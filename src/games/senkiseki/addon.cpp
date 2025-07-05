@@ -716,8 +716,8 @@ bool initialized = false;
 
 }  // namespace
 
-extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX";
-extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX (Generic)";
+extern "C" __declspec(dllexport) constexpr const char* NAME = "Sen no Kiseki - RenoDX";
+extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for Trails of Cold Steel games";
 
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   switch (fdw_reason) {
