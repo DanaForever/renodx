@@ -77,7 +77,12 @@ struct ShaderInjectData {
   float inverse_tonemap_highlight_saturation;
   float inverse_tonemap_extra_hdr_saturation;
 
+  float color_grade_per_channel_hue_correction;
+  float color_grade_per_channel_chrominance_correction;
+  float color_grade_per_channel_blowout_restoration;
+
   float bloom;
+  float fxaa;
 };
 
 #ifndef __cplusplus
@@ -127,6 +132,10 @@ cbuffer shader_injection : register(b13) {
 #define INVERSE_TONEMAP_COLOR_CONSERVATION shader_injection.inverse_tonemap_color_conservation
 #define INVERSE_TONEMAP_HIGHLIGHT_SATURATION shader_injection.inverse_tonemap_highlight_saturation
 #define INVERSE_TONEMAP_EXTRA_HDR_SATURATION shader_injection.inverse_tonemap_extra_hdr_saturation
+
+#define RENODX_PER_CHANNEL_BLOWOUT_RESTORATION  shader_injection.color_grade_per_channel_blowout_restoration
+#define RENODX_PER_CHANNEL_HUE_CORRECTION  shader_injection.color_grade_per_channel_hue_correction
+#define RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION  shader_injection.color_grade_per_channel_chrominance_correction
 
 #define BROKEN_BLOOM                           shader_injection.bloom
 

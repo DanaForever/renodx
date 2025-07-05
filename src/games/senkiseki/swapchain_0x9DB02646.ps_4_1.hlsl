@@ -85,10 +85,18 @@ void main(
   float4 fDest;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-
+  
+  if (RENODX_TONE_MAP_TYPE == 0.f) {
+    r0.xyz = saturate(r0.xyz);
+  }
   o0.w = r0.w;
-  o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x); // overwrite the game brightness
+  o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);  // overwrite the game brightness
+
+  o0.x = (isnan(o0.x) || isinf(o0.x)) ? 0.0f : o0.x;
+  o0.y = (isnan(o0.y) || isinf(o0.y)) ? 0.0f : o0.y;
+  o0.z = (isnan(o0.z) || isinf(o0.z)) ? 0.0f : o0.z;
   o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  
 
   return;
 }

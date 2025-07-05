@@ -103,10 +103,10 @@ void main(
   r0.xy = (int2)r0.xy;
   r0.zw = float2(0,0);
   r0.x = DepthBuffer.Load(r0.xy, 0).x;
-  r0.y = r1.z * 0.00390625 + r1.y;
-  r0.y = r0.y * 0.00390625 + r1.x;
-  r0.x = cmp(r0.x < r0.y);  
-  // r0.yz = w1.xy * float2(1,-1) + float2(0,1);
+  // r0.y = r1.z * 0.00390625 + r1.y;
+  // r0.y = r0.y * 0.00390625 + r1.x;
+  // r0.x = cmp(r0.x < r0.y);  
+  r0.x = cmp(r0.x < r1.x);  
   r0.yz = w1.xy * float2(1,-1) + float2(0,1);
   r0.y = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r0.yz, 0).x;
   r0.z = FilterTexture.SampleLevel(LinearClampSamplerState_s, w4.xy, 0).x;
@@ -114,9 +114,8 @@ void main(
   r0.y = GodrayColor.w * r0.y;
   r0.yzw = GodrayColor.xyz * r0.yyy;
 
-  // r0.yzw *= 100;
-
   if (BROKEN_BLOOM > 0.f) {
+  // if (1.f) {
     r1.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.xy), 0).xyzw);
     r1.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r1.xyzw;
     r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v1.xy), 0).xyzw);
@@ -131,6 +130,9 @@ void main(
     r1.xyz = lerp(r1.xyz, 1.0, r0.yzw);
 
     o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
+
+    // o0.xyzw = r1.xyzw;
+    o0 = max(o0, 0);
   } else {
     o0.rgb = r0.yzw;
     o0.w = 1.0;

@@ -325,6 +325,8 @@ void main(
                                                sdr_color,
                                                graded_sdr_color,
                                                1.f);
+
+      o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);                                         
                                                
     } else {
       // fast inverted Reinhard

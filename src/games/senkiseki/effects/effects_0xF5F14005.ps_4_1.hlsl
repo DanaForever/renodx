@@ -142,6 +142,7 @@ void main(
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
 
-  o0 = saturate(o0);
+  // o0 = saturate(o0);
+  o0.rgb = clamp(o0.rgb, 0.f, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
   return;
 }

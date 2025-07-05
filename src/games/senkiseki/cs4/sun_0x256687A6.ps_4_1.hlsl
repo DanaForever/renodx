@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 22:18:00 2025
-
+#include "common.hlsl"
 cbuffer _Globals : register(b0)
 {
 

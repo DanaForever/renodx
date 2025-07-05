@@ -112,8 +112,10 @@ void main(
     r1.xyzw = r2.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r1.xyzw;
     r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
     r1.xyzw = r2.xyzw * float4(0.100000001,0.100000001,0.100000001,0.100000001) + r1.xyzw;
-    r2.xyz = float3(1, 1, 1) + -r1.xyz;
-    r1.xyz = r0.xyz * r2.xyz + r1.xyz;
+    // r2.xyz = float3(1, 1, 1) + -r1.xyz;
+    // r1.xyz = r0.xyz * r2.xyz + r1.xyz;
+
+    r1.xyz = lerp(r0.xyz, 1.f, r1.xyz);
   } else {
     r1.xyz = r0.xyz;
     r1.w = 1.f;
@@ -122,9 +124,10 @@ void main(
   r0.xy = v4.xy * float2(1,-1) + float2(0,1);
   r2.xyz = FocusBuffer.SampleLevel(PointClampSamplerState_s, r0.xy, 0).xyz;
   r0.x = DepthBuffer.SampleLevel(PointClampSamplerState_s, r0.xy, 0).x;
-  r0.y = r2.z * 0.00390625 + r2.y;
-  r0.y = r0.y * 0.00390625 + r2.x;
-  r0.x = cmp(r0.x < r0.y);
+  // r0.y = r2.z * 0.00390625 + r2.y;
+  // r0.y = r0.y * 0.00390625 + r2.x;
+  // r0.x = cmp(r0.x < r0.y);
+  r0.x = cmp(r0.x < r2.x);
   o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
   o0 = max(o0, 0);
 

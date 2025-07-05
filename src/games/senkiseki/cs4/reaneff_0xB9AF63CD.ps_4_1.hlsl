@@ -113,5 +113,13 @@ void main(
   o0.xyz = v2.xyz * v2.www + r0.xyz;
   o0.w = r0.w;
 
-   return;
+  o0 = max(o0, 0.0f);  // After all math, before return
+  // o0.x = (isnan(o0.x) || isinf(o0.x)) ? 0.0f : o0.x;
+  // o0.y = (isnan(o0.y) || isinf(o0.y)) ? 0.0f : o0.y;
+  // o0.z = (isnan(o0.z) || isinf(o0.z)) ? 0.0f : o0.z;
+  // o0.w = (isnan(o0.w) || isinf(o0.w)) ? 0.0f : o0.w;
+
+  float max_hdr_value = 1.f;
+  o0.rgb = min(o0.rgb, max_hdr_value);
+  return;
 }

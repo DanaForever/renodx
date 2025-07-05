@@ -136,16 +136,16 @@ void main(
   r0.x = min(1, r0.x);
   o0.w = PointLightParams.z * r0.x;
   o1.w = 0.466666698 + MaskEps;
-  // r0.x = v6.z / v6.w;
-  // r0.y = 256 * r0.x;
-  // r1.x = trunc(r0.y);
-  // r0.x = r0.x * 256 + -r1.x;
-  // r0.y = 256 * r0.x;
-  // r1.y = trunc(r0.y);
-  // r1.z = r0.x * 256 + -r1.y;
-  // o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
-  float value = v6.z / v6.w;
-  o2.xyz = value;
+  r0.x = v6.z / v6.w;
+  r0.y = 256 * r0.x;
+  r1.x = trunc(r0.y);
+  r0.x = r0.x * 256 + -r1.x;
+  r0.y = 256 * r0.x;
+  r1.y = trunc(r0.y);
+  r1.z = r0.x * 256 + -r1.y;
+  o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
+  // float value = v6.z / v6.w;
+  // o2.xyz = value;
   o2.w = 0.00784313772 + MaskEps;
   return;
 }

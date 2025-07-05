@@ -18,6 +18,13 @@ void main(
   float4 fDest;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSampler_s, v1.xy, 0).xyzw;
+
+  if (shader_injection.fxaa == 0) {
+    o0 = r0;
+    return;
+  }
+
+  // skip FXAA for good ?
   r1.xyz = ColorBuffer.Gather(LinearClampSampler_s, v1.xy).xyz;
   r2.xyz = ColorBuffer.Gather(LinearClampSampler_s, v1.xy, int2(-1, -1)).xzw;
   r1.w = max(r1.x, r0.w);
@@ -350,10 +357,4 @@ void main(
   }
   o0.xyz = r0.xyz;
 
-  o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.2);
-  o0.rgb = PumboInverseTonemap(o0.rgb);
-  o0.rgb = ToneMap(o0.rgb); // for some reason ToneMapPass causes Artifact
-  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
-  o0.w = 1;
-  return;
 }

@@ -336,6 +336,18 @@ renodx::utils::settings::Settings settings = {
         .parse = [](float value) { return value * 0.01f; },
     },
     new renodx::utils::settings::Setting{
+        .key = "InverseToneMapExtraHDRSaturation",
+        .binding = &shader_injection.expand_gamut,
+        .default_value = 0.f,
+        .can_reset = true,
+        .label = "Extra HDR saturation",
+        .section = "Restoring Highlight Saturation",
+        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
+        .min = 0.f,
+        .max = 1000.f,
+        .parse = [](float value) { return value; },
+    },
+    new renodx::utils::settings::Setting{
         .key = "Per channel correction",
         .binding = &shader_injection.per_channel_correction,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
@@ -593,6 +605,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .old_format = reshade::api::format::r10g10b10a2_typeless,
           .new_format = reshade::api::format::r16g16b16a16_typeless,
         });
+
+        
 
         bool is_hdr10 = false;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);

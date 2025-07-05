@@ -79,7 +79,56 @@ Texture2D<float4> FilterTexture : register(t4);
 // 3Dmigoto declarations
 #define cmp -
 
+float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, float2 v1, bool Bloom) {
+  float4 r0, r1, r2, r3;
+  r0.xyz = depthInput;
 
+  // r1.xyz is the difference between a blurred (focus) and sharp (color) buffer.
+  r1.xyz = focusInput;
+  r2.xyz = colorInput;
+  r1.xyz = -r2.xyz + r1.xyz;
+
+  // If out of focus, more blurred (focus buffer)
+  // If in focus, just sharp (color buffer)
+  r0.yzw = r0.yyy * r1.xyz + r2.xyz;
+
+  // Applies a per-channel scale (ToneFactor) to the color.
+  r1.xyz = ToneFactor.xxx * r0.yzw;
+
+  // Computes 1 - (color * scale) for later masking/blending.
+  r0.yzw = -r0.yzw * ToneFactor.xxx + float3(1, 1, 1);
+
+  // Additional Texture Sampling (for Filters/Bloom)
+  r2.xy = v1.xy * float2(1, -1) + float2(0, 1);
+
+  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
+  r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+
+  r2.xyzw = FilterColor.xyzw * r2.xyzw;
+  r2.xyz = r2.xyz * r2.www;
+
+  r3.xyz = GlowIntensity.w * r3.xyz;
+  if (!Bloom) {
+    r3.xyz = 0.f;
+  }
+
+  // Multiply “main color” by Bloom
+  // If glare is strong, this can significantly brighten or “glow up” highlights.
+  r0.yzw = r3.xyz * r0.yzw + r1.xyz;
+
+  // Compositing colors
+  r1.xyz = float3(1, 1, 1) + -r0.yzw;
+  r3.xyz = r2.xyz * r0.xxx;
+  r2.xyz = r2.xyz * r0.xxx + r0.yzw;
+  r0.xyz = r3.xyz  * r1.xyz + r0.yzw;
+  r0.xyz = r0.xyz + -r2.xyz;
+  float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
+
+  output = renodx::color::srgb::DecodeSafe(output);
+  // output = renodx::color::gamma::DecodeSafe(output, 2.2f);
+
+  return output;
+}
 
 
 
@@ -92,6 +141,8 @@ void main(
   float4 r0,r1,r2,r3;
   uint4 bitmask, uiDest;
   float4 fDest;
+
+  float glowIntensity = GlowIntensity.w;
 
   DepthBuffer.GetDimensions(uiDest.x, uiDest.y, uiDest.z);
   r0.xy = uiDest.xy;
@@ -109,32 +160,21 @@ void main(
   r0.y = saturate(DofParams.y * abs(r0.y));
   r0.y = r0.y * r0.y;
   r0.y = DofParams.z * r0.y;
+
+  // r1.xyz is the difference between a blurred (focus) and sharp (color) buffer.
   r1.xyz = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
   r2.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
-  r1.xyz = -r2.xyz + r1.xyz;
-  r0.yzw = r0.yyy * r1.xyz + r2.xyz;
-  r1.xyz = ToneFactor.xxx * r0.yzw;
-  r0.yzw = -r0.yzw * ToneFactor.xxx + float3(1,1,1);
-  r2.xy = v1.xy * float2(1,-1) + float2(0,1);
-  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
-  r2.xyzw = FilterColor.xyzw * r2.xyzw;
-  r2.xyz = r2.xyz * r2.www;
-  r3.xyz = GlowIntensity.www * r3.xyz;
-  r0.yzw = r3.xyz * r0.yzw + r1.xyz;
-  r1.xyz = float3(1,1,1) + -r0.yzw;
-  r3.xyz = r2.xyz * r0.xxx;
-  r2.xyz = r2.xyz * r0.xxx + r0.yzw;
-  r0.xyz = r3.xyz * r1.xyz + r0.yzw;
-  r0.xyz = r0.xyz + -r2.xyz;
-  o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
 
+  float3 bloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, true);
+  float3 noBloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, false);
+  
+  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
   o0.w = 1;
-  // ToneMapPass here?
 
-  o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.2);
-  o0.rgb = PumboInverseTonemap(o0.rgb);
-  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact 
+  // ToneMapPass here?
+  // o0.rgb = PumboInverseTonemap(o0.rgb);
+  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = expandColorGamut(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
 
   return;

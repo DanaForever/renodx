@@ -1,4 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Jun 07 06:12:20 2025
+// ---- Created with 3Dmig#include "../cs4/common.hlsl"
+#include "../cs4/common.hlsl"
 #include "../shared.h"
 cbuffer _Globals : register(b0)
 {
@@ -66,48 +67,67 @@ cbuffer _Globals : register(b0)
 SamplerState LinearClampSamplerState_s : register(s0);
 Texture2D<float4> ColorBuffer : register(t0);
 Texture2D<float4> GlareBuffer : register(t1);
+Texture2D<float4> FadingTexture : register(t2);
 
 
 // 3Dmigoto declarations
 #define cmp -
 
+float3 CompositeColor(float4 color, float4 toneColor, float4 glareColor, float4 fadingColor, bool Bloom) {
+  float4 r0, r1, r2, r3;
+  r0 = color;
+  r1 = toneColor;
+  r2 = fadingColor;
+  r3 = glareColor;
+
+  r3.xyz = GlowIntensity.www * r3.xyz;
+  if (!Bloom) {
+    r3.xyz = 0.f;
+  }
+  r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
+  r0.w = FadingColor.w * r2.w;
+  float3 output = r0.www * r1.xyz + r0.xyz;
+
+  output = renodx::color::gamma::DecodeSafe(output, 2.2f);
+
+  return output;
+}
 
 void main(
   float4 v0 : SV_POSITION0,
   float2 v1 : TEXCOORD0,
-  float2 w1 : TEXCOORD7,
-  float4 v2 : TEXCOORD1,
-  float4 v3 : TEXCOORD2,
+  float2 w1 : TEXCOORD1,
   out float4 o0 : SV_TARGET0)
 {
-  float4 r0,r1,r2;
+  float4 r0,r1,r2,r3;
   uint4 bitmask, uiDest;
   float4 fDest;
-  // if (BROKEN_BLOOM > 0.f) {
-  if (0) {
-    r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
-    r0.xyzw = float4(0.100000001,0.100000001,0.100000001,0.100000001) * r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.400000006,0.400000006,0.400000006,0.400000006) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r0.xyzw;
-  
-    r1.x = GaussianBlurParams.w * r0.w;
-    r2.xyzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyzw;
-    r2.xyz = r2.xyz * r1.xxx;
-    r0.xyzw = r2.xyzw + r0.xyzw;
-    o0.xyzw = GaussianBlurParams.zzzz * r0.xyzw;
-    o0 = max(o0, 0.f);
-  } else {
-    
-    r2.xyzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyzw;
-    o0.rgb = r2.rgb;
-    o0.w = r2.w;
-    o0 = saturate(o0);
-  }
+
+  r0.xy = v1.xy * UvScaleBias.xy + UvScaleBias.zw;
+  r0.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
+  r1.xyz = ToneFactor.xxx * r0.xyz;
+  r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
+  r2.xy = v1.xy * float2(1,-1) + float2(0,1);
+  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
+  r2.xyzw = FadingTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  // r3.xyz = GlowIntensity.www * r3.xyz;
+  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  // r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
+  // r0.w = FadingColor.w * r2.w;
+  // o0.xyz = r0.www * r1.xyz + r0.xyz;
+
+  float3 bloomOutput = CompositeColor(r0, r1, r3, r2, true);
+  float3 noBloomOutput = CompositeColor(r0, r1, r3, r2, false);
+
+  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  o0.w = 1;
+
+  // ToneMapPass here?
+  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = expandColorGamut(o0.rgb);
+  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  o0.w = 1;
+
   return;
 }

@@ -92,6 +92,7 @@ void main(
     r0.xyz = renodx::color::srgb::EncodeSafe(r0.xyz);
     r0.xyz = r0.www * float3(0.00392156886, 0.00392156886, 0.00392156886) + r0.xyz;
     r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
+    r0.rgb = renodx::color::bt709::clamp::AP1(r0.rgb);
     o0.rgb = renodx::draw::RenderIntermediatePass(r0.rgb);
     o0.w = 1;
     return;

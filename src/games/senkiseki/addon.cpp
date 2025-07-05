@@ -38,11 +38,30 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x010A2698), // Artifact
     CustomShaderEntry(0x1FEBC77F), // Artifact
     CustomShaderEntry(0xFB81CC22), // Artifact
+    CustomShaderEntry(0x53F9EA61), // Helix
+    CustomShaderEntry(0x8377693A), // Helix
+    CustomShaderEntry(0xF52ED722), // Helix
+    CustomShaderEntry(0x7C713EA2), // artifact
+    CustomShaderEntry(0x899A5037), // artifact
+    CustomShaderEntry(0x92AF88E8), // artifact
+    CustomShaderEntry(0x693BB6AD), // artifact
+    CustomShaderEntry(0x0617F17E), // artifact
+    CustomShaderEntry(0x864D0B94), // artifact
+    CustomShaderEntry(0x28A12202), // artifact
+    CustomShaderEntry(0x03A9635B), // artifact
+    CustomShaderEntry(0xD4CC30DD), // artifact
+    CustomShaderEntry(0x5904850F), // artifact
+    CustomShaderEntry(0xAEFC72F9), // artifact
+    CustomShaderEntry(0x5A14FF14), // artifact
+    CustomShaderEntry(0x97B6686A), // artifact
+    CustomShaderEntry(0xB6F58E83), // artifact
     
 };
 
 renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x131CC98E),
+    CustomShaderEntry(0x46A727D9), // final4
+    CustomShaderEntry(0xC2D07E63), // final-Scraft
     CustomShaderEntry(0x9DB02646), // swapchain unclamp
     CustomShaderEntry(0xF0FA2768), // artifact
     CustomShaderEntry(0x386909EF), // bloom artifact
@@ -66,6 +85,11 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x2BF0C94B), // Final 3
     CustomShaderEntry(0x3E08A3A6), // Final 2
     CustomShaderEntry(0x2A8422DE), // Final 1
+    CustomShaderEntry(0x49107B8F), // Final 6
+    CustomShaderEntry(0x1C7DCC30), // Final 7
+    CustomShaderEntry(0x3541804A), // Final 8
+    CustomShaderEntry(0xFD245ECC), // Final 9
+    CustomShaderEntry(0x93DEF816), // Final 10
     CustomShaderEntry(0xE92523E6), // Light 
     CustomShaderEntry(0x2CE1FDAD), // Moon
     CustomShaderEntry(0x7CC40E3A), // Artifact 
@@ -79,12 +103,39 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xE291FC5C), // Artifact 
     CustomShaderEntry(0x2A1ED860), // Artifact 
     CustomShaderEntry(0x3F916BC5), // Sky Artifact 
+    CustomShaderEntry(0x40E73DDB), // mirror light
+    CustomShaderEntry(0x39657C8A), // light
+    CustomShaderEntry(0xBB9756CF), // light
+    CustomShaderEntry(0x24FB4CC2), // light
+    CustomShaderEntry(0x36E4465F), // light
+    CustomShaderEntry(0x50ED90FA), // light
+    CustomShaderEntry(0xD15C5D7D), // light
+    CustomShaderEntry(0xE7F4B7AF), // lantern
+    CustomShaderEntry(0x2BBCADD8), // lantern
+    CustomShaderEntry(0xF5F14005), // lantern
+    CustomShaderEntry(0x8E631192), // waterfall
+    CustomShaderEntry(0x6E7F5CBB), // waterfall2
+    CustomShaderEntry(0xB64DF407), // sky
+    CustomShaderEntry(0x8C099E7B), // lantern
+    CustomShaderEntry(0xB9AF63CD), // lantern
 
     // CS3
     CustomShaderEntry(0xDB20052A), // CS3 swapchain
     CustomShaderEntry(0xFAD1BDE8), // CS3 bloom
     CustomShaderEntry(0x8E0121CE), // CS3 bloom
     CustomShaderEntry(0x36ED28F7), // CS3 bloom
+    CustomShaderEntry(0x6B574B6E), // CS3 final 
+    CustomShaderEntry(0xABF4E009), // CS3 final 2
+    CustomShaderEntry(0xB4406452), // CS3 final 3
+    CustomShaderEntry(0x95F02C1D), // CS3 final 4
+    CustomShaderEntry(0x26217A30), // CS3 final 5
+    CustomShaderEntry(0x46DC6C58), // CS3 final 6
+    CustomShaderEntry(0x70EAAEFC), // lighthouse
+    CustomShaderEntry(0xD4F2A488), // ortis light
+    CustomShaderEntry(0xA7E488FF), // aion
+    CustomShaderEntry(0x9243FD49), // valimar
+    CustomShaderEntry(0xFF76CAFD), // valimar2
+    CustomShaderEntry(0x1355F463), // house light
     // CustomSwapchainShader(0x00000000),
     // BypassShaderEntry(0x00000000)
 };
@@ -131,9 +182,19 @@ renodx::utils::settings::Settings settings = {
         .key = "SettingsMode",
         .binding = &shader_injection.bloom,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
+        .default_value = 1.f,
         .can_reset = false,
         .label = "Game Bloom.",
+        .labels = {"Disabled", "Enabled"},
+        .is_global = true,
+    },
+    new renodx::utils::settings::Setting{
+        .key = "SettingsMode",
+        .binding = &shader_injection.fxaa,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Game FXAA.",
         .labels = {"Disabled", "Enabled"},
         .is_global = true,
     },
@@ -298,12 +359,12 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "InverseToneMapperWhiteLevel",
         .binding = &shader_injection.inverse_tonemap_white_level,
-        .default_value = 1.f,
+        .default_value = 0.f,
         .can_reset = false,
         .label = "Tonemapper white level (in units)",
         .section = "Inverse Tone Mapping",
         .tooltip = "Used as parameter by some (inverse) tonemappers. Increases saturation. Has no effect at 1.",
-        .min = 1.f,
+        .min = 0.f,
         .max = 4.f,
     },
     new renodx::utils::settings::Setting{
@@ -440,6 +501,46 @@ renodx::utils::settings::Settings settings = {
         .parse = [](float value) { return value * 0.01f; },
         .is_visible = []() { return false; },
     },
+
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeBlowoutRestoration",
+        .binding = &shader_injection.color_grade_per_channel_blowout_restoration,
+        .default_value = 0.f,
+        .label = "Per Channel Blowout Restoration",
+        .section = "Color Grading",
+        .tooltip = "Restores color from blowout from per-channel grading.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type > 0; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 1; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeChrominanceCorrection",
+        .binding = &shader_injection.color_grade_per_channel_chrominance_correction,
+        .default_value = 0.f,
+        .label = "Per Channel Chrominance Correction",
+        .section = "Color Grading",
+        .tooltip = "Corrects unbalanced chrominance (?) from per-channel grading.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type > 0; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 1; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeHueCorrection",
+        .binding = &shader_injection.color_grade_per_channel_hue_correction,
+        .default_value = 0.f,
+        .label = "Per Channel Hue Correction",
+        .section = "Color Grading",
+        .tooltip = "Corrects per-channel hue shifts from per-channel grading.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type > 0; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 1; },
+    },
     new renodx::utils::settings::Setting{
         .key = "SwapChainCustomColorSpace",
         .binding = &shader_injection.swap_chain_custom_color_space,
@@ -569,6 +670,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_index = 13;
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
+        renodx::mods::swapchain::force_borderless = true;
         renodx::mods::swapchain::swap_chain_proxy_shaders = {
             {
                 reshade::api::device_api::d3d11,
@@ -603,6 +705,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
           .usage_include = reshade::api::resource_usage::render_target,
       });
+
+    //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+    //       .old_format = reshade::api::format::bc1_unorm,
+    //       .new_format = reshade::api::format::r16g16b16a16_float,
+    //       .ignore_size = true
+          
+    //     });
     //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
     //       .old_format = reshade::api::format::r8g8b8a8_unorm,
     //       .new_format = reshade::api::format::r16g16b16a16_float,
