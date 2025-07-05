@@ -93,7 +93,5 @@ void main(
   r0.x = cmp(r0.x < GodrayParams.z);
   o0.x = r0.x ? 0 : 1;
   o0.yzw = float3(0,0,0);
-
-  o0 = min(o0, 0.f);
   return;
 }

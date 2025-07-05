@@ -216,23 +216,7 @@ void main(
     // o0.xyz = Gamma ? r1.xyz : r0.xyz;
     output = r0.xyz;
 
-    [branch]
-    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.2f);
-    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.4f);
-    }
-
-    output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-
-    [branch]
-    if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.2f);
-    } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.4f);
-    }
-
-    o0.rgb = output;
+    o0.rgb = PostToneMapProcess(output);
   }
   else {
     // float3 sdr_graded = colorGrade(r0.rgb);
@@ -297,23 +281,7 @@ void main(
 
     output = hdr_graded;
 
-    [branch]
-    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.2f);
-    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.4f);
-    }
-
-    output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-
-    [branch]
-    if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.2f);
-    } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.4f);
-    }
-
-    o0.rgb = output;
+    o0.rgb = PostToneMapProcess(output);
   }
   o0.w = r0.w;
   return;

@@ -349,11 +349,11 @@ static const float C1 = 3424.f / 4096.f;            // 0.8359375f;
 static const float C2 = 32.f * (2413.f / 4096.f);   // 18.8515625f;
 static const float C3 = 32.f * (2392.f / 4096.f);   // 18.6875f;
 
-float3 Encode(float3 color, float scaling = 10000.f) {
-  color *= (scaling / 10000.f);
-  float3 y_m1 = pow(color, M1);
-  return pow((C1 + C2 * y_m1) / (1.f + C3 * y_m1), M2);
-}
+  float3 Encode(float3 color, float scaling = 10000.f) {
+    color *= (scaling / 10000.f);
+    float3 y_m1 = pow(color, M1);
+    return pow((C1 + C2 * y_m1) / (1.f + C3 * y_m1), M2);
+  }
 
 float3 Decode(float3 color, float scaling = 10000.f) {
   float3 e_m12 = pow(color, 1.f / M2);

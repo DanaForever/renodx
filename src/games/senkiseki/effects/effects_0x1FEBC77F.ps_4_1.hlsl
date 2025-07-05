@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sun Jun 22 13:28:47 2025
-
+#include "../shared.h"
 cbuffer _Globals : register(b0)
 {
 
@@ -110,6 +110,7 @@ void main(
   o0.xyz = v2.xyz * v2.www + r0.xyz;
   o0.w = r0.w;
 
-  o0 = saturate(o0);
+  // o0 = saturate(o0);
+  o0.rgb = clamp(o0.rgb, 0.f, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
   return;
 }

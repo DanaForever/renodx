@@ -180,3 +180,82 @@ float3 ToneMapPass(float3 untonemapped,
 ///////////////////////////////////////////////////////////////////////////
 ////////// CUSTOM TONEMAPPASS//////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
+
+float3 PostToneMapProcess(float3 output) {
+
+  [branch]
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    output = renodx::color::correct::GammaSafe(output, false, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    output = renodx::color::correct::GammaSafe(output, false, 2.4f);
+  }
+
+  output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
+
+  [branch]
+  if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    output = renodx::color::correct::GammaSafe(output, true, 2.2f);
+  } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    output = renodx::color::correct::GammaSafe(output, true, 2.4f);
+  }
+
+  return output;
+
+}
+
+///////////////////////////////////////////////////////////////////////////
+////////// CUSTOM TONEMAPPASS//////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+#define FLT16_MAX 65504.f
+#define FLT_MIN   asfloat(0x00800000)  // 1.175494351e-38f
+#define FLT_MAX   asfloat(0x7F7FFFFF)  // 3.402823466e+38f
+
+static const float3x3 Wide_2_XYZ_MAT = float3x3(
+    0.5441691, 0.2395926, 0.1666943,
+    0.2394656, 0.7021530, 0.0583814,
+    -0.0023439, 0.0361834, 1.0552183);
+
+static const float3 AP1_RGB2Y = float3(
+    0.2722287168,  // AP1_2_XYZ_MAT[0][1],
+    0.6740817658,  // AP1_2_XYZ_MAT[1][1],
+    0.0536895174   // AP1_2_XYZ_MAT[2][1]
+);
+
+float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
+{
+  // const float3x3 sRGB_2_AP1 = mul(XYZ_2_AP1_MAT, mul(D65_2_D60_CAT, sRGB_2_XYZ_MAT));
+  // const float3x3 AP1_2_sRGB = mul(XYZ_2_sRGB_MAT, mul(D60_2_D65_CAT, AP1_2_XYZ_MAT));
+  // const float3x3 Wide_2_AP1 = mul(XYZ_2_AP1_MAT, Wide_2_XYZ_MAT);
+  // const float3x3 ExpandMat = mul(Wide_2_AP1, AP1_2_sRGB);
+
+  const float3x3 sRGB_2_AP1 = renodx::color::BT709_TO_AP1_MAT;
+  const float3x3 AP1_2_sRGB = renodx::color::AP1_TO_BT709_MAT;
+  const float3x3 Wide_2_AP1 = mul(renodx::color::XYZ_TO_AP1_MAT, Wide_2_XYZ_MAT);
+  const float3x3 ExpandMat = mul(Wide_2_AP1, AP1_2_sRGB);
+
+  // float3 ColorAP1 = mul(sRGB_2_AP1, vHDRColor);
+  float3 ColorAP1 = renodx::color::ap1::from::BT709(vHDRColor);
+  float LumaAP1 = renodx::color::y::from::AP1(ColorAP1);
+
+  // float LumaAP1 = dot(ColorAP1, AP1_RGB2Y);
+  if (LumaAP1 <= 0.f)
+    {
+    return vHDRColor;
+  }
+  float3 ChromaAP1 = ColorAP1 / LumaAP1;
+
+  float ChromaDistSqr = dot(ChromaAP1 - 1, ChromaAP1 - 1);
+  // float ExpandAmount = (1 - exp2(-4 * ChromaDistSqr)) * (1 - exp2(-4 * fExpandGamut * LumaAP1 * LumaAP1));
+  float ExpandAmount = (1 - exp2(-4 * ChromaDistSqr)) * (1 - exp2(-4 * fExpandGamut * LumaAP1 * LumaAP1));
+
+  float3 ColorExpand = mul(ExpandMat, ColorAP1);
+
+  // ColorAP1 = lerp(ColorAP1, ColorExpand, fExpandGamut);
+  ColorAP1 = lerp(ColorAP1, ColorExpand, ExpandAmount);
+  // ColorAP1 = ColorExpand;
+
+  // vHDRColor = mul(AP1_2_sRGB, ColorAP1);
+  vHDRColor = renodx::color::bt709::from::AP1(ColorAP1);
+  return vHDRColor;
+}

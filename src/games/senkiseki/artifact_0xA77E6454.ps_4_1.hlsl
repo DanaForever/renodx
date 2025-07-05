@@ -620,5 +620,13 @@ void main(
   o2.xyz = v7.z / v7.w;
   o0.xyz = r0.xyz;
   o2.w = MaskEps;
+
+  // o0 = saturate(o0);
+  // o1 = saturate(o1);
+  // o2 = saturate(o2);
+
+  o0 = clamp(o0, 0.f, 1.f);
+  o1 = clamp(o1, 0.f, 1.f);
+  o2 = clamp(o2, 0.f, 1.f);
   return;
 }

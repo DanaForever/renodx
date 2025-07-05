@@ -74,6 +74,31 @@ Texture2D<float4> ColorBuffer : register(t0);
 // 3Dmigoto declarations
 #define cmp -
 
+float4 createGaussianBlurTexture(float2 v1, bool Bloom) {
+  float4 r0, r1, r2, output;
+  float gaussianBlur = GaussianBlurParams.w;
+
+  if (!Bloom) {
+    gaussianBlur = 0.f;
+  }
+
+  r0.xy = -GaussianBlurParams.xy + v1.xy;
+  r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r0.xy), 0).xyzw;
+  r0.xyzw = gaussianBlur * r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v1.xy), 0).xyzw;
+  r0.xyzw = r1.xyzw * GaussianBlurParams.zzzz + r0.xyzw;
+  r1.xyzw = GaussianBlurParams.xyxy * float4(1, -1, -1, 1) + v1.xyxy;
+  r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.xy), 0).xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.zw), 0).xyzw;
+  r0.xyzw = r2.xyzw * gaussianBlur + r0.xyzw;
+  r0.xyzw = r1.xyzw * gaussianBlur + r0.xyzw;
+  r1.xy = GaussianBlurParams.xy + v1.xy;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.xy), 0).xyzw;
+  output.xyzw = r1.xyzw * gaussianBlur + r0.xyzw;
+
+  return output;
+}
+
 
 void main(
   float4 v0 : SV_POSITION0,
@@ -84,19 +109,26 @@ void main(
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  r0.xy = -GaussianBlurParams.xy + v1.xy;
-  r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r0.xy), 0).xyzw;
-  r0.xyzw = GaussianBlurParams.wwww * r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v1.xy), 0).xyzw;
-  r0.xyzw = r1.xyzw * GaussianBlurParams.zzzz + r0.xyzw;
-  r1.xyzw = GaussianBlurParams.xyxy * float4(1, -1, -1, 1) + v1.xyxy;
-  r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.xy), 0).xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.zw), 0).xyzw;
-  r0.xyzw = r2.xyzw * GaussianBlurParams.wwww + r0.xyzw;
-  r0.xyzw = r1.xyzw * GaussianBlurParams.wwww + r0.xyzw;
-  r1.xy = GaussianBlurParams.xy + v1.xy;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.xy), 0).xyzw;
-  o0.xyzw = r1.xyzw * GaussianBlurParams.wwww + r0.xyzw;
+  // if (BROKEN_BLOOM > 0.f) {
+  if (1) {
+    r0.xy = -GaussianBlurParams.xy + v1.xy;
+    r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r0.xy), 0).xyzw;
+    r0.xyzw = GaussianBlurParams.wwww * r0.xyzw;
+    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v1.xy), 0).xyzw;
+    r0.xyzw = r1.xyzw * GaussianBlurParams.zzzz + r0.xyzw;
+    r1.xyzw = GaussianBlurParams.xyxy * float4(1, -1, -1, 1) + v1.xyxy;
+    r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.xy), 0).xyzw;
+    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.zw), 0).xyzw;
+    r0.xyzw = r2.xyzw * GaussianBlurParams.wwww + r0.xyzw;
+    r0.xyzw = r1.xyzw * GaussianBlurParams.wwww + r0.xyzw;
+    r1.xy = GaussianBlurParams.xy + v1.xy;
+    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, (r1.xy), 0).xyzw;
+    o0.xyzw = r1.xyzw * GaussianBlurParams.wwww + r0.xyzw;
+  } else {
+    o0.xyzw = 0.f;
+  }
+  // o0.xyzw = createGaussianBlurTexture(v1, true);
+
   o0 = max(o0, 0.f);
 
   return;

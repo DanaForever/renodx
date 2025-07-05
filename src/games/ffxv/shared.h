@@ -74,6 +74,7 @@ struct ShaderInjectData {
 
   float per_channel_correction;
   float per_channel_correction_range;
+  float expand_gamut;
   float color_grade_per_channel_hue_correction;
   float color_grade_per_channel_hue_shift_strength;
   float color_grade_per_channel_chrominance_correction;
@@ -83,7 +84,6 @@ struct ShaderInjectData {
   float displayMapPeak;
   float displayMapShoulder;
 
-  float peak_clamp;
 
   // float color_grade_hue_shift;
 };
@@ -139,6 +139,7 @@ cbuffer shader_injection : register(b13) {
 #define DISPLAY_MAP_PEAK                     shader_injection.displayMapPeak
 #define DISPLAY_MAP_SHOULDER                 shader_injection.displayMapShoulder
 #define FFXV_PER_CHANNEL_CORRECTION                 shader_injection.per_channel_correction
+#define FFXV_EXPAND_GAMUT                shader_injection.expand_gamut
 
 #define PEAK_CLAMP                 shader_injection.peak_clamp
 

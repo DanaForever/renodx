@@ -15,6 +15,7 @@ void main(
 {
   o0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
   o0 = saturate(o0);
-  // o0 = max(o0, 0);
+  // o0.rgb = clamp(o0.rgb, 0, 1.f);
+  // o0.rgb = min(o0.rgb, 1.f);
   return;
 }

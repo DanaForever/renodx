@@ -168,6 +168,7 @@ void main(
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
 
-  o0 = saturate(o0);
+  // this is must
+  o0 = clamp(o0, 0.f, 2.f);
   return;
 }

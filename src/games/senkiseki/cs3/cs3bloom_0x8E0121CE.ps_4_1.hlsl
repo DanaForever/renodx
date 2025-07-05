@@ -1,4 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Jun 07 06:17:25 2025
+// ---- Created with 3Dmigoto v1.3.16 on Sat Jun 07 06:12:20 2025
 #include "../shared.h"
 cbuffer _Globals : register(b0)
 {
@@ -65,6 +65,7 @@ cbuffer _Globals : register(b0)
 
 SamplerState LinearClampSamplerState_s : register(s0);
 Texture2D<float4> ColorBuffer : register(t0);
+Texture2D<float4> GlareBuffer : register(t1);
 
 
 // 3Dmigoto declarations
@@ -74,34 +75,30 @@ Texture2D<float4> ColorBuffer : register(t0);
 void main(
   float4 v0 : SV_POSITION0,
   float2 v1 : TEXCOORD0,
+  float2 w1 : TEXCOORD7,
+  float4 v2 : TEXCOORD1,
+  float4 v3 : TEXCOORD2,
   out float4 o0 : SV_TARGET0)
 {
   float4 r0,r1,r2;
   uint4 bitmask, uiDest;
   float4 fDest;
+  r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
+  r0.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r0.xyzw;
 
-  // if (BROKEN_BLOOM > 0.f) {
-  if (1) {
-    r0.xy = -GaussianBlurParams.xy + v1.xy;
-    r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyzw;
-    r0.xyzw = GaussianBlurParams.wwww * r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-    r0.xyzw = r1.xyzw * GaussianBlurParams.zzzz + r0.xyzw;
-    r1.xyzw = GaussianBlurParams.xyxy * float4(1,-1,-1,1) + v1.xyxy;
-    r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r1.xy, 0).xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r1.zw, 0).xyzw;
-    r0.xyzw = r2.xyzw * GaussianBlurParams.wwww + r0.xyzw;
-    r0.xyzw = r1.xyzw * GaussianBlurParams.wwww + r0.xyzw;
-    r1.xy = GaussianBlurParams.xy + v1.xy;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r1.xy, 0).xyzw;
-    o0.xyzw = r1.xyzw;
-    o0 = max(o0, 0.f);
-
-  } else {
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-    o0.xyzw = saturate(r1.xyzw);
-    // o0 = 0;
-    
-  }
+  r1.x = GaussianBlurParams.w * r0.w;
+  r2.xyzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyzw;
+  r2.xyz = r2.xyz * r1.xxx;
+  r0.xyzw = r2.xyzw + r0.xyzw;
+  o0.xyzw = GaussianBlurParams.zzzz * r0.xyzw;
+  o0 = max(o0, 0.f);
   return;
 }

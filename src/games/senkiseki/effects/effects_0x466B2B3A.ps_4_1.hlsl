@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 17:04:25 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -109,7 +110,9 @@ void main(
   o0.xyz = v2.xyz * v2.www + r0.xyz;
   o0.w = r0.w;
 
-  o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  // o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  o0.rgb = clamp(o0.rgb, FLT_MIN, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
 
+  // o0 = saturate(o0);
   return;
 }

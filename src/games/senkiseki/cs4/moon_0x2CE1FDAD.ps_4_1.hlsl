@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sun Jun 08 16:04:05 2025
 #include "../shared.h"
+#include "common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -214,14 +215,17 @@ void main(
   o1.xyz = r1.xyz * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);
   o1.w = 0.466666698 + MaskEps;
   r0.x = v6.z / v6.w;
-  // r0.y = 256 * r0.x;
-  // r1.x = trunc(r0.y);
-  // r0.x = r0.x * 256 + -r1.x;
-  // r0.y = 256 * r0.x;
-  // r1.y = trunc(r0.y);
-  // r1.z = r0.x * 256 + -r1.y;
-  // o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
-  o2.xyz = float3(r0.x, 0.f, 0.f);
+  r0.y = 256 * r0.x;
+  r1.x = trunc(r0.y);
+  r0.x = r0.x * 256 + -r1.x;
+  r0.y = 256 * r0.x;
+  r1.y = trunc(r0.y);
+  r1.z = r0.x * 256 + -r1.y;
+  o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
+  // o2.xyz = float3(r0.x, 0.f, 0.f);
   o2.w = MaskEps;
+
+  // o0.rgb *= 10;
+  // o0.rgb = PumboInverseTonemap(o0.rgb);
   return;
 }

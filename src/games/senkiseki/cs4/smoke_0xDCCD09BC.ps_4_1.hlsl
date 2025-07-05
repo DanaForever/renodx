@@ -138,11 +138,11 @@ void main(
   r1.x = r1.y ? -r1.x : r1.x;
   r1.x = 1 + -abs(r1.x);
   r1.x = max(0, r1.x);
-  // r1.x = log2(r1.x);
-  // r1.y = RimLitPower * r1.x;
-  // r1.x = PointLightColor.x * r1.x;
-  // r1.x = exp2(r1.x);
-  r1.x = renodx::math::SafePow(r1.x, RimLitPower * PointLightColor.x);
+  r1.x = log2(r1.x);
+  r1.y = RimLitPower * r1.x;
+  r1.x = PointLightColor.x * r1.x;
+  r1.x = exp2(r1.x);
+  // r1.x = renodx::math::SafePow(r1.x, RimLitPower * PointLightColor.x);
   r1.x = -1 + r1.x;
   r1.x = PointLightColor.y * r1.x + 1;
   r1.y = exp2(r1.y);
@@ -155,6 +155,8 @@ void main(
   r1.yzw = Light0.m_colorIntensity.xyz / r0.www;
   r1.yzw = min(float3(1.5,1.5,1.5), r1.yzw);
   r3.xyz = min(float3(1,1,1), r1.yzw);
+  // r1.yzw = r1.yzw;
+  // r3.xyz = r1.yzw;
   r3.xyz = float3(1,1,1) + -r3.xyz;
   r3.xyz = ShadowColorShift.xyz * r3.xyz;
   r4.xyz = Light0.m_colorIntensity.xyz + Light0.m_colorIntensity.xyz;
@@ -173,6 +175,7 @@ void main(
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
 
-  o0.w = max(o0.w, 0);
+  o0.w = max(o0.w, 0); 
+  // o0.rgb = saturate(o0.rgb);
   return;
 }

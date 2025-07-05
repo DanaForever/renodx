@@ -83,13 +83,11 @@ void main(
   float4 fDest;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-  // r0.xyz = saturate(r0.xyz);
-  // o0.w = r0.w;
-  // r0.xyz = log2(r0.xyz);
-  // r0.xyz = GammaParameters.xxx * r0.xyz;
-  // o0.xyz = exp2(r0.xyz);
 
   r0.rgb = renodx::color::bt709::clamp::BT2020(r0.rgb);
+  if (RENODX_TONE_MAP_TYPE == 0.f) {
+    r0.xyz = saturate(r0.xyz);
+  }
   o0.w = r0.w;
   o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);
 
