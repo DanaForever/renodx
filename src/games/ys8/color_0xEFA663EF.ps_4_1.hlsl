@@ -60,8 +60,9 @@ void main(
   r1.xy = r1.xy * r1.xy;
   r1.xy = r1.xy * r1.xy;
   r1.x = max(r1.x, r1.y);
-  // BT601 transformation 
-  r1.y = dot(r0.xyz, float3(0.298911989,0.586610973,0.114478));
+  // BT601 transformation
+  // r1.y = dot(r0.xyz, float3(0.298911989,0.586610973,0.114478));
+  r1.y = renodx::color::y::from::BT709(r0.xyz);
   r1.z = fparam3.w * 0.349999994;
   r2.xyz = r1.yyy + -r0.xyz;
   r1.yzw = r1.zzz * r2.xyz + r0.xyz;

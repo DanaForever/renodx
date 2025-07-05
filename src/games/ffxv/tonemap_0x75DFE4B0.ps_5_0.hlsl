@@ -282,7 +282,8 @@ void main(
     if (FFXV_PER_CHANNEL_CORRECTION >= 1.f) {
       // attempt to recover the highlight saturation from untonemapped
       float color_y = renodx::color::y::from::BT709(hdr_graded);
-
+      
+      // I think this function is stupid
       float3 hdr_saturated = renodx::draw::ApplyPerChannelCorrection(
           ToneMapMaxCLL(untonemapped),
           hdr_graded,

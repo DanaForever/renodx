@@ -23,14 +23,10 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     // Uber_Post
     CustomShaderEntry(0x05F21D2B),  // output
     CustomShaderEntry(0xEFA663EF),  // color
-    // CustomShaderEntry(0xECEF72F5),  // Uberpost
-    // CustomShaderEntry(0x6983BFA7),  // Uberpost
-    // // hdrFinal
-    // CustomShaderEntry(0x27812EF8),  // HDR Final // (AA OFF, TAA, SMAA, FSR3 AA)
-    // CustomShaderEntry(0xAE7EE10F),  // HDR Final (DLAA)
-    // CustomShaderEntry(0x73F01A45),  // HDR Final 2 (AA OFF, TAA, SMAA, FSR3 AA)
-    // CustomShaderEntry(0xDD2F76F2),  // HDR Final 2 (DLAA)
-
+    CustomShaderEntry(0x488CE77A),  // color
+    CustomShaderEntry(0x5957375C),  // color
+    CustomShaderEntry(0xA7CEF703),  // color
+   
 };
 
 ShaderInjectData shader_injection;

@@ -97,7 +97,7 @@ void main(
   float2 c = v2.xy;
   r0.xyzw = TextureSampler.Sample(VariableSamplerState_s, c).xyzw;
   r1.x = r0.w * v1.w + -inputAlphaThreshold;
-  r0.xyzw = saturate(v1.xyzw * r0.xyzw);
+  r0.xyzw = (v1.xyzw * r0.xyzw);
   r1.x = cmp(r1.x < 0);
   if (r1.x != 0) discard;
   o0.xyz = inputSpecular.xyz * inputSpecular.www + r0.xyz;

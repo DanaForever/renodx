@@ -45,8 +45,17 @@ jobs:
       - name: Configure CMake (x64)
         run: cmake --preset clang-x64
 
-      - name: Build (x64)
+      - name: Build (x64) for Sen no Kiseki (3-4-5)
         run: cmake --build --preset clang-x64-release --target senkiseki --verbose
+      
+      - name: Build (x64) for Final Fantasy XV
+        run: cmake --build --preset clang-x64-release --target ffxv --verbose
+      
+      - name: Build (x64) for YS8
+        run: cmake --build --preset clang-x64-release --target ys8 --verbose
+    
+    #   - name: Build (x64) for Eiyuden
+    #     run: cmake --build --preset clang-x64-release --target eiyudenchronicles --verbose
 
     #   - name: Set up Clang
     #     uses: egor-tensin/setup-clang@v1

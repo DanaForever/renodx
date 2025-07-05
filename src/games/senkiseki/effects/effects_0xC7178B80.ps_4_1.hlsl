@@ -136,20 +136,24 @@ void main(
   r0.w = dot(v5.xyz, v5.xyz);
   r0.w = rsqrt(r0.w);
   r4.xyz = v5.xyz * r0.www;
-  r0.w = saturate(dot(r4.xyz, r3.xyz));
-  r0.w = log2(r0.w);
-  r0.w = SpecularPower * r0.w;
-  r0.w = exp2(r0.w);
+  // r0.w = saturate(dot(r4.xyz, r3.xyz));
+  r0.w = (dot(r4.xyz, r3.xyz));
+  // r0.w = log2(r0.w);
+  // r0.w = SpecularPower * r0.w;
+  // r0.w = exp2(r0.w);
+  r0.w = renodx::math::SafePow(r0.w, SpecularPower);
   r0.w = min(1, r0.w);
   r1.w = SpecularMapSampler.Sample(SpecularMapSamplerSampler_s, v3.xy).x;
   r1.w = Shininess * r1.w;
   r0.w = r1.w * r0.w;
   r1.w = dot(Light0.m_direction.xyz, r4.xyz);
-  r1.x = saturate(dot(r4.xyz, r1.xyz));
+  // r1.x = saturate(dot(r4.xyz, r1.xyz));
+  r1.x = (dot(r4.xyz, r1.xyz));
   r1.x = 1 + -r1.x;
-  r1.x = log2(r1.x);
-  r1.x = PointLightColor.x * r1.x;
-  r1.x = exp2(r1.x);
+  // r1.x = log2(r1.x);
+  // r1.x = PointLightColor.x * r1.x;
+  // r1.x = exp2(r1.x);
+  r1.x = renodx::math::SafePow(r1.x, PointLightColor.x);
   r1.x = -1 + r1.x;
   r1.x = PointLightColor.y * r1.x + 1;
   r1.y = r1.w * 0.5 + 0.5;
@@ -169,6 +173,7 @@ void main(
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
 
   // this is must
-  o0 = clamp(o0, 0.f, 2.f);
+  // o0 = clamp(o0, 0.f, 1.f);
+  o0 = saturate(o0);
   return;
 }

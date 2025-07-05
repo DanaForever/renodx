@@ -748,10 +748,6 @@ float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
     return bloomColor;
   }
 
-  // return bloomColor;
-
-  // return color;
-
   if (BROKEN_BLOOM == 0.f) {
     return color;
   }
@@ -760,7 +756,6 @@ float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
 
   color = scaleByPerceptualLuminance(color, bloomColor, max_scale);
 
-  // color = lerp(bloomColor, color, renodx::color::y::from);
   // color = scaleByOKLabLuminance(color, bloomColor, max_scale);
 
   return color;

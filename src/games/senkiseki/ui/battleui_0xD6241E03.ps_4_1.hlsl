@@ -1,5 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Jun 07 01:44:32 2025
-#include "common.hlsl"
+// ---- Created with 3Dmigoto v1.3.16 on Sat Jul 05 14:15:35 2025
+
 cbuffer _Globals : register(b0)
 {
 
@@ -77,11 +77,7 @@ cbuffer _Globals : register(b0)
 }
 
 SamplerState VariableSamplerState_s : register(s0);
-SamplerState VariableSamplerState1_s : register(s1);
-SamplerState VariableSamplerState2_s : register(s2);
 Texture2D<float4> TextureSampler : register(t0);
-Texture2D<float4> Texture1Sampler : register(t1);
-Texture2D<float4> Texture2Sampler : register(t2);
 
 
 // 3Dmigoto declarations
@@ -91,27 +87,16 @@ Texture2D<float4> Texture2Sampler : register(t2);
 void main(
   float4 v0 : SV_POSITION0,
   float4 v1 : COLOR0,
-  float4 v2 : COLOR1,
-  float2 v3 : TEXCOORD0,
-  float2 w3 : TEXCOORD1,
-  float2 v4 : TEXCOORD2,
+  float2 v2 : TEXCOORD0,
   out float4 o0 : SV_TARGET0)
 {
-  float4 r0,r1;
+  float4 r0;
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  r0.xyzw = TextureSampler.Sample(VariableSamplerState_s, v3.xy).xyzw;
-  r1.xyzw = Texture1Sampler.Sample(VariableSamplerState1_s, w3.xy).xyzw;
-  r0.xyzw = r1.xyzw * r0.xyzw;
-  r1.xyzw = Texture2Sampler.Sample(VariableSamplerState2_s, v4.xy).xyzw;
-  r0.xyzw = r1.xyzw * r0.xyzw;
-  r1.x = r0.w * v1.w + -inputAlphaThreshold;
+  r0.xyzw = TextureSampler.Sample(VariableSamplerState_s, v2.xy).xyzw;
   r0.xyzw = v1.xyzw * r0.xyzw;
-  r1.x = cmp(r1.x < 0);
-  if (r1.x != 0) discard;
-  o0.xyz = v2.xyz * v2.www + r0.xyz;
+  o0.xyz = inputSpecular.xyz * inputSpecular.www + r0.xyz;
   o0.w = r0.w;
-
   return;
 }
