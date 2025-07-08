@@ -225,7 +225,14 @@ void main(
   // o2.xyz = float3(r0.x, 0.f, 0.f);
   o2.w = MaskEps;
 
-  // o0.rgb *= 10;
+  // o0.rgb *= 2;
   // o0.rgb = PumboInverseTonemap(o0.rgb);
+
+  float3 mid_gray = 0.18f;
+  o0.rgb = inv_tonemap_ReinhardPerComponent(o0.rgb, 2.0f);
+
+  o0.rgb *= mid_gray / average(inv_tonemap_ReinhardPerComponent(mid_gray, 2.0f));
+
+
   return;
 }

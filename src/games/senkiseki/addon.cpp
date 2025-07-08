@@ -93,11 +93,21 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0xAEFC72F9), // artifact
     CustomShaderEntry(0x5A14FF14), // artifact
     CustomShaderEntry(0x97B6686A), // artifact
-    CustomShaderEntry(0xB6F58E83), // artifact
+    CustomShaderEntry(0x16C5613F), // artifact
+    CustomShaderEntry(0xE9CCCC87), // artifact
+    CustomShaderEntry(0xE011F8E0), // artifact
+    CustomShaderEntry(0xAC986310), // artifact
+    CustomShaderEntry(0xF4F7DF67), // artifact
+    CustomShaderEntry(0x00D25A6E), // artifact
+    CustomShaderEntry(0x2CA64FEA), // artifact
+    CustomShaderEntry(0x4EFC489C), // artifact
+    CustomShaderEntry(0xD76CAD22), // artifact
+    CustomShaderEntry(0x27C49A90), // artifact
     
 };
 
 renodx::mods::shader::CustomShaders custom_shaders = {
+    CustomShaderEntry(0x256687A6), // sun
     CustomShaderEntry(0x2403F73F), // ui
     CustomShaderEntry(0xD6241E03), // ui
     CustomShaderEntry(0x131CC98E),
@@ -109,10 +119,12 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xE8C7EBA2), // bloom artifact
     CustomShaderEntry(0x96BB8CFF), // MSAA
     CustomShaderEntry(0xC5F739B8), // Tone
+    CustomShaderEntry(0x312CE29D), // PreBloom
     CustomShaderEntry(0x640BFEB8), // Bloom
-    CustomShaderEntry(0xD63B1562), // Bloom 2
-    CustomShaderEntry(0x96FE091D), // Bloom 4
-    CustomShaderEntry(0xFB26B904), // Bloom 5
+    CustomShaderEntry(0xC1EA843D), // Bloom 2
+    CustomShaderEntry(0xD63B1562), // Bloom 4
+    CustomShaderEntry(0x96FE091D), // Bloom 1
+    CustomShaderEntry(0xFB26B904), // Bloom godray 3
     CustomShaderEntry(0xA3F66EB7), // Artifact
     CustomShaderEntry(0xA77E6454), // Artifact 
     CustomShaderEntry(0x3EB64A30), // Artifact 
@@ -121,6 +133,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xA8FAC241), // Artifact 
     CustomShaderEntry(0x0EC06FAC), // Lantern
     CustomShaderEntry(0x4D7BB28D), // Helicopter
+    CustomShaderEntry(0xACB821F7), // effect
     // CustomShaderEntry(0x6C72EE93), // Bloom Generator
     // CS4
     CustomShaderEntry(0x2BF0C94B), // Final 3
@@ -159,6 +172,9 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xB64DF407), // sky
     CustomShaderEntry(0x8C099E7B), // lantern
     CustomShaderEntry(0xB9AF63CD), // lantern
+    CustomShaderEntry(0xAF5B4CE1), // lantern
+    CustomShaderEntry(0xE3E9C74F), // lantern
+    
 
     // CS3
     CustomShaderEntry(0xDB20052A), // CS3 swapchain
@@ -243,15 +259,26 @@ renodx::utils::settings::Settings settings = {
         .is_global = true,
     },
     new renodx::utils::settings::Setting{
+        .key = "GammaCorrection",
+        .binding = &shader_injection.gamma_correction,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 2.f,
+        .label = "Gamma Correction",
+        .section = "Tone Mapping",
+        .tooltip = "Emulates a display EOTF.",
+        .labels = {"Off", "2.2", "BT.1886"},
+        .is_visible = []() { return current_settings_mode >= 1; },
+    },
+    new renodx::utils::settings::Setting{
         .key = "ToneMapType",
         .binding = &shader_injection.tone_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 3.f,
+        .default_value = 2.f,
         .can_reset = true,
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "None", "ACES", "RenoDRT"},
+        .labels = {"Vanilla", "None", "DICE", "RenoDRT"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -286,27 +313,93 @@ renodx::utils::settings::Settings settings = {
         .max = 500.f,
     },
     new renodx::utils::settings::Setting{
-        .key = "GammaCorrection",
-        .binding = &shader_injection.gamma_correction,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 2.f,
-        .label = "Gamma Correction",
+        .key = "InverseToneMapExtraHDRSaturation",
+        .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Gamut Expansion",
         .section = "Tone Mapping",
-        .tooltip = "Emulates a display EOTF.",
-        .labels = {"Off", "2.2", "BT.1886"},
-        .is_visible = []() { return current_settings_mode >= 1; },
+        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
+        .min = 0.f,
+        .max = 500.f,
+        .parse = [](float value) { return value * 0.01f; },
     },
+    new renodx::utils::settings::Setting{
+        .key = "DICEToneMapType",
+        .binding = &shader_injection.dice_tone_map_type,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 3.f,
+        .can_reset = true,
+        .label = "DICE ToneMap Type",
+        .section = "DICE Configuration",
+        .tooltip = "Sets the DICE tone mapper type",
+        .labels = {"Luminance RGB", "Luminance PQ", "Luminance PQ w/ Channel Correction", "Channel PQ"},
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 2.f ; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "DICEShoulderStart",
+        .binding = &shader_injection.dice_shoulder_start,
+        .default_value = 33.f,
+        .label = "DICE Shoulder Start",
+        .section = "DICE Configuration",
+        .tooltip = "Sets the DICE shoulder start.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 2.f ; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "DICEDesaturation",
+        .binding = &shader_injection.dice_desaturation,
+        .default_value = 33.f,
+        .label = "DICE Desaturation",
+        .section = "DICE Configuration",
+        .tooltip = "Sets the DICE desaturation.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 2.f ; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "DICEDarkening",
+        .binding = &shader_injection.dice_darkening,
+        .default_value = 33.f,
+        .label = "DICE Darkening",
+        .section = "DICE Configuration",
+        .tooltip = "Sets the DICE darkening.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 2.f ; },
+    },
+    
     new renodx::utils::settings::Setting{
         .key = "ToneMapScaling",
         .binding = &shader_injection.tone_map_per_channel,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
         .default_value = 0.f,
         .label = "Scaling",
-        .section = "Tone Mapping",
+        .section = "RenoDRT Configuration",
         .tooltip = "Luminance scales colors consistently while per-channel saturates and blows out sooner",
         .labels = {"Luminance", "Per Channel"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 2; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 3.f; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapWhiteClip",
+        .binding = &shader_injection.tone_map_white_clip,
+        .default_value = 100.f,
+        .label = "White Clip",
+        .section = "RenoDRT Configuration",
+        .tooltip = "White clip values.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .parse = [](float value) { return value * 1.f; },
+        .is_visible = []() { return current_settings_mode >= 1 && shader_injection.tone_map_type == 3.f; },
     },
     // new renodx::utils::settings::Setting{
     //     .key = "ToneMapWorkingColorSpace",
@@ -321,72 +414,62 @@ renodx::utils::settings::Settings settings = {
     //     .is_visible = []() { return false; },
     // },
     new renodx::utils::settings::Setting{
+        .key = "ToneMapHueCorrectionMethod",
+        .binding = &shader_injection.tone_map_hue_correction_method,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "Hue Correction Method",
+        .section = "Hue Correction",
+        .tooltip = "Selects tonemapping method for hue correction",
+        .labels = {"Reinhard", "NeutralSDR", "DICE", "Uncharted2", "ACES", "Clipping"},
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        // .is_visible = []() { return current_settings_mode >= 2; },
+        .is_visible = []() { return shader_injection.tone_map_type >= 1 && current_settings_mode >= 2.f; },
+        // .is_visible = []() { return false; },
+    },
+    new renodx::utils::settings::Setting{
         .key = "ToneMapHueProcessor",
         .binding = &shader_injection.tone_map_hue_processor,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
+        .default_value = 1.f,
         .label = "Hue Processor",
-        .section = "Tone Mapping",
+        .section = "Hue Correction",
         .tooltip = "Selects hue processor",
         .labels = {"OKLab", "ICtCp", "darkTable UCS"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         // .is_visible = []() { return current_settings_mode >= 2; },
-        .is_visible = []() { return false; },
+        .is_visible = []() { return shader_injection.tone_map_type >= 1 && current_settings_mode >= 2.f; },
+        // .is_visible = []() { return false; },
     },
-    // new renodx::utils::settings::Setting{
-    //     .key = "ToneMapHueCorrection",
-    //     .binding = &shader_injection.tone_map_hue_correction,
-    //     .default_value = 100.f,
-    //     .label = "Hue Correction",
-    //     .section = "Tone Mapping",
-    //     .tooltip = "Hue retention strength.",
-    //     .min = 0.f,
-    //     .max = 100.f,
-    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-    //     .parse = [](float value) { return value * 0.01f; },
-    //     .is_visible = []() { return current_settings_mode >= 2; },
-    // },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
         .binding = &shader_injection.tone_map_hue_correction,
         .default_value = 100.f,
-        .label = "Hue Correction",
-        .section = "Tone Mapping",
+        .label = "Hue Correction Strength",
+        .section = "Hue Correction",
         .tooltip = "Hue retention strength.",
         .min = 0.f,
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return current_settings_mode >= 2; },
+        // .is_visible = []() { return current_settings_mode >= 2; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueShift",
         .binding = &shader_injection.tone_map_hue_shift,
-        .default_value = 50.f,
+        .default_value = 0.f,
         .label = "Hue Shift",
-        .section = "Tone Mapping",
+        .section = "Hue Correction",
         .tooltip = "Hue-shift emulation strength.",
         .min = 0.f,
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .parse = [](float value) { return value * 0.01f; },
         // .is_visible = []() { return current_settings_mode >= 1; },
-        .is_visible = []() { return current_settings_mode >= 1; },
+        .is_visible = []() { return false; },
     },
 
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapWhiteClip",
-        .binding = &shader_injection.tone_map_white_clip,
-        .default_value = 100.f,
-        .label = "White Clip",
-        .section = "Tone Mapping",
-        .tooltip = "White clip values.",
-        .min = 0.f,
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .parse = [](float value) { return value * 1.f; },
-        .is_visible = []() { return current_settings_mode >= 1; },
-    },
+    
     // new renodx::utils::settings::Setting{
     //     .key = "ToneMapClampColorSpace",
     //     .binding = &shader_injection.tone_map_clamp_color_space,
@@ -426,6 +509,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Used as parameter by some (inverse) tonemappers. Increases saturation. Has no effect at 1.",
         .min = 0.f,
         .max = 4.f,
+        .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "InverseToneMapColorConservation",
@@ -438,6 +522,7 @@ renodx::utils::settings::Settings settings = {
         .min = 1.f,
         .max = 100.f,
         .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return false; },
     },
 
     new renodx::utils::settings::Setting{
@@ -451,20 +536,10 @@ renodx::utils::settings::Settings settings = {
         .min = 0.f,
         .max = 200.f,
         .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return false; },
     },
 
-    new renodx::utils::settings::Setting{
-        .key = "InverseToneMapExtraHDRSaturation",
-        .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
-        .default_value = 0.f,
-        .can_reset = false,
-        .label = "Extra HDR saturation",
-        .section = "Inverse Tone Mapping",
-        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
-        .min = 0.f,
-        .max = 200.f,
-        .parse = [](float value) { return value * 0.01f; },
-    },
+    
     
 
     /////////////////////////////////////////////////////////////

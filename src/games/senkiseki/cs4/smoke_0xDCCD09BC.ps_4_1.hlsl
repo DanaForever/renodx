@@ -137,15 +137,17 @@ void main(
   r1.y = cmp(r1.x < 0);
   r1.x = r1.y ? -r1.x : r1.x;
   r1.x = 1 + -abs(r1.x);
-  r1.x = max(0, r1.x);
-  r1.x = log2(r1.x);
-  r1.y = RimLitPower * r1.x;
-  r1.x = PointLightColor.x * r1.x;
-  r1.x = exp2(r1.x);
-  // r1.x = renodx::math::SafePow(r1.x, RimLitPower * PointLightColor.x);
+  // r1.x = max(0, r1.x);
+  float l = r1.x;
+  // r1.x = log2(r1.x);
+  // r1.y = RimLitPower * r1.x;
+  // r1.x = PointLightColor.x * r1.x;
+  // r1.x = exp2(r1.x);
+  r1.x = renodx::math::SafePow(l, PointLightColor.x);
   r1.x = -1 + r1.x;
   r1.x = PointLightColor.y * r1.x + 1;
-  r1.y = exp2(r1.y);
+  // r1.y = exp2(r1.y);
+  r1.y = renodx::math::SafePow(l, RimLitPower);
   r1.y = -r1.y * RimLitIntensity + 1;
   r0.w = v1.w * r0.w;
   r2.w = r0.w * r1.y;
@@ -176,6 +178,5 @@ void main(
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
 
   o0.w = max(o0.w, 0); 
-  // o0.rgb = saturate(o0.rgb);
   return;
 }

@@ -124,8 +124,7 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
   r0.xyz = r0.xyz + -r2.xyz;
   float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
 
-  output = renodx::color::srgb::DecodeSafe(output);
-  // output = renodx::color::gamma::DecodeSafe(output, 2.2f);
+  output = decodeColor(output);
 
   return output;
 }
@@ -173,7 +172,7 @@ void main(
 
   // ToneMapPass here?
   // o0.rgb = PumboInverseTonemap(o0.rgb);
-  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = ToneMap(o0.rgb, noBloomOutput);  // for some reason ToneMapPass causes Artifact
   o0.rgb = expandColorGamut(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
 

@@ -104,7 +104,8 @@ void main(
   r1.w = dot(v5.xyz, v5.xyz);
   r1.w = rsqrt(r1.w);
   r2.xyz = v5.xyz * r1.www;
-  r1.x = saturate(dot(r2.xyz, r1.xyz));
+  // r1.x = saturate(dot(r2.xyz, r1.xyz));
+  r1.x = (dot(r2.xyz, r1.xyz));
   r1.x = 1 + -r1.x;
   // r1.x = log2(r1.x);
   // r1.x = RimLitPower * r1.x;

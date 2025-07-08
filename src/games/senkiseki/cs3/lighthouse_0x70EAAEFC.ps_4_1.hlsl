@@ -109,7 +109,7 @@ void main(
   r1.y = cmp(r1.x < 0);
   r1.x = r1.y ? -r1.x : r1.x;
   r1.x = 1 + -abs(r1.x);
-  r1.x = max(0, r1.x);
+  // r1.x = max(0, r1.x);
   // r1.x = log2(r1.x);
   // r1.x = RimLitPower * r1.x;
   // r1.x = exp2(r1.x);

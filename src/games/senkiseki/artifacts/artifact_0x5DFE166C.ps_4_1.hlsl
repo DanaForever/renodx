@@ -1,5 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sun Jun 08 17:02:32 2025
-#include "shared.h"
+// ---- Created with 3Dmigoto v1.3.16 on Sun Jun 08 16:13:51 2025
+#include "../shared.h"
 cbuffer _Globals : register(b0)
 {
 
@@ -87,11 +87,13 @@ SamplerState LinearWrapSamplerState_s : register(s0);
 SamplerState PointWrapSamplerState_s : register(s1);
 SamplerState PointClampSamplerState_s : register(s2);
 SamplerState DiffuseMapSamplerSampler_s : register(s4);
+SamplerState SpecularMapSamplerSampler_s : register(s5);
 SamplerComparisonState LinearClampCmpSamplerState_s : register(s3);
 Texture2D<float4> DitherNoiseTexture : register(t0);
 Texture2D<float4> LowResDepthTexture : register(t1);
 Texture2D<float4> LightShadowMap0 : register(t2);
 Texture2D<float4> DiffuseMapSampler : register(t3);
+Texture2D<float4> SpecularMapSampler : register(t4);
 
 
 // 3Dmigoto declarations
@@ -111,7 +113,7 @@ void main(
   out float4 o1 : SV_TARGET1,
   out float4 o2 : SV_TARGET2)
 {
-  float4 r0,r1,r2,r3,r4,r5,r6;
+  float4 r0,r1,r2,r3,r4,r5,r6,r7;
   uint4 bitmask, uiDest;
   float4 fDest;
 
@@ -179,9 +181,8 @@ void main(
           r3.xy = r3.zz * r3.xy;
           LightShadowMap0.GetDimensions(0, fDest.x, fDest.y, fDest.z);
           r3.zw = fDest.xy;
-          r4.x = 0.5 / r3.z;
-          r4.y = 1 / r3.w;
-          r3.xy = max(r4.xy, r3.xy);
+          r3.zw = float2(0.5,0.5) / r3.zw;
+          r3.xy = max(r3.zw, r3.xy);
           r3.zw = float2(0,0);
           while (true) {
             r4.x = cmp((int)r3.w >= 16);
@@ -241,37 +242,37 @@ void main(
             r3.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r2.xy, r2.z).x;
             r4.xy = -r3.yz * r0.ww;
             r4.z = 0;
+            r4.xyz = r4.xyz + r2.xyz;
+            r4.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
+            r4.x = 0.0625 * r4.x;
+            r3.w = r3.w * 0.5 + r4.x;
+            r4.x = r3.y * r0.w;
+            r4.y = -r3.z * r0.w;
+            r4.z = 0;
             r5.xyz = r4.xyz + r2.xyz;
-            r4.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
-            r4.w = 0.0625 * r4.w;
-            r3.w = r3.w * 0.5 + r4.w;
-            r5.x = r3.y * r0.w;
-            r5.y = -r3.z * r0.w;
-            r5.z = 0;
-            r5.xyz = r5.xyz + r2.xyz;
             r4.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
             r3.w = r4.w * 0.0625 + r3.w;
             r5.x = -r3.y * r0.w;
             r5.y = r3.z * r0.w;
             r5.z = 0;
-            r5.xyz = r5.xyz + r2.xyz;
-            r4.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
-            r3.w = r4.w * 0.0625 + r3.w;
-            r5.xy = r3.yz * r0.ww;
-            r5.z = 0;
             r6.xyz = r5.xyz + r2.xyz;
-            r3.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
+            r4.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
+            r3.w = r4.w * 0.0625 + r3.w;
+            r6.xy = r3.yz * r0.ww;
+            r6.z = 0;
+            r7.xyz = r6.xyz + r2.xyz;
+            r3.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r7.xy, r7.z).x;
             r3.y = r3.y * 0.0625 + r3.w;
-            r6.xyz = r4.zyz + r2.xyz;
-            r3.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
+            r7.xyz = r4.zyz + r2.xyz;
+            r3.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r7.xy, r7.z).x;
+            r3.y = r3.z * 0.0625 + r3.y;
+            r5.xyz = r5.xzz + r2.xyz;
+            r3.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
             r3.y = r3.z * 0.0625 + r3.y;
             r4.xyz = r4.xzz + r2.xyz;
             r3.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
             r3.y = r3.z * 0.0625 + r3.y;
-            r4.xyz = r5.xzz + r2.xyz;
-            r3.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
-            r3.y = r3.z * 0.0625 + r3.y;
-            r4.xyz = r5.zyz + r2.xyz;
+            r4.xyz = r6.zyz + r2.xyz;
             r3.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
             r2.w = r3.z * 0.0625 + r3.y;
           } else {
@@ -356,9 +357,8 @@ void main(
           r3.xy = r3.ww * r3.xy;
           LightShadowMap0.GetDimensions(0, fDest.x, fDest.y, fDest.z);
           r4.xy = fDest.xy;
-          r5.x = 0.5 / r4.x;
-          r5.y = 1 / r4.y;
-          r3.xy = max(r5.xy, r3.xy);
+          r4.xy = float2(0.5,0.5) / r4.xy;
+          r3.xy = max(r4.xy, r3.xy);
           r3.w = 0;
           r4.x = 0;
           while (true) {
@@ -522,36 +522,43 @@ void main(
   r1.x = 1 + -r0.w;
   r1.y = 1 + -GameMaterialEmission.w;
   r0.w = r1.x * r1.y + r0.w;
-  r1.x = r0.w * r0.w;
-  r1.xyz = Light0.m_colorIntensity.xyz * r1.xxx;
-  r1.w = dot(v5.xyz, v5.xyz);
-  r1.w = rsqrt(r1.w);
-  r2.xyz = v5.xyz * r1.www;
+  r1.x = SpecularMapSampler.Sample(SpecularMapSamplerSampler_s, v3.xy).x;
+  r1.y = 1 + r1.x;
+  r1.y = 0.5 * r1.y;
+  r1.yzw = Light0.m_colorIntensity.xyz * r1.yyy;
+  r2.x = r0.w * r0.w;
+  r1.yzw = r2.xxx * r1.yzw;
+  r2.x = dot(v5.xyz, v5.xyz);
+  r2.x = rsqrt(r2.x);
+  r2.xyz = v5.xyz * r2.xxx;
   r3.xyz = scene.EyePosition.xyz + -v4.xyz;
-  r1.w = dot(r3.xyz, r3.xyz);
-  r1.w = rsqrt(r1.w);
-  r4.xyz = r3.xyz * r1.www;
-  r2.w = saturate(dot(r2.xyz, r4.xyz));
-  r3.w = dot(Light0.m_direction.xyz, r2.xyz);
-  r3.w = r3.w * 0.5 + 0.5;
-  r3.w = r3.w * r3.w;
-  r3.xyz = r3.xyz * r1.www + Light0.m_direction.xyz;
-  r1.w = dot(r3.xyz, r3.xyz);
-  r1.w = rsqrt(r1.w);
-  r3.xyz = r3.xyz * r1.www;
-  r1.w = saturate(dot(r2.xyz, r3.xyz));
-  r1.w = log2(r1.w);
-  r1.w = SpecularPower * r1.w;
-  r1.w = exp2(r1.w);
-  r1.w = min(1, r1.w);
-  r1.w = Shininess * r1.w;
-  r3.xyz = Light0.m_colorIntensity.xyz * r3.www + scene.GlobalAmbientColor.xyz;
+  r2.w = dot(r3.xyz, r3.xyz);
+  r2.w = rsqrt(r2.w);
+  r4.xyz = r3.xyz * r2.www;
+  r3.w = saturate(dot(r2.xyz, r4.xyz));
+  r1.x = Shininess * r1.x;
+  r4.x = dot(Light0.m_direction.xyz, r2.xyz);
+  r4.x = r4.x * 0.5 + 0.5;
+  r4.x = r4.x * r4.x;
+  r3.xyz = r3.xyz * r2.www + Light0.m_direction.xyz;
+  r2.w = dot(r3.xyz, r3.xyz);
+  r2.w = rsqrt(r2.w);
+  r3.xyz = r3.xyz * r2.www;
+  // r2.w = saturate(dot(r2.xyz, r3.xyz));
+  r2.w = (dot(r2.xyz, r3.xyz));
+  // r2.w = log2(r2.w);
+  // r2.w = SpecularPower * r2.w;
+  // r2.w = exp2(r2.w);
+  r2.w = renodx::math::SafePow(r2.w, SpecularPower);
+  r2.w = min(1, r2.w);
+  r1.x = r2.w * r1.x;
+  r3.xyz = Light0.m_colorIntensity.xyz * r4.xxx + scene.GlobalAmbientColor.xyz;
   r3.xyz = min(float3(1.5,1.5,1.5), r3.xyz);
-  r3.xyz = Light0.m_colorIntensity.xyz * r1.www + r3.xyz;
+  r3.xyz = Light0.m_colorIntensity.xyz * r1.xxx + r3.xyz;
   r0.w = 1 + -r0.w;
   r4.xyz = r3.xyz * scene.MiscParameters1.xyz + -r3.xyz;
   r3.xyz = r0.www * r4.xyz + r3.xyz;
-  r1.xyz = r1.xyz + r1.xyz;
+  r1.xyz = r1.yzw + r1.yzw;
   r1.xyz = max(float3(1,1,1), r1.xyz);
   r4.xyz = min(float3(1,1,1), r3.xyz);
   r4.xyz = float3(1,1,1) + -r4.xyz;
@@ -559,10 +566,11 @@ void main(
   r1.xyz = r4.xyz * r1.xyz + r3.xyz;
   r1.xyz = v1.xyz * r1.xyz;
   r0.xyz = r1.xyz * r0.xyz;
-  r0.w = 1 + -r2.w;
-  r0.w = log2(r0.w);
-  r0.w = PointLightColor.x * r0.w;
-  r0.w = exp2(r0.w);
+  r0.w = 1 + -r3.w;
+  // r0.w = log2(r0.w);
+  // r0.w = PointLightColor.x * r0.w;
+  // r0.w = exp2(r0.w);
+  r0.w = renodx::math::SafePow(r0.w, PointLightColor.x);
   r0.w = -1 + r0.w;
   r0.w = PointLightColor.y * r0.w + 1;
   r1.xyz = GameMaterialEmission.xyz * r0.www;
@@ -588,7 +596,7 @@ void main(
   r0.w = -r0.w * 0.5 + 1;
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
-  // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  // r1.x = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
   r1.x = renodx::color::y::from::BT709(r0.xyz);
   r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
@@ -611,9 +619,12 @@ void main(
   r1.y = trunc(r1.w);
   r1.z = r0.w * 256 + -r1.y;
   o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
+  // o2.xyz = float3(r0.w, 0.f, 0.f);
   o0.xyz = r0.xyz;
+  o2.w = MaskEps;
 
   o0 = saturate(o0);
-  o2.w = MaskEps;
+  o1 = saturate(o1);
+  o2 = saturate(o2);
   return;
 }

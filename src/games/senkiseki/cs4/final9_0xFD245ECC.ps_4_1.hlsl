@@ -108,7 +108,7 @@ float3 CompositeColor(float3 colorBuffer, float3 toneColor, float2 v1, bool Bloo
   r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
   r0.w = FadingColor.w * r2.w;
   float3 output = r0.www * r1.xyz + r0.xyz;
-  output = renodx::color::gamma::DecodeSafe(output, 2.2f);
+  output = decodeColor(output);
 
   return output;
 }
@@ -136,7 +136,7 @@ void main(
   o0.w = 1;
 
   // ToneMapPass here?
-  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = ToneMap(o0.rgb, noBloomOutput);  // for some reason ToneMapPass causes Artifact
   o0.rgb = expandColorGamut(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
   o0.w = 1;

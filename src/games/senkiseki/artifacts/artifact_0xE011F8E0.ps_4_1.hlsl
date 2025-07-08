@@ -1,5 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sun Jun 08 14:16:16 2025
-#include "shared.h"
+// ---- Created with 3Dmigoto v1.3.16 on Sun Jul 06 18:01:52 2025
+#include "../shared.h"
 cbuffer _Globals : register(b0)
 {
 
@@ -75,18 +75,17 @@ cbuffer _Globals : register(b0)
   float4 UVaMUv2Texcoord : packoffset(c82) = {0,0,1,1};
   float4 UVaDuDvTexcoord : packoffset(c83) = {0,0,1,1};
   float AlphaThreshold : packoffset(c84) = {0.5};
-  float3 ShadowColorShift : packoffset(c84.y) = {0.100000001,0.0199999996,0.0199999996};
-  float Shininess : packoffset(c85) = {0.5};
-  float SpecularPower : packoffset(c85.y) = {50};
-  float3 RimLitColor : packoffset(c86) = {1,1,1};
-  float RimLitIntensity : packoffset(c86.w) = {4};
-  float RimLitPower : packoffset(c87) = {2};
-  float RimLightClampFactor : packoffset(c87.y) = {2};
-  float SphereMapIntensity : packoffset(c87.z) = {1};
-  float BloomIntensity : packoffset(c87.w) = {1};
-  float MaskEps : packoffset(c88);
-  float4 PointLightParams : packoffset(c89) = {0,2,1,1};
-  float4 PointLightColor : packoffset(c90) = {1,0,0,0};
+  float Shininess : packoffset(c84.y) = {0.5};
+  float SpecularPower : packoffset(c84.z) = {50};
+  float3 RimLitColor : packoffset(c85) = {1,1,1};
+  float RimLitIntensity : packoffset(c85.w) = {4};
+  float RimLitPower : packoffset(c86) = {2};
+  float RimLightClampFactor : packoffset(c86.y) = {2};
+  float SphereMapIntensity : packoffset(c86.z) = {1};
+  float BloomIntensity : packoffset(c86.w) = {1};
+  float MaskEps : packoffset(c87);
+  float4 PointLightParams : packoffset(c88) = {0,2,1,1};
+  float4 PointLightColor : packoffset(c89) = {1,0,0,0};
 }
 
 SamplerState LinearWrapSamplerState_s : register(s0);
@@ -175,9 +174,8 @@ void main(
           r4.xy = r4.zz * r4.xy;
           LightShadowMap0.GetDimensions(0, fDest.x, fDest.y, fDest.z);
           r4.zw = fDest.xy;
-          r5.x = 0.5 / r4.z;
-          r5.y = 1 / r4.w;
-          r4.xy = max(r5.xy, r4.xy);
+          r4.zw = float2(0.5,0.5) / r4.zw;
+          r4.xy = max(r4.zw, r4.xy);
           r4.zw = float2(0,0);
           while (true) {
             r5.x = cmp((int)r4.w >= 16);
@@ -237,14 +235,14 @@ void main(
             r4.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r3.xy, r3.z).x;
             r5.xy = -r4.yz * r0.ww;
             r5.z = 0;
-            r6.xyz = r5.xyz + r3.xyz;
-            r5.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
+            r5.xyz = r5.xyz + r3.xyz;
+            r5.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
             r5.x = 0.0625 * r5.x;
             r4.w = r4.w * 0.5 + r5.x;
-            r6.x = r4.y * r0.w;
-            r6.y = -r4.z * r0.w;
-            r6.z = 0;
-            r6.xyz = r6.xyz + r3.xyz;
+            r5.x = r4.y * r0.w;
+            r5.y = -r4.z * r0.w;
+            r5.z = 0;
+            r6.xyz = r5.xyz + r3.xyz;
             r5.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
             r4.w = r5.x * 0.0625 + r4.w;
             r6.x = -r4.y * r0.w;
@@ -352,9 +350,8 @@ void main(
           r4.xy = r4.ww * r4.xy;
           LightShadowMap0.GetDimensions(0, fDest.x, fDest.y, fDest.z);
           r5.xy = fDest.xy;
-          r6.x = 0.5 / r5.x;
-          r6.y = 1 / r5.y;
-          r4.xy = max(r6.xy, r4.xy);
+          r5.xy = float2(0.5,0.5) / r5.xy;
+          r4.xy = max(r5.xy, r4.xy);
           r4.w = 0;
           r5.x = 0;
           while (true) {
@@ -415,37 +412,37 @@ void main(
             r2.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r3.xy, r3.z).x;
             r4.xy = -r2.yz * r0.ww;
             r4.z = 0;
+            r4.xyz = r4.xyz + r3.xyz;
+            r4.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
+            r4.x = 0.0625 * r4.x;
+            r2.w = r2.w * 0.5 + r4.x;
+            r4.x = r2.y * r0.w;
+            r4.y = -r2.z * r0.w;
+            r4.z = 0;
             r5.xyz = r4.xyz + r3.xyz;
-            r4.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
-            r4.w = 0.0625 * r4.w;
-            r2.w = r2.w * 0.5 + r4.w;
-            r5.x = r2.y * r0.w;
-            r5.y = -r2.z * r0.w;
-            r5.z = 0;
-            r5.xyz = r5.xyz + r3.xyz;
-            r4.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
-            r2.w = r4.w * 0.0625 + r2.w;
+            r4.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
+            r2.w = r4.x * 0.0625 + r2.w;
             r5.x = -r2.y * r0.w;
             r5.y = r2.z * r0.w;
             r5.z = 0;
-            r5.xyz = r5.xyz + r3.xyz;
-            r4.w = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
-            r2.w = r4.w * 0.0625 + r2.w;
-            r5.xy = r2.yz * r0.ww;
-            r5.z = 0;
             r6.xyz = r5.xyz + r3.xyz;
-            r2.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
+            r4.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
+            r2.w = r4.x * 0.0625 + r2.w;
+            r6.xy = r2.yz * r0.ww;
+            r6.z = 0;
+            r7.xyz = r6.xyz + r3.xyz;
+            r2.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r7.xy, r7.z).x;
             r2.y = r2.y * 0.0625 + r2.w;
-            r6.xyz = r4.zyz + r3.xyz;
-            r2.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
-            r2.y = r2.z * 0.0625 + r2.y;
-            r4.xyz = r4.xzz + r3.xyz;
+            r4.xyz = r4.zyz + r3.xyz;
             r2.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
             r2.y = r2.z * 0.0625 + r2.y;
             r4.xyz = r5.xzz + r3.xyz;
             r2.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
             r2.y = r2.z * 0.0625 + r2.y;
-            r4.xyz = r5.zyz + r3.xyz;
+            r4.xyz = r6.xzz + r3.xyz;
+            r2.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
+            r2.y = r2.z * 0.0625 + r2.y;
+            r4.xyz = r6.zyz + r3.xyz;
             r2.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
             r3.w = r2.z * 0.0625 + r2.y;
           } else {
@@ -527,7 +524,8 @@ void main(
   r2.w = dot(r4.xyz, r4.xyz);
   r2.w = rsqrt(r2.w);
   r5.xyz = r4.xyz * r2.www;
-  r3.w = saturate(dot(r3.xyz, r5.xyz));
+  // r3.w = saturate(dot(r3.xyz, r5.xyz));
+  r3.w = (dot(r3.xyz, r5.xyz));
   r5.x = dot(r3.xyz, scene.View._m00_m10_m20);
   r5.y = dot(r3.xyz, scene.View._m01_m11_m21);
   r5.xy = r5.xy * float2(0.5,0.5) + float2(0.5,0.5);
@@ -539,10 +537,12 @@ void main(
   r2.w = dot(r4.xyz, r4.xyz);
   r2.w = rsqrt(r2.w);
   r4.xyz = r4.xyz * r2.www;
-  r2.w = saturate(dot(r3.xyz, r4.xyz));
-  r2.w = log2(r2.w);
-  r2.w = SpecularPower * r2.w;
-  r2.w = exp2(r2.w);
+  // r2.w = saturate(dot(r3.xyz, r4.xyz));
+  r2.w = (dot(r3.xyz, r4.xyz));
+  // r2.w = log2(r2.w);
+  // r2.w = SpecularPower * r2.w;
+  // r2.w = exp2(r2.w);
+  r2.w = renodx::math::SafePow(r2.w, SpecularPower);
   r2.w = min(1, r2.w);
   r2.w = Shininess * r2.w;
   r3.xyz = Light0.m_colorIntensity.xyz * r4.www + scene.GlobalAmbientColor.xyz;
@@ -552,19 +552,14 @@ void main(
   r4.xyz = r3.xyz * scene.MiscParameters1.xyz + -r3.xyz;
   r3.xyz = r0.www * r4.xyz + r3.xyz;
   r0.w = 1 + -r3.w;
-  r0.w = log2(r0.w);
-  r2.w = RimLitPower * r0.w;
-  r2.w = exp2(r2.w);
+  // r0.w = log2(r0.w);
+  // r2.w = RimLitPower * r0.w;
+  // r2.w = exp2(r2.w);
+  r2.w = renodx::math::SafePow(r2.w, RimLitPower);
   r2.w = RimLitIntensity * r2.w;
   r4.xyz = RimLitColor.xyz * r2.www;
-  r3.xyz = r4.xyz * r2.xyz + r3.xyz;
-  r3.xyz = min(RimLightClampFactor, r3.xyz);
-  r2.xyz = r2.xyz + r2.xyz;
-  r2.xyz = max(float3(1,1,1), r2.xyz);
-  r4.xyz = min(float3(1,1,1), r3.xyz);
-  r4.xyz = float3(1,1,1) + -r4.xyz;
-  r4.xyz = ShadowColorShift.xyz * r4.xyz;
   r2.xyz = r4.xyz * r2.xyz + r3.xyz;
+  r2.xyz = min(RimLightClampFactor, r2.xyz);
   r3.xyz = SphereMapIntensity * r5.xyz;
   r0.xyz = r3.xyz * v1.xyz + r0.xyz;
   r2.xyz = v1.xyz * r2.xyz;

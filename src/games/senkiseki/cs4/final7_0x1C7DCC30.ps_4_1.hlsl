@@ -105,7 +105,7 @@ float3 CompositeColor(float4 depthInput, float2 v1, bool Bloom) {
   r1.xyz = r2.xyz + -r0.xyz;
   float3 output = r1.xyz * float3(0.5, 0.5, 0.5) + r0.xyz;
 
-  output = renodx::color::gamma::DecodeSafe(output, 2.2f);
+  output = decodeColor(output);
 
   return output;
 }
@@ -135,7 +135,7 @@ void main(
   o0.w = 1;
 
   // ToneMapPass here?
-  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = ToneMap(o0.rgb, noBloomOutput);  // for some reason ToneMapPass causes Artifact
   o0.rgb = expandColorGamut(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
   o0.w = 1;

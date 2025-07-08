@@ -131,15 +131,20 @@ void main(
   r1.w = dot(v5.xyz, v5.xyz);
   r1.w = rsqrt(r1.w);
   r3.xyz = v5.xyz * r1.www;
-  r1.w = saturate(dot(r3.xyz, r2.xyz));
+  // r1.w = saturate(dot(r3.xyz, r2.xyz));
+  r1.w = (dot(r3.xyz, r2.xyz));
   r1.w = 1 + -r1.w;
-  r1.w = log2(r1.w);
-  r2.x = RimLitPower * r1.w;
-  r1.w = PointLightColor.x * r1.w;
-  r1.w = exp2(r1.w);
+
+  float l = r1.w;
+  // r1.w = log2(r1.w);
+  // r2.x = RimLitPower * r1.w;
+  // r1.w = PointLightColor.x * r1.w;
+  // r1.w = exp2(r1.w);
+  r1.w = renodx::math::SafePow(l, PointLightColor.x);
   r1.w = -1 + r1.w;
   r1.w = PointLightColor.y * r1.w + 1;
-  r2.x = exp2(r2.x);
+  // r2.x = exp2(r2.x);
+  r2.x = renodx::math::SafePow(l, RimLitPower);
   r2.x = -r2.x * RimLitIntensity + 1;
   r2.w = r2.x * r0.w;
   r0.xyz = r2.www * r1.xyz + r0.xyz;
