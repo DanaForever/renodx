@@ -586,10 +586,11 @@ void main(
   r6.xzw = r5.xyz * scene.MiscParameters1.xyz + -r5.xyz;
   r5.xyz = r0.xxx * r6.xzw + r5.xyz;
   r0.x = 1 + -r0.y;
+  float l = r0.x;
   // r0.x = log2(r0.x);
   // r0.y = RimLitPower * r0.x;
   // r0.y = exp2(r0.y);
-  r0.y = renodx::math::SafePow(r0.x, RimLitPower);
+  r0.y = renodx::math::SafePow(l, RimLitPower);
   r0.y = RimLitIntensity * r0.y;
   r6.xzw = RimLitColor.xyz * r0.yyy;
   r5.xyz = r6.xzw * r3.xyz + r5.xyz;
@@ -618,8 +619,9 @@ void main(
   r1.xyz = r2.xyz * r1.xyz + r5.xyz;
   r1.xyz = v1.xyz * r1.xyz;
   r0.yzw = r1.xyz * r0.yzw;
-  r0.x = PointLightColor.x * r0.x;
-  r0.x = exp2(r0.x);
+  // r0.x = PointLightColor.x * r0.x;
+  // r0.x = exp2(r0.x);
+  r0.x = renodx::math::SafePow(l, PointLightColor.x);
   r0.x = -1 + r0.x;
   r0.x = PointLightColor.y * r0.x + 1;
   r1.xyz = GameMaterialEmission.xyz * r0.xxx;
@@ -646,13 +648,13 @@ void main(
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
   // r1.x = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
-  r1.x = renodx::color::y::from::BT709(r0.xyz);
+  r1.x = renodx::color::y::from::NTSC1953(r0.xyz);
   r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r1.xyz = BloomIntensity * r0.xyz;
   // r1.x = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = renodx::color::y::from::BT709(r1.xyz);
+  r1.x = renodx::color::y::from::NTSC1953(r1.xyz);
   r1.x = -scene.MiscParameters2.z + r1.x;
   r1.x = max(0, r1.x);
   r1.x = 0.5 * r1.x;
@@ -670,5 +672,9 @@ void main(
   o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
   o0.xyz = r0.xyz;
   o2.w = MaskEps;
+
+  o0 = max(o0, 0.f);
+  o1 = max(o1, 0.f);
+  o2 = max(o2, 0.f);
   return;
 }

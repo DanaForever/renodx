@@ -143,7 +143,7 @@ void main(
   o0.rgb = scaleColor(noBloomOutput, bloomOutput);
   o0.w = 1;
 
-  o0.rgb = ToneMap(o0.rgb, noBloomOutput);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
   o0.rgb = expandColorGamut(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
   return;

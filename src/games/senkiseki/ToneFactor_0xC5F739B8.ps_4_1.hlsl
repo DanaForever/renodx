@@ -84,9 +84,9 @@ void main(
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  // discard;
   r0.xyzw = ColorBuffer.SampleLevel(PointClampSamplerState_s, v1.xy, 0).wxyz;
   // r0.x = saturate(r0.x);
+  r0.x = max(r0.x, 0.f);
   // r0.x = log2(r0.x);
   // r0.x = ToneFactor.z * r0.x;
   // r0.x = exp2(r0.x);
@@ -94,8 +94,6 @@ void main(
   o0.xyz = r0.yzw * r0.xxx;
   r0.x = -0.5 + r0.x;
   o0.w = r0.x * r0.x;
-
-  // o0 - saturate(o0);
   
   return;
 }

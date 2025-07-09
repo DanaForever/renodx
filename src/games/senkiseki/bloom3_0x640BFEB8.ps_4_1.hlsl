@@ -105,15 +105,8 @@ void main(
   r2.xyzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyzw;
   r2.xyz = r2.xyz * r1.xxx;
 
-  // if (BROKEN_BLOOM > 0.f) {
-  if (1) {
-    r0.xyzw = r2.xyzw + r0.xyzw;
-    o0.xyzw = gaussian_blur_z * r0.xyzw;
-  } else {
-    r0.xyzw = r2.xyzw;
-    o0.xyzw = r0.xyzw;
-  }
-  // o0.xyzw = gaussian_blur_z * r0.xyzw;
+  r0.xyzw = r2.xyzw + r0.xyzw;
+  o0.xyzw = gaussian_blur_z * r0.xyzw;
   o0 = max(o0, 0.f);
   
   return;

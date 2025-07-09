@@ -21,7 +21,7 @@ void main(
 
   // BT.601 luma
   // o0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  o0.w = renodx::color::y::from::BT709(r0.xyz);
+  o0.w = renodx::color::y::from::NTSC1953(r0.xyz);
   o0.xyz = r0.xyz;
   return;
 }

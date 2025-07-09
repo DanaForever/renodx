@@ -113,7 +113,8 @@ void main(
   r0.w = dot(r2.xyz, r2.xyz);
   r0.w = rsqrt(r0.w);
   r2.xyz = r2.xyz * r0.www;
-  r0.w = saturate(dot(r1.yzw, r2.xyz));
+  // r0.w = saturate(dot(r1.yzw, r2.xyz));
+  r0.w = (dot(r1.yzw, r2.xyz));
   r1.y = max(Light0.m_colorIntensity.x, Light0.m_colorIntensity.y);
   r1.z = max(0.00100000005, Light0.m_colorIntensity.z);
   r1.y = max(r1.y, r1.z);
@@ -160,7 +161,7 @@ void main(
   }
   r0.xyz = r0.www * -r0.xyz + r0.xyz;
   // r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
-  r0.w = renodx::color::y::from::BT709(r0.xyz);
+  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

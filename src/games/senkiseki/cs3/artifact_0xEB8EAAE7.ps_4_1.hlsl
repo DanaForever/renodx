@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 17:38:59 2025
-
+#include "../shared.h"
 cbuffer _Globals : register(b0)
 {
   uint4 DuranteSettings : packoffset(c0);
@@ -119,18 +119,21 @@ void main(
   r1.w = dot(v5.xyz, v5.xyz);
   r1.w = rsqrt(r1.w);
   r4.xyz = v5.xyz * r1.www;
-  r1.w = saturate(dot(r4.xyz, r3.xyz));
-  r1.w = log2(r1.w);
-  r1.w = SpecularPower * r1.w;
-  r1.w = exp2(r1.w);
+  // r1.w = saturate(dot(r4.xyz, r3.xyz));
+  r1.w = (dot(r4.xyz, r3.xyz));
+  // r1.w = log2(r1.w);
+  // r1.w = SpecularPower * r1.w;
+  // r1.w = exp2(r1.w);
+  r1.w = renodx::math::SafePow(r1.w, SpecularPower);
   r1.xyzw = min(float4(1.5,1.5,1.5,1), r1.xyzw);
   r1.w = Shininess * r1.w;
   r1.xyz = Light0.m_colorIntensity.xyz * r1.www + r1.xyz;
   r1.w = saturate(dot(r4.xyz, r2.xyz));
   r1.w = 1 + -r1.w;
-  r1.w = log2(r1.w);
-  r1.w = RimLitPower * r1.w;
-  r1.w = exp2(r1.w);
+  // r1.w = log2(r1.w);
+  // r1.w = RimLitPower * r1.w;
+  // r1.w = exp2(r1.w);
+  r1.w = renodx::math::SafePow(r1.w, RimLitPower);
   r1.w = RimLitIntensity * r1.w;
   r2.xyz = RimLitColor.xyz * r1.www;
   r1.xyz = r2.xyz * Light0.m_colorIntensity.xyz + r1.xyz;

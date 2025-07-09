@@ -1,4 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Tue Jul 01 21:00:44 2025
+// ---- Created with 3Dmigoto v1.3.16 on Wed Jul 09 03:38:00 2025
 #include "../shared.h"
 cbuffer _Globals : register(b0)
 {
@@ -71,10 +71,14 @@ cbuffer _Globals : register(b0)
   float RimLitIntensity : packoffset(c75) = {4};
   float RimLitPower : packoffset(c75.y) = {2};
   float RimLightClampFactor : packoffset(c75.z) = {2};
-  float BloomIntensity : packoffset(c75.w) = {1};
-  float MaskEps : packoffset(c76);
-  float4 PointLightParams : packoffset(c77) = {0,2,1,1};
-  float4 PointLightColor : packoffset(c78) = {1,0,0,0};
+  float2 WindyGrassDirection : packoffset(c76) = {0,0};
+  float WindyGrassSpeed : packoffset(c76.z) = {0.100000001};
+  float WindyGrassHomogenity : packoffset(c76.w) = {2};
+  float WindyGrassScale : packoffset(c77) = {1};
+  float BloomIntensity : packoffset(c77.y) = {1};
+  float MaskEps : packoffset(c77.z);
+  float4 PointLightParams : packoffset(c78) = {0,2,1,1};
+  float4 PointLightColor : packoffset(c79) = {1,0,0,0};
 }
 
 SamplerState DiffuseMapSamplerSampler_s : register(s0);
@@ -147,8 +151,5 @@ void main(
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
-
-  // o0 = min(o0, 0.f);
-  o0.w = max(o0.w, 0);
   return;
 }

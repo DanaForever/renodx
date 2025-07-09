@@ -1,4 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Jun 07 05:00:48 2025
+// ---- Created with 3Dmigoto v1.3.16 on Wed Jul 09 03:34:35 2025
 #include "../shared.h"
 cbuffer _Globals : register(b0)
 {
@@ -59,15 +59,20 @@ cbuffer _Globals : register(b0)
   float4 UVaMUvTexcoord : packoffset(c69) = {0,0,1,1};
   float4 UVaMUv2Texcoord : packoffset(c70) = {0,0,1,1};
   float4 UVaDuDvTexcoord : packoffset(c71) = {0,0,1,1};
-  float AlphaThreshold : packoffset(c72) = {0.5};
-  float BloomIntensity : packoffset(c72.y) = {1};
-  float MaskEps : packoffset(c72.z);
-  float4 PointLightParams : packoffset(c73) = {0,2,1,1};
-  float4 PointLightColor : packoffset(c74) = {1,0,0,0};
+  float2 WindyGrassDirection : packoffset(c72) = {0,0};
+  float WindyGrassSpeed : packoffset(c72.z) = {0.100000001};
+  float WindyGrassHomogenity : packoffset(c72.w) = {2};
+  float WindyGrassScale : packoffset(c73) = {1};
+  float BloomIntensity : packoffset(c73.y) = {1};
+  float MaskEps : packoffset(c73.z);
+  float4 PointLightParams : packoffset(c74) = {0,2,1,1};
+  float4 PointLightColor : packoffset(c75) = {1,0,0,0};
 }
 
-SamplerState DiffuseMapSamplerSampler_s : register(s0);
-Texture2D<float4> DiffuseMapSampler : register(t0);
+SamplerState PointWrapSamplerState_s : register(s0);
+SamplerState DiffuseMapSamplerSampler_s : register(s1);
+Texture2D<float4> DitherNoiseTexture : register(t0);
+Texture2D<float4> DiffuseMapSampler : register(t1);
 
 
 // 3Dmigoto declarations
@@ -80,45 +85,62 @@ void main(
   float4 v2 : COLOR1,
   float4 v3 : TEXCOORD0,
   float4 v4 : TEXCOORD1,
-  float3 v5 : TEXCOORD4,
+  float4 v5 : TEXCOORD4,
+  float4 v6 : TEXCOORD9,
   out float4 o0 : SV_TARGET0)
 {
   float4 r0,r1,r2;
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  r0.xyzw = DiffuseMapSampler.Sample(DiffuseMapSamplerSampler_s, v3.xy).xyzw;
-  r1.x = r0.w * v1.w + -0.00400000019;
-  r1.x = cmp(r1.x < 0);
-  if (r1.x != 0) discard;
+  r0.xy = float2(0.25,0.25) * v0.xy;
+  r0.x = DitherNoiseTexture.SampleLevel(PointWrapSamplerState_s, r0.xy, 0).x;
+  r0.x = v6.x + -r0.x;
+  r0.x = cmp(r0.x < 0);
+  if (r0.x != 0) discard;
+  r0.xyz = -scene.UserClipPlane2.xyz + v4.xyz;
+  r0.w = dot(r0.xyz, r0.xyz);
+  r0.w = rsqrt(r0.w);
+  r0.xyz = r0.xyz * r0.www;
+  r0.x = dot(scene.UserClipPlane.xyz, r0.xyz);
+  r0.x = cmp(r0.x < 0);
+  if (r0.x != 0) discard;
+  r0.xyz = scene.EyePosition.xyz + -v4.xyz;
+  r0.w = dot(r0.xyz, r0.xyz);
+  r0.w = rsqrt(r0.w);
+  r0.xyz = r0.xyz * r0.www;
+  r0.w = dot(v5.xyz, v5.xyz);
+  r0.w = rsqrt(r0.w);
+  r1.xyz = v5.xyz * r0.www;
+  // r0.x = saturate(dot(r1.xyz, r0.xyz));
+  r0.x = (dot(r1.xyz, r0.xyz));
+  r0.x = 1 + -r0.x;
+  // r0.x = log2(r0.x);
+  // r0.x = PointLightColor.x * r0.x;
+  // r0.x = exp2(r0.x);
+  r0.x = renodx::math::SafePow(r0.x, PointLightColor.x);
+  r0.x = -1 + r0.x;
+  r0.x = PointLightColor.y * r0.x + 1;
+  r0.xyz = GameMaterialEmission.xyz * r0.xxx;
   r1.xyz = max(float3(1,1,1), scene.GlobalAmbientColor.xyz);
   r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
   r1.xyz = v1.xyz * r1.xyz;
-  r1.xyz = r1.xyz * r0.xyz;
-  r1.w = v1.w * r0.w;
-  r0.xyzw = GameMaterialDiffuse.xyzw * r1.xyzw;
-  r1.xyz = scene.EyePosition.xyz + -v4.xyz;
-  r1.w = dot(r1.xyz, r1.xyz);
-  r1.w = rsqrt(r1.w);
-  r1.xyz = r1.xyz * r1.www;
-  r1.w = dot(v5.xyz, v5.xyz);
-  r1.w = rsqrt(r1.w);
-  r2.xyz = v5.xyz * r1.www;
-  // r1.x = saturate(dot(r2.xyz, r1.xyz));
-  r1.x = (dot(r2.xyz, r1.xyz));
-  r1.x = 1 + -r1.x;
-  // r1.x = log2(r1.x);
-  // r1.x = PointLightColor.x * r1.x;
-  // r1.x = exp2(r1.x);
-  r1.x = renodx::math::SignPow(r1.x, PointLightColor.x);
-  r1.x = -1 + r1.x;
-  r1.x = PointLightColor.y * r1.x + 1;
-  r0.xyz = GameMaterialEmission.xyz * r1.xxx + r0.xyz;
-  o0.w = r0.w;
-  // r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
+  r2.xyz = DiffuseMapSampler.Sample(DiffuseMapSamplerSampler_s, v3.xy).xyz;
+  r1.xyz = r2.xyz * r1.xyz;
+  r0.xyz = r1.xyz * GameMaterialDiffuse.xyz + r0.xyz;
+  // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
   r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
-  o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
+  r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
+  r1.xyz = BloomIntensity * r0.xyz;
+  o0.xyz = r0.xyz;
+  // r0.x = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
+  r0.x = renodx::color::y::from::NTSC1953(r1.xyz);
+  r0.x = -scene.MiscParameters2.z + r0.x;
+  r0.x = max(0, r0.x);
+  r0.x = 0.5 * r0.x;
+  r0.x = min(1, r0.x);
+  o0.w = PointLightParams.z * r0.x;
   return;
 }

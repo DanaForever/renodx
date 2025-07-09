@@ -601,14 +601,14 @@ void main(
   r1.xyz = scene.FogColor.xyz + -r0.xyz;
   r0.xyz = v2.www * r1.xyz + r0.xyz;
   // r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
-  r0.w = renodx::color::y::from::BT709(r0.xyz);
+  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r0.w = GlareMapSampler.Sample(GlareMapSamplerSampler_s, v3.xy).x;
   r1.xyz = BloomIntensity * r0.xyz;
   // r1.x = dot(r1.xyz, float3(0.298999995, 0.587000012, 0.114));
-  r1.x = renodx::color::y::from::BT709(r1.xyz);
+  r1.x = renodx::color::y::from::NTSC1953(r1.xyz);
   r1.x = -scene.MiscParameters2.z + r1.x;
   r1.x = max(0, r1.x);
   r1.x = 0.5 * r1.x;

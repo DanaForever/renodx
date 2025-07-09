@@ -103,6 +103,7 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x4EFC489C), // artifact
     CustomShaderEntry(0xD76CAD22), // artifact
     CustomShaderEntry(0x27C49A90), // artifact
+    CustomShaderEntry(0xEB8EAAE7), // artifact
     
 };
 
@@ -174,6 +175,9 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xB9AF63CD), // lantern
     CustomShaderEntry(0xAF5B4CE1), // lantern
     CustomShaderEntry(0xE3E9C74F), // lantern
+    CustomShaderEntry(0x51EB2788), // lantern
+    CustomShaderEntry(0x01906E4B), // lantern
+    CustomShaderEntry(0x4C831242), // lantern
     
 
     // CS3
@@ -424,8 +428,8 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Reinhard", "NeutralSDR", "DICE", "Uncharted2", "ACES", "Clipping"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         // .is_visible = []() { return current_settings_mode >= 2; },
-        .is_visible = []() { return shader_injection.tone_map_type >= 1 && current_settings_mode >= 2.f; },
-        // .is_visible = []() { return false; },
+        // .is_visible = []() { return shader_injection.tone_map_type >= 1 && current_settings_mode >= 2.f; },
+        .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueProcessor",
@@ -438,8 +442,8 @@ renodx::utils::settings::Settings settings = {
         .labels = {"OKLab", "ICtCp", "darkTable UCS"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         // .is_visible = []() { return current_settings_mode >= 2; },
-        .is_visible = []() { return shader_injection.tone_map_type >= 1 && current_settings_mode >= 2.f; },
-        // .is_visible = []() { return false; },
+        // .is_visible = []() { return shader_injection.tone_map_type >= 1 && current_settings_mode >= 2.f; },
+        .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
@@ -452,6 +456,7 @@ renodx::utils::settings::Settings settings = {
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return false; },
         // .is_visible = []() { return current_settings_mode >= 2; },
     },
     new renodx::utils::settings::Setting{

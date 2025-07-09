@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 22:18:00 2025
 #include "./shared.h"
+#include "./cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -114,31 +115,23 @@ void main(
   r0.y = GodrayColor.w * r0.y;
   r0.yzw = GodrayColor.xyz * r0.yyy;
 
-  if (BROKEN_BLOOM > 0.f) {
-  // if (1.f) {
-    r1.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.xy), 0).xyzw);
-    r1.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r1.xyzw;
-    r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v1.xy), 0).xyzw);
-    r1.xyzw = r2.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r1.xyzw;
-    r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.zw), 0).xyzw);
-    r1.xyzw = r2.xyzw * float4(0.200000006, 0.200000006, 0.200000006, 0.200000006) + r1.xyzw;
-    r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v3.xy), 0).xyzw);
-    r1.xyzw = r2.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r1.xyzw;
-    r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v3.zw), 0).xyzw);
-    r1.xyzw = r2.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r1.xyzw;
+  float3 unbloom = r0.yzw;
 
-    r1.xyz = lerp(r1.xyz, 1.0, r0.yzw);
+  r1.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.xy), 0).xyzw);
+  r1.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r1.xyzw;
+  r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v1.xy), 0).xyzw);
+  r1.xyzw = r2.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r1.xyzw;
+  r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.zw), 0).xyzw);
+  r1.xyzw = r2.xyzw * float4(0.200000006, 0.200000006, 0.200000006, 0.200000006) + r1.xyzw;
+  r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v3.xy), 0).xyzw);
+  r1.xyzw = r2.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r1.xyzw;
+  r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v3.zw), 0).xyzw);
+  r1.xyzw = r2.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r1.xyzw;
 
-    o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
+  r1.xyz = lerp(r1.xyz, 1.0, r0.yzw);
 
-    // o0.xyzw = r1.xyzw;
-    o0 = max(o0, 0);
-  } else {
-    o0.rgb = r0.yzw;
-    o0.w = 1.0;
-
-    o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : o0.xyzw;
-    o0 = max(o0, 0);
-  } 
+  o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
+  o0 = max(o0, 0);
+  
   return;
 }

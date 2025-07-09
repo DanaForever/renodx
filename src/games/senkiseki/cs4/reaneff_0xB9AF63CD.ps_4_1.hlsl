@@ -113,5 +113,7 @@ void main(
   o0.xyz = v2.xyz * v2.www + r0.xyz;
   o0.w = r0.w;
 
+  o0 = max(o0, 0.f);
+
   return;
 }

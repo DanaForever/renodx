@@ -143,7 +143,7 @@ void main(
   r0.xyz = GameMaterialEmission.xyz * r0.yyy + r1.xyz;
   o0.w = r1.w;
   // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = renodx::color::y::from::BT709(r0.xyz);
+  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
@@ -151,7 +151,7 @@ void main(
   // o0 = min(o0, 0.f);
   // o0.rgb = max(o0.rgb, 0.f);
   // o0 = max(o0, 0.f);
-  // o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  // o0.rgb = renodx::color::NTSC1953::clamp::BT2020(o0.rgb);
   o0.w = max(o0.w, 0.f);
   return;
 }

@@ -150,7 +150,7 @@ void main(
 
   // o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.2);
   // o0.rgb = PumboInverseTonemap(o0.rgb);
-  o0.rgb = ToneMap(o0.rgb, noBloomOutput);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
   o0.rgb = expandColorGamut(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
 

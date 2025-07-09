@@ -22,33 +22,27 @@ void main(
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  // if (BROKEN_BLOOM > 0.f) {
-  if (1) {
-    r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
-    r0.xyzw = float4(0.170000002,0.170000002,0.170000002,0.170000002) * r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.189999998,0.189999998,0.189999998,0.189999998) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.150000006,0.150000006,0.150000006,0.150000006) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.129999995,0.129999995,0.129999995,0.129999995) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v4.xy, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.109999999,0.109999999,0.109999999,0.109999999) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v4.zw, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.0900000036,0.0900000036,0.0900000036,0.0900000036) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v5.xy, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.0700000003,0.0700000003,0.0700000003,0.0700000003) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v5.zw, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.0500000007,0.0500000007,0.0500000007,0.0500000007) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v6.xy, 0).xyzw;
-    r0.xyzw = r1.xyzw * float4(0.0299999993,0.0299999993,0.0299999993,0.0299999993) + r0.xyzw;
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v6.zw, 0).xyzw;
-    o0.xyzw = r1.xyzw * float4(0.00999999978, 0.00999999978, 0.00999999978, 0.00999999978) + r0.xyzw;
-    o0 = max(o0, 0.f);
-  } else {
-    r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-    o0 = r0;
-  }
+  r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
+  r0.xyzw = float4(0.170000002, 0.170000002, 0.170000002, 0.170000002) * r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.189999998, 0.189999998, 0.189999998, 0.189999998) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.150000006, 0.150000006, 0.150000006, 0.150000006) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.129999995, 0.129999995, 0.129999995, 0.129999995) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v4.xy, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.109999999, 0.109999999, 0.109999999, 0.109999999) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v4.zw, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.0900000036, 0.0900000036, 0.0900000036, 0.0900000036) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v5.xy, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.0700000003, 0.0700000003, 0.0700000003, 0.0700000003) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v5.zw, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.0500000007, 0.0500000007, 0.0500000007, 0.0500000007) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v6.xy, 0).xyzw;
+  r0.xyzw = r1.xyzw * float4(0.0299999993, 0.0299999993, 0.0299999993, 0.0299999993) + r0.xyzw;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v6.zw, 0).xyzw;
+  o0.xyzw = r1.xyzw * float4(0.00999999978, 0.00999999978, 0.00999999978, 0.00999999978) + r0.xyzw;
+  o0 = max(o0, 0.f);
 
   return;
 }

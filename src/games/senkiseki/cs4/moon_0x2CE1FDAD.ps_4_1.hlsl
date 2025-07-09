@@ -207,7 +207,7 @@ void main(
   r2.xyz = GameMaterialEmission.xyz * r0.www;
   r0.xyz = r0.xyz * GameMaterialDiffuse.xyz + r2.xyz;
   // r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
-  r0.w = renodx::color::y::from::BT709(r0.xyz);
+  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
   r2.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r2.xyz = r2.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r2.xyz + r0.xyz;
@@ -222,17 +222,7 @@ void main(
   r1.y = trunc(r0.y);
   r1.z = r0.x * 256 + -r1.y;
   o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
-  // o2.xyz = float3(r0.x, 0.f, 0.f);
   o2.w = MaskEps;
-
-  // o0.rgb *= 2;
-  // o0.rgb = PumboInverseTonemap(o0.rgb);
-
-  float3 mid_gray = 0.18f;
-  o0.rgb = inv_tonemap_ReinhardPerComponent(o0.rgb, 2.0f);
-
-  o0.rgb *= mid_gray / average(inv_tonemap_ReinhardPerComponent(mid_gray, 2.0f));
-
 
   return;
 }

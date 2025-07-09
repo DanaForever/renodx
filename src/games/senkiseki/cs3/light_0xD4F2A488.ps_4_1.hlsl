@@ -125,7 +125,7 @@ void main(
   r0.xyz = r1.xyz * r0.xyz;
   r0.xyz = r0.xyz * GameMaterialDiffuse.xyz + GameMaterialEmission.xyz;
   r0.xyz = v2.xyz + r0.xyz;
-  r0.w = renodx::color::y::from::BT709(r0.xyz);
+  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

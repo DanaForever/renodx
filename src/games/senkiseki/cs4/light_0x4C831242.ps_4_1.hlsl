@@ -1,4 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Wed Jul 02 06:47:15 2025
+// ---- Created with 3Dmigoto v1.3.16 on Wed Jul 09 03:38:00 2025
 #include "../shared.h"
 cbuffer _Globals : register(b0)
 {
@@ -106,11 +106,8 @@ void main(
   float4 v5 : TEXCOORD4,
   float4 v6 : TEXCOORD6,
   float4 v7 : TEXCOORD9,
-  float4 v8 : TEXCOORD10,
-  uint v9 : SV_SampleIndex0,
-  out float4 o0 : SV_TARGET0,
-  out float4 o1 : SV_TARGET1,
-  out float4 o2 : SV_TARGET2)
+  uint v8 : SV_SampleIndex0,
+  out float4 o0 : SV_TARGET0)
 {
   const float4 icb[] = { { 0, 0, 0, 0},
                               { 0, 0, 0, 0},
@@ -193,12 +190,19 @@ void main(
   r0.x = v7.x + -r0.x;
   r0.x = cmp(r0.x < 0);
   if (r0.x != 0) discard;
+  r0.xyz = -scene.UserClipPlane2.xyz + v4.xyz;
+  r0.w = dot(r0.xyz, r0.xyz);
+  r0.w = rsqrt(r0.w);
+  r0.xyz = r0.xyz * r0.www;
+  r0.x = dot(scene.UserClipPlane.xyz, r0.xyz);
+  r0.x = cmp(r0.x < 0);
+  if (r0.x != 0) discard;
   r0.x = (int)scene.DuranteSettings.x & 1;
   if (r0.x != 0) {
     r0.xy = ddx(v3.xy);
     r0.zw = ddy(v3.xy);
     r1.x = (uint)scene.DuranteSettings.y << 3;
-    r1.x = (int)r1.x + (int)v9.x;
+    r1.x = (int)r1.x + (int)v8.x;
     r0.zw = icb[r1.x+0].yy * r0.zw;
     r0.xy = icb[r1.x+0].xx * r0.xy + r0.zw;
     r0.xy = v3.xy + r0.xy;
@@ -242,79 +246,70 @@ void main(
   r0.w = dot(r2.xyz, r2.xyz);
   r0.w = rsqrt(r0.w);
   r2.xyz = r2.xyz * r0.www;
-  // r0.w = saturate(dot(r0.xyz, r2.xyz));
-  r0.w = (dot(r0.xyz, r2.xyz));
-  // r0.w = log2(r0.w);
-  // r0.w = SpecularPower * r0.w;
-  // r0.w = exp2(r0.w);
-  r0.w = renodx::math::SafePow(r0.w, SpecularPower);
-  r0.w = min(1, r0.w);
-  r0.w = Shininess * r0.w;
-  r2.xyz = Light0.m_colorIntensity.xyz * r2.www + scene.GlobalAmbientColor.xyz;
-  r2.xyz = min(float3(1.5,1.5,1.5), r2.xyz);
-  r2.xyz = Light0.m_colorIntensity.xyz * r0.www + r2.xyz;
+  // r0.x = saturate(dot(r0.xyz, r2.xyz));
+  r0.x = (dot(r0.xyz, r2.xyz));
+  // r0.x = log2(r0.x);
+  // r0.x = SpecularPower * r0.x;
+  // r0.x = exp2(r0.x);
+  r0.x = renodx::math::SafePow(r0.x, SpecularPower);
+  r0.x = min(1, r0.x);
+  r0.x = Shininess * r0.x;
+  r0.yzw = Light0.m_colorIntensity.xyz * r2.www + scene.GlobalAmbientColor.xyz;
+  r0.yzw = min(float3(1.5,1.5,1.5), r0.yzw);
+  r0.xyz = Light0.m_colorIntensity.xyz * r0.xxx + r0.yzw;
   r0.w = 1 + -r1.w;
   // r0.w = log2(r0.w);
   // r1.w = RimLitPower * r0.w;
   // r1.w = exp2(r1.w);
   r1.w = renodx::math::SafePow(r0.w, RimLitPower);
   r1.w = RimLitIntensity * r1.w;
-  r3.xyz = RimLitColor.xyz * r1.www;
-  r2.xyz = r3.xyz * Light0.m_colorIntensity.xyz + r2.xyz;
-  r2.xyz = min(RimLightClampFactor, r2.xyz);
-  r2.xyz = v1.xyz * r2.xyz;
-  r1.xyz = r2.xyz * r1.xyz;
+  r2.xyz = RimLitColor.xyz * r1.www;
+  r0.xyz = r2.xyz * Light0.m_colorIntensity.xyz + r0.xyz;
+  r0.xyz = min(RimLightClampFactor, r0.xyz);
+  r0.xyz = v1.xyz * r0.xyz;
+  r0.xyz = r1.xyz * r0.xyz;
   r0.w = PointLightColor.x * r0.w;
   r0.w = exp2(r0.w);
   r0.w = -1 + r0.w;
   r0.w = PointLightColor.y * r0.w + 1;
-  r2.xyz = GameMaterialEmission.xyz * r0.www;
-  r1.xyz = r1.xyz * GameMaterialDiffuse.xyz + r2.xyz;
+  r1.xyz = GameMaterialEmission.xyz * r0.www;
+  r0.xyz = r0.xyz * GameMaterialDiffuse.xyz + r1.xyz;
   r0.w = cmp(0 < scene.MiscParameters6.w);
   if (r0.w != 0) {
-    r2.xy = GlobalTexcoordFactor * scene.MiscParameters6.xy;
-    r2.xz = r2.xy * float2(30,30) + v4.xz;
-    r2.y = v4.y;
-    r2.xyz = scene.MiscParameters6.zzz * r2.xyz;
-    r3.x = LowResDepthTexture.SampleLevel(LinearWrapSamplerState_s, r2.xy, 0).x;
-    r3.y = LowResDepthTexture.SampleLevel(LinearWrapSamplerState_s, r2.xz, 0).x;
-    r3.z = LowResDepthTexture.SampleLevel(LinearWrapSamplerState_s, r2.yz, 0).x;
-    r0.w = dot(r3.xyz, float3(0.333299994,0.333299994,0.333299994));
+    r1.xy = GlobalTexcoordFactor * scene.MiscParameters6.xy;
+    r1.xz = r1.xy * float2(30,30) + v4.xz;
+    r1.y = v4.y;
+    r1.xyz = scene.MiscParameters6.zzz * r1.xyz;
+    r2.x = LowResDepthTexture.SampleLevel(LinearWrapSamplerState_s, r1.xy, 0).x;
+    r2.y = LowResDepthTexture.SampleLevel(LinearWrapSamplerState_s, r1.xz, 0).x;
+    r2.z = LowResDepthTexture.SampleLevel(LinearWrapSamplerState_s, r1.yz, 0).x;
+    r0.w = dot(r2.xyz, float3(0.333299994,0.333299994,0.333299994));
     r0.w = v2.w * r0.w;
     r0.w = -r0.w * scene.MiscParameters6.w + v2.w;
     r0.w = max(0, r0.w);
   } else {
     r0.w = v2.w;
   }
-  r2.xyz = scene.FogColor.xyz + -r1.xyz;
-  r1.xyz = r0.www * r2.xyz + r1.xyz;
+  r1.xyz = scene.FogColor.xyz + -r0.xyz;
+  r0.xyz = r0.www * r1.xyz + r0.xyz;
   r0.w = -r0.w * 0.5 + 1;
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
-  // r1.w = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.w = renodx::color::y::from::NTSC1953(r1.xyz);
-  r2.xyz = r1.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
-  r2.xyz = r2.xyz + -r1.xyz;
-  r1.xyz = GameMaterialMonotone * r2.xyz + r1.xyz;
-  r2.xyz = BloomIntensity * r1.xyz;
-  // r1.w = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.w = renodx::color::y::from::NTSC1953(r2.xyz);
-  r1.w = -scene.MiscParameters2.z + r1.w;
-  r1.w = max(0, r1.w);
-  r1.w = 0.5 * r1.w;
-  r1.w = min(1, r1.w);
-  o0.w = r1.w * r0.w;
-  o1.xyz = r0.xyz * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);
-  o1.w = 0.466666698 + MaskEps;
-  r0.x = v8.z / v8.w;
-  r0.y = 256 * r0.x;
-  r2.x = trunc(r0.y);
-  r0.x = r0.x * 256 + -r2.x;
-  r0.y = 256 * r0.x;
-  r2.y = trunc(r0.y);
-  r2.z = r0.x * 256 + -r2.y;
-  o2.xyz = float3(0.00390625,0.00390625,1) * r2.xyz;
-  o0.xyz = r1.xyz;
-  o2.w = MaskEps;
+  // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = renodx::color::y::from::NTSC1953(r0.xyz);
+  r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
+  r1.xyz = r1.xyz + -r0.xyz;
+  r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
+  r1.xyz = BloomIntensity * r0.xyz;
+  // r1.x = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = renodx::color::y::from::NTSC1953(r1.xyz);
+  r1.x = -scene.MiscParameters2.z + r1.x;
+  r1.x = max(0, r1.x);
+  r1.x = 0.5 * r1.x;
+  r1.x = min(1, r1.x);
+  o0.w = r1.x * r0.w;
+  o0.xyz = r0.xyz;
+
+  o0.w = max(o0.w, 0.f);
   return;
 }
