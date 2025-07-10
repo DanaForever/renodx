@@ -116,6 +116,7 @@ void main(
   r3.xyz = r2.xyz * -r1.www + -r1.xyz;
   r1.x = saturate(dot(r2.xyz, r1.xyz));
   r1.x = 1 + -r1.x;
+  float l = r1.x;
   r1.x = log2(r1.x);
   r2.x = dot(r3.xyz, scene.View._m00_m10_m20);
   r2.y = dot(r3.xyz, scene.View._m01_m11_m21);
@@ -128,12 +129,14 @@ void main(
   r1.yzw = RefractionTexture.Sample(LinearClampSamplerState_s, r1.yz).xyz;
   r0.xyz = -r1.yzw + r0.xyz;
   r0.w = v1.w * r0.w;
-  r2.x = RimLitPower * r1.x;
-  r1.x = PointLightColor.x * r1.x;
-  r1.x = exp2(r1.x);
+  // r2.x = RimLitPower * r1.x;
+  // r1.x = PointLightColor.x * r1.x;
+  // r1.x = exp2(r1.x);
+  r1.x = renodx::math::SafePow(l, PointLightColor.x);
   r1.x = -1 + r1.x;
   r1.x = PointLightColor.y * r1.x + 1;
-  r2.x = exp2(r2.x);
+  // r2.x = exp2(r2.x);
+  r2.x = renodx::math::SafePow(l, RimLitPower);
   r2.x = -r2.x * RimLitIntensity + 1;
   r2.w = r2.x * r0.w;
   r0.w = PointLightParams.w * r2.w;

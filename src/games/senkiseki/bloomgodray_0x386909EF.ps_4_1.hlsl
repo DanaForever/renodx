@@ -1,5 +1,7 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 16:57:45 2025
+#include "cs4/common.hlsl"
 #include "shared.h"
+
 cbuffer _Globals : register(b0)
 {
 
@@ -117,14 +119,19 @@ void main(
   r0.yzw = GodrayColor.xyz * r0.yyy;
 
   r1.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw);
+  r1.xyz = processColorBuffer(r1.xyz);
   r1.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw);
+  r2.xyz = processColorBuffer(r2.xyz);
   r1.xyzw = r2.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw);
+  r2.xyz = processColorBuffer(r2.xyz);
   r1.xyzw = r2.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw);
+  r2.xyz = processColorBuffer(r2.xyz);
   r1.xyzw = r2.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw);
+  r2.xyz = processColorBuffer(r2.xyz);
   r1.xyzw = r2.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r1.xyzw;
   // r2.xyz = float3(1, 1, 1) + -r1.xyz;
   // r1.xyz = r0.yzw * r2.xyz + r1.xyz;

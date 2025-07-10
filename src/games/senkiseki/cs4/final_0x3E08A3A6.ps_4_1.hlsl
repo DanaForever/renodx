@@ -102,6 +102,7 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
   r2.xy = v1.xy * float2(1, -1) + float2(0, 1);
 
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
+  r3.xyz = processColorBuffer(r3.xyz);
   r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
 
   r2.xyzw = FilterColor.xyzw * r2.xyzw;
@@ -163,19 +164,24 @@ void main(
   // r1.xyz is the difference between a blurred (focus) and sharp (color) buffer.
   r1.xyz = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
   r2.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
+  r2.xyz = processColorBuffer(r2.xyz);
 
   float3 bloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, true);
   float3 noBloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, false);
 
   o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  float3 scaledColor = o0.rgb;
   // o0.rgb
 
   o0.w = 1;
 
   o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = correctHue(o0.rgb, scaledColor);
   o0.rgb = expandColorGamut(o0.rgb);
   o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+
+  
 
   return;
 }

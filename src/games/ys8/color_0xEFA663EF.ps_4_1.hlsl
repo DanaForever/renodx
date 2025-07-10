@@ -73,7 +73,8 @@ void main(
 
   // ToneMapPass here?
   if (RENODX_TONE_MAP_TYPE > 0.f) {
-    o0.rgb = renodx::color::gamma::Decode(o0.rgb, 2.2);
+    // o0.rgb = renodx::color::gamma::Decode(o0.rgb, 2.2);
+    o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
     o0.rgb = ToneMap(o0.rgb);
   }
 

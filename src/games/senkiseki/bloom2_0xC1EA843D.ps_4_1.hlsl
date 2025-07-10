@@ -1,5 +1,7 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sun Jun 08 14:51:03 2025
+#include "cs4/common.hlsl"
 #include "shared.h"
+
 SamplerState LinearClampSamplerState_s : register(s0);
 Texture2D<float4> ColorBuffer : register(t0);
 
@@ -20,16 +22,21 @@ void main(
   float4 fDest;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
+  r0.xyz = processColorBuffer(r0.xyz);
   r0.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
   r0.xyzw = r1.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
   r0.xyzw = r1.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
   r0.xyzw = r1.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
   o0.xyzw = r1.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r0.xyzw;
-  o0 = max(o0, 0.f);
+  // o0 = max(o0, 0.f);
 
   return;
 }

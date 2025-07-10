@@ -142,5 +142,7 @@ void main(
   r0.x = 0.5 * r0.x;
   r0.x = min(1, r0.x);
   o0.w = PointLightParams.z * r0.x;
+
+  o0.w = max(o0.w, 0.f);
   return;
 }

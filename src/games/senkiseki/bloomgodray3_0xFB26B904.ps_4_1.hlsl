@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sat Jun 21 00:21:30 2025
 #include "./shared.h"
+#include "cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -101,25 +102,25 @@ void main(
   r0.x = GodrayColor.w * r0.x;
   r0.xyz = GodrayColor.xyz * r0.xxx;
 
-  if (BROKEN_BLOOM > 0.f) {
-    r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
-    r1.xyzw = float4(0.100000001,0.100000001,0.100000001,0.100000001) * r1.xyzw;
-    r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-    r1.xyzw = r2.xyzw * float4(0.400000006,0.400000006,0.400000006,0.400000006) + r1.xyzw;
-    r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
-    r1.xyzw = r2.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r1.xyzw;
-    r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
-    r1.xyzw = r2.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r1.xyzw;
-    r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
-    r1.xyzw = r2.xyzw * float4(0.100000001,0.100000001,0.100000001,0.100000001) + r1.xyzw;
-    // r2.xyz = float3(1, 1, 1) + -r1.xyz;
-    // r1.xyz = r0.xyz * r2.xyz + r1.xyz;
+  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
+  r1.xyzw = float4(0.100000001,0.100000001,0.100000001,0.100000001) * r1.xyzw;
+  r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
+  r2.xyz = processColorBuffer(r2.xyz);
+  r1.xyzw = r2.xyzw * float4(0.400000006,0.400000006,0.400000006,0.400000006) + r1.xyzw;
+  r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
+  r2.xyz = processColorBuffer(r2.xyz);
+  r1.xyzw = r2.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r1.xyzw;
+  r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
+  r2.xyz = processColorBuffer(r2.xyz);
+  r1.xyzw = r2.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r1.xyzw;
+  r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
+  r2.xyz = processColorBuffer(r2.xyz);
+  r1.xyzw = r2.xyzw * float4(0.100000001,0.100000001,0.100000001,0.100000001) + r1.xyzw;
+  // r2.xyz = float3(1, 1, 1) + -r1.xyz;
+  // r1.xyz = r0.xyz * r2.xyz + r1.xyz;
 
-    r1.xyz = lerp(r0.xyz, 1.f, r1.xyz);
-  } else {
-    r1.xyz = r0.xyz;
-    r1.w = 1.f;
-  }
+  r1.xyz = lerp(r0.xyz, 1.f, r1.xyz);
 
   r0.xy = v4.xy * float2(1,-1) + float2(0,1);
   r2.xyz = FocusBuffer.SampleLevel(PointClampSamplerState_s, r0.xy, 0).xyz;

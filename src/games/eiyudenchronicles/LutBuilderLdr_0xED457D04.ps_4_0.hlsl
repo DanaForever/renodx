@@ -247,7 +247,8 @@ void main(
         untonemapped = renodx::color::ap1::from::BT709(untonemapped_bt709);
       }
 
-      sdr_color = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
+      // sdr_color = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
+      sdr_color = displayMap(untonemapped);
       r0.xyz = sdr_color;
     } else {
       // fast Reinhard
@@ -310,21 +311,26 @@ void main(
 
       graded_sdr_color = o0.rgb;
 
-      if (RENODX_PER_CHANNEL_BLOWOUT_RESTORATION != 0.f
-          || RENODX_PER_CHANNEL_HUE_CORRECTION != 0.f
-          || RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION != 0.f) {
-        graded_sdr_color = renodx::draw::ApplyPerChannelCorrection(
-            untonemapped_bt709,
-            graded_sdr_color,
-            RENODX_PER_CHANNEL_BLOWOUT_RESTORATION,
-            RENODX_PER_CHANNEL_HUE_CORRECTION,
-            RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION);
-      }
+      if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
 
-      o0.rgb = renodx::tonemap::UpgradeToneMap(untonemapped_bt709,
-                                               sdr_color,
-                                               graded_sdr_color,
-                                               1.f);
+        if (RENODX_PER_CHANNEL_BLOWOUT_RESTORATION != 0.f
+            || RENODX_PER_CHANNEL_HUE_CORRECTION != 0.f
+            || RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION != 0.f) {
+          graded_sdr_color = renodx::draw::ApplyPerChannelCorrection(
+              untonemapped_bt709,
+              graded_sdr_color,
+              RENODX_PER_CHANNEL_BLOWOUT_RESTORATION,
+              RENODX_PER_CHANNEL_HUE_CORRECTION,
+              RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION);
+        }
+
+        o0.rgb = renodx::tonemap::UpgradeToneMap(untonemapped_bt709,
+                                                 sdr_color,
+                                                 graded_sdr_color,
+                                                 1.f);
+      } else {
+        o0.rgb = CustomUpgradeToneMapPerChannel(untonemapped_bt709, graded_sdr_color);
+      }                                          
 
       o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);                                         
                                                

@@ -138,17 +138,20 @@ void main(
   r0.y = DofParams.z * r0.y;
   r1.xyz = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
   r2.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
+  r2.xyz = processColorBuffer(r2.xyz);
 
   float3 bloomOutput = CompositeColor(r0, r2.xyz, r1.xyz, v1, true);
   float3 noBloomOutput = CompositeColor(r0, r2.xyz, r1.xyz, v1, false);
-  
+
   o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  float3 scaledColor = o0.rgb;
   o0.w = 1;
 
   // ToneMapPass here?
-  // o0.rgb = PumboInverseTonemap(o0.rgb);
   o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = correctHue(o0.rgb, scaledColor);
   o0.rgb = expandColorGamut(o0.rgb);
+  o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
   return;
 }

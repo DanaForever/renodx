@@ -295,11 +295,6 @@ float3 CustomToneMapPass(float3 untonemapped,
         RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION,
         RENODX_TONE_MAP_HUE_SHIFT);
 
-    // outputColor = UpgradeToneMapWithoutHueCorrection(untonemapped_midgray,
-    //                                                 //  renodx::tonemap::renodrt::NeutralSDR(untonemapped_midgray),
-    //   ToneMapMaxCLL(untonemapped_midgray), 
-    //   tonemapped_bt709, 
-    //   RENODX_COLOR_GRADE_STRENGTH);
 
     outputColor = UpgradeToneMap(untonemapped_midgray,
                                  //  renodx::tonemap::renodrt::NeutralSDR(untonemapped_midgray),

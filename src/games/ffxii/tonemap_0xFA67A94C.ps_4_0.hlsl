@@ -113,26 +113,6 @@ void main(
     // o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.2);
   } else {
     o0.rgb = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
-    float3 output = o0.rgb;
-
-    [branch]
-    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.2f);
-    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.4f);
-    }
-
-    // output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-
-    [branch]
-    if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.2f);
-    } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.4f);
-    }
-
-    o0.rgb = output;
-    
   }
   
   return;

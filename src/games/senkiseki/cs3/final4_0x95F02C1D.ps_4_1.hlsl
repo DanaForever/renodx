@@ -106,6 +106,8 @@ void main(
 
   r0.xy = v1.xy * UvScaleBias.xy + UvScaleBias.zw;
   r0.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
+  r0.xyz = processColorBuffer(r0.xyz);
+
   r1.xyz = ToneFactor.xxx * r0.xyz;
   r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
   r2.xy = v1.xy * float2(1,-1) + float2(0,1);
@@ -121,11 +123,14 @@ void main(
   float3 noBloomOutput = CompositeColor(r0, r1, r3, r2, false);
 
   o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  float3 scaledColor = o0.rgb;
   o0.w = 1;
 
   // ToneMapPass here?
   o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
+  o0.rgb = correctHue(o0.rgb, scaledColor);
   o0.rgb = expandColorGamut(o0.rgb);
+  o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
   o0.w = 1;
 

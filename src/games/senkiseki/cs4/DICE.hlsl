@@ -131,7 +131,7 @@ DICESettings DefaultDICESettings() {
 // Tonemapper inspired from DICE. Can work by luminance to maintain hue.
 // Takes scRGB colors with a white level (the value of 1 1 1) of 80 nits (sRGB) (to not be confused with paper white).
 // Paper white is expected to have already been multiplied in.
-float3 DICETonemap(
+float3 ApplyDICE(
     float3 Color,
     float PeakWhite,
     const DICESettings Settings) {
@@ -196,4 +196,42 @@ float3 DICETonemap(
   }
 
   return Color;
+}
+
+float3 DICEToneMap(float3 color) {
+  float3 untonemapped = color;
+
+  color = renodx::color::grade::UserColorGrading(
+      color,
+      RENODX_TONE_MAP_EXPOSURE,    // exposure
+      RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
+      RENODX_TONE_MAP_SHADOWS,     // shadows
+      RENODX_TONE_MAP_CONTRAST,    // contrast
+      1.f,                         // saturation, we'll do this post-tonemap
+      0.f,                         // dechroma, post tonemapping
+      0.f);                        // hue correction, Post tonemapping
+
+  DICESettings DICEconfig = DefaultDICESettings();
+  DICEconfig.Type = (int)shader_injection.dice_tone_map_type;
+  DICEconfig.ShoulderStart = shader_injection.dice_shoulder_start;  // Start shoulder
+  DICEconfig.DesaturationAmount = shader_injection.dice_desaturation;
+  DICEconfig.DarkeningAmount = shader_injection.dice_darkening;
+
+  float dicePaperWhite = RENODX_DIFFUSE_WHITE_NITS / 80.f;
+  float dicePeakWhite = RENODX_PEAK_WHITE_NITS / 80.f;
+
+  color = ApplyDICE(color * dicePaperWhite, dicePeakWhite, DICEconfig) / dicePaperWhite;
+
+  color = renodx::color::grade::UserColorGrading(
+      color,
+      1.f,                         // exposure
+      1.f,                         // highlights
+      1.f,                         // shadows
+      1.f,                         // contrast
+      RENODX_TONE_MAP_SATURATION,  // saturation
+      0.f,                         // dechroma, we don't need it
+      0.f,                         // Hue Correction Strength
+      color);                      // Hue Correction Type
+
+  return color;
 }

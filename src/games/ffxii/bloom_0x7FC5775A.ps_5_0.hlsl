@@ -97,7 +97,7 @@ cbuffer SceneWideParameterConstantBuffer : register(b1)
   float eMapAmbientMdifir : packoffset(c28.w);
   float eMapAmbientBnd : packoffset(c29);
   float hMapCmrLghtXMdifir : packoffset(c29.y);
-  float hMapCmrLghtYMdifir : packoffset(c29.z);wwwwwwwwwwwwwwwwwwwwwwww
+  float hMapCmrLghtYMdifir : packoffset(c29.z);
   float hMapCmrLghtZMdifir : packoffset(c29.w);
   float hMapSpculrPwrMdifir : packoffset(c30);
   float hMapSpculrPwryCmrDistncFctr : packoffset(c30.y);

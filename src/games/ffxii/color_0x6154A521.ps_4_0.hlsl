@@ -44,25 +44,29 @@ void main(
   r2.w = r0.w * r1.x + 0.5;
   r0.xyzw = float4(0.5,0.5,0.5,0) + r2.xyzw;
 
+  // oh looks like it does gamma conversion here
   // r0.xyzw = log2(r0.xyzw);
   // r1.x = 1 / gamma;
   // r0.xyzw = r1.xxxx * r0.xyzw;
   // o0.xyzw = exp2(r0.xyzw);
-  o0.xyz = renodx::math::SafePow(r0.xyz, 1 / gamma);
+  r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
 
-  // oh looks like it does gamma conversion here
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     r0.xyzw = max(float4(0, 0, 0, 0), r0.xyzw);
     r0.xyzw = min(float4(100, 100, 100, 100), r0.xyzw);
   }
   else {
     o0.xyz = r0.xyz;
+    float g = 2.2;
     o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);  // clamp to bt2020 to eliminate invalid colors
   }
 
   o0.w = r0.w;
 
-  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  if (RENODX_TONE_MAP_TYPE > 0.f) {
+    r0.xyz = renodx::color::gamma::DecodeSafe(r0.xyz, gamma);
+    o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  }
   
   return;
 }

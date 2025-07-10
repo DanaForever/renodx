@@ -1,5 +1,7 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 16:56:24 2025
+#include "cs4/common.hlsl"
 #include "shared.h"
+
 cbuffer _Globals : register(b0)
 {
 
@@ -92,14 +94,19 @@ void main(
   float gaussian_blur_z = GaussianBlurParams.z;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
+  r0.xyz = processColorBuffer(r0.xyz);
   r0.xyzw = float4(0.100000001,0.100000001,0.100000001,0.100000001) * r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
   r0.xyzw = r1.xyzw * float4(0.400000006,0.400000006,0.400000006,0.400000006) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
   r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
   r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
+  r1.xyz = processColorBuffer(r1.xyz);
   r0.xyzw = r1.xyzw * float4(0.100000001,0.100000001,0.100000001,0.100000001) + r0.xyzw;
   r1.x = gaussian_blur_w * r0.w;
   r2.xyzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyzw;

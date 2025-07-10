@@ -135,6 +135,9 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x0EC06FAC), // Lantern
     CustomShaderEntry(0x4D7BB28D), // Helicopter
     CustomShaderEntry(0xACB821F7), // effect
+    CustomShaderEntry(0x7DF4072B), // effect
+    CustomShaderEntry(0x90904C40), // effect
+    
     // CustomShaderEntry(0x6C72EE93), // Bloom Generator
     // CS4
     CustomShaderEntry(0x2BF0C94B), // Final 3
@@ -427,9 +430,9 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Selects tonemapping method for hue correction",
         .labels = {"Reinhard", "NeutralSDR", "DICE", "Uncharted2", "ACES", "Clipping"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        // .is_visible = []() { return current_settings_mode >= 2; },
+        .is_visible = []() { return current_settings_mode >= 2; },
         // .is_visible = []() { return shader_injection.tone_map_type >= 1 && current_settings_mode >= 2.f; },
-        .is_visible = []() { return false; },
+        // .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueProcessor",
@@ -441,9 +444,9 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Selects hue processor",
         .labels = {"OKLab", "ICtCp", "darkTable UCS"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        // .is_visible = []() { return current_settings_mode >= 2; },
+        .is_visible = []() { return current_settings_mode >= 2; },
         // .is_visible = []() { return shader_injection.tone_map_type >= 1 && current_settings_mode >= 2.f; },
-        .is_visible = []() { return false; },
+        // .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
@@ -456,8 +459,8 @@ renodx::utils::settings::Settings settings = {
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return false; },
-        // .is_visible = []() { return current_settings_mode >= 2; },
+        // .is_visible = []() { return false; },
+        .is_visible = []() { return current_settings_mode >= 2; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueShift",

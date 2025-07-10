@@ -20,9 +20,7 @@
 namespace {
 
 renodx::mods::shader::CustomShaders custom_shaders = {
-    // CustomShaderEntry(0x00000000),
-    // CustomSwapchainShader(0x00000000),
-    // BypassShaderEntry(0x00000000)
+    // __ALL_CUSTOM_SHADERS,
 };
 
 ShaderInjectData shader_injection;
@@ -395,14 +393,26 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       if (!reshade::register_addon(h_module)) return FALSE;
 
       if (!initialized) {
+        // while (!IsDebuggerPresent()) Sleep(100);
+
         renodx::mods::shader::force_pipeline_cloning = true;
         renodx::mods::shader::expected_constant_buffer_space = 50;
         renodx::mods::shader::expected_constant_buffer_index = 13;
         renodx::mods::shader::allow_multiple_push_constants = true;
+        renodx::mods::shader::constant_buffer_offset = 50 * 4;
 
         renodx::mods::swapchain::expected_constant_buffer_index = 13;
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
-        renodx::mods::swapchain::use_resource_cloning = true;
+        // renodx::mods::swapchain::target_format = reshade::api::format::b8g8r8a8_unorm;
+        // renodx::mods::swapchain::target_color_space = reshade::api::color_space::srgb_nonlinear;
+        renodx::mods::swapchain::prevent_full_screen = false;
+        renodx::mods::swapchain::force_screen_tearing = false;
+        renodx::mods::swapchain::use_resource_cloning = false;
+        renodx::mods::swapchain::set_color_space = false;
+        renodx::mods::swapchain::use_device_proxy = true;
+        renodx::mods::swapchain::ignored_window_class_names = {
+            "SplashScreenClass",
+        };
         renodx::mods::swapchain::swap_chain_proxy_shaders = {
             {
                 reshade::api::device_api::d3d11,
@@ -419,23 +429,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
                 },
             },
         };
-
-        float screen_width = GetSystemMetrics(SM_CXSCREEN);
-        float screen_height = GetSystemMetrics(SM_CYSCREEN);
-
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r8g8b8a8_typeless,
-            .new_format = reshade::api::format::r16g16b16a16_typeless,
-            .aspect_ratio = screen_width / screen_height
-            // .ignore_size=true
-        });
-
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r8g8b8a8_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .aspect_ratio = screen_width / screen_height
-            // .ignore_size=true
-        });
 
         {
           auto* setting = new renodx::utils::settings::Setting{
@@ -501,6 +494,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           bool is_hdr10 = setting->GetValue() == 4;
           renodx::mods::swapchain::SetUseHDR10(is_hdr10);
           renodx::mods::swapchain::use_resize_buffer = setting->GetValue() < 4;
+          renodx::mods::swapchain::use_resize_buffer_on_demand = renodx::mods::swapchain::use_resize_buffer;
+          renodx::mods::swapchain::set_color_space = !renodx::mods::swapchain::use_resize_buffer;
           shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
           settings.push_back(setting);
         }

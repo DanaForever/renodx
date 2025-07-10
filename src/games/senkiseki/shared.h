@@ -109,7 +109,7 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_TONE_MAP_WORKING_COLOR_SPACE  2.f // shader_injection.tone_map_working_color_space
 #define RENODX_TONE_MAP_HUE_PROCESSOR        shader_injection.tone_map_hue_processor
 #define RENODX_TONE_MAP_HUE_CORRECTION       shader_injection.tone_map_hue_correction
-// #define RENODX_TONE_MAP_HUE_SHIFT            shader_injection.tone_map_hue_shift
+#define RENODX_TONE_MAP_HUE_SHIFT            shader_injection.tone_map_hue_shift
 #define RENODX_TONE_MAP_HUE_CORRECTION_METHOD     shader_injection.tone_map_hue_correction_method
 #define RENODX_RENO_DRT_WHITE_CLIP           shader_injection.tone_map_white_clip
 #define RENODX_TONE_MAP_CLAMP_COLOR_SPACE    2.f // shader_injection.tone_map_clamp_color_space
