@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sun Jun 08 15:57:47 2025
-
+#include "../shared.h"
 cbuffer _Globals : register(b0)
 {
 
@@ -550,9 +550,10 @@ void main(
   r4.xyz = r3.xyz * scene.MiscParameters1.xyz + -r3.xyz;
   r3.xyz = r0.www * r4.xyz + r3.xyz;
   r0.w = 1 + -r3.w;
-  r0.w = log2(r0.w);
-  r2.w = RimLitPower * r0.w;
-  r2.w = exp2(r2.w);
+  // r0.w = log2(r0.w);
+  // r2.w = RimLitPower * r0.w;
+  // r2.w = exp2(r2.w);
+  
   r2.w = RimLitIntensity * r2.w;
   r4.xyz = RimLitColor.xyz * r2.www;
   r3.xyz = r4.xyz * r2.xyz + r3.xyz;

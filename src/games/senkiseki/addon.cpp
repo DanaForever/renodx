@@ -104,6 +104,22 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0xD76CAD22), // artifact
     CustomShaderEntry(0x27C49A90), // artifact
     CustomShaderEntry(0xEB8EAAE7), // artifact
+    CustomShaderEntry(0x2140995A), // artifact
+    CustomShaderEntry(0xBA8780BB), // artifact
+    CustomShaderEntry(0xC757392B), // artifact
+    CustomShaderEntry(0xFBEC108C), // artifact
+    CustomShaderEntry(0xB6F58E83), // artifact
+    CustomShaderEntry(0x83970024), // artifact
+    CustomShaderEntry(0x9971D43C), // artifact
+    CustomShaderEntry(0x40AAA6CF), // artifact
+    CustomShaderEntry(0x0CE1250D), // artifact
+    CustomShaderEntry(0x2F9ED134), // artifact
+    CustomShaderEntry(0x4EFC489C), // artifact
+    CustomShaderEntry(0x374F364D), // artifact
+    CustomShaderEntry(0xF299DBA1), // artifact
+    CustomShaderEntry(0x4A5044D3), // artifact
+    CustomShaderEntry(0x85AF2462), // artifact
+    CustomShaderEntry(0x96E2605E), // artifact
     
 };
 
@@ -569,7 +585,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Color Grading",
         .max = 100.f,
         .parse = [](float value) { return value * 0.02f; },
-        .is_visible = []() { return current_settings_mode >= 1; },
+        
     },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeShadows",
@@ -620,6 +636,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Controls highlight desaturation due to overexposure.",
         .max = 100.f,
         .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeFlare",
@@ -631,6 +648,7 @@ renodx::utils::settings::Settings settings = {
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type == 3; },
         .parse = [](float value) { return value * 0.02f; },
+        .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeScene",

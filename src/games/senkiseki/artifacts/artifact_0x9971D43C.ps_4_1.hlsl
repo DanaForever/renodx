@@ -1,4 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Mon Jul 07 02:40:52 2025
+// ---- Created with 3Dmigoto v1.3.16 on Fri Jul 11 00:04:36 2025
 #include "../shared.h"
 cbuffer _Globals : register(b0)
 {
@@ -77,14 +77,10 @@ cbuffer _Globals : register(b0)
   float3 ShadowColorShift : packoffset(c84) = {0.100000001,0.0199999996,0.0199999996};
   float Shininess : packoffset(c84.w) = {0.5};
   float SpecularPower : packoffset(c85) = {50};
-  float3 RimLitColor : packoffset(c85.y) = {1,1,1};
-  float RimLitIntensity : packoffset(c86) = {4};
-  float RimLitPower : packoffset(c86.y) = {2};
-  float RimLightClampFactor : packoffset(c86.z) = {2};
-  float BloomIntensity : packoffset(c86.w) = {1};
-  float MaskEps : packoffset(c87);
-  float4 PointLightParams : packoffset(c88) = {0,2,1,1};
-  float4 PointLightColor : packoffset(c89) = {1,0,0,0};
+  float BloomIntensity : packoffset(c85.y) = {1};
+  float MaskEps : packoffset(c85.z);
+  float4 PointLightParams : packoffset(c86) = {0,2,1,1};
+  float4 PointLightColor : packoffset(c87) = {1,0,0,0};
 }
 
 SamplerState LinearWrapSamplerState_s : register(s0);
@@ -425,36 +421,36 @@ void main(
             r3.xy = -r1.yz * r0.ww;
             r3.z = 0;
             r4.xyz = r3.xyz + r2.xyz;
-            r3.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
-            r3.x = 0.0625 * r3.x;
-            r1.w = r1.w * 0.5 + r3.x;
+            r3.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r4.xy, r4.z).x;
+            r3.y = 0.0625 * r3.y;
+            r1.w = r1.w * 0.5 + r3.y;
             r4.x = r1.y * r0.w;
             r4.y = -r1.z * r0.w;
             r4.z = 0;
             r5.xyz = r4.xyz + r2.xyz;
-            r3.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
-            r1.w = r3.x * 0.0625 + r1.w;
+            r3.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
+            r1.w = r3.y * 0.0625 + r1.w;
             r5.x = -r1.y * r0.w;
             r5.y = r1.z * r0.w;
             r5.z = 0;
+            r5.xyz = r5.xyz + r2.xyz;
+            r3.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r5.xy, r5.z).x;
+            r1.w = r3.y * 0.0625 + r1.w;
+            r5.xy = r1.yz * r0.ww;
+            r5.z = 0;
             r6.xyz = r5.xyz + r2.xyz;
-            r3.x = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
-            r1.w = r3.x * 0.0625 + r1.w;
-            r6.xy = r1.yz * r0.ww;
-            r6.z = 0;
-            r7.xyz = r6.xyz + r2.xyz;
-            r1.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r7.xy, r7.z).x;
+            r1.y = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
             r1.y = r1.y * 0.0625 + r1.w;
-            r3.xyz = r3.zyz + r2.xyz;
-            r1.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r3.xy, r3.z).x;
+            r6.xyz = r4.zyz + r2.xyz;
+            r1.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r6.xy, r6.z).x;
             r1.y = r1.z * 0.0625 + r1.y;
-            r3.xyz = r5.xzz + r2.xyz;
+            r3.xyz = r3.xzz + r2.xyz;
             r1.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r3.xy, r3.z).x;
             r1.y = r1.z * 0.0625 + r1.y;
             r3.xyz = r4.xzz + r2.xyz;
             r1.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r3.xy, r3.z).x;
             r1.y = r1.z * 0.0625 + r1.y;
-            r3.xyz = r6.zyz + r2.xyz;
+            r3.xyz = r5.zyz + r2.xyz;
             r1.z = LightShadowMap0.SampleCmpLevelZero(LinearClampCmpSamplerState_s, r3.xy, r3.z).x;
             r2.w = r1.z * 0.0625 + r1.y;
           } else {
@@ -552,8 +548,8 @@ void main(
   r1.w = dot(r3.xyz, r3.xyz);
   r1.w = rsqrt(r1.w);
   r4.xyz = r3.xyz * r1.www;
-  // r2.w = saturate(dot(r2.xyz, r4.xyz));
   r2.w = (dot(r2.xyz, r4.xyz));
+  // r2.w = saturate(dot(r2.xyz, r4.xyz));
   r3.w = dot(Light0.m_direction.xyz, r2.xyz);
   r3.w = r3.w * 0.5 + 0.5;
   r3.w = r3.w * r3.w;
@@ -561,8 +557,7 @@ void main(
   r1.w = dot(r3.xyz, r3.xyz);
   r1.w = rsqrt(r1.w);
   r3.xyz = r3.xyz * r1.www;
-  // r1.w = saturate(dot(r2.xyz, r3.xyz));
-  r1.w = (dot(r2.xyz, r3.xyz));
+  r1.w = saturate(dot(r2.xyz, r3.xyz));
   // r1.w = log2(r1.w);
   // r1.w = SpecularPower * r1.w;
   // r1.w = exp2(r1.w);
@@ -575,15 +570,6 @@ void main(
   r0.w = 1 + -r0.w;
   r4.xyz = r3.xyz * scene.MiscParameters1.xyz + -r3.xyz;
   r3.xyz = r0.www * r4.xyz + r3.xyz;
-  r0.w = 1 + -r2.w;
-  // r0.w = log2(r0.w);
-  // r1.w = RimLitPower * r0.w;
-  // r1.w = exp2(r1.w);
-  r1.w = renodx::math::SafePow(r0.w, RimLitPower);
-  r1.w = RimLitIntensity * r1.w;
-  r4.xyz = RimLitColor.xyz * r1.www;
-  r3.xyz = r4.xyz * r1.xyz + r3.xyz;
-  r3.xyz = min(RimLightClampFactor, r3.xyz);
   r1.xyz = r1.xyz + r1.xyz;
   r1.xyz = max(float3(1,1,1), r1.xyz);
   r4.xyz = min(float3(1,1,1), r3.xyz);
@@ -592,8 +578,11 @@ void main(
   r1.xyz = r4.xyz * r1.xyz + r3.xyz;
   r1.xyz = v1.xyz * r1.xyz;
   r0.xyz = r1.xyz * r0.xyz;
-  r0.w = PointLightColor.x * r0.w;
-  r0.w = exp2(r0.w);
+  r0.w = 1 + -r2.w;
+  // r0.w = log2(r0.w);
+  // r0.w = PointLightColor.x * r0.w;
+  // r0.w = exp2(r0.w);
+  r0.w = renodx::math::SafePow(r0.w, PointLightColor.x);
   r0.w = -1 + r0.w;
   r0.w = PointLightColor.y * r0.w + 1;
   r1.xyz = GameMaterialEmission.xyz * r0.www;
@@ -620,13 +609,13 @@ void main(
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
   // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = renodx::color::y::from::BT709(r0.xyz);
+  r1.x = renodx::color::y::from::NTSC1953(r0.xyz);
   r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r1.xyz = BloomIntensity * r0.xyz;
   // r1.x = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = renodx::color::y::from::BT709(r1.xyz);
+  r1.x = renodx::color::y::from::NTSC1953(r1.xyz);
   r1.x = -scene.MiscParameters2.z + r1.x;
   r1.x = max(0, r1.x);
   r1.x = 0.5 * r1.x;
@@ -648,6 +637,5 @@ void main(
   o0 = saturate(o0);
   o1 = saturate(o1);
   o2 = saturate(o2);
-
   return;
 }

@@ -662,5 +662,9 @@ void main(
   o0.xyz = r0.xyz;
   o2.w = MaskEps;
 
+  o0 = saturate(o0);
+  o1 = saturate(o1);
+  o2 = saturate(o2);
+
   return;
 }
