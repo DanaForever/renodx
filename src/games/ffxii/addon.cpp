@@ -34,6 +34,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xD7B2F9D1), // artifact
     CustomShaderEntry(0xD55AB119), // artifact
     CustomShaderEntry(0xC041F2BD), // artifact
+    CustomShaderEntry(0x7B3816A7), // proxy
     CustomShaderEntry(0x2A3B8150), // final
     // CustomSwapchainShader(0x00000000),
     // BypassShaderEntry(0x00000000)
@@ -66,6 +67,18 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Vanilla", "None", "ACES", "RenoDRT"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapType",
+    //     .binding = &shader_injection.debug_gamma,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 0.f,
+    //     .can_reset = true,
+    //     .label = "Debug Gamma",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Sets the gamma decoding type",
+    //     .labels = {"None", "SRGB", "2.2", "2.4"},
+    //     .is_visible = []() { return current_settings_mode >= 1; },
+    // },
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",
         .binding = &shader_injection.peak_white_nits,
@@ -86,7 +99,6 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Sets the value of 100% white in nits",
         .min = 48.f,
         .max = 500.f,
-        .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapUINits",
@@ -97,7 +109,48 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Sets the brightness of UI and HUD elements in nits",
         .min = 48.f,
         .max = 500.f,
-        .is_visible = []() { return false; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapUpradeType",
+        .binding = &shader_injection.custom_tonemap_upgrade_type,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 1.f,
+        .can_reset = true,
+        .label = "Grading Application",
+        .section = "Highlight Saturation Restoration",
+        .tooltip = "How the graded image gets upgraded",
+        .labels = {"Luminance", "Per Channel+"},
+        .is_visible = []() { return current_settings_mode >= 1; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapUpradeStrength",
+        .binding = &shader_injection.custom_tonemap_upgrade_strength,
+        .default_value = 50.f,
+        .label = "Saturation Strength",
+        .section = "Highlight Saturation Restoration",
+        .is_enabled = []() { return shader_injection.custom_tonemap_upgrade_type == 1.f; },
+        .parse = [](float value) { return value * 0.01f; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapUpradeHueCorr",
+        .binding = &shader_injection.custom_tonemap_upgrade_huecorr,
+        .default_value = 100.f,
+        .label = "Hue Correction",
+        .section = "Highlight Saturation Restoration",
+        .is_enabled = []() { return shader_injection.custom_tonemap_upgrade_type == 1.f; },
+        .parse = [](float value) { return value * 0.01f; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "DisplayMapType",
+        .binding = &shader_injection.custom_display_map_type,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 1.f,
+        .can_reset = true,
+        .label = "Display Map Type",
+        .section = "Highlight Saturation Restoration",
+        .tooltip = "Sets the display mapper used",
+        .labels = {"None", "DICE", "Frostbite", "RenoDRT NeutralSDR", "ToneMapMaxCLL"},
+        .is_visible = []() { return settings[0]->GetValue() >= 1; },
     },
     new renodx::utils::settings::Setting{
         .key = "GammaCorrection",
@@ -122,17 +175,17 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .is_visible = []() { return current_settings_mode >= 2; },
     },
-    // new renodx::utils::settings::Setting{
-    //     .key = "ToneMapWorkingColorSpace",
-    //     .binding = &shader_injection.tone_map_working_color_space,
-    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-    //     .default_value = 0.f,
-    //     .label = "Working Color Space",
-    //     .section = "Tone Mapping",
-    //     .labels = {"BT709", "BT2020", "AP1"},
-    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-    //     .is_visible = []() { return current_settings_mode >= 2; },
-    // },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapWorkingColorSpace",
+        .binding = &shader_injection.tone_map_working_color_space,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "Working Color Space",
+        .section = "Tone Mapping",
+        .labels = {"BT709", "BT2020", "AP1"},
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .is_visible = []() { return current_settings_mode >= 2; },
+    },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueProcessor",
         .binding = &shader_injection.tone_map_hue_processor,
@@ -171,19 +224,19 @@ renodx::utils::settings::Settings settings = {
         .parse = [](float value) { return value * 0.01f; },
         .is_visible = []() { return current_settings_mode >= 1; },
     },
-    // new renodx::utils::settings::Setting{
-    //     .key = "ToneMapClampColorSpace",
-    //     .binding = &shader_injection.tone_map_clamp_color_space,
-    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-    //     .default_value = 0.f,
-    //     .label = "Clamp Color Space",
-    //     .section = "Tone Mapping",
-    //     .tooltip = "Hue-shift emulation strength.",
-    //     .labels = {"None", "BT709", "BT2020", "AP1"},
-    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-    //     .parse = [](float value) { return value - 1.f; },
-    //     .is_visible = []() { return current_settings_mode >= 2; },
-    // },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapClampColorSpace",
+        .binding = &shader_injection.tone_map_clamp_color_space,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "Clamp Color Space",
+        .section = "Tone Mapping",
+        .tooltip = "Hue-shift emulation strength.",
+        .labels = {"None", "BT709", "BT2020", "AP1"},
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .parse = [](float value) { return value - 1.f; },
+        .is_visible = []() { return current_settings_mode >= 2; },
+    },
     new renodx::utils::settings::Setting{
         .key = "ToneMapClampPeak",
         .binding = &shader_injection.tone_map_clamp_peak,
@@ -197,6 +250,7 @@ renodx::utils::settings::Settings settings = {
         .parse = [](float value) { return value - 1.f; },
         .is_visible = []() { return current_settings_mode >= 2; },
     },
+    
     new renodx::utils::settings::Setting{
         .key = "ColorGradeExposure",
         .binding = &shader_injection.tone_map_exposure,
@@ -348,34 +402,34 @@ renodx::utils::settings::Settings settings = {
         },
         .is_visible = []() { return settings[0]->GetValue() >= 1; },
     },
-    // new renodx::utils::settings::Setting{
-    //     .key = "IntermediateDecoding",
-    //     .binding = &shader_injection.intermediate_encoding,
-    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-    //     .default_value = 0.f,
-    //     .label = "Intermediate Encoding",
-    //     .section = "Display Output",
-    //     .labels = {"Auto", "None", "SRGB", "2.2", "2.4"},
-    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-    //     .parse = [](float value) {
-    //         if (value == 0) return shader_injection.gamma_correction + 1.f;
-    //         return value - 1.f; },
-    //     .is_visible = []() { return current_settings_mode >= 2; },
-    // },
-    // new renodx::utils::settings::Setting{
-    //     .key = "SwapChainDecoding",
-    //     .binding = &shader_injection.swap_chain_decoding,
-    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-    //     .default_value = 0.f,
-    //     .label = "Swapchain Decoding",
-    //     .section = "Display Output",
-    //     .labels = {"Auto", "None", "SRGB", "2.2", "2.4"},
-    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-    //     .parse = [](float value) {
-    //         if (value == 0) return shader_injection.intermediate_encoding;
-    //         return value - 1.f; },
-    //     .is_visible = []() { return current_settings_mode >= 2; },
-    // },
+    new renodx::utils::settings::Setting{
+        .key = "IntermediateDecoding",
+        .binding = &shader_injection.intermediate_encoding,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "Intermediate Encoding",
+        .section = "Display Output",
+        .labels = {"Auto", "None", "SRGB", "2.2", "2.4"},
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .parse = [](float value) {
+            if (value == 0) return shader_injection.gamma_correction + 1.f;
+            return value - 1.f; },
+        .is_visible = []() { return current_settings_mode >= 2; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "SwapChainDecoding",
+        .binding = &shader_injection.swap_chain_decoding,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "Swapchain Decoding",
+        .section = "Display Output",
+        .labels = {"Auto", "None", "SRGB", "2.2", "2.4"},
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .parse = [](float value) {
+            if (value == 0) return shader_injection.intermediate_encoding;
+            return value - 1.f; },
+        .is_visible = []() { return current_settings_mode >= 2; },
+    },
     new renodx::utils::settings::Setting{
         .key = "SwapChainGammaCorrection",
         .binding = &shader_injection.swap_chain_gamma_correction,
@@ -457,29 +511,22 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_index = 13;
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
-        renodx::mods::swapchain::swap_chain_proxy_shaders = {
-            {
-                reshade::api::device_api::d3d11,
-                {
-                    .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
-                    .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
-                },
-            },
-            {
-                reshade::api::device_api::d3d12,
-                {
-                    .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
-                    .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
-                },
-            },
-        };
-
-        // //  RGBA8_typeless
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //     .old_format = reshade::api::format::r8g8b8a8_typeless,
-        //     .new_format = reshade::api::format::r16g16b16a16_float,
-        //     .aspect_ratio = 16.f / 9.f
-        // });
+        // renodx::mods::swapchain::swap_chain_proxy_shaders = {
+        //     {
+        //         reshade::api::device_api::d3d11,
+        //         {
+        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
+        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
+        //         },
+        //     },
+        //     {
+        //         reshade::api::device_api::d3d12,
+        //         {
+        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
+        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
+        //         },
+        //     },
+        // };
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_unorm,
@@ -491,32 +538,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .new_format = reshade::api::format::r16g16b16a16_float,
         });
 
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //     .old_format = reshade::api::format::r8g8b8a8_unorm,
-        //     .new_format = reshade::api::format::r16g16b16a16_float,
-        //     .aspect_ratio = 1.f / 1.f
-        // });
-
-        // //  BGRA8_typeless
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //     .old_format = reshade::api::format::b8g8r8a8_typeless,
-        //     .new_format = reshade::api::format::r16g16b16a16_float,
-        //     .aspect_ratio = 16.f / 9.f
-        // });
-
-        // //  BGRA8_typeless
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //     .old_format = reshade::api::format::b8g8r8a8_unorm,
-        //     .new_format = reshade::api::format::r16g16b16a16_float,
-        //     .aspect_ratio = 16.f / 9.f
-        // });
-
-        // //  BGRA8_typeless
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //     .old_format = reshade::api::format::b8g8r8a8_unorm_srgb,
-        //     .new_format = reshade::api::format::r16g16b16a16_float,
-        //     .aspect_ratio = 16.f / 9.f
-        // });
 
         // {
         //   auto* setting = new renodx::utils::settings::Setting{

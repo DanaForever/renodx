@@ -50,38 +50,6 @@ float3 PostToneMapScale(float3 color) {
   return color;
 }
 
-float3 RestoreHighlightSaturation(float3 color) {
-  if (RENODX_TONE_MAP_TYPE != 0.f && DISPLAY_MAP_TYPE != 0.f) {
-    if (DISPLAY_MAP_TYPE == 1.f) {  // Dice
-
-      float dicePeak = DISPLAY_MAP_PEAK;          // 2.f default
-      float diceShoulder = DISPLAY_MAP_SHOULDER;  // 0.5f default
-      color = renodx::tonemap::dice::BT709(color, dicePeak, diceShoulder);
-
-    } else if (DISPLAY_MAP_TYPE == 2.f) {  // Frostbite
-
-      float3 neutral_sdr_color = renodx::tonemap::renodrt::NeutralSDR(color);
-      float color_y = renodx::color::y::from::BT709(color);
-      // Lerp color and NeutralSDR(color) based on luminance
-      // Normally using NeutralSDR alone messes up midtones
-      // But the lerp makes sure it only gets applied to highlights
-      color = lerp(color, neutral_sdr_color, saturate(color_y));
-    } else if (DISPLAY_MAP_TYPE == 3.f) {
-      float3 neutral_sdr_color = renodx::tonemap::renodrt::NeutralSDR(color);
-      float color_y = renodx::color::y::from::BT709(color);
-      // Lerp color and NeutralSDR(color) based on luminance
-      // Normally using NeutralSDR alone messes up midtones
-      // But the lerp makes sure it only gets applied to highlights
-      color = lerp(color, neutral_sdr_color, saturate(color_y));
-    }
-  } else {
-    // We dont want to Display Map if the tonemapper is vanilla/preset off or display map is none
-    color = color;
-  }
-
-  return color;
-}
-
 float3 ToneMapPass(float3 untonemapped, 
   float3 graded_sdr, 
   float3 neutral_sdr,
@@ -258,4 +226,129 @@ float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
   // vHDRColor = mul(AP1_2_sRGB, ColorAP1);
   vHDRColor = renodx::color::bt709::from::AP1(ColorAP1);
   return vHDRColor;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+float3 RestoreHighlightSaturation(float3 untonemapped) {
+  float3 displaymappedColor = untonemapped;
+
+  if (CUSTOM_DISPLAY_MAP_TYPE == 1.f) {
+    displaymappedColor = renodx::tonemap::dice::BT709(untonemapped, 1.f, 0.f);
+  }
+    else if (CUSTOM_DISPLAY_MAP_TYPE == 2.f) {
+    displaymappedColor = renodx::tonemap::frostbite::BT709(untonemapped, 1.f, 0.f, 1.f);
+  }
+    else if (CUSTOM_DISPLAY_MAP_TYPE == 3.f) {
+    untonemapped = min(100.f, untonemapped);
+    displaymappedColor = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
+  }
+    else if (CUSTOM_DISPLAY_MAP_TYPE == 4.f) {
+    displaymappedColor = ToneMapMaxCLL(untonemapped);
+  }
+
+  return lerp(untonemapped, displaymappedColor, saturate(renodx::color::y::from::BT709(untonemapped)));
+}
+
+float3 displayMap(float3 untonemapped) {
+  if (CUSTOM_DISPLAY_MAP_TYPE == 0.f) {
+    return untonemapped;
+  } else {
+    return RestoreHighlightSaturation(untonemapped);
+  }
+}
+
+#define PI    3.141592653589793238462643383279502884197
+#define PI_X2 (PI * 2.0)
+#define PI_X4 (PI * 4.0)
+
+float3 CorrectHuePolar(float3 incorrectOkLCH, float3 correctOkLCH, float strength) {
+  // skip adjustment for achromatic colors
+  const float chromaThreshold = 1e-5;
+  float iChroma = incorrectOkLCH.y;
+  float cChroma = correctOkLCH.y;
+
+  if (iChroma < chromaThreshold || cChroma < chromaThreshold) {
+    return incorrectOkLCH;
+  }
+
+  // hues in radians
+  float iHue = incorrectOkLCH.z;
+  float cHue = correctOkLCH.z;
+
+  // calculate shortest angular difference
+  float diff = cHue - iHue;
+  if (diff > PI) diff -= PI_X2;
+  else if (diff < -PI) diff += PI_X2;
+
+  // apply strength-based correction
+  float newHue = iHue + strength * diff;
+
+  float3 adjustedOkLCH = float3(
+      incorrectOkLCH.x,
+      incorrectOkLCH.y,
+      newHue
+  );
+
+  return adjustedOkLCH;
+}
+
+float UpgradeToneMapRatio(float color_hdr, float color_sdr, float post_process_color) {
+  if (color_hdr < color_sdr) {
+    // If substracting (user contrast or paperwhite) scale down instead
+    // Should only apply on mismatched HDR
+    return color_hdr / color_sdr;
+  } else {
+    float delta = color_hdr - color_sdr;
+    delta = max(0, delta);  // Cleans up NaN
+    const float new_value = post_process_color + delta;
+
+    const bool valid = (post_process_color > 0);  // Cleans up NaN and ignore black
+    return valid ? (new_value / post_process_color) : 0;
+  }
+}
+
+float3 UpgradeToneMapPerChannel(float3 color_hdr, float3 color_sdr, float3 post_process_color, float post_process_strength) {
+  // float ratio = 1.f;
+
+  float3 bt2020_hdr = max(0, renodx::color::bt2020::from::BT709(color_hdr));
+  float3 bt2020_sdr = max(0, renodx::color::bt2020::from::BT709(color_sdr));
+  float3 bt2020_post_process = max(0, renodx::color::bt2020::from::BT709(post_process_color));
+
+  float3 ratio = float3(
+      UpgradeToneMapRatio(bt2020_hdr.r, bt2020_sdr.r, bt2020_post_process.r),
+      UpgradeToneMapRatio(bt2020_hdr.g, bt2020_sdr.g, bt2020_post_process.g),
+      UpgradeToneMapRatio(bt2020_hdr.b, bt2020_sdr.b, bt2020_post_process.b));
+
+  float3 color_scaled = max(0, bt2020_post_process * ratio);
+  color_scaled = renodx::color::bt709::from::BT2020(color_scaled);
+  float peak_correction = saturate(1.f - renodx::color::y::from::BT2020(bt2020_post_process));
+  color_scaled = renodx::color::correct::Hue(color_scaled, post_process_color, peak_correction);
+  return lerp(color_hdr, color_scaled, post_process_strength);
+}
+
+float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
+  float hueCorrection = 1.f - CUSTOM_TONEMAP_UPGRADE_HUECORR;
+  float satStrength = 1.f - CUSTOM_TONEMAP_UPGRADE_STRENGTH;
+
+  float3 upgradedPerCh = UpgradeToneMapPerChannel(
+      untonemapped,
+      renodx::tonemap::renodrt::NeutralSDR(untonemapped),
+      graded,
+      1.f);
+
+  float3 upgradedPerCh_okLCH = renodx::color::oklch::from::BT709(upgradedPerCh);
+  float3 graded_okLCH = renodx::color::oklch::from::BT709(graded);
+
+  // heavy hue correction with graded hue
+  upgradedPerCh_okLCH = CorrectHuePolar(upgradedPerCh_okLCH, graded_okLCH, saturate(pow(graded_okLCH.y, hueCorrection)));
+
+  // desaturate highlights based on graded chrominance
+  upgradedPerCh_okLCH.y = lerp(graded_okLCH.y, upgradedPerCh_okLCH.y, saturate(pow(graded_okLCH.y, satStrength)));
+
+  upgradedPerCh = renodx::color::bt709::from::OkLCh(upgradedPerCh_okLCH);
+
+  upgradedPerCh = max(-10000000000000000000000000000000000000.f, upgradedPerCh);  // bandaid for NaNs
+
+  return upgradedPerCh;
 }

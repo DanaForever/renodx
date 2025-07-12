@@ -42,6 +42,7 @@ struct ShaderInjectData {
   float graphics_white_nits;
   float color_grade_strength;
   float tone_map_type;
+  float tone_map_mode;
   float tone_map_exposure;
   float tone_map_highlights;
   float tone_map_shadows;
@@ -72,18 +73,19 @@ struct ShaderInjectData {
   float swap_chain_encoding;
   float swap_chain_encoding_color_space;
 
-  float per_channel_correction;
-  float per_channel_correction_range;
-  float expand_gamut;
+  // float per_channel_correction;
+  // float per_channel_correction_range;
+  // float expand_gamut;
+
   float color_grade_per_channel_hue_correction;
   float color_grade_per_channel_hue_shift_strength;
   float color_grade_per_channel_chrominance_correction;
   float color_grade_per_channel_blowout_restoration;
 
-  float displayMapType;
-  float displayMapPeak;
-  float displayMapShoulder;
-
+  float custom_display_map_type;
+  float custom_tonemap_upgrade_type;
+  float custom_tonemap_upgrade_huecorr;
+  float custom_tonemap_upgrade_strength;
 
   // float color_grade_hue_shift;
 };
@@ -135,13 +137,18 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_PER_CHANNEL_HUE_CORRECTION  shader_injection.color_grade_per_channel_hue_correction
 #define RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION  shader_injection.color_grade_per_channel_chrominance_correction
 
-#define DISPLAY_MAP_TYPE                     shader_injection.displayMapType
-#define DISPLAY_MAP_PEAK                     shader_injection.displayMapPeak
-#define DISPLAY_MAP_SHOULDER                 shader_injection.displayMapShoulder
-#define FFXV_PER_CHANNEL_CORRECTION                 shader_injection.per_channel_correction
-#define FFXV_EXPAND_GAMUT                shader_injection.expand_gamut
+#define CUSTOM_DISPLAY_MAP_TYPE                   shader_injection.custom_display_map_type
+#define CUSTOM_TONEMAP_UPGRADE_TYPE               shader_injection.custom_tonemap_upgrade_type
+#define CUSTOM_TONEMAP_UPGRADE_HUECORR            shader_injection.custom_tonemap_upgrade_huecorr
+#define CUSTOM_TONEMAP_UPGRADE_STRENGTH           shader_injection.custom_tonemap_upgrade_strength
 
-#define PEAK_CLAMP                 shader_injection.peak_clamp
+// #define DISPLAY_MAP_TYPE                     shader_injection.displayMapType
+// #define DISPLAY_MAP_PEAK                     shader_injection.displayMapPeak
+// #define DISPLAY_MAP_SHOULDER                 shader_injection.displayMapShoulder
+// #define FFXV_PER_CHANNEL_CORRECTION                 shader_injection.per_channel_correction
+// #define FFXV_EXPAND_GAMUT                shader_injection.expand_gamut
+
+// #define PEAK_CLAMP                 shader_injection.peak_clamp
 
 #include "../../shaders/renodx.hlsl"
 

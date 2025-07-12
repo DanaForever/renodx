@@ -61,6 +61,7 @@ void main(
   float4 fDest;
 
   r0.xyzw = t2.Sample(s2_s, v3.xy).xyzw;
+
  
   r1.xyz = r0.xyz * cb0[186].xxx + cb0[186].yyy;
   r0.xyz = r0.xyz * cb0[188].xxx + cb0[188].yyy;
@@ -77,15 +78,21 @@ void main(
   
   r1.xyz = r2.xyz * r0.xyz + r1.xyz;
   r1.xyz = (cb0[154].yyy * r1.xyz);
-  r2.xyzw = t0.Sample(s0_s, v0.xy, int2(0, 0)).xyzw; // sample the untonemapped
+  r2.xyzw = t0.Sample(s0_s, v0.xy, int2(0, 0)).xyzw;  // sample the untonemapped
+  // r2.xyz = renodx::color::srgb::DecodeSafe(r2.xyz);
 
   r0.xyz = r2.xyz * r0.xyz;
 
   r0.w = dot(r2.xyzw, cb0[155].xyzw);
   o0.w = (cb0[154].w + r0.w);
 
-  float3 untonemapped = r0.rgb;
-  r0.rgb = RestoreHighlightSaturation(untonemapped);
+  // SetUntonemappedSRGB(r0.rgb);
+
+  float3 untonemapped = renodx::color::srgb::DecodeSafe(r0.rgb);
+  // r0.rgb = RestoreHighlightSaturation(untonemapped);
+  if (CUSTOM_DISPLAY_MAP_TYPE > 0.f) {
+    r0.rgb = renodx::color::srgb::EncodeSafe(RestoreHighlightSaturation(untonemapped));
+  }
 
   // r0.xyz = cb0[154].xxx * r0.xyz;
 
@@ -104,16 +111,20 @@ void main(
   // o0.xyz = r2.xyz * r1.xyz + r0.xyz; // lerp
 
   o0.xyz = toneMap(r0.rgb, r1.rgb);
+  o0.xyz = renodx::color::srgb::DecodeSafe(o0.xyz);
 
-  // float3 midgray = (0.18f, 0.18f, 0.18f);
-  // midgray = toneMap(midgray, r1.rgb);
-  float midgray_value = 0.18f; //renodx::color::y::from::BT709(midgray);
+  if (RENODX_TONE_MAP_TYPE > 0.f) {
 
-  if (shader_injection.tone_map_type == 0.f) {
-    // o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.2);
-  } else {
-    o0.rgb = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
+    // based on their color grading code
+    float mid_gray = renodx::color::srgb::Decode(0.5f);
+    untonemapped = untonemapped * mid_gray / 0.18f;
+    // o0.rgb = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
+    if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
+      o0.rgb = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
+    } else {
+      o0.rgb = CustomUpgradeToneMapPerChannel(untonemapped, o0.rgb);
+      o0.rgb = renodx::draw::ToneMapPass(o0.rgb);
+    }
   }
-  
   return;
 }

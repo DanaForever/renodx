@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sat May 31 20:51:58 2025
 #include "./shared.h"
+#include "./common.hlsl"
 cbuffer _Globals : register(b0)
 {
   float4 offsets : packoffset(c0);
@@ -33,6 +34,8 @@ void main(
   r0.xy = v1.xy * float2(1,-1) + float2(0,1);
   r0.xyzw = apply_MainTex.Sample(ColorBufferSampler_s, r0.xy).xyzw;
 
+  r0.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     r0.xyzw = max(float4(0,0,0,0), r0.xyzw);
     r0.xyzw = min(float4(2,2,2,2), r0.xyzw);
@@ -49,24 +52,24 @@ void main(
   // r1.x = 1 / gamma;
   // r0.xyzw = r1.xxxx * r0.xyzw;
   // o0.xyzw = exp2(r0.xyzw);
-  r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
 
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     r0.xyzw = max(float4(0, 0, 0, 0), r0.xyzw);
     r0.xyzw = min(float4(100, 100, 100, 100), r0.xyzw);
+    r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
   }
   else {
-    o0.xyz = r0.xyz;
-    float g = 2.2;
-    o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);  // clamp to bt2020 to eliminate invalid colors
+    r0.rgb = renodx::color::bt709::clamp::AP1(r0.rgb);  // clamp to bt2020 to eliminate invalid colors
+    r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
   }
 
   o0.w = r0.w;
 
-  if (RENODX_TONE_MAP_TYPE > 0.f) {
-    r0.xyz = renodx::color::gamma::DecodeSafe(r0.xyz, gamma);
-    o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
-  }
+  o0.rgb = r0.rgb;
+
+  o0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+
+  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
   
   return;
 }
