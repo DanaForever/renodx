@@ -98,5 +98,6 @@ void main(
   r0.xyzw = v1.xyzw * r0.xyzw;
   o0.xyz = inputSpecular.xyz * inputSpecular.www + r0.xyz;
   o0.w = r0.w;
+
   return;
 }

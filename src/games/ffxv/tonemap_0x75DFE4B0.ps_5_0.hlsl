@@ -104,7 +104,7 @@ float3 colorGrade(float3 color) {
   r1.y = dot(r0.xyz, float3(-0.0744709969, 1.081357, -0.00688599981));
   r1.z = dot(r0.xyz, float3(-0.00750700012, -0.0244679991, 1.03197396));
 
-  r0.x = dot(r1.xyz, float3(0.343300015, 0.593299985, 0.0634000003));
+  r0.x = dot(r1.xyz, float3(0.343300015, 0.593299985, 0.0634000003)); // luminance
   r2.x = dot(r1.xyz, float3(0.40959999, -0.453200012, 0.0436000004)); // magenta (red + blue) vs green
   r2.y = dot(r1.xyz, float3(0.286799997, 0.211300001, -0.498100013)); // yellow (red + green) vs blue
   r2.zw = -r2.xy;

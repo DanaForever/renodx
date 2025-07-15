@@ -167,6 +167,7 @@ void main(
 
   r0.xyzw = g_tTex.SampleLevel(g_sSampler_s, v1.xy, 0).xyzw;
   float3 untonemapped = r0.xyz;
+  r0.xyz = displayMap(untonemapped);
 
   r1.x = dot(r0.xyz, float3(0.542472005,0.439283997,0.0182429999));
   r1.y = dot(r0.xyz, float3(0.0426700003,0.941115022,0.0162140001));
@@ -223,13 +224,27 @@ void main(
 
     float3 hdr_ungraded, hdr_graded;
 
-    hdr_ungraded = ToneMapPass(untonemapped,
-                               r0.rgb,
-                               renodx::tonemap::renodrt::NeutralSDR(untonemapped),
-                               0.18f,
-                               false);
+    if (shader_injection.tone_map_mode == 0.f) {
+      if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
+        hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, r0.rgb);
+      } else {
+        hdr_ungraded = CustomUpgradeToneMapPerChannel(untonemapped, r0.rgb);
+        hdr_ungraded = renodx::draw::ToneMapPass(hdr_ungraded);
+      }
 
-    hdr_graded = colorGrade(hdr_ungraded);
+      hdr_graded = colorGrade(hdr_ungraded);
+    } else {
+      float3 sdr_graded = colorGrade(r0.rgb);
+
+      if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
+        hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, sdr_graded);
+      } else {
+        hdr_ungraded = CustomUpgradeToneMapPerChannel(untonemapped, sdr_graded);
+        hdr_ungraded = renodx::draw::ToneMapPass(hdr_ungraded);
+      }
+
+      hdr_graded = hdr_ungraded;
+    }
 
     // if (FFXV_PER_CHANNEL_CORRECTION >= 1.f) {
     //   // attempt to recover the highlight saturation from untonemapped

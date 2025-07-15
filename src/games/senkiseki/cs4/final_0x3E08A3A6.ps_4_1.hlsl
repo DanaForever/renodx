@@ -102,7 +102,7 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
   r2.xy = v1.xy * float2(1, -1) + float2(0, 1);
 
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  r3.xyz = processColorBuffer(r3.xyz);
+  r3.xyz = postProcessBloomBuffer(r3.xyz);
   r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
 
   r2.xyzw = FilterColor.xyzw * r2.xyzw;

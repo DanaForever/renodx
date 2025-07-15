@@ -74,5 +74,6 @@ void main(
   o0.xyzw = r0.xyzw;
   r0.x = cmp(r1.x < 0);
   if (r0.x != 0) discard;
+
   return;
 }

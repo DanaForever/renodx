@@ -92,9 +92,7 @@ void main(
   o0.w = r0.w;
   // o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);  // overwrite the game brightness
   o0.rgb = renodx::math::SignPow(r0.rgb, 1.0f);
-
-  o0.rgb = renodx::color::bt709::clamp::BT709(o0.rgb);
-  
+  // o0.w = saturate(o0.w);  
 
   return;
 }

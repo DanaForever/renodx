@@ -118,25 +118,25 @@ void main(
   float3 unbloom = r0.yzw;
 
   r1.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.xy), 0).xyzw);
-  r1.xyz = processColorBuffer(r1.xyz);
+  r1.xyz = processBloomBuffer(r1.xyz);
   r1.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v1.xy), 0).xyzw);
-  r2.xyz = processColorBuffer(r2.xyz);
+  r2.xyz = processBloomBuffer(r2.xyz);
   r1.xyzw = r2.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.zw), 0).xyzw);
-  r2.xyz = processColorBuffer(r2.xyz);
+  r2.xyz = processBloomBuffer(r2.xyz);
   r1.xyzw = r2.xyzw * float4(0.200000006, 0.200000006, 0.200000006, 0.200000006) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v3.xy), 0).xyzw);
-  r2.xyz = processColorBuffer(r2.xyz);
+  r2.xyz = processBloomBuffer(r2.xyz);
   r1.xyzw = r2.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v3.zw), 0).xyzw);
-  r2.xyz = processColorBuffer(r2.xyz);
+  r2.xyz = processBloomBuffer(r2.xyz);
   r1.xyzw = r2.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r1.xyzw;
 
   r1.xyz = lerp(r1.xyz, 1.0, r0.yzw);
 
   o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
   o0 = max(o0, 0);
-  
+  o0.w = saturate(o0.w);
   return;
 }

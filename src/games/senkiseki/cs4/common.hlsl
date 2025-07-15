@@ -281,8 +281,7 @@ float3 expandColorGamut(float3 finalColor) {
     fineTunedColor = expandGamut(fineTunedColor, INVERSE_TONEMAP_EXTRA_HDR_SATURATION);
     finalColor = fineTunedColor / recommendedBrightnessScale;
   
-    // finalColor = fixNAN(finalColor);
-    finalColor = renodx::color::bt709::clamp::AP1(finalColor);
+    finalColor = renodx::color::bt709::clamp::BT2020(finalColor);
     return finalColor;
   } else {
     return finalColor;
@@ -393,8 +392,7 @@ float max_scale_icp(
 }
 
 float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_scale = 4.f) {
-  color = renodx::color::bt709::clamp::AP1(color);
-  bloomColor = renodx::color::bt709::clamp::AP1(bloomColor);
+
 
   float3 originalColor = color;
   float3 bloomColor_perceptual = renodx::color::ictcp::from::BT709(bloomColor);
@@ -432,7 +430,6 @@ float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_sca
   // float finalScale = find_scale_for_matching_luminance(originalColor, color_perceptual.x, max_scale);
   // color = originalColor * finalScale;
   color = renodx::color::bt709::from::ICtCp(color_perceptual);
-  color = renodx::color::bt709::clamp::AP1(color);
 
   return color;
 }
@@ -453,10 +450,11 @@ float3 scaleChrominance(float3 color, float3 bloomColor) {
 }
 
 float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
+  // return bloomColor;
 
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
-    return bloomColor;
-  }
+  // if (RENODX_TONE_MAP_TYPE == 0.f) {
+  //   return bloomColor;
+  // }
 
   if (BROKEN_BLOOM == 0.f) {
     return color;
@@ -485,6 +483,7 @@ float3 decodeColor(float3 color, bool srgb = true) {
 float3 SDRTonemap(float3 color) {
   float tone_map_hue_correction_method = RENODX_TONE_MAP_HUE_CORRECTION_METHOD;
   float3 sdr_color;
+  color = max(0.f, color);
 
   if (tone_map_hue_correction_method == 2.f) {
     sdr_color = renodx::tonemap::dice::BT709(color, 1.f, 0.25f);
@@ -505,18 +504,37 @@ float3 SDRTonemap(float3 color) {
 
 float3 processColorBuffer(float3 color) {
 
-  color = renodx::color::srgb::DecodeSafe(color);
+  // color = renodx::color::srgb::DecodeSafe(color);
 
-  // // choose color space
-  color = renodx::color::bt709::clamp::AP1(color);
+  // // // choose color space
+  // // color = renodx::color::bt709::clamp::AP1(color);
+  // color = renodx::color::bt709::clamp::BT709(color);
 
-  // color = saturate(color);
-  color = renodx::color::srgb::EncodeSafe(color);
-  // color = max(color, 0.f);
+  // color = renodx::color::srgb::EncodeSafe(color);
 
   return color;
 }
-    // r2.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
+
+float3 processBloomBuffer(float3 color) {
+  // color = renodx::color::srgb::DecodeSafe(color);
+
+  // // // choose color space
+  // color = renodx::color::bt709::clamp::AP1(color);
+  // // color = renodx::color::bt709::clamp::BT709(color);
+
+  // color = renodx::color::srgb::EncodeSafe(color);
+
+  // color *= BLOOM_RESCALE;
+
+  return color;
+}
+
+float3 postProcessBloomBuffer(float3 color) {
+  
+  // color /= BLOOM_RESCALE;
+
+  return color;
+}
 
 float3 correctHue(float3 color, float3 correctColor) {
   if (RENODX_TONE_MAP_HUE_CORRECTION <= 0.f) {
@@ -532,15 +550,45 @@ float3 correctHue(float3 color, float3 correctColor) {
 }
 
 float3 ToneMap(float3 color) {
+  
+
+  color = max(color, 0.f);
+
   float3 originalColor = color;
 
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     return color;
-  } 
+  } else if (shader_injection.tone_map_type == 1.f) {
+    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
+      color = renodx::color::bt2020::from::BT709(color);
+    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
+      color = renodx::color::ap1::from::BT709(color);
+    }
+
+    color = FrostbiteToneMap(color);
+
+    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
+      color = renodx::color::bt709::from::BT2020(color);
+    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
+      color = renodx::color::bt709::from::AP1(color);
+    }
+    return color;
+  }
   else if (shader_injection.tone_map_type == 2.f) {
-    color = renodx::color::bt709::clamp::AP1(color);
+    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
+      color = renodx::color::bt2020::from::BT709(color);
+    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
+      color = renodx::color::ap1::from::BT709(color);
+    }
+
     color = DICEToneMap(color);
-    color = renodx::color::bt709::clamp::AP1(color);
+
+    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
+      color = renodx::color::bt709::from::BT2020(color);
+    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
+      color = renodx::color::bt709::from::AP1(color);
+    }
+
     return color;
   
   }

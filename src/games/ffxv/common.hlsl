@@ -231,8 +231,17 @@ float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 float3 RestoreHighlightSaturation(float3 untonemapped) {
-  float3 displaymappedColor = untonemapped;
+  float l;
+  if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
+    untonemapped = renodx::color::bt2020::from::BT709(untonemapped);
+    l = renodx::color::y::from::BT2020(untonemapped);
+  } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
+    untonemapped = renodx::color::ap1::from::BT709(untonemapped);
+    l = renodx::color::y::from::AP1(untonemapped);
+  }
 
+  float3 displaymappedColor = untonemapped;
+  
   if (CUSTOM_DISPLAY_MAP_TYPE == 1.f) {
     displaymappedColor = renodx::tonemap::dice::BT709(untonemapped, 1.f, 0.f);
   }
@@ -247,10 +256,21 @@ float3 RestoreHighlightSaturation(float3 untonemapped) {
     displaymappedColor = ToneMapMaxCLL(untonemapped);
   }
 
-  return lerp(untonemapped, displaymappedColor, saturate(renodx::color::y::from::BT709(untonemapped)));
+  float3 output = lerp(untonemapped, displaymappedColor, saturate(l));
+
+  if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
+    output = renodx::color::bt709::from::BT2020(output);
+  } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
+    output = renodx::color::bt709::from::AP1(output);
+  }
+
+  return output;
 }
 
 float3 displayMap(float3 untonemapped) {
+  if (RENODX_TONE_MAP_TYPE <= 1.f)
+    return untonemapped;
+
   if (CUSTOM_DISPLAY_MAP_TYPE == 0.f) {
     return untonemapped;
   } else {
