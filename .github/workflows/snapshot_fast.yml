@@ -52,7 +52,7 @@ jobs:
         run: cmake --build --preset clang-x64-release --target ffxv --verbose
       
       - name: Build (x64) for YS8
-        run: cmake --build --preset clang-x64-release --target ys8 --verbose
+        run: cmake --build --preset clang-x64-release --target ffxii --verbose
     
     #   - name: Build (x64) for Eiyuden
     #     run: cmake --build --preset clang-x64-release --target eiyudenchronicles --verbose

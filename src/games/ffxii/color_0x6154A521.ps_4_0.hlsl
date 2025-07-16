@@ -59,7 +59,7 @@ void main(
     r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
   }
   else {
-    r0.rgb = renodx::color::bt709::clamp::AP1(r0.rgb);  // clamp to bt2020 to eliminate invalid colors
+    r0.rgb = renodx::color::bt709::clamp::BT2020(r0.rgb);  // clamp to bt2020 to eliminate invalid colors
     r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
   }
 
