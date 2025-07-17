@@ -539,7 +539,8 @@ void main(
   r3.w = dot(r3.xyz, r3.xyz);
   r3.w = rsqrt(r3.w);
   r4.xyz = r3.xyz * r3.www;
-  r4.x = saturate(dot(r2.yzw, r4.xyz));
+  // r4.x = saturate(dot(r2.yzw, r4.xyz));
+  r4.x = (dot(r2.yzw, r4.xyz));
   r4.y = dot(Light0.m_direction.xyz, r2.yzw);
   r4.y = r4.y * 0.5 + 0.5;
   r4.y = r4.y * r4.y;
@@ -547,7 +548,8 @@ void main(
   r3.w = dot(r3.xyz, r3.xyz);
   r3.w = rsqrt(r3.w);
   r3.xyz = r3.xyz * r3.www;
-  r2.y = saturate(dot(r2.yzw, r3.xyz));
+  // r2.y = saturate(dot(r2.yzw, r3.xyz));
+  r2.y = (dot(r2.yzw, r3.xyz));
   // r2.y = log2(r2.y);
   // r2.xy = Shininess * r2.xy;
   // r2.y = exp2(r2.y);
@@ -597,6 +599,7 @@ void main(
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   o0.w = r0.w;
 
-  o0 = saturate(o0);
+  // o0 = saturate(o0);
+  o0.w = saturate(o0.w);
   return;
 }

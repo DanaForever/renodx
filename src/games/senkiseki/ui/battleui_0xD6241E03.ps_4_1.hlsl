@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sat Jul 05 14:15:35 2025
-
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -95,6 +95,7 @@ void main(
   float4 fDest;
 
   r0.xyzw = TextureSampler.Sample(VariableSamplerState_s, v2.xy).xyzw;
+  r0 = processColorBuffer(r0);
   r0.xyzw = v1.xyzw * r0.xyzw;
   o0.xyz = inputSpecular.xyz * inputSpecular.www + r0.xyz;
   o0.w = r0.w;

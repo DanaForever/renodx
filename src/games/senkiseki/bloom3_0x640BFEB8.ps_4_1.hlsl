@@ -94,19 +94,19 @@ void main(
   float gaussian_blur_z = GaussianBlurParams.z;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
-  r0.xyz = processBloomBuffer(r0.xyz);
+  r0 = processBloomBuffer(r0);
   r0.xyzw = float4(0.100000001,0.100000001,0.100000001,0.100000001) * r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-  r1.xyz = processBloomBuffer(r1.xyz);
+  r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.400000006,0.400000006,0.400000006,0.400000006) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
-  r1.xyz = processBloomBuffer(r1.xyz);
+  r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
-  r1.xyz = processBloomBuffer(r1.xyz);
+  r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
-  r1.xyz = processBloomBuffer(r1.xyz);
+  r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.100000001,0.100000001,0.100000001,0.100000001) + r0.xyzw;
   r1.x = gaussian_blur_w * r0.w;
   r2.xyzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyzw;
@@ -114,8 +114,6 @@ void main(
 
   r0.xyzw = r2.xyzw + r0.xyzw;
   o0.xyzw = gaussian_blur_z * r0.xyzw;
-  o0 = max(o0, 0.f);
-  o0.w = saturate(o0.w);
   
   return;
 }

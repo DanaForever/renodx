@@ -153,11 +153,7 @@ void main(
   o0.w = 1;
 
   // ToneMapPass here?
-  o0.rgb = ToneMap(o0.rgb);  // for some reason ToneMapPass causes Artifact
-  o0.rgb = correctHue(o0.rgb, scaledColor);
-  o0.rgb = expandColorGamut(o0.rgb);
-  o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
-  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  o0.rgb = processAndToneMap(o0.rgb);
   o0.w = 1;
   return;
 }

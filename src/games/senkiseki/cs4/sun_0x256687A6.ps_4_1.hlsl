@@ -98,6 +98,7 @@ void main(
   float4 fDest;
 
   r0.xyzw = TextureSampler.Sample(VariableSamplerState_s, v3.xy).xyzw;
+  r0.xyz = processColorBuffer(r0.xyz);
   r1.x = r0.w * v1.w + -inputAlphaThreshold;
   r0.xyzw = v1.xyzw * r0.xyzw;
   r1.x = cmp(r1.x < 0);

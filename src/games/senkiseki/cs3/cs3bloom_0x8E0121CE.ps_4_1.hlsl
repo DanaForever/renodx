@@ -1,5 +1,7 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sat Jun 07 06:12:20 2025
+#include "../cs4/common.hlsl"
 #include "../shared.h"
+
 cbuffer _Globals : register(b0)
 {
   uint4 DuranteSettings : packoffset(c0);
@@ -84,14 +86,19 @@ void main(
   uint4 bitmask, uiDest;
   float4 fDest;
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
+  r0 = processBloomBuffer(r0);
   r0.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
+  r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
+  r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
+  r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
+  r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r0.xyzw;
 
   r1.x = GaussianBlurParams.w * r0.w;
@@ -99,6 +106,5 @@ void main(
   r2.xyz = r2.xyz * r1.xxx;
   r0.xyzw = r2.xyzw + r0.xyzw;
   o0.xyzw = GaussianBlurParams.zzzz * r0.xyzw;
-  o0 = max(o0, 0.f);
   return;
 }

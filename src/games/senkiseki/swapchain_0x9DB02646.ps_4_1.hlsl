@@ -91,8 +91,9 @@ void main(
   // }
   o0.w = r0.w;
   // o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);  // overwrite the game brightness
-  o0.rgb = renodx::math::SignPow(r0.rgb, 1.0f);
+  o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);
   // o0.w = saturate(o0.w);
+  // o0.w = saturate(renodx::color::srgb::DecodeSafe(o0.w));
 
   return;
 }

@@ -125,6 +125,8 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x19B22350), // artifact
     CustomShaderEntry(0xA750A152), // artifact
     CustomShaderEntry(0x9FCDD407), // artifact
+    CustomShaderEntry(0x92449B53), // artifact
+    CustomShaderEntry(0x63655D7C), // artifact
     
 };
 
@@ -203,7 +205,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x6E7F5CBB), // waterfall2
     CustomShaderEntry(0xB64DF407), // sky
     CustomShaderEntry(0x8C099E7B), // lantern
-    CustomShaderEntry(0xB9AF63CD), // lantern
+    CustomShaderEntry(0xB9AF63CD), // rean eff
     CustomShaderEntry(0xAF5B4CE1), // lantern
     CustomShaderEntry(0xE3E9C74F), // lantern
     CustomShaderEntry(0x51EB2788), // lantern
@@ -277,10 +279,10 @@ renodx::utils::settings::Settings settings = {
         .key = "SettingsBloom",
         .binding = &shader_injection.bloom,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
+        .default_value = 0.f,
         .can_reset = false,
         .label = "Game Bloom.",
-        .labels = {"Disabled", "Enabled"},
+        .labels = {"Enabled (Approximated)", "Enabled", "Disabled"},
         .is_global = true,
     },
     // new renodx::utils::settings::Setting{
@@ -855,7 +857,9 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_index = 13;
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
-        renodx::mods::swapchain::force_borderless = true;
+        // renodx::mods::swapchain::force_borderless = false;
+        // renodx::mods::swapchain::swapchain_proxy_compatibility_mode = false;
+        // renodx::mods::swapchain::prevent_full_screen = false;
         renodx::mods::swapchain::swap_chain_proxy_shaders = {
             {
                 reshade::api::device_api::d3d11,
@@ -875,34 +879,27 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
     //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
     //       .old_format = reshade::api::format::r8g8b8a8_unorm,
-    //       .new_format = reshade::api::format::r16g16b16a16_float,
-    //     //   .new_format = reshade::api::format::r32g32b32a32_float,
+    //       .new_format = reshade::api::format::r16g16b16a16_unorm,
     //       .use_resource_view_cloning = true, // black screen
     //       .use_resource_view_hot_swap = true, // black screen
-    //     //   .ignore_size = true,
-    //     //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-    //     //   .usage_include = reshade::api::resource_usage::render_target
+    //       .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER, 
     //   });
 
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8b8a8_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,
-        //   .new_format = reshade::api::format::r32g32b32a32_float,
-        //   .use_resource_view_cloning = true, // black screen
-        //   .ignore_size = true,
+          
           .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
           .usage_include = reshade::api::resource_usage::render_target
       });
 
-      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r8g8b8a8_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-        //   .new_format = reshade::api::format::r32g32b32a32_float,
-        //   .use_resource_view_cloning = true, // black screen
-        //   .ignore_size = true,
-          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-          .usage_include = reshade::api::resource_usage::unordered_access
-      });
+    //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+    //       .old_format = reshade::api::format::r8g8b8a8_unorm,
+    //       .new_format = reshade::api::format::r16g16b16a16_float,
+
+    //       .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+    //       .usage_include = reshade::api::resource_usage::unordered_access
+    //   });
 
       bool is_hdr10 = false;
       renodx::mods::swapchain::SetUseHDR10(is_hdr10);
