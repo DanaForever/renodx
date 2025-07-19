@@ -83,7 +83,7 @@ struct ShaderInjectData {
   float color_grade_per_channel_blowout_restoration;
 
   float bloom;
-  float bloom_rescale;
+  float bloom_approx_method;
   float fxaa;
 
   float dice_tone_map_type;
@@ -146,7 +146,7 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION  shader_injection.color_grade_per_channel_chrominance_correction
 
 #define BROKEN_BLOOM                           shader_injection.bloom
-#define BLOOM_RESCALE                           shader_injection.bloom_rescale
+#define BLOOM_APPROX_METHOD                           shader_injection.bloom_approx_method
 #define FXAA                          shader_injection.fxaa
 
 #include "../../shaders/renodx.hlsl"

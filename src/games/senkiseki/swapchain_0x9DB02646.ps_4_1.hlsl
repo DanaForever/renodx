@@ -85,15 +85,65 @@ void main(
   float4 fDest;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-  
-  // if (RENODX_TONE_MAP_TYPE == 0.f) {
-  //   r0.xyz = saturate(r0.xyz);
-  // }
   o0.w = r0.w;
-  // o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);  // overwrite the game brightness
-  o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);
-  // o0.w = saturate(o0.w);
-  // o0.w = saturate(renodx::color::srgb::DecodeSafe(o0.w));
 
+  // game brightness?
+  o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);
+
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+  float3 color = o0.rgb;
+
+  color = renodx::draw::DecodeColor(color, config.swap_chain_decoding);
+
+  if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+  } else if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  }
+
+  color *= config.swap_chain_scaling_nits;
+
+  [branch]
+  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT709D93(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT601NTSCU(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::ARIBTRB9(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  }
+
+  color = min(color, config.swap_chain_clamp_nits);  // Clamp UI or Videos
+
+  color = renodx::color::bt709::clamp::BT2020(color);
+  // [branch]
+  // if (config.swap_chain_clamp_color_space == renodx::color::convert::COLOR_SPACE_UNKNOWN) {
+  //   color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_encoding_color_space);
+  // } else {
+  //   [branch]
+  //   if (config.swap_chain_clamp_color_space == config.swap_chain_encoding_color_space) {
+  //     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_encoding_color_space);
+  //     color = max(0, color);
+  //   } else {
+  //     if (config.swap_chain_clamp_color_space != config.swap_chain_decoding_color_space) {
+  //       color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_clamp_color_space);
+  //     }
+  //     color = max(0, color);
+  //     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_clamp_color_space, config.swap_chain_encoding_color_space);
+  //   }
+  // }
+
+  color = renodx::draw::EncodeColor(color, config.swap_chain_encoding);
+
+  o0.rgb = color;
   return;
 }
