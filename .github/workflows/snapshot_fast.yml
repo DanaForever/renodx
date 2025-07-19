@@ -51,8 +51,14 @@ jobs:
       - name: Build (x64) for Final Fantasy XV
         run: cmake --build --preset clang-x64-release --target ffxv --verbose
       
-      - name: Build (x64) for YS8
+      - name: Build (x64) for FFXII
         run: cmake --build --preset clang-x64-release --target ffxii --verbose
+
+      - name: Build (x64) for YS8
+        run: cmake --build --preset clang-x64-release --target ys8 --verbose
+
+      - name: Build (x64) for YS9
+        run: cmake --build --preset clang-x64-release --target ys9 --verbose
     
     #   - name: Build (x64) for Eiyuden
     #     run: cmake --build --preset clang-x64-release --target eiyudenchronicles --verbose

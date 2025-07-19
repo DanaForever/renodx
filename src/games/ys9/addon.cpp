@@ -17,21 +17,14 @@
 #include "../../utils/settings.hpp"
 #include "./shared.h"
 
-
-
 namespace {
 
 renodx::mods::shader::CustomShaders custom_shaders = {
     // Uber_Post
-    CustomShaderEntry(0xEFA663EF),  // color
-    CustomShaderEntry(0x488CE77A),  // color
-    CustomShaderEntry(0x5957375C),  // color
-    CustomShaderEntry(0xA7CEF703),  // light2
-    CustomShaderEntry(0x2E081582),  // ui
-    CustomShaderEntry(0x05F21D2B),  // ui2
-    CustomShaderEntry(0x3934D0EB),  // ui
-    
-   
+    CustomShaderEntry(0xBA0341D9),  // final
+    CustomShaderEntry(0x9BD47CEC),  // tonemap
+    CustomShaderEntry(0xE21199AD),  // bloom
+
 };
 
 ShaderInjectData shader_injection;
@@ -550,19 +543,13 @@ void OnPresetOff() {
 
 extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX YS8";
 extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for YS8";
-bool use_resource_view_cloning = true;
 
 // NOLINTEND(readability-identifier-naming)
-float screen_width = GetSystemMetrics(SM_CXSCREEN);
-float screen_height = GetSystemMetrics(SM_CYSCREEN);
 
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
-    
   switch (fdw_reason) {
-    
     case DLL_PROCESS_ATTACH:
       if (!reshade::register_addon(h_module)) return FALSE;
-      
 
       // renodx::mods::shader::on_init_pipeline_layout = [](reshade::api::device* device, auto, auto) {
       //   return device->get_api() == reshade::api::device_api::d3d12;  // So overlays dont kill the game
@@ -577,7 +564,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       // renodx::mods::swapchain::expected_constant_buffer_index = 13;
 
       renodx::mods::shader::force_pipeline_cloning = true;   // So the mod works with the toolkit
-      renodx::mods::shader::use_pipeline_layout_cloning = true;   // So the mod works with the toolkit
       renodx::mods::swapchain::force_borderless = false;     // needed for stability
       renodx::mods::swapchain::prevent_full_screen = false;  // needed for stability
 
@@ -586,41 +572,61 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
     //   renodx::mods::swapchain::swap_chain_proxy_pixel_shader = __swap_chain_proxy_pixel_shader_dx11;
       renodx::mods::swapchain::swapchain_proxy_compatibility_mode = false;  // true crashes the game when an FMV plays
       renodx::mods::swapchain::swapchain_proxy_revert_state = true;
-      
+
+    //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+    //       .old_format = reshade::api::format::r8g8b8a8_unorm,
+    //       .new_format = reshade::api::format::r16g16b16a16_float,
+    //     //   .ignore_size = true,
+    //       .use_resource_view_cloning = true,
+    //       .aspect_ratio = 1.f
+    //   });
 
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8b8a8_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,
         //   .ignore_size = true,
-          .use_resource_view_cloning = use_resource_view_cloning,
+          .use_resource_view_cloning = true,
           .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
       });
 
+      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r8g8b8x8_unorm,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+        //   .ignore_size = true,
+          .use_resource_view_cloning = true,
+          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+      });
 
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::b8g8r8a8_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,
-          .use_resource_view_cloning = use_resource_view_cloning,
+        //   .ignore_size = true,
+          .use_resource_view_cloning = true,
+          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
       });
-      
-    
-      // special condition?
+
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::b8g8r8x8_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,
-          .use_resource_view_cloning = use_resource_view_cloning,
+        //   .ignore_size = true,
+          .use_resource_view_cloning = true,
+          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
       });
 
-      /// r16_unorm
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r16_unorm,
+          .old_format = reshade::api::format::r8g8_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,
           .ignore_size = true,
-          .use_resource_view_cloning = use_resource_view_cloning,
+          .use_resource_view_cloning = true,
       });
-      
+
+    //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+    //       .old_format = reshade::api::format::b8g8r8x8_unorm,
+    //       .new_format = reshade::api::format::r16g16b16a16_float,
+    //       .ignore_size = true,
+    //       .use_resource_view_cloning = true,
+    //   });
+
       break;
       
     case DLL_PROCESS_DETACH:

@@ -1,36 +1,19 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Jul 05 00:32:13 2025
+// ---- Created with 3Dmigoto v1.3.16 on Fri Jul 18 15:52:21 2025
 #include "shared.h"
-cbuffer CB0 : register(b0)
+Texture2D<float4> t1 : register(t1);
+
+Texture2D<float4> t0 : register(t0);
+
+SamplerState s1_s : register(s1);
+
+SamplerState s0_s : register(s0);
+
+cbuffer cb0 : register(b0)
 {
-  float altest : packoffset(c0);
-  float danalightmode : packoffset(c0.y);
-  float mulblend : packoffset(c0.z);
-  float noalpha : packoffset(c0.w);
-  float znear : packoffset(c1);
-  float zfar : packoffset(c1.y);
-  float zwrite : packoffset(c1.z);
-  float4 shadowcolor : packoffset(c2);
-  float4 cascadeBound : packoffset(c3);
-  float4 lightColor : packoffset(c4);
-  float4 specColor : packoffset(c5);
-  float4 rimcolor : packoffset(c6);
-  float4 lightvec : packoffset(c7);
-  float4 param : packoffset(c8);
-  float4 danalight : packoffset(c9);
-  float numLight : packoffset(c1.w);
-
-  struct
-  {
-    float4 pos;
-    float4 color;
-  } lightinfo[64] : packoffset(c10);
-
+  float4 cb0[138];
 }
 
-SamplerState tex_samp_s : register(s0);
-SamplerState normalmap_samp_s : register(s1);
-Texture2D<float4> tex_tex : register(t0);
-Texture2D<float4> normalmap_tex : register(t1);
+
 
 
 // 3Dmigoto declarations
@@ -59,11 +42,11 @@ void main(
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  r0.xyzw = tex_tex.Sample(tex_samp_s, v2.xy).xyzw;
+  r0.xyzw = t0.Sample(s0_s, v2.xy).xyzw;
   r1.x = v0.w * r0.w;
-  r1.z = cmp(0 != noalpha);
+  r1.z = cmp(0 != cb0[0].w);
   r1.z = ~(int)r1.z;
-  r2.x = altest;
+  r2.x = cb0[0].x;
   r2.y = 0.00400000019;
   r1.y = r0.w;
   r1.yw = -r2.xy + r1.yx;
@@ -71,12 +54,12 @@ void main(
   r0.w = (int)r1.w | (int)r1.y;
   r0.w = r1.z ? r0.w : 0;
   if (r0.w != 0) discard;
-  r0.w = cmp(0 < param.w);
+  r0.w = cmp(0 < cb0[8].w);
   if (r0.w != 0) {
-    r0.w = -param.z + v9.w;
-    r0.w = r0.w / param.w;
+    r0.w = -cb0[8].z + v9.w;
+    r0.w = r0.w / cb0[8].w;
     r0.w = min(1, r0.w);
-    r1.y = cmp(0 != zwrite);
+    r1.y = cmp(0 != cb0[1].z);
     if (r1.y != 0) {
       r1.yw = float2(0.25,0.25) * v9.yx;
       r2.xy = cmp(r1.yw >= -r1.yw);
@@ -100,18 +83,18 @@ void main(
       if (r0.w != 0) discard;
     }
   }
-  r0.w = cmp(0 < danalightmode);
-  r1.y = cmp(0 >= danalight.w);
+  r0.w = cmp(0 < cb0[0].y);
+  r1.y = cmp(0 >= cb0[9].w);
   r1.w = ~(int)r1.y;
   r2.x = r0.w ? r1.y : 0;
-  r2.yz = cmp(float2(1,2) == danalightmode);
+  r2.yz = cmp(float2(1,2) == cb0[0].yy);
   r2.x = r2.y ? r2.x : 0;
   if (r2.x != 0) discard;
   r1.w = r0.w ? r1.w : 0;
-  r2.xyw = -danalight.xyz + v6.xyz;
+  r2.xyw = -cb0[9].xyz + v6.xyz;
   r2.x = dot(r2.xyw, r2.xyw);
   r2.x = sqrt(r2.x);
-  r2.x = r2.x / danalight.w;
+  r2.x = r2.x / cb0[9].w;
   r2.x = min(1, r2.x);
   r2.x = 1 + -r2.x;
   r2.x = min(0.5, r2.x);
@@ -125,7 +108,7 @@ void main(
   r1.w = dot(v6.xyz, v6.xyz);
   r1.w = rsqrt(r1.w);
   r2.yzw = v6.xyz * r1.www;
-  r3.xyz = normalmap_tex.Sample(normalmap_samp_s, v2.xy).xyz;
+  r3.xyz = t1.Sample(s1_s, v2.xy).xyz;
   r3.xy = r3.xy * float2(2,2) + float2(-1,-1);
   r3.w = dot(r3.xy, r3.xy);
   r3.w = 1 + -r3.w;
@@ -139,13 +122,14 @@ void main(
   r3.xyw = r4.xxx * r3.xyw;
   r2.y = dot(-r2.yzw, r3.xyw);
   r2.y = saturate(1 + -r2.y);
-  r2.z = cmp(param.y < 10);
-  r2.y = log2(r2.y);
-  r2.w = param.y * r2.y;
-  r2.w = exp2(r2.w);
-  // r2.w = renodx::math::SafePow(r2.y, param.y);
+  r2.z = cmp(cb0[8].y < 10);
+  float y = r2.y;
+  // r2.y = log2(r2.y);
+  // r2.w = cb0[8].y * r2.y;
+  // r2.w = exp2(r2.w);
+  r2.w = renodx::math::SafePow(r2.y, cb0[8].y);
   r2.w = 1 + -r2.w;
-  r4.x = cmp(r2.w < altest);
+  r4.x = cmp(r2.w < cb0[0].x);
   r1.z = r1.z ? r4.x : 0;
   r1.z = r1.z ? r2.z : 0;
   if (r1.z != 0) discard;
@@ -153,17 +137,16 @@ void main(
   r0.w = r0.w ? r1.y : r1.x;
   r1.x = r0.w * r2.w;
   r4.xyz = v0.xyz * r0.xyz;
-  r5.xyz = lightColor.xyz * r4.xyz;
+  r5.xyz = cb0[4].xyz * r4.xyz;
   r0.w = r2.z ? r1.x : r0.w;
-  r1.x = dot(r3.xyw, lightvec.xyz);
-  // r1.x = saturate(1 + -r1.x);
-  r1.x = (1 + -r1.x);
+  r1.x = dot(r3.xyw, cb0[7].xyz);
+  r1.x = saturate(1 + -r1.x);
   // r1.x = log2(r1.x);
-  // r1.x = lightvec.w * r1.x;
+  // r1.x = cb0[7].w * r1.x;
   // r1.x = exp2(r1.x);
-  r1.x = renodx::math::SafePow(r1.x, lightvec.w);
-  r1.y = numLight;
-  r1.z = cmp(0 < specColor.w);
+  r1.x = renodx::math::SafePow(r1.x, cb0[7].w);
+  r1.y = (int)cb0[1].w;
+  r1.z = cmp(0 < cb0[5].w);
   r2.xzw = float3(0,0,0);
   r6.xyz = float3(0,0,0);
   r4.w = 0;
@@ -171,22 +154,23 @@ void main(
     r5.w = cmp((int)r4.w >= (int)r1.y);
     if (r5.w != 0) break;
     r5.w = (uint)r4.w << 1;
-    r7.xyz = lightinfo[r5.w].pos.xyz + -v6.xyz;
+    r7.xyz = cb0[r5.w+10].xyz + -v6.xyz;
     r6.w = dot(r7.xyz, r7.xyz);
     r7.w = sqrt(r6.w);
-    r6.w = cmp(r7.w >= lightinfo[r5.w].pos.w);
+    r6.w = cmp(r7.w >= cb0[r5.w+10].w);
     if (r6.w != 0) {
       r6.w = (int)r4.w + 1;
       r4.w = r6.w;
       continue;
     }
     r8.x = r7.w;
-    r8.w = lightinfo[r5.w].pos.w;
+    r8.w = cb0[r5.w+10].w;
     r7.xyzw = r7.xyzw / r8.xxxw;
     r6.w = 1 + -r7.w;
-    r6.w = log2(r6.w);
-    r6.w = lightinfo[r5.w].color.w * r6.w;
-    r6.w = exp2(r6.w);
+    // r6.w = log2(r6.w);
+    // r6.w = cb0[r5.w+11].w * r6.w;
+    // r6.w = exp2(r6.w);
+    r6.w = renodx::math::SafePow(r6.w, cb0[r5.w + 11]);
     r8.xyz = -v6.xyz * r1.www + r7.xyz;
     r7.w = dot(r8.xyz, r8.xyz);
     r7.w = rsqrt(r7.w);
@@ -197,14 +181,15 @@ void main(
     r8.x = max(0, r7.x);
     r7.x = cmp(r7.y >= 0);
     r7.x = r7.z ? r7.x : 0;
-    r7.y = log2(r7.y);
-    r7.y = specColor.w * r7.y;
-    r7.y = exp2(r7.y);
+    // r7.y = log2(r7.y);
+    // r7.y = cb0[5].w * r7.y;
+    // r7.y = exp2(r7.y);
+    r7.y = renodx::math::SafePow(r7.y, cb0[5].w);
     r8.y = r7.x ? r7.y : 0;
     r7.xy = r8.xy * r6.ww;
-    r2.xzw = lightinfo[r5.w].color.xyz * r7.xxx + r2.xzw;
+    r2.xzw = cb0[r5.w+11].xyz * r7.xxx + r2.xzw;
     if (r1.z != 0) {
-      r6.xyz = lightinfo[r5.w].color.xyz * r7.yyy + r6.xyz;
+      r6.xyz = cb0[r5.w+11].xyz * r7.yyy + r6.xyz;
     }
     r4.w = (int)r4.w + 1;
   }
@@ -214,42 +199,41 @@ void main(
   r1.y = saturate(1 + -r1.y);
   r1.x = r1.x * r1.y;
   r0.xyz = r2.xzw * r0.xyz;
-  r4.xyz = r4.xyz * lightColor.xyz + r0.xyz;
+  r4.xyz = r4.xyz * cb0[4].xyz + r0.xyz;
   r0.xyz = -r5.xyz * r0.xyz + r4.xyz;
-  r4.xyz = lightColor.xyz + r2.xzw;
-  r2.xzw = -r2.xzw * lightColor.xyz + r4.xyz;
-  r2.xzw = rimcolor.xyz * r2.xzw;
-  r1.y = rimcolor.w * r2.y;
-  r1.y = exp2(r1.y);
+  r4.xyz = cb0[4].xyz + r2.xzw;
+  r2.xzw = -r2.xzw * cb0[4].xyz + r4.xyz;
+  r2.xzw = cb0[6].xyz * r2.xzw;
+  // r1.y = cb0[6].w * r2.y;
+  // r1.y = exp2(r1.y);
+  r1.y = renodx::math::SafePow(y, cb0[6].w);
   r2.xyz = r2.xzw * r1.yyy + v1.xyz;
   r2.xyz = r6.xyz * r3.zzz + r2.xyz;
-  r4.xyz = shadowcolor.xyz * r0.xyz + -r0.xyz;
+  r4.xyz = cb0[2].xyz * r0.xyz + -r0.xyz;
   r0.xyz = r1.xxx * r4.xyz + r0.xyz;
-  r1.yzw = -v6.xyz * r1.www + lightvec.xyz;
+  r1.yzw = -v6.xyz * r1.www + cb0[7].xyz;
   r2.w = dot(r1.yzw, r1.yzw);
   r2.w = rsqrt(r2.w);
   r1.yzw = r2.www * r1.yzw;
   // r1.y = saturate(dot(r1.yzw, r3.xyw));
   r1.y = (dot(r1.yzw, r3.xyw));
   // r1.y = log2(r1.y);
-  // r1.y = specColor.w * r1.y;
+  // r1.y = cb0[5].w * r1.y;
   // r1.y = exp2(r1.y);
-  r1.y = renodx::math::SafePow(r1.y, specColor.w);
+  r1.y = renodx::math::SafePow(r1.y, cb0[5].w);
   r1.y = r1.y * r3.z;
-  r4.xyz = specColor.xyz * lightColor.xyz;
+  r4.xyz = cb0[5].xyz * cb0[4].xyz;
   r1.yzw = r4.xyz * r1.yyy;
-  r2.w = cmp(param.x < 1);
-  r3.z = param.x + -1;
+  r2.w = cmp(cb0[8].x < 1);
+  r3.z = cb0[8].x + -1;
   r1.x = r1.x * r3.z + 1;
   r4.xyz = r1.yzw * r1.xxx;
   r1.xyz = r2.www ? r4.xyz : r1.yzw;
   r1.xyz = r2.xyz + r1.xyz;
   r0.xyz = r1.xyz + r0.xyz;
   r0.xyz = min(float3(1,1,1), r0.xyz);
-  // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = renodx::color::y::from::BT709(r0.xyz);
-  // r1.y = dot(v8.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.y = renodx::color::y::from::BT709(v8.xyz);
+  r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.y = dot(v8.xyz, float3(0.298999995,0.587000012,0.114));
   r1.x = -r1.y * 0.5 + r1.x;
   r1.x = max(0, r1.x);
   r1.y = 1 + -v8.w;
@@ -259,13 +243,13 @@ void main(
   r2.xyz = r1.xxx * r0.xyz;
   r0.xyz = r0.xyz * r1.xxx + r1.yzw;
   r0.xyz = -r1.yzw * r2.xyz + r0.xyz;
-  r1.x = cmp(0 != mulblend);
+  r1.x = cmp(0 != cb0[0].z);
   r1.y = -r0.w * v8.w + 1;
   r2.xyz = float3(1,1,1) + -r0.xyz;
   r1.yzw = r1.yyy * r2.xyz + r0.xyz;
   o0.xyz = r1.xxx ? r1.yzw : r0.xyz;
-  r0.x = cmp(0 < zwrite);
-  r0.y = cmp(8.000000 == zwrite);
+  r0.x = cmp(0 < cb0[1].z);
+  r0.y = cmp(8.000000 == cb0[1].z);
   r1.xyz = r3.xyw * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);
   r2.xy = r1.xy;
   r2.z = v8.w;

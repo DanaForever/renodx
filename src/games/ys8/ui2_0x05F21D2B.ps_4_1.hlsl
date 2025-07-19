@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sun May 25 18:04:40 2025
-#include "./shared.h"
+#include "common.hlsl"
+#include "shared.h"
 cbuffer CAlTest : register(b0)
 {
   float altest : packoffset(c0);
@@ -26,6 +27,7 @@ void main(
   float4 fDest;
 
   r0.xyzw = tex.Sample(samp_s, v0.xy).xyzw;
+  
   r1.x = r0.w * v1.w + -altest;
   r1.x = cmp(r1.x < 0);
   if (r1.x != 0) discard;
@@ -39,8 +41,6 @@ void main(
   r2.xy = cmp(float2(0,0) != mulblend);
   o0.xyz = r2.xxx ? r1.xyz : r0.xyz;
   o0.w = r2.y ? 1 : r3.w;
-  
-  o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
 
   return;
 }

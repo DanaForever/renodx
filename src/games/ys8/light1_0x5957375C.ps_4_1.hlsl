@@ -54,6 +54,7 @@ void main(
   r0.x = rsqrt(r0.x);
   r0.xyz = v1.xyz * r0.xxx;
   r1.xyzw = tex_tex.Sample(tex_samp_s, v0.xy).xyzw;
+  // r1.xyz = renodx::color::srgb::DecodeSafe(r1.xyz);
   r2.xyzw = v3.xyzw * r1.xyzw;
   r0.w = cmp(0 != noalpha);
   r0.w = ~(int)r0.w;
@@ -68,8 +69,8 @@ void main(
   if (r0.w != 0) discard;
   r0.w = cmp(param.x < 10);
   r0.x = dot(-r0.xyz, v2.xyz);
-  // r0.x = saturate(1 + -r0.x);
-  r0.x = (1 + -r0.x);
+  r0.x = saturate(1 + -r0.x);
+  // r0.x = (1 + -r0.x);
   // r0.x = log2(r0.x);
   // r0.x = param.x * r0.x;
   // r0.x = exp2(r0.x);

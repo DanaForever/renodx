@@ -1,13 +1,14 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sun May 25 17:37:38 2025
-#include "shared.h"
+// ---- Created with 3Dmigoto v1.3.16 on Fri Jul 18 20:11:30 2025
 #include "common.hlsl"
-
-
+#include "shared.h"
 cbuffer CB0 : register(b0)
 {
   float4 fparam : packoffset(c0);
-  float4 fparam2 : packoffset(c1);
-  float4 fparam3 : packoffset(c2);
+}
+
+cbuffer CB2 : register(b2)
+{
+  float4 fparam3 : packoffset(c0);
 }
 
 SamplerState tex_samp_s : register(s0);
@@ -17,18 +18,15 @@ Texture2D<float4> tex_tex : register(t0);
 Texture2D<float4> gradtex_tex : register(t1);
 Texture2D<float4> darktex_tex : register(t2);
 
-
 // 3Dmigoto declarations
 #define cmp -
 
 float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool bloom = true) {
-  float4 r2, r3, r4;
+  float4 r2, r3, r4, r5, r6, r7, r8;
 
   r2.xyz = r1.xyz + r0.xyz;
   r0.xyz = -r0.xyz * r1.xyz + r2.xyz;
-
-  float3 v = v2.xyz;
-  r1.xyz = v * r0.xyz;
+  r1.xyz = v2.xyz * r0.xyz;
   r2.xyz = r1.xyz * r1.xyz;
   r2.xyz = r2.xyz + r2.xyz;
   r3.xyz = r1.xyz * float3(4, 4, 4) + -r2.xyz;
@@ -37,12 +35,11 @@ float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool bloom = t
   r2.xyz = r4.xyz ? r3.xyz : r2.xyz;
 
   if (bloom)
-    r0.xyz = -r0.xyz * v + r2.xyz;
+    r0.xyz = -r0.xyz * v2.xyz + r2.xyz;
   else {
-    r0.xyz = -r0.xyz * v;
+    r0.xyz = -r0.xyz * v2.xyz;
   }
   r0.xyz = fparam.xxx * r0.xyz + r1.xyz;
-
   r0.w = cmp(0 < fparam.y);
   if (r0.w != 0) {
     r1.xyzw = darktex_tex.Sample(darktex_samp_s, v1.xy).xyzw;
@@ -54,19 +51,14 @@ float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool bloom = t
   r1.xy = float2(-0.5, -0.5) + v1.xy;
   r1.xy = fparam3.ww * r1.xy;
   r1.xy = r1.xy * r1.xy;
-  r1.xy = r1.xy * r1.xy;
   r1.x = max(r1.x, r1.y);
-  r1.y = renodx::color::y::from::NTSC1953(r0.xyz);
-  r1.z = fparam3.w * 0.349999994;
-  r2.xyz = r1.yyy + -r0.xyz;
-  r1.yzw = r1.zzz * r2.xyz + r0.xyz;
-  r2.xyz = fparam3.xyz + -r1.yzw;
-  r1.xyz = r1.xxx * r2.xyz + r1.yzw;
+  r1.yzw = fparam3.xyz + -r0.xyz;
+  r1.xyz = r1.xxx * r1.yzw + r0.xyz;
   float3 output = r0.www ? r1.xyz : r0.xyz;
 
   return output;
-
 }
+
 
 
 void main(
@@ -75,28 +67,48 @@ void main(
   float4 v2 : COLOR0,
   out float4 o0 : SV_Target0)
 {
-  float4 r0,r1,r2,r3,r4;
+  float4 r0,r1,r2,r3,r4,r5,r6,r7,r8;
   uint4 bitmask, uiDest;
   float4 fDest;
 
   r0.xyz = tex_tex.Sample(tex_samp_s, v0.xy).xyz;
+  tex_tex.GetDimensions(0, fDest.x, fDest.y, fDest.z);
+  r1.xy = fDest.xy;
+  r1.xy = v0.xy * r1.xy;
+  r1.xy = (int2)r1.xy;
+  r1.zw = float2(0,0);
+  r2.xyz = tex_tex.Load(r1.xyw, int3(0, 0, 0)).xyz;
+  r3.xyz = tex_tex.Load(r1.xyw, int3(0, 0, 0)).xyz;
+  r4.xyz = tex_tex.Load(r1.xyw, int3(0, 0, 0)).xyz;
+  r5.xyz = tex_tex.Load(r1.xyw, int3(0, 0, 0)).xyz;
+  r6.xyz = tex_tex.Load(r1.xyw, int3(0, 0, 0)).xyz;
+  r7.xyz = tex_tex.Load(r1.xyw, int3(0, 0, 0)).xyz;
+  r8.xyz = tex_tex.Load(r1.xyw, int3(0, 0, 0)).xyz;
+  r1.xyz = tex_tex.Load(r1.xyz, int3(0, 0, 0)).xyz;
+  r0.w = cmp(fparam.w != 0.000000);
+  r2.xyz = r2.xyz * float3(0.25,0.25,0.25) + r3.xyz;
+  r2.xyz = r4.xyz * float3(0.25,0.25,0.25) + r2.xyz;
+  r2.xyz = r2.xyz + r5.xyz;
+  r2.xyz = r0.xyz * float3(2,2,2) + r2.xyz;
+  r2.xyz = r2.xyz + r6.xyz;
+  r2.xyz = r7.xyz * float3(0.25,0.25,0.25) + r2.xyz;
+  r2.xyz = r2.xyz + r8.xyz;
+  r1.xyz = r1.xyz * float3(0.25,0.25,0.25) + r2.xyz;
+  r1.xyz = r1.xyz * float3(0.142857149,0.142857149,0.142857149) + -r0.xyz;
+  r1.xyz = -fparam.www * r1.xyz + r0.xyz;
+  r0.xyz = r0.www ? r1.xyz : r0.xyz;
   r1.xyz = gradtex_tex.Sample(gradtex_samp_s, v0.zw).xyz;
   // r2.xyz = r1.xyz + r0.xyz;
   // r0.xyz = -r0.xyz * r1.xyz + r2.xyz;
-
-  // float3 v = v2.xyz;
-  // r1.xyz = v * r0.xyz;
+  // r1.xyz = v2.xyz * r0.xyz;
   // r2.xyz = r1.xyz * r1.xyz;
   // r2.xyz = r2.xyz + r2.xyz;
   // r3.xyz = r1.xyz * float3(4,4,4) + -r2.xyz;
   // r3.xyz = float3(-1,-1,-1) + r3.xyz;
   // r4.xyz = cmp(float3(0.5,0.5,0.5) < r1.xyz);
   // r2.xyz = r4.xyz ? r3.xyz : r2.xyz;
-
-  // r0.xyz = -r0.xyz * v; // + r2.xyz;
+  // r0.xyz = -r0.xyz * v2.xyz + r2.xyz;
   // r0.xyz = fparam.xxx * r0.xyz + r1.xyz;
-
-
   // r0.w = cmp(0 < fparam.y);
   // if (r0.w != 0) {
   //   r1.xyzw = darktex_tex.Sample(darktex_samp_s, v1.xy).xyzw;
@@ -108,20 +120,13 @@ void main(
   // r1.xy = float2(-0.5,-0.5) + v1.xy;
   // r1.xy = fparam3.ww * r1.xy;
   // r1.xy = r1.xy * r1.xy;
-  // r1.xy = r1.xy * r1.xy;
   // r1.x = max(r1.x, r1.y);
-  // r1.y = renodx::color::y::from::NTSC1953(r0.xyz);
-  // r1.z = fparam3.w * 0.349999994;
-  // r2.xyz = r1.yyy + -r0.xyz;
-  // r1.yzw = r1.zzz * r2.xyz + r0.xyz;
-  // r2.xyz = fparam3.xyz + -r1.yzw;
-  // r1.xyz = r1.xxx * r2.xyz + r1.yzw;
+  // r1.yzw = fparam3.xyz + -r0.xyz;
+  // r1.xyz = r1.xxx * r1.yzw + r0.xyz;
   // o0.xyz = r0.www ? r1.xyz : r0.xyz;
 
   float3 color = compositeColor(r0, r1, v1, v2, false);
   float3 bloomColor = compositeColor(r0, r1, v1, v2, true);
-
-  
   o0.w = 1;
 
   // ToneMapPass here?
@@ -130,15 +135,13 @@ void main(
     o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
     o0.rgb = ToneMap(o0.rgb);
     o0.rgb = correctHue(o0.rgb, o0.rgb);
-    o0.rgb = expandColorGamut(o0.rgb);
     o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
   } else {
     o0.xyz = bloomColor;
     o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
     o0.rgb = saturate(o0.rgb);
   }
-
-  // o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+    // o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
   color = o0.rgb;
   [branch]
   if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
@@ -151,11 +154,11 @@ void main(
 
   if (shader_injection.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
     color = renodx::color::bt709::from::BT709D93(color);
-  } 
+  }
 
   color = renodx::color::srgb::EncodeSafe(color);
   o0.rgb = color;
   o0.w = 1;
-
+  
   return;
 }
