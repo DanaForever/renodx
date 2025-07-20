@@ -130,6 +130,7 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x2286C934), // artifact
     CustomShaderEntry(0xC41CBE29), // artifact
     CustomShaderEntry(0xBDFDE2B7), // artifact
+    CustomShaderEntry(0x4CB2EE15), // artifact
     
 };
 
@@ -170,6 +171,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x1275C3E6), // environment
     CustomShaderEntry(0x605593B6), // environment
     CustomShaderEntry(0x6907BF88), // lantern
+    CustomShaderEntry(0xCF69F81A), // effect
     
     // CustomShaderEntry(0x6C72EE93), // Bloom Generator
     // CS4
@@ -539,13 +541,12 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapClampColorSpace",
         .binding = &shader_injection.tone_map_clamp_color_space,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
+        .default_value = 1.f,
         .label = "Clamp Color Space",
         .section = "Color Space",
         .tooltip = "Hue-shift emulation strength.",
-        .labels = {"None", "BT709", "BT2020", "AP1"},
+        .labels = {"BT709", "BT2020"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .parse = [](float value) { return value - 1.f; },
         .is_visible = []() { return current_settings_mode >= 2; },
     },
     // new renodx::utils::settings::Setting{

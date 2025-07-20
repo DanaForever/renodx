@@ -372,3 +372,26 @@ float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
 
   return upgradedPerCh;
 }
+
+// static const float3x3 Bt709ToBt2020 =
+//     float3x3
+//       (
+//         0.627403914f, 0.329283028f, 0.0433130674f,
+//         0.0690972879f, 0.919540405f, 0.0113623151f,
+//         0.0163914393f, 0.0880133062f, 0.895595252f
+//       );
+
+// static const float3x3 Bt2020ToBt709 =
+//     float3x3
+//       (
+//         1.66049098f, -0.587641119f, -0.0728498622f,
+//         -0.124550476f, 1.13289988f, -0.00834942236f,
+//         -0.0181507635f, -0.100578896f, 1.11872971f
+//       );
+
+// float3 clampBT2020(float3 color) {
+//   float3 color_bt2020 = mul(Bt709ToBt2020, color);
+//   color_bt2020 = max(color_bt2020, 0.f);
+//   return mul(Bt2020ToBt709, color_bt2020);
+//   // return renodx::color::bt709::from::BT2020(bt2020);
+// }

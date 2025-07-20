@@ -585,7 +585,6 @@ float3 ToneMap(float3 color) {
 float3 processAndToneMap(float3 color) {
   color = ToneMap(color);
   color = expandColorGamut(color);
-  color = renodx::color::bt709::clamp::BT2020(color);
   color = renodx::draw::RenderIntermediatePass(color);
   return color;
 }

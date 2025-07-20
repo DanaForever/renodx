@@ -110,7 +110,6 @@ void main(
   o0.xyz = v2.xyz * v2.www + r0.xyz;
   o0.w = r0.w;
 
-  // o0 = saturate(o0);
-  o0.rgb = clamp(o0.rgb, 0.f, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
+  o0 = max(o0, 0.f);
   return;
 }

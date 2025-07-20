@@ -75,7 +75,7 @@ struct ShaderInjectData {
 
   // float per_channel_correction;
   // float per_channel_correction_range;
-  // float expand_gamut;
+  float hdr_grading;
 
   float color_grade_per_channel_hue_correction;
   float color_grade_per_channel_hue_shift_strength;
@@ -148,7 +148,7 @@ cbuffer shader_injection : register(b13) {
 // #define FFXV_PER_CHANNEL_CORRECTION                 shader_injection.per_channel_correction
 // #define FFXV_EXPAND_GAMUT                shader_injection.expand_gamut
 
-// #define PEAK_CLAMP                 shader_injection.peak_clamp
+#define FFXV_HDR_GRADING                 shader_injection.hdr_grading
 
 #include "../../shaders/renodx.hlsl"
 

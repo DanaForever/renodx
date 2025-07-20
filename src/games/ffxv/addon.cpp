@@ -71,6 +71,18 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper mode",
         .labels = {"Before Grading", "After Grading"},
+        .is_visible = []() { return current_settings_mode >= 2; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "GradingMode",
+        .binding = &shader_injection.hdr_grading,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .can_reset = true,
+        .label = "Grading Mode",
+        .section = "Tone Mapping",
+        .tooltip = "Sets the grading mode",
+        .labels = {"SDR", "HDR"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -174,19 +186,6 @@ renodx::utils::settings::Settings settings = {
     },
     
     new renodx::utils::settings::Setting{
-        .key = "ToneMapHueProcessor",
-        .binding = &shader_injection.tone_map_hue_processor,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .label = "Hue Processor",
-        .section = "Tone Mapping",
-        .tooltip = "Selects hue processor",
-        .labels = {"OKLab", "ICtCp", "darkTable UCS"},
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 2; },
-        // .is_visible = []() { return false; },
-    },
-    new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
         .binding = &shader_injection.tone_map_hue_correction,
         .default_value = 100.f,
@@ -257,7 +256,7 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapUpradeType",
         .binding = &shader_injection.custom_tonemap_upgrade_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
+        .default_value = 1.f,
         .can_reset = true,
         .label = "Grading Application",
         .section = "Highlight Saturation Restoration",
@@ -295,7 +294,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Highlight Saturation Restoration",
         .tooltip = "Sets the display mapper used",
         .labels = {"None", "DICE", "Frostbite", "RenoDRT NeutralSDR", "ToneMapMaxCLL"},
-        .is_visible = []() { return settings[0]->GetValue() >= 1; },
+        .is_visible = []() { return settings[0]->GetValue() >= 0; },
     },
 
     new renodx::utils::settings::Setting{

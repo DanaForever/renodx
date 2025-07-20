@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Wed May 28 12:37:51 2025
 #include "shared.h"
+#include "common.hlsl"
 cbuffer _Globals : register(b0)
 {
   float gamma : packoffset(c0);
@@ -26,8 +27,6 @@ void main(
   r0.xyzw = samplerSrc0Texture.Sample(samplerSrc0_s, v1.xy).xyzw;
   o0.w = r0.w;
 
-  // r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
-  o0.rgb = r0.xyz;
 
   if (RENODX_TONE_MAP_TYPE <= 1.f) {
     r0.xyz = max(float3(0,0,0), r0.xyz);
@@ -36,12 +35,12 @@ void main(
     // r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
 
     // gamma scaling
-    if (RENODX_TONE_MAP_TYPE == 0.f)
+    if (RENODX_TONE_MAP_TYPE == 0.f)  {
 
       // SDR gamma = 1.0, HDR gamma = 1.3
       r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
 
-    if (RENODX_TONE_MAP_TYPE < 1.f) {
+    
       r0.w = 0.587700009 * r0.y;
       r0.w = r0.x * 1.66050005 + -r0.w;
       r1.x = -r0.z * 0.072800003 + r0.w;
@@ -64,6 +63,26 @@ void main(
     }
     
 
+  }
+
+  if (FFXV_HDR_GRADING == 1.f && RENODX_TONE_MAP_TYPE > 1.f) {
+    r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
+
+    r0.w = 0.587700009 * r0.y;
+    r0.w = r0.x * 1.66050005 + -r0.w;
+    r1.x = -r0.z * 0.072800003 + r0.w;
+    r0.w = 0.100599997 * r0.y;
+    r0.w = r0.x * -0.0182000007 + -r0.w;
+    r1.z = r0.z * 1.11870003 + r0.w;
+    r0.x = dot(r0.xy, float2(-0.124600001, 1.13300002));
+    r1.y = -r0.z * 0.0083999997 + r0.x;
+
+    r1.xyz = renodx::color::gamma::DecodeSafe(r1.xyz, 1.0f/gamma);
+
+    r1.rgb = renodx::color::bt709::clamp::BT2020(r1.rgb);
+    o0.rgb = r1.rgb;
+  } else {
+    o0.rgb = r0.rgb;
   }
 
   // renodx swapchainpass
@@ -102,21 +121,22 @@ void main(
 
   color = min(color, RENODX_PEAK_WHITE_NITS);
 
-  [branch]
-  if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE != renodx::color::convert::COLOR_SPACE_UNKNOWN) {
-    [branch]
-    if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE == RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE) {
-      color = renodx::color::convert::ColorSpaces(color, swap_chain_decoding_color_space, RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE);
-      color = max(0, color);
-    } else {
-      if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE == swap_chain_decoding_color_space) {
-        color = max(0, color);
-      }
-      color = renodx::color::convert::ColorSpaces(color, swap_chain_decoding_color_space, RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE);
-    }
-  } else {
-    color = renodx::color::convert::ColorSpaces(color, swap_chain_decoding_color_space, RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE);
-  }
+  // [branch]
+  // if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE != renodx::color::convert::COLOR_SPACE_UNKNOWN) {
+  //   [branch]
+  //   if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE == RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE) {
+  //     color = renodx::color::convert::ColorSpaces(color, swap_chain_decoding_color_space, RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE);
+  //     color = max(0, color);
+  //   } else {
+  //     if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE == swap_chain_decoding_color_space) {
+  //       color = max(0, color);
+  //     }
+  //     color = renodx::color::convert::ColorSpaces(color, swap_chain_decoding_color_space, RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE);
+  //   }
+  // } else {
+  //   color = renodx::color::convert::ColorSpaces(color, swap_chain_decoding_color_space, RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE);
+  // }
+  color = renodx::color::bt709::clamp::BT2020(color);
 
   color = color / 80.f;
 
