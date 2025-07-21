@@ -124,14 +124,23 @@ void main(
 
   color = min(color, config.swap_chain_clamp_nits);  // Clamp UI or Videos
 
-  [branch]
-  if (shader_injection.tone_map_clamp_color_space == 1.f) {
-    color = renodx::color::bt709::clamp::BT2020(color);
-  } else {
-    color = renodx::color::bt709::clamp::BT709(color);
-  }
+  // [branch]
+  // if (shader_injection.tone_map_clamp_color_space == 1.f) {
+  //   color = renodx::color::bt709::clamp::BT2020(color);
+  // } else {
+  //   color = renodx::color::bt709::clamp::BT709(color);
+  // }
 
-  color = renodx::draw::EncodeColor(color, config.swap_chain_encoding);
+  color = renodx::color::bt2020::from::BT709(color);
+  color = max(0.f, color);
+
+  if (RENODX_SWAP_CHAIN_ENCODING == 4.f) {
+    color = renodx::color::pq::EncodeSafe(color, 1.f);
+  } else if (RENODX_SWAP_CHAIN_ENCODING == 5.f) {
+    color = renodx::color::bt709::from::BT2020(color);
+    color = color / 80.f;
+  }
+  // color = renodx::draw::EncodeColor(color, config.swap_chain_encoding);
 
   o0.rgb = color;
   return;
