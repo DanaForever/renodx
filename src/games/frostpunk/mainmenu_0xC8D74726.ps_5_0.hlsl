@@ -61,11 +61,12 @@ void main(
   if (r0.w != 0) {
     r0.xyz = t2.Sample(s2_s, r0.xy).xyz;
 
-    if (RENODX_TONE_MAP_TYPE == 0.f) {
-      r0.xyz = log2(abs(r0.xyz));
-      r0.xyz = float3(2.20000005,2.20000005,2.20000005) * r0.xyz;
-      r0.xyz = exp2(r0.xyz);
-    }
+    // if (RENODX_TONE_MAP_TYPE == 0.f) {
+    //   r0.xyz = log2(abs(r0.xyz));
+    //   r0.xyz = float3(2.20000005,2.20000005,2.20000005) * r0.xyz;
+    //   r0.xyz = exp2(r0.xyz);
+    // }
+    r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
     r1.xyz = cmp(r0.xyz < float3(0.5,0.5,0.5));
     r3.xyz = r2.xyz * r0.xyz;
     r3.xyz = r3.xyz + r3.xyz;

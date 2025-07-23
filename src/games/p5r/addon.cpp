@@ -400,7 +400,7 @@ bool OnDrawIndexed(
   shader_injection.clampState = CLAMP_STATE__OUTPUT;
   PushConstants(cmd_list, data->injection_layout);
   cmd_list->draw_indexed(index_count, instance_count, first_index, vertex_offset, first_instance);
-  shader_injection.clampState = CLAMP_STATE__NONE;
+  shader_injection.  = CLAMP_STATE__NONE;
 
   return true;
 }

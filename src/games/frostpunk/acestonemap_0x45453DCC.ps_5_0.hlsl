@@ -91,8 +91,8 @@ void main(
   // this is 0.001129
   r1.xyz = cb0[16].yyy * r1.xyz;
 
-  
   float3 untonemapped = r1.xyz;
+  r1.xyz = displayMap(r1.xyz);
 
   if (RENODX_TONE_MAP_TYPE == 2) {
     r1.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(r1.rgb, aces_min * 48.f, aces_max * 48.f);
@@ -104,7 +104,7 @@ void main(
   r0.xyz = lerp(r1.xyz, r0.xyz, cb2[6].z);
 
   float3 sdr_ungraded = r0.xyz;
-
+  // lut sampling apparently
   r1.x = t4.Sample(s4_s, r0.x).x;
   r1.y = t4.Sample(s4_s, r0.y).y;
   r1.z = t4.Sample(s4_s, r0.z).z;
@@ -144,24 +144,19 @@ void main(
   r0.w = renodx::color::y::from::BT709(r0.xyz);
   o0.xyz = r0.xyz;
 
-  float midgrey = renodx::color::y::from::BT709(renodx::tonemap::ACESFittedBT709(0.18f));
-  if (RENODX_TONE_MAP_TYPE >= 3.f) {
-    untonemapped = untonemapped * 0.18f / midgrey;
-    o0.xyz = renodx::draw::ToneMapPass(untonemapped,
-                                       //  sdr_ungraded,
-                                       //  renodx::color::gamma::Decode(o0.xyz, 1 / cb2[1].w)
-                                       o0.xyz
-                                      //  o0.xyz
-    );
-
+  if (RENODX_TONE_MAP_TYPE >= 3.f || RENODX_TONE_MAP_TYPE == 1.f) {
+    // o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
+    if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
+      o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
+    } else {
+      o0.xyz = CustomUpgradeToneMapPerChannel(untonemapped, o0.xyz);
+      o0.xyz = renodx::draw::ToneMapPass(o0.xyz);
+    }                                      
   } else {
-    // o0.xyz = renodx::color::gamma::Decode(o0.xyz, 1 / cb2[1].w);
   }
 
   o0.w = r0.w;
 
-  if (RENODX_TONE_MAP_TYPE >= 3.f)
-    o0.xyz = renodx::color::srgb::DecodeSafe(o0.xyz);
   o0.xyz = renodx::draw::RenderIntermediatePass(o0.xyz);
   return;
 }

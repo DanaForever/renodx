@@ -184,6 +184,89 @@ renodx::utils::settings::Settings settings = {
         .is_visible = []() { return current_settings_mode >= 2; },
     },
     new renodx::utils::settings::Setting{
+        .key = "ToneMapUpradeType",
+        .binding = &shader_injection.custom_tonemap_upgrade_type,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .can_reset = true,
+        .label = "Grading Application",
+        .section = "Highlight Saturation Restoration",
+        .tooltip = "How the graded image gets upgraded",
+        .labels = {"Luminance", "Per Channel+"},
+        .is_visible = []() { return current_settings_mode >= 1; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapUpradeStrength",
+        .binding = &shader_injection.custom_tonemap_upgrade_strength,
+        .default_value = 50.f,
+        .label = "Saturation Strength",
+        .section = "Highlight Saturation Restoration",
+        .is_enabled = []() { return shader_injection.custom_tonemap_upgrade_type == 1.f; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 2; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapUpradeHueCorr",
+        .binding = &shader_injection.custom_tonemap_upgrade_huecorr,
+        .default_value = 100.f,
+        .label = "Hue Correction",
+        .section = "Highlight Saturation Restoration",
+        .is_enabled = []() { return shader_injection.custom_tonemap_upgrade_type == 1.f; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 2; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "DisplayMapType",
+        .binding = &shader_injection.custom_display_map_type,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 1.f,
+        .can_reset = true,
+        .label = "Display Map Type",
+        .section = "Highlight Saturation Restoration",
+        .tooltip = "Sets the display mapper used",
+        .labels = {"None", "DICE", "Frostbite", "RenoDRT NeutralSDR", "ToneMapMaxCLL"},
+        .is_visible = []() { return settings[0]->GetValue() >= 1; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeBlowoutRestoration",
+        .binding = &shader_injection.color_grade_per_channel_blowout_restoration,
+        .default_value = 0.f,
+        .label = "Per Channel Blowout Restoration",
+        .section = "Per channel scene-grading",
+        .tooltip = "Restores color from blowout from per-channel grading.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type > 0; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 1 && shader_injection.custom_tonemap_upgrade_type == 0.f; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeChrominanceCorrection",
+        .binding = &shader_injection.color_grade_per_channel_chrominance_correction,
+        .default_value = 0.f,
+        .label = "Per Channel Chrominance Correction",
+        .section = "Per channel scene-grading",
+        .tooltip = "Corrects unbalanced chrominance (?) from per-channel grading.",
+        .min = 0.f,
+        .max = 100.f,
+       .is_enabled = []() { return shader_injection.tone_map_type > 0; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 1 && shader_injection.custom_tonemap_upgrade_type == 0.f; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeHueCorrection",
+        .binding = &shader_injection.color_grade_per_channel_hue_correction,
+        .default_value = 0.f,
+        .label = "Per Channel Hue Correction",
+        .section = "Per channel scene-grading",
+        .tooltip = "Corrects per-channel hue shifts from per-channel grading.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type > 0; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return current_settings_mode >= 1 && shader_injection.custom_tonemap_upgrade_type == 0.f; },
+    },
+    new renodx::utils::settings::Setting{
         .key = "ColorGradeExposure",
         .binding = &shader_injection.tone_map_exposure,
         .default_value = 1.f,
@@ -232,44 +315,7 @@ renodx::utils::settings::Settings settings = {
         .parse = [](float value) { return value * 0.02f; },
     },
 
-    new renodx::utils::settings::Setting{
-        .key = "ColorGradeHueCorrection",
-        .binding = &shader_injection.color_grade_per_channel_hue_correction,
-        .default_value = 0.f,
-        .label = "Per Channel Hue Correction",
-        .section = "Per Channel Scene Grading",
-        .tooltip = "Corrects per-channel hue shifts from per-channel grading.",
-        .min = 0.f,
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return current_settings_mode >= 2; },
-    },
-    new renodx::utils::settings::Setting{
-        .key = "ColorGradeChrominanceCorrection",
-        .binding = &shader_injection.color_grade_per_channel_chrominance_correction,
-        .default_value = 0.f,
-        .label = "Per Channel Chrominance Correction",
-        .section = "Per Channel Scene Grading",
-        .tooltip = "Corrects unbalanced chrominance (?) from per-channel grading.",
-        .min = 0.f,
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return current_settings_mode >= 2; },
-    },
-    new renodx::utils::settings::Setting{
-        .key = "ColorGradeBlowoutRestoration",
-        .binding = &shader_injection.color_grade_per_channel_blowout_restoration,
-        .default_value = 0.f,
-        .label = "Per Channel Blowout Restoration",
-        .section = "Per Channel Scene Grading",
-        .tooltip = "Restores color from blowout from per-channel grading.",
-        .min = 0.f,
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .parse = [](float value) { return value * 0.01f; },
-    },
+    
     new renodx::utils::settings::Setting{
         .key = "ColorGradeHighlightSaturation",
         .binding = &shader_injection.tone_map_highlight_saturation,
@@ -387,48 +433,6 @@ renodx::utils::settings::Settings settings = {
     //     .is_visible = []() { return current_settings_mode >= 2; },
     // },
 
-    // Display map settings for Highlight Saturation
-
-    new renodx::utils::settings::Setting{
-        .key = "RestoreHighlight",
-        .binding = &shader_injection.restore_highlight,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .can_reset = true,
-        .label = "Display Map Type",
-        .section = "Highlight Saturation Restoration",
-        .tooltip = "Sets the Display mapper used",
-        .labels = {"None", "DICE", "Frostbite", "NaturalSDR"},
-        .is_visible = []() { return settings[0]->GetValue() >= 1; },
-    },
-
-    new renodx::utils::settings::Setting{
-        .key = "RestoreHighlightPeak",
-        .binding = &shader_injection.restore_highlight_peak,
-        .value_type = renodx::utils::settings::SettingValueType::FLOAT,
-        .default_value = 2.f,
-        .can_reset = true,
-        .label = "Display Map Peak",
-        .section = "Highlight Saturation Restoration",
-        .tooltip = "What nit value we want to display map down to -- 2.f is solid",
-        .max = 5.f,
-        .is_visible = []() { return settings[0]->GetValue() >= 1; },
-    },
-
-    new renodx::utils::settings::Setting{
-        .key = "RestoreHighlightShoulder",
-        .binding = &shader_injection.restore_highlight_shoulder,
-        .value_type = renodx::utils::settings::SettingValueType::FLOAT,
-        .default_value = 0.25f,
-        .can_reset = true,
-        .label = "Display Map Shoulder",
-        .section = "Highlight Saturation Restoration",
-        .tooltip = "Determines where the highlights curve (shoulder) starts in the display mapper.",
-        .max = 1.f,
-        .format = "%.2f",
-        .is_visible = []() { return settings[0]->GetValue() >= 1; },
-    },
-
     new renodx::utils::settings::Setting{
         .key = "fxSharpening",
         .binding = &shader_injection.rcas,
@@ -485,20 +489,6 @@ renodx::utils::settings::Settings settings = {
     },
 };
 
-const std::unordered_map<std::string, reshade::api::format> UPGRADE_TARGETS = {
-    {"R8G8B8A8_TYPELESS", reshade::api::format::r8g8b8a8_typeless},
-    {"B8G8R8A8_TYPELESS", reshade::api::format::b8g8r8a8_typeless},
-    {"R8G8B8A8_UNORM", reshade::api::format::r8g8b8a8_unorm},
-    {"B8G8R8A8_UNORM", reshade::api::format::b8g8r8a8_unorm},
-    {"R8G8B8A8_SNORM", reshade::api::format::r8g8b8a8_snorm},
-    {"R8G8B8A8_UNORM_SRGB", reshade::api::format::r8g8b8a8_unorm_srgb},
-    {"B8G8R8A8_UNORM_SRGB", reshade::api::format::b8g8r8a8_unorm_srgb},
-    {"R10G10B10A2_TYPELESS", reshade::api::format::r10g10b10a2_typeless},
-    {"R10G10B10A2_UNORM", reshade::api::format::r10g10b10a2_unorm},
-    {"B10G10R10A2_UNORM", reshade::api::format::b10g10r10a2_unorm},
-    {"R11G11B10_FLOAT", reshade::api::format::r11g11b10_float},
-    {"R16G16B16A16_TYPELESS", reshade::api::format::r16g16b16a16_typeless},
-};
 
 void OnPresetOff() {
   //   renodx::utils::settings::UpdateSetting("toneMapType", 0.f);
@@ -563,7 +553,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         //  RGBA8_typeless
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_typeless,
-            .new_format = reshade::api::format::r16g16b16a16_typeless,
+            .new_format = reshade::api::format::r16g16b16a16_float,
             // .new_format = reshade::api::format::r32g32b32a32_typeless,
             .aspect_ratio = 16.f / 9.f
         });
@@ -585,7 +575,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         //  BGRA8_typeless
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::b8g8r8a8_typeless,
-            .new_format = reshade::api::format::r16g16b16a16_typeless,
+            .new_format = reshade::api::format::r16g16b16a16_float,
             .aspect_ratio = 16.f / 9.f
         });
 

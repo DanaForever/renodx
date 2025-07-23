@@ -134,15 +134,13 @@ float3 colorGrade(float3 ungraded) {
   r0.y = dot(r1.xyz, float3(-0.0863080025, 1.10471201, -0.0184039995));
   r0.z = dot(r1.xyz, float3(-0.0281070005, -0.100798003, 1.12890506));
 
-  if (HDR != 0) {
+  if ((FFXV_HDR_GRADING == 1.f && RENODX_TONE_MAP_TYPE > 1.f) || (HDR != 0 && RENODX_TONE_MAP_TYPE == 0.f)) {
     // push colors a bit towards BT2020?
-    if (RENODX_TONE_MAP_TYPE == 0.f) {
-      r1.xyz = float3(0.329299986, 0.919499993, 0.0879999995) * r0.yyy;
-      r1.xyz = r0.xxx * float3(0.627399981, 0.0691, 0.0164000001) + r1.xyz;
-      r1.xyz = r0.zzz * float3(0.0432999991, 0.0114000002, 0.895600021) + r1.xyz;
-      r2.xyz = -r1.xyz + r0.xyz;
-      r0.xyz = HDRGamutRatio * r2.xyz + r1.xyz;
-    }
+    r1.xyz = float3(0.329299986, 0.919499993, 0.0879999995) * r0.yyy;
+    r1.xyz = r0.xxx * float3(0.627399981, 0.0691, 0.0164000001) + r1.xyz;
+    r1.xyz = r0.zzz * float3(0.0432999991, 0.0114000002, 0.895600021) + r1.xyz;
+    r2.xyz = -r1.xyz + r0.xyz;
+    r0.xyz = HDRGamutRatio * r2.xyz + r1.xyz;
   }
 
   // negate all invalid colors

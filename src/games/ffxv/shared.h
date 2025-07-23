@@ -76,11 +76,12 @@ struct ShaderInjectData {
   // float per_channel_correction;
   // float per_channel_correction_range;
   float hdr_grading;
+  float hdr_format;
 
-  float color_grade_per_channel_hue_correction;
-  float color_grade_per_channel_hue_shift_strength;
-  float color_grade_per_channel_chrominance_correction;
-  float color_grade_per_channel_blowout_restoration;
+  // float color_grade_per_channel_hue_correction;
+  // float color_grade_per_channel_hue_shift_strength;
+  // float color_grade_per_channel_chrominance_correction;
+  // float color_grade_per_channel_blowout_restoration;
 
   float custom_display_map_type;
   float custom_tonemap_upgrade_type;
@@ -123,19 +124,20 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_COLOR_GRADE_STRENGTH          shader_injection.color_grade_strength
 #define RENODX_INTERMEDIATE_ENCODING         0.f // shader_injection.intermediate_encoding
 #define RENODX_SWAP_CHAIN_DECODING           0.f // shader_injection.swap_chain_decoding
-#define RENODX_SWAP_CHAIN_GAMMA_CORRECTION   shader_injection.swap_chain_gamma_correction
+// #define RENODX_SWAP_CHAIN_GAMMA_CORRECTION   shader_injection.swap_chain_gamma_correction
+#define RENODX_SWAP_CHAIN_GAMMA_CORRECTION   shader_injection.gamma_correction
 // #define RENODX_SWAP_CHAIN_DECODING_COLOR_SPACE shader_injection.swap_chain_decoding_color_space
 #define RENODX_SWAP_CHAIN_CUSTOM_COLOR_SPACE shader_injection.swap_chain_custom_color_space
 // #define RENODX_SWAP_CHAIN_SCALING_NITS         shader_injection.swap_chain_scaling_nits
 // #define RENODX_SWAP_CHAIN_CLAMP_NITS           shader_injection.swap_chain_clamp_nits
-#define RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE    shader_injection.swap_chain_clamp_color_space
-#define RENODX_SWAP_CHAIN_ENCODING             5.f //
-#define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE 0.f // shader_injection.swap_chain_encoding_color_space
+#define RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE    2.f // shader_injection.swap_chain_clamp_color_space
+#define RENODX_SWAP_CHAIN_ENCODING             shader_injection.swap_chain_encoding // 5.f
+#define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE shader_injection.swap_chain_encoding_color_space
 #define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::REINHARD
 
-#define RENODX_PER_CHANNEL_BLOWOUT_RESTORATION  shader_injection.color_grade_per_channel_blowout_restoration
-#define RENODX_PER_CHANNEL_HUE_CORRECTION  shader_injection.color_grade_per_channel_hue_correction
-#define RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION  shader_injection.color_grade_per_channel_chrominance_correction
+// #define RENODX_PER_CHANNEL_BLOWOUT_RESTORATION  shader_injection.color_grade_per_channel_blowout_restoration
+// #define RENODX_PER_CHANNEL_HUE_CORRECTION  shader_injection.color_grade_per_channel_hue_correction
+// #define RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION  shader_injection.color_grade_per_channel_chrominance_correction
 
 #define CUSTOM_DISPLAY_MAP_TYPE                   shader_injection.custom_display_map_type
 #define CUSTOM_TONEMAP_UPGRADE_TYPE               shader_injection.custom_tonemap_upgrade_type

@@ -59,12 +59,9 @@ void main(
   }
   r1.x = cmp(cb1[1].w == 0.000000);
   if (r1.x != 0) {
-    if (RENODX_TONE_MAP_TYPE == 0.f) {
-      r2.xyzw = log2(abs(r0.xyzw));
-      r2.xyzw = float4(2.20000005,2.20000005,2.20000005,2.20000005) * r2.xyzw;
-      r2.xyzw = exp2(r2.xyzw);
-      o0.xyz = v2.xyz * r2.xyz;
-    }
+
+    r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
+    o0.xyz = v2.xyz * r2.xyz;
     
     o0.w = r2.w * r1.y;
     o0 = r2;

@@ -87,6 +87,7 @@ void main(
   r0.w = 1 + -r0.w;
   r0.xyz = cb0[10].www * r0.xyz;
   o0.xyz = r1.xyz * r0.www + r0.xyz;
-  o0.w = 1;
+  // o0.w = 1;
+  o0.w = r0.w;
   return;
 }

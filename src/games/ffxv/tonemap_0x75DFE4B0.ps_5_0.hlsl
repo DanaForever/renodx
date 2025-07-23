@@ -201,16 +201,22 @@ float3 colorGrade(float3 color) {
   r0.y = dot(r1.xyz, float3(-0.0863080025, 1.10471201, -0.0184039995)); // A
   r0.z = dot(r1.xyz, float3(-0.0281070005, -0.100798003, 1.12890506));  // B
 
-  if (HDR != 0) {
-    // push colors a bit towards BT2020?
-    if (RENODX_TONE_MAP_TYPE == 0.f || FFXV_HDR_GRADING == 1.f) {
+  if (RENODX_TONE_MAP_TYPE > 1.f) {
+    if (FFXV_HDR_GRADING == 1.f) {
       r1.xyz = float3(0.329299986, 0.919499993, 0.0879999995) * r0.yyy;
       r1.xyz = r0.xxx * float3(0.627399981, 0.0691, 0.0164000001) + r1.xyz;
       r1.xyz = r0.zzz * float3(0.0432999991, 0.0114000002, 0.895600021) + r1.xyz;
       r2.xyz = -r1.xyz + r0.xyz;
       r0.xyz = HDRGamutRatio * r2.xyz + r1.xyz;
-    } else if (RENODX_TONE_MAP_TYPE == 3.f) {
-      // r0.xyz = expandGamut(r0.xyz, FFXV_EXPAND_GAMUT);
+    }
+  } else if (RENODX_TONE_MAP_TYPE == 0.f) {
+    if (HDR != 0) {
+      // push colors a bit towards BT2020?
+      r1.xyz = float3(0.329299986, 0.919499993, 0.0879999995) * r0.yyy;
+      r1.xyz = r0.xxx * float3(0.627399981, 0.0691, 0.0164000001) + r1.xyz;
+      r1.xyz = r0.zzz * float3(0.0432999991, 0.0114000002, 0.895600021) + r1.xyz;
+      r2.xyz = -r1.xyz + r0.xyz;
+      r0.xyz = HDRGamutRatio * r2.xyz + r1.xyz;
     }
   }
 

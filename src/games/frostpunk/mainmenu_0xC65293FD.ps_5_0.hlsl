@@ -54,12 +54,14 @@ void main(
   r2.xy = r2.yy ? r3.xy : 0;
   r0.xy = r0.xy * cb0[13].ww + r2.xy;
   r3.xyz = t1.Sample(s1_s, r0.xy).xyz;
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
-    r3.xyz = log2(abs(r3.xyz));
-    r3.xyz = float3(2.20000005,2.20000005,2.20000005) * r3.xyz;
-    r3.xyz = exp2(r3.xyz);
-  }
-  r0.x = dot(r3.xyz, float3(0.212599993,0.715200007,0.0722000003));
+  // if (RENODX_TONE_MAP_TYPE == 0.f) {
+  //   r3.xyz = log2(abs(r3.xyz));
+  //   r3.xyz = float3(2.20000005,2.20000005,2.20000005) * r3.xyz;
+  //   r3.xyz = exp2(r3.xyz);
+  // }
+  r3.xyz = renodx::color::srgb::DecodeSafe(r3.xyz);
+  r0.x = renodx::color::y::from::BT709(r3.xyz);
+  // r0.x = dot(r3.xyz, float3(0.212599993,0.715200007,0.0722000003));
   r3.xyz = r3.xyz + -r0.xxx;
   r1.xyz = v2.xxx * r3.xyz + r0.xxx;
   r3.x = 1;
@@ -81,11 +83,12 @@ void main(
   }
   if (r2.w != 0) {
     r0.xyz = t2.Sample(s2_s, r0.zw).xyz;
-    if (RENODX_TONE_MAP_TYPE == 0.f) {
-      r0.xyz = log2(abs(r0.xyz));
-      r0.xyz = float3(2.20000005,2.20000005,2.20000005) * r0.xyz;
-      r0.xyz = exp2(r0.xyz);
-    }
+    // if (RENODX_TONE_MAP_TYPE == 0.f) {
+    //   r0.xyz = log2(abs(r0.xyz));
+    //   r0.xyz = float3(2.20000005,2.20000005,2.20000005) * r0.xyz;
+    //   r0.xyz = exp2(r0.xyz);
+    // }
+    r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
     r1.xyz = cmp(r0.xyz < float3(0.5,0.5,0.5));
     r2.xyz = r4.xyz * r0.xyz;
     r2.xyz = r2.xyz + r2.xyz;

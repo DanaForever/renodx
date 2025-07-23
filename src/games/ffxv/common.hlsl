@@ -53,7 +53,7 @@ float3 PostToneMapScale(float3 color) {
 float3 ToneMapPass(float3 untonemapped, 
   float3 graded_sdr, 
   float3 neutral_sdr,
-  float3 mid_gray=0.18f,
+  float mid_gray=0.18f,
   bool regrade=false) {
   renodx::draw::Config draw_config = renodx::draw::BuildConfig();
   draw_config.reno_drt_tone_map_method = renodx::tonemap::renodrt::config::tone_map_method::REINHARD;

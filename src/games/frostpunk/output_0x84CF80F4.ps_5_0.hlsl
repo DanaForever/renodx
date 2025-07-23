@@ -39,26 +39,28 @@ void main(
   r0.xyzw = InputTexture.Sample(InputTextureSampler_s, v1.xy).xyzw;
 
   r1.x = cmp(0 < PerDrawCall.MaskParams_MaskColor_InputGammaCorrection.z);
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
-    r2.xyzw = log2(abs(r0.xyzw));
-    r2.xyzw = float4(2.20000005,2.20000005,2.20000005,2.20000005) * r2.xyzw;
-    r2.xyzw = exp2(r2.xyzw);
-    r0.xyzw = r1.xxxx ? r2.xyzw : r0.xyzw;
-  }
+  float3 igc = r1.xxx;
+    // r2.xyzw = log2(abs(r0.xyzw));
+    // r2.xyzw = float4(2.20000005,2.20000005,2.20000005,2.20000005) * r2.xyzw;
+    // r2.xyzw = exp2(r2.xyzw);
+  r2.xyz = renodx::color::srgb::EncodeSafe(r0.xyz);
+  r0.xyz = igc ? r2.xyz : r0.xyz;
+  
 
-  // r1.x = cmp(0 < PerDrawCall.BrightnessContrastSaturationColorLUTEnable.w);
-  // if (r1.x != 0) {
-  //   r1.x = cmp(0 < PerDrawCall.MaskParams_MaskColor_InputGammaCorrection.y);
-  //   if (r1.x != 0) {
-  //     r1.x = ColorLUTMask.Sample(ColorLUTMaskSampler_s, w1.xy).w;
-  //   } else {
-  //     r1.x = 1;
-  //   }
-  //   r1.yzw = PerDrawCall.AverageLuminanceHalfTexelSize.www + r0.xyz;
-  //   r1.yzw = ColorLUTTexture.Sample(ColorLUTTextureSampler_s, r1.yzw).xyz;
-  //   r1.yzw = r1.yzw + -r0.xyz;
-  //   r0.xyz = r1.xxx * r1.yzw + r0.xyz;
-  // }
+  r1.x = cmp(0 < PerDrawCall.BrightnessContrastSaturationColorLUTEnable.w);
+  if (r1.x != 0) {
+    r1.x = cmp(0 < PerDrawCall.MaskParams_MaskColor_InputGammaCorrection.y);
+    if (r1.x != 0) {
+      r1.x = ColorLUTMask.Sample(ColorLUTMaskSampler_s, w1.xy).w;
+    } else {
+      r1.x = 1;
+    }
+    r1.yzw = PerDrawCall.AverageLuminanceHalfTexelSize.www + r0.xyz;
+    r1.yzw = ColorLUTTexture.Sample(ColorLUTTextureSampler_s, r1.yzw).xyz;
+    // r1.yzw = r1.yzw + -r0.xyz;
+    // r0.xyz = r1.xxx * r1.yzw + r0.xyz;
+    r0.xyz = lerp(r0.xyz, r1.yzw, r1.xxx);
+  }
 
   r1.x = cmp(PerDrawCall.MaskParams_MaskColor_InputGammaCorrection.x >= 0);
   if (r1.x != 0) {
@@ -68,15 +70,19 @@ void main(
     r1.x = 1;
   }
   r1.yzw = PerDrawCall.BrightnessContrastSaturationColorLUTEnable.xxx * r0.xyz;
-  r1.y = dot(r1.yzw, float3(0.212599993,0.715200007,0.0722000003));
+  // r1.y = dot(r1.yzw, float3(0.212599993,0.715200007,0.0722000003));
+  r1.y = renodx::color::y::from::NTSC1953(r1.yzw);
   r2.xyz = r0.xyz * PerDrawCall.BrightnessContrastSaturationColorLUTEnable.xxx + -r1.yyy;
   r1.yzw = PerDrawCall.BrightnessContrastSaturationColorLUTEnable.zzz * r2.xyz + r1.yyy;
   r1.yzw = -PerDrawCall.AverageLuminanceHalfTexelSize.xyz + r1.yzw;
   r1.yzw = PerDrawCall.BrightnessContrastSaturationColorLUTEnable.yyy * r1.yzw + PerDrawCall.AverageLuminanceHalfTexelSize.xyz;
-  r1.yzw = r1.yzw + -r0.xyz;
-  o0.xyz = r1.xxx * r1.yzw + r0.xyz;
+  // r1.yzw = r1.yzw + -r0.xyz;
+  // o0.xyz = r1.xxx * r1.yzw + r0.xyz;
+  o0.xyz = lerp(r0.xyz, r1.yzw, r1.xxx);
+  o0.xyz = igc ? renodx::color::srgb::DecodeSafe(o0.xyz) : o0.xyz;
 
   o0.w = r0.w;
-  o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  
+  // o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
   return;
 }

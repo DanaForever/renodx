@@ -127,7 +127,90 @@ float CustomizeLuminance(float value, float highlights = 1.f, float shadows = 1.
   return value;
 }
 
+float3x3 Invert3x3(float3x3 m) {
+  float a = m[0][0], b = m[0][1], c = m[0][2];
+  float d = m[1][0], e = m[1][1], f = m[1][2];
+  float g = m[2][0], h = m[2][1], i = m[2][2];
+
+  float A = (e * i - f * h);
+  float B = -(d * i - f * g);
+  float C = (d * h - e * g);
+  float D = -(b * i - c * h);
+  float E = (a * i - c * g);
+  float F = -(a * h - b * g);
+  float G = (b * f - c * e);
+  float H = -(a * f - c * d);
+  float I = (a * e - b * d);
+
+  float det = a * A + b * B + c * C;
+  float invDet = 1.0 / det;
+
+  return float3x3(
+             A, D, G,
+             B, E, H,
+             C, F, I)
+         * invDet;
+}
+
+
 float3 BT709(float3 bt709, Config current_config) {
+  
+  // if (current_config.working_color_space == 2) {
+  //   bt709 *= current_config.exposure;
+  //   float y_original = renodx::color::y::from::BT709(abs(bt709));
+    
+  //   // Von-Kries LMS
+  //   static const float3x3 XYZ_TO_LMS_D65_MAT = float3x3(
+  //       0.4002400f, 0.7076000f, -0.0808100f,
+  //       -0.2263000f, 1.1653200f, 0.0457000f,
+  //       0.0000000f, 0.0000000f, 0.9182200f);
+    
+
+  //   // static const float3x3 XYZ_TO_LMS_D65_MAT = float3x3(
+  //   //     0.8562f, 0.3372f, -0.1934f,
+  //   //     -0.8360f, 1.8327f, 0.0033f,
+  //   //     0.0357f, -0.0469f, 1.0112f);
+
+  //   // static const float3x3 XYZ_TO_LMS_D65_MAT = float3x3(
+  //   //     0.8951f, 0.2664f, -0.1614,
+  //   //     -0.7502f, 1.7135f, 0.0367f,
+  //   //     0.0389f, -0.0685f, 1.0296f);
+
+  //   float3 lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(bt709));
+  //   float3 midgray_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(0.18f));
+
+  //   // midgray match
+  //   lms = renodx::math::DivideSafe(lms, midgray_lms, 1.f);
+  //   lms = sign(lms) * pow(abs(lms), current_config.contrast);
+  //   lms *= midgray_lms;
+
+  //   const float human_vision_peak = 4000 / 203.f;
+  //   float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(human_vision_peak));
+
+  //   // Naka Rushton per cone
+  //   float3 new_lms = float3(
+  //       sign(lms.x) * renodx::tonemap::ReinhardScalableExtended(abs(lms.x), 100.f, peak_lms.x, 0.f, abs(midgray_lms.x), abs(midgray_lms.x)),
+  //       sign(lms.y) * renodx::tonemap::ReinhardScalableExtended(abs(lms.y), 100.f, peak_lms.y, 0.f, abs(midgray_lms.y), abs(midgray_lms.y)),
+  //       sign(lms.z) * renodx::tonemap::ReinhardScalableExtended(abs(lms.z), 100.f, peak_lms.z, 0.f, abs(midgray_lms.z), abs(midgray_lms.z)));
+
+  //   float3 new_xyz = mul(Invert3x3(XYZ_TO_LMS_D65_MAT), new_lms);
+  //   float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);
+
+  //   // float input = y_original;
+  //   float input = renodx::color::y::from::BT709(input_color);
+  //   float rolloff_start = 0.20f;
+  //   float output_max = current_config.nits_peak / 100.f;
+  //   float rolloff_size = output_max - rolloff_start;
+    
+  //   float overage = -max((float)0, input - rolloff_start);  // very negative if input >>>>> rolloff_start
+  //   float rolloff_value = (float)1.0f - exp(overage / rolloff_size); // rolloff_value to zero?
+  //   float new_overage = mad(rolloff_size, rolloff_value, overage); 
+  //   float new_y = input + new_overage;
+
+  //   float3 final = input_color * renodx::math::DivideSafe(new_y, (input), 1.f);
+
+  //   return final;
+  // }
   const float n_r = 100.f;
   float n = 1000.f;
 

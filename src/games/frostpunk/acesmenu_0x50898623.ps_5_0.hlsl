@@ -1,8 +1,9 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jun 12 19:47:49 2025
+#include "common.hlsl"
+#include "shared.h"
 Texture2D<float4> t0 : register(t0);
 Texture1D<float4> t4 : register(t4);
 Texture1D<float4> t3 : register(t3);
-#include "shared.h"
 
 SamplerState s4_s : register(s4);
 
@@ -65,6 +66,7 @@ void main(
   o0.w = r1.w;
   r1.xyz = cb0[16].yyy * r1.xyz;
   float3 untonemapped = r1.xyz;
+  r1.xyz = displayMap(r1.xyz);
   
   // r2.xyz = r1.xyz * float3(2570.23999,2570.23999,2570.23999) + float3(0.0299999993,0.0299999993,0.0299999993);
   // r3.xyz = float3(1024,1024,1024) * r1.xyz;
@@ -112,9 +114,12 @@ void main(
   o0.xyz = r0.xyz * r0.www;
 
   if (RENODX_TONE_MAP_TYPE > 1.f) {
-    o0.xyz = renodx::draw::ToneMapPass(untonemapped, renodx::color::gamma::Decode(o0.xyz, 1 / cb2[1].w));
-    if (RENODX_TONE_MAP_TYPE > 1.f)
-      o0.xyz = renodx::color::srgb::DecodeSafe(o0.xyz);
+    if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
+      o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
+    } else {
+      o0.xyz = CustomUpgradeToneMapPerChannel(untonemapped, o0.xyz);
+      o0.xyz = renodx::draw::ToneMapPass(o0.xyz);
+    }
   }
   
   o0.xyz = renodx::draw::RenderIntermediatePass(o0.xyz);

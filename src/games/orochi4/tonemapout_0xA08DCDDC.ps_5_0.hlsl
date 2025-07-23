@@ -115,9 +115,9 @@ void main(
 
   r0.xyz = cb0[4].xyz * r0.xyz;
   o0.w = r0.w;
-  
+
   float3 untonemapped = r0.xyz;
-  r0.xyz = RestoreHighlightSaturation(untonemapped);
+  r0.xyz = displayMap(untonemapped);
 
   r1.xyz = cb0[4].www * r0.xyz + cb0[5].xxx;
   r1.xyz = r0.xyz * r1.xyz + cb0[5].yyy;
@@ -147,30 +147,18 @@ void main(
     r0.xyz = cb0[6].yyy * r0.xyz;
 
     float mid_gray = renodx::color::y::from::BT709(r0.xyz);
-    // untonemapped *= mid_gray / 0.18f;
+    untonemapped *= mid_gray / 0.18f;
+    float3 hdr;
 
-    // o0.rgb = renodx::draw::ToneMapPass(untonemapped, sdr);
-    
-    // untonemapped *= mid_gray / 0.18f;
+    if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
+      hdr = renodx::draw::ToneMapPass(untonemapped, sdr);
+    } else {
+      hdr = CustomUpgradeToneMapPerChannel(untonemapped, sdr);
+      hdr = renodx::draw::ToneMapPass(hdr);
+    }
 
-    o0.rgb = CustomToneMapPass(untonemapped, sdr, mid_gray);
-    // o0.rgb = CustomToneMapPass(untonemapped, sdr, mid_gray);
-
-    // float3 tonemapped_bt709;
-    // float3 ungraded_bt709 = untonemapped;
-    // // float3 graded_untonemapped_bt709 = UpgradeToneMapByLuminance(ungraded_bt709,
-    // //                                                              renodx::tonemap::renodrt::NeutralSDR(untonemapped),
-    // //                                                             sdr, 1.f);
-
-    // // float3 graded_untonemapped_bt709 = UpgradeToneMapPerChannel(ungraded_bt709,
-    // //                                                              renodx::tonemap::renodrt::NeutralSDR(untonemapped),
-    // //                                                              sdr, 1.f);
-
-    // tonemapped_bt709 = CustomToneMapPass(untonemapped, sdr, mid_gray);
-    // // tonemapped_bt709 = ToneMap(graded_untonemapped_bt709);
-    // o0.rgb = tonemapped_bt709; 
+    o0.rgb = hdr;
     o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-    
 
   }
 

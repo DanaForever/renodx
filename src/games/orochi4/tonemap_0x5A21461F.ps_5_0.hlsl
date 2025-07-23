@@ -238,7 +238,7 @@ void main(
   r0.xyz = vSaturationScale.xyz * r0.xyz + r1.xxx;
 
   float3 untonemapped = convertToBT709(r0.xyz);
-  r0.xyz = RestoreHighlightSaturation(untonemapped); 
+  r0.xyz = displayMap(untonemapped); 
 
   r1.xyz = fParamA * r0.xyz + fParamCB;
   r1.xyz = r0.xyz * r1.xyz + fParamDE;
@@ -265,10 +265,18 @@ void main(
     r0.xyz = fWhiteTone * r0.xyz;
 
     float mid_gray = renodx::color::y::from::BT709(r0.xyz);
-    o0.rgb = CustomToneMapPass(untonemapped, sdr, mid_gray);
+    untonemapped *= mid_gray / 0.18f;
+    float3 hdr;
 
+    if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
+      hdr = renodx::draw::ToneMapPass(untonemapped, sdr);
+    } else {
+      hdr = CustomUpgradeToneMapPerChannel(untonemapped, sdr);
+      hdr = renodx::draw::ToneMapPass(hdr);
+    }
+
+    o0.rgb = hdr;
     o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-
   }
 
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);

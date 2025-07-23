@@ -91,18 +91,21 @@ void main(
   // r1.yzw = log2(r1.yzw);
   // r1.yzw = float3(78.84375,78.84375,78.84375) * r1.yzw;
   // r1.yzw = exp2(r1.yzw);
-  // r1.yzw = renodx::color::pq::EncodeSafe(lut_input, 1.f);
+  r1.yzw = renodx::color::pq::EncodeSafe(lut_input, 1.f);
   r0.yzw = lut_input + float3(0.00266771927,0.00266771927,0.00266771927); 
   r0.yzw = log2(r0.yzw);
   // scale and offset
   r0.yzw = (r0.yzw * float3(0.0714285746, 0.0714285746, 0.0714285746) + float3(0.610726953, 0.610726953, 0.610726953));
-  // r0.yzw = r2.xxx ? r1.yzw : r0.yzw;
-  // r0.yzw = r1.yzw;
+  r0.yzw = r2.xxx ? r1.yzw : r0.yzw;
 
   r0.yzw = r0.yzw * float3(0.96875,0.96875,0.96875) + float3(0.015625,0.015625,0.015625);
-  r0.yzw = t3.Sample(s3_s, r0.yzw).xyz;
+  // r0.yzw = t3.Sample(s3_s, r0.yzw).xyz;
+  r0.yzw = renodx::lut::Sample(t3, s3_s, r0.yzw, 32u);
   r1.xyz = float3(1.04999995,1.04999995,1.04999995) * r0.yzw;
-  o0.w = (dot(r1.xyz, float3(0.298999995,0.587000012,0.114)));
+  // o0.w = (dot(r1.xyz, float3(0.298999995,0.587000012,0.114)));
+
+  // srgb luminance
+  o0.w = renodx::color::y::from::NTSC1953(r1.xyz);
   r0.x = r0.x * 0.00390625 + -0.001953125;
   r0.xyz = r0.yzw * float3(1.04999995,1.04999995,1.04999995) + r0.xxx;
 

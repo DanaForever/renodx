@@ -214,18 +214,6 @@ float3 PumboInverseTonemap(float3 color) {
 
   float3 finalColor = lerp(originalColor, displayMappedColor, weight);
 
-  // // expand gamut
-  // if (INVERSE_TONEMAP_EXTRA_HDR_SATURATION > 0.f) {
-  //   const float ReferenceWhiteNits_BT2408 = 203.f;
-  //   const float sRGB_max_nits = 80.f;
-  //   const float recommendedBrightnessScale = ReferenceWhiteNits_BT2408 / sRGB_max_nits;
-
-  //   fineTunedColor = finalColor * recommendedBrightnessScale;
-  //   fineTunedColor = expandGamut(fineTunedColor, INVERSE_TONEMAP_EXTRA_HDR_SATURATION);
-  //   finalColor = fineTunedColor / recommendedBrightnessScale;
-  // }
-  // // finalColor = fixNAN(finalColor);
-  // finalColor = renodx::color::bt709::clamp::AP1(finalColor);
   return finalColor;
 }
 
@@ -249,19 +237,25 @@ float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_ma
 
 
 float3 expandColorGamut(float3 finalColor) {
-  if (INVERSE_TONEMAP_EXTRA_HDR_SATURATION > 0.f) {
-    const float ReferenceWhiteNits_BT2408 = 203.f;
-    const float sRGB_max_nits = 80.f;
-    const float recommendedBrightnessScale = ReferenceWhiteNits_BT2408 / sRGB_max_nits;
+  // if (INVERSE_TONEMAP_EXTRA_HDR_SATURATION > 0.f) {
+  //   float4 r0, r1;
+  //   r0.rgb = finalColor;
 
-    float3 fineTunedColor = finalColor * recommendedBrightnessScale;
-    fineTunedColor = expandGamut(fineTunedColor, INVERSE_TONEMAP_EXTRA_HDR_SATURATION);
-    finalColor = fineTunedColor / recommendedBrightnessScale;
-  
-    return finalColor;
-  } else {
-    return finalColor;
-  }
+  //   r0.w = 0.587700009 * r0.y;
+  //   r0.w = r0.x * 1.66050005 + -r0.w;
+  //   r1.x = -r0.z * 0.072800003 + r0.w;
+  //   r0.w = 0.100599997 * r0.y;
+  //   r0.w = r0.x * -0.0182000007 + -r0.w;
+  //   r1.z = r0.z * 1.11870003 + r0.w;
+  //   r0.x = dot(r0.xy, float2(-0.124600001, 1.13300002));
+  //   r1.y = -r0.z * 0.0083999997 + r0.x;
+
+  //   finalColor.rgb = r1.rgb;
+  //   return finalColor;
+  // } else {
+  //   return finalColor;
+  // }
+  return finalColor;
 }
 
 float UpgradeToneMapRatio(float color_hdr, float color_sdr) {
@@ -585,6 +579,8 @@ float3 ToneMap(float3 color) {
 float3 processAndToneMap(float3 color) {
   color = ToneMap(color);
   color = expandColorGamut(color);
+
+
   color = renodx::draw::RenderIntermediatePass(color);
   return color;
 }

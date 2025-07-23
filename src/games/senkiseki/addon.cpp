@@ -131,6 +131,7 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0xC41CBE29), // artifact
     CustomShaderEntry(0xBDFDE2B7), // artifact
     CustomShaderEntry(0x4CB2EE15), // artifact
+    CustomShaderEntry(0x1E7B91F3), // artifact
     
 };
 
@@ -215,7 +216,8 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xE3E9C74F), // lantern
     CustomShaderEntry(0x51EB2788), // lantern
     CustomShaderEntry(0x01906E4B), // lantern
-    CustomShaderEntry(0x4C831242), // lantern
+    CustomShaderEntry(0x4C831242), // lantern 
+    CustomShaderEntry(0xCD0D39E7), // light
     
 
     // CS3
@@ -378,18 +380,18 @@ renodx::utils::settings::Settings settings = {
         .min = 48.f,
         .max = 500.f,
     },
-    new renodx::utils::settings::Setting{
-        .key = "InverseToneMapExtraHDRSaturation",
-        .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
-        .default_value = 0.f,
-        .can_reset = false,
-        .label = "Gamut Expansion",
-        .section = "Tone Mapping",
-        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
-        .min = 0.f,
-        .max = 500.f,
-        .parse = [](float value) { return value * 0.01f; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "InverseToneMapExtraHDRSaturation",
+    //     .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
+    //     .default_value = 0.f,
+    //     .can_reset = false,
+    //     .label = "Gamut Expansion",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
+    //     .min = 0.f,
+    //     .max = 500.f,
+    //     .parse = [](float value) { return value * 0.01f; },
+    // },
     new renodx::utils::settings::Setting{
         .key = "DICEToneMapType",
         .binding = &shader_injection.dice_tone_map_type,

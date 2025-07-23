@@ -96,6 +96,7 @@ void main(
   r0.xyz = log2(r0.xyz);
   r0.xyz = float3(78.84375,78.84375,78.84375) * r0.xyz;
   o0.xyz = exp2(r0.xyz);
-  o0.w = 1;
+  // o0.w = 1;
+  o0.w = r0.w;
   return;
 }
