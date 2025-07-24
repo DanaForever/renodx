@@ -118,15 +118,13 @@ void main(
 
   color = min(color, RENODX_PEAK_WHITE_NITS);
 
-  if (shader_injection.swap_chain_encoding == 4.f) {
-    color = renodx::color::bt2020::from::BT709(color);
-    color = max(0.f, color);
-    color = renodx::color::pq::EncodeSafe(color, 1.f);
-  } else {
-    color = renodx::color::bt709::clamp::BT2020(color);
-    color = color / 80.f;
-  }
-
+  // scrgb output
+  color = renodx::color::bt709::clamp::BT2020(color);
+  // color = renodx::color::bt2020::from::BT709(color);
+  // color = renodx::color::pq::EncodeSafe(color, 1.f);
+  // color = renodx::color::pq::DecodeSafe(color, 1.f);
+  // color = renodx::color::bt709::from::BT2020(color);
+  color = color / 80.f;
   o0.rgb = color;
 
 

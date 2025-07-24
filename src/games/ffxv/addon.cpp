@@ -60,7 +60,7 @@ renodx::utils::settings::Settings settings = {
         .key = "GradingMode",
         .binding = &shader_injection.hdr_grading,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
+        .default_value = 1.f,
         .can_reset = true,
         .label = "Color Grading Mode",
         .tooltip = "Sets the grading mode",
@@ -589,21 +589,6 @@ renodx::utils::settings::Settings settings = {
     },
 };
 
-const std::unordered_map<std::string, reshade::api::format> UPGRADE_TARGETS = {
-    {"R8G8B8A8_TYPELESS", reshade::api::format::r8g8b8a8_typeless},
-    {"B8G8R8A8_TYPELESS", reshade::api::format::b8g8r8a8_typeless},
-    {"R8G8B8A8_UNORM", reshade::api::format::r8g8b8a8_unorm},
-    {"B8G8R8A8_UNORM", reshade::api::format::b8g8r8a8_unorm},
-    {"R8G8B8A8_SNORM", reshade::api::format::r8g8b8a8_snorm},
-    {"R8G8B8A8_UNORM_SRGB", reshade::api::format::r8g8b8a8_unorm_srgb},
-    {"B8G8R8A8_UNORM_SRGB", reshade::api::format::b8g8r8a8_unorm_srgb},
-    {"R10G10B10A2_TYPELESS", reshade::api::format::r10g10b10a2_typeless},
-    {"R10G10B10A2_UNORM", reshade::api::format::r10g10b10a2_unorm},
-    {"B10G10R10A2_UNORM", reshade::api::format::b10g10r10a2_unorm},
-    {"R11G11B10_FLOAT", reshade::api::format::r11g11b10_float},
-    {"R16G16B16A16_TYPELESS", reshade::api::format::r16g16b16a16_typeless},
-};
-
 void OnPresetOff() {
   //   renodx::utils::settings::UpdateSetting("toneMapType", 0.f);
   //   renodx::utils::settings::UpdateSetting("toneMapPeakNits", 203.f);
@@ -674,32 +659,32 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
         });
 
-        {
-          auto* setting = new renodx::utils::settings::Setting{
-              .key = "SwapChainEncoding",
-              .binding = &shader_injection.hdr_format,
-              .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-              .default_value = 1.f,
-              .label = "HDR Fromat",
-              .section = "Display Output",
-              .labels = {"HDR10", "scRGB"},
-              .is_enabled = []() { return true; },
-              .on_change_value = [](float previous, float current) {
-                bool is_hdr10 = current == 0;
-                shader_injection.swap_chain_encoding_color_space = (is_hdr10 ? 1.f : 0.f);
-                // return void
-              },
-              .is_global = true,
-              .is_visible = []() { return current_settings_mode >= 1; },
-          };
-          renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-          bool is_hdr10 = setting->GetValue() == 0;
-          renodx::mods::swapchain::SetUseHDR10(is_hdr10);
-          renodx::mods::swapchain::use_resize_buffer = setting->GetValue() < 4;
-          shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
-          shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
-          settings.push_back(setting);
-        }
+        // {
+        //   auto* setting = new renodx::utils::settings::Setting{
+        //       .key = "SwapChainEncoding",
+        //       .binding = &shader_injection.hdr_format,
+        //       .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        //       .default_value = 1.f,
+        //       .label = "HDR Fromat",
+        //       .section = "Display Output",
+        //       .labels = {"HDR10", "scRGB"},
+        //       .is_enabled = []() { return true; },
+        //       .on_change_value = [](float previous, float current) {
+        //         bool is_hdr10 = current == 0;
+        //         shader_injection.swap_chain_encoding_color_space = (is_hdr10 ? 1.f : 0.f);
+        //         // return void
+        //       },
+        //       .is_global = true,
+        //       .is_visible = []() { return current_settings_mode >= 1; },
+        //   };
+        //   renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
+        //   bool is_hdr10 = setting->GetValue() == 0;
+        //   renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        //   renodx::mods::swapchain::use_resize_buffer = setting->GetValue() < 4;
+        //   shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
+        //   shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
+        //   settings.push_back(setting);
+        // }
 
         // // bool is_hdr10 = (shader_injection.hdr_format == 0.f);
         // bool is_hdr10 = false;
