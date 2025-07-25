@@ -167,6 +167,8 @@ float3 PostToneMapProcess(float3 output) {
     output = renodx::color::correct::GammaSafe(output, true, 2.4f);
   }
 
+  output = renodx::color::srgb::EncodeSafe(output);
+
   return output;
 
 }

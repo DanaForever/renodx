@@ -1,6 +1,7 @@
 // ---- Created with 3Dmigoto v1.3.16 on Wed May 28 12:37:51 2025
 #include "shared.h"
 #include "common.hlsl"
+// #include "color.hlsl"
 
 cbuffer COLOR_FILTER_PARMS : register(b0)
 {
@@ -99,6 +100,7 @@ float3 colorGrade(float3 color) {
   float4 r0, r1, r2, r3, r4, r5;
   float4 signs;
   r0.rgb = color;
+
 
   r1.x = dot(r0.xyz, float3(1.41498101, -0.400139987, -0.0148409996));
   r1.y = dot(r0.xyz, float3(-0.0744709969, 1.081357, -0.00688599981));
@@ -240,6 +242,7 @@ void main(
   r0.xyzw = g_tTex.SampleLevel(g_sSampler_s, v1.xy, 0).xyzw;
 
   float3 untonemapped = r0.xyz;
+  float3 original = r0.xyz;
   r0.xyz = displayMap(untonemapped);
 
   r0.rgb = toneMapLogContrast(r0.rgb);
@@ -254,24 +257,22 @@ void main(
     // clamping
     r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-    // o0.xyz = Gamma ? r1.xyz : r0.xyz;
-    o0.xyz = r0.xyz;
+    r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+    o0.xyz = Gamma ? r1.xyz : r0.xyz;
 
   }
-  else
+  else // sdr
   if (shader_injection.tone_map_type == 1.f) {
     r0.rgb = colorGrade(r0.rgb);
 
     // clamping and srgb gamma encoding
     r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-    // o0.xyz = Gamma ? r1.xyz : r0.xyz;
-    output = r0.xyz;
-
-    o0.rgb = PostToneMapProcess(output);
+    r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+    o0.xyz = Gamma ? r1.xyz : r0.xyz;
   }
   else {
-    // float3 sdr_graded = colorGrade(r0.rgb);
+    float3 sdr_graded = colorGrade(r0.rgb);
 
     float3 hdr_ungraded, hdr_graded;
 
@@ -297,6 +298,15 @@ void main(
 
       hdr_graded = hdr_ungraded;
     }
+
+    sdr_graded = colorGrade(toneMapLogContrast(original));
+    // sdr_graded = saturate(sdr_graded);
+    // sdr_graded = renodx::tonemap::Reinhard(sdr_graded);
+    sdr_graded = max(0.f, sdr_graded);
+
+    hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded, 
+                                             RENODX_TONE_MAP_HUE_CORRECTION, 
+                                             RENODX_TONE_MAP_HUE_PROCESSOR);
 
     // if (FFXV_PER_CHANNEL_CORRECTION >= 1.f) {
     //   // attempt to recover the highlight saturation from untonemapped

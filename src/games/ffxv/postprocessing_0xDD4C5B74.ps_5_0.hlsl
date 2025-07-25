@@ -10,6 +10,14 @@ cbuffer _Globals : register(b0)
 SamplerState samplerSrc0_s : register(s0);
 Texture2D<float4> samplerSrc0Texture : register(t0);
 
+static const float3x3 saturationMat =
+    float3x3
+      (
+        1.66050005f, -0.587700009f, -0.072800003,
+        -0.124600001f, 1.13300002f, 0.0083999997f,
+        -0.0182000007f, 0.100599997f, 1.11870003f
+      );
+
 float3 SE_Saturation(float4 r0) {
   float4 r1;
 
@@ -40,13 +48,15 @@ void main(
   float4 fDest;
 
   r0.xyzw = samplerSrc0Texture.Sample(samplerSrc0_s, v1.xy).xyzw;
+
+  // srgb decoding
+  r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
   o0.w = r0.w;
 
   if (RENODX_TONE_MAP_TYPE <= 1.f) {
     r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
     // srgb decoding
-    // r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
 
     // gamma scaling
     if (RENODX_TONE_MAP_TYPE == 0.f) {
@@ -72,13 +82,17 @@ void main(
       // gamma should be 1.0 in SDR
       // o0.xyz = saturate(r0.xyz);
       o0.xyz = (r0.xyz);
+
+      o0.xyz *= RENODX_GRAPHICS_WHITE_NITS;
+      o0.xyz = o0.xyz / 80.f;
+      return;
     }
   }
 
   else if (FFXV_HDR_GRADING == 1.f) {
-    r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
+    // r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
     r1.rgb = SE_Saturation(r0);
-    r1.xyz = renodx::math::SignPow(r1.xyz, 1.0f / gamma);
+    // r1.xyz = renodx::math::SignPow(r1.xyz, 1.0f / gamma);
     o0.rgb = r1.rgb;
   } else {
     o0.rgb = r0.rgb;
@@ -120,10 +134,6 @@ void main(
 
   // scrgb output
   color = renodx::color::bt709::clamp::BT2020(color);
-  // color = renodx::color::bt2020::from::BT709(color);
-  // color = renodx::color::pq::EncodeSafe(color, 1.f);
-  // color = renodx::color::pq::DecodeSafe(color, 1.f);
-  // color = renodx::color::bt709::from::BT2020(color);
   color = color / 80.f;
   o0.rgb = color;
 

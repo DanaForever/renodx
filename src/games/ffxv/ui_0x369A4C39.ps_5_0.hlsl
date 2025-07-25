@@ -51,7 +51,8 @@ void main(
   // r2.xyz = cmp(float3(0.00313080009, 0.00313080009, 0.00313080009) >= r0.xyz);
   // r0.xyz = float3(12.9200001, 12.9200001, 12.9200001) * r0.xyz;
   // o0.xyz = r2.xyz ? r0.xyz : r1.xyz;
-  o0.rgb = r0.rgb;
+  // o0.rgb = r0.rgb;
+  o0.rgb = renodx::color::srgb::EncodeSafe(r0.xyz);
   r0.x = g_samp0Texture.Sample(g_samp0_s, v2.xy).x;
   o0.w = v1.w * r0.x;
   return;
