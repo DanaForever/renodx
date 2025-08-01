@@ -72,7 +72,7 @@ void main(
       lut_color = renodx::lut::Sample(t2, s0_s, encoded, precompute);
     }
     o0.rgb = renodx::draw::ToneMapPass(lut_color);
-    o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+    o0.rgb = RenderIntermediatePass(o0.rgb);
     o0.w = 1;
     return;
   } else if (RENODX_TONE_MAP_TYPE != 0.f && shader_injection.tone_map_mode == 1.f) {
@@ -125,9 +125,9 @@ void main(
 
   if (RENODX_TONE_MAP_TYPE > 0.f) {
     o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
-  }  
+  }
 
-  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  o0.rgb = RenderIntermediatePass(o0.rgb);
   o0.w = 1;
   return;
 }

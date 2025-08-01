@@ -1,6 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri May 23 15:41:51 2025
 #include "./common.hlsl"
-#include "./rcas.hlsl"
+#include "./DICE.hlsl"
 #include "./shared.h"
 
 cbuffer _Globals : register(b0)
@@ -252,7 +252,24 @@ void main(
 
   if (shader_injection.tone_map_type == 0.f) {
     o0.xyz = renodx::math::SafePow(r0.xyz, fGamma);
-    
+  } else if (shader_injection.tone_map_type == 2.f) {
+    // tonemap (0.18) to find mid gray
+    r0.xyz = float3(0.18f, 0.18f, 0.18f);
+    r1.xyz = fParamA * r0.xyz + fParamCB;
+    r1.xyz = r0.xyz * r1.xyz + fParamDE;
+    r2.xyz = fParamA * r0.xyz + fParamB;
+    r0.xyz = r0.xyz * r2.xyz + fParamDF;
+    r0.xyz = r1.xyz / r0.xyz;
+    r0.xyz = -fParamEperF + r0.xyz;
+    r0.xyz = fWhiteTone * r0.xyz;
+
+    float mid_gray = renodx::color::y::from::BT709(r0.xyz);
+    untonemapped *= mid_gray / 0.18f;
+
+    float3 hdr = DICEToneMap(untonemapped);
+    o0.rgb = renodx::color::correct::Hue(hdr, sdr, RENODX_TONE_MAP_HUE_CORRECTION, RENODX_TONE_MAP_HUE_PROCESSOR);
+    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+
   } else {
     // tonemap (0.18) to find mid gray
     r0.xyz = float3(0.18f, 0.18f, 0.18f);
@@ -279,7 +296,11 @@ void main(
     o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
   }
 
-  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  // o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+
+  o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
+
+  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
 
   return;
 }

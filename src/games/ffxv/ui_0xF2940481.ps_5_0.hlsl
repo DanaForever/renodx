@@ -30,8 +30,7 @@ void main(
   r1.xyzw = g_samp0Texture.Sample(g_samp0_s, v2.xy).xyzw;
   r1.w = r1.w * r0.x;
   r0.xyzw = v1.xyzw * r1.xyzw;
-  // r0.xyzw = saturate(r0.xyzw * float4(2, 2, 2, 2) + v3.xyzw);
-  r0.xyzw = (r0.xyzw * float4(2, 2, 2, 2) + v3.xyzw);
+  r0.xyzw = saturate(r0.xyzw * float4(2, 2, 2, 2) + v3.xyzw);
   // r1.xyz = float3(0.0549999997, 0.0549999997, 0.0549999997) + r0.xyz;
   // r1.xyz = float3(0.947867334, 0.947867334, 0.947867334) * r1.xyz;
   // r1.xyz = log2(r1.xyz);
@@ -39,10 +38,10 @@ void main(
   // r1.xyz = exp2(r1.xyz);
   // r2.xyz = cmp(float3(0.0392800011, 0.0392800011, 0.0392800011) >= r0.xyz);
   // r0.xyz = float3(0.0773993805, 0.0773993805, 0.0773993805) * r0.xyz;
+  // r0.xyz = r2.xyz ? r0.xyz : r1.xyz;
   o0.w = r0.w;
   r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
-  // r0.xyz = r2.xyz ? r0.xyz : r1.xyz;
-
+  
   r1.xy = float2(0.627399981, 0.329299986) * r0.xy;
   r0.w = r1.x + r1.y;
   r1.x = r0.z * 0.0432999991 + r0.w;

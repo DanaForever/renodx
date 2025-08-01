@@ -20,7 +20,7 @@ static const float PQ_constant_C3 = 18.6875f;
 // 1 Remove negative numbers
 // 2 Remove numbers beyond 0-1
 // 3 Mirror negative numbers
-float3 Linear_to_PQ(float3 LinearColor, int clampType = 0) {
+float3 Linear_to_PQ(float3 LinearColor, int clampType = 3) {
   float3 LinearColorSign = sign(LinearColor);
   if (clampType == 1) {
     LinearColor = max(LinearColor, 0.f);
@@ -39,7 +39,7 @@ float3 Linear_to_PQ(float3 LinearColor, int clampType = 0) {
   return pq;
 }
 
-float3 PQ_to_Linear(float3 ST2084Color, int clampType = 0) {
+float3 PQ_to_Linear(float3 ST2084Color, int clampType = 3) {
   float3 ST2084ColorSign = sign(ST2084Color);
   if (clampType == 1) {
     ST2084Color = max(ST2084Color, 0.f);

@@ -31,6 +31,8 @@ void main(
   r0.xyzw = tex.Sample(smp_s, v2.xy).xyzw;
   o0.xyz = v1.xyz * r0.xyz;
   o0.w = v1.w;
+
+  
   
   return;
 }

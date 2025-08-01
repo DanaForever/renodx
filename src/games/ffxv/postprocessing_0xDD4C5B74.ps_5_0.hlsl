@@ -103,14 +103,12 @@ void main(
 
   float swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
 
-  if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::convert::ColorSpaces(color, swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-  } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::convert::ColorSpaces(color, swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  // GammaCorrectHuePreserving
+
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = GammaCorrectHuePreserving(color, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = GammaCorrectHuePreserving(color, 2.4f);
   }
 
   color *= RENODX_GRAPHICS_WHITE_NITS;

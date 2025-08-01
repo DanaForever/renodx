@@ -151,21 +151,21 @@ float3 ToneMapPass(float3 untonemapped,
 
 float3 PostToneMapProcess(float3 output) {
 
-  [branch]
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    output = renodx::color::correct::GammaSafe(output, false, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    output = renodx::color::correct::GammaSafe(output, false, 2.4f);
-  }
+  // [branch]
+  // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+  //   output = renodx::color::correct::GammaSafe(output, false, 2.2f);
+  // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+  //   output = renodx::color::correct::GammaSafe(output, false, 2.4f);
+  // }
 
   output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
 
-  [branch]
-  if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    output = renodx::color::correct::GammaSafe(output, true, 2.2f);
-  } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    output = renodx::color::correct::GammaSafe(output, true, 2.4f);
-  }
+  // [branch]
+  // if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+  //   output = renodx::color::correct::GammaSafe(output, true, 2.2f);
+  // } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+  //   output = renodx::color::correct::GammaSafe(output, true, 2.4f);
+  // }
 
   output = renodx::color::srgb::EncodeSafe(output);
 
@@ -397,3 +397,41 @@ float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
 //   return mul(Bt2020ToBt709, color_bt2020);
 //   // return renodx::color::bt709::from::BT2020(bt2020);
 // }
+
+float3 ColorCorrectChrominanceICtCp(float3 incorrect_color, float3 correct_color, float strength = 1.f) {
+  if (strength == 0.f) return incorrect_color;
+
+  float3 incorrect_ictcp = renodx::color::ictcp::from::BT709(incorrect_color);
+  float3 correct_ictcp = renodx::color::ictcp::from::BT709(correct_color);
+
+  float2 incorrect_ctcp = incorrect_ictcp.yz;
+  float2 correct_ctcp = correct_ictcp.yz;
+
+  // Compute chrominance (magnitude of the Ct–Cp vector)
+  float incorrect_chrominance = length(incorrect_ctcp);
+  float correct_chrominance = length(correct_ctcp);
+
+  // Scale chrominance vector to match target chrominance
+  float chroma_ratio = renodx::math::DivideSafe(correct_chrominance, incorrect_chrominance, 1.f);
+  float scale = lerp(1.f, chroma_ratio, strength);
+  incorrect_ictcp.yz = incorrect_ctcp * scale;
+
+  float3 result = renodx::color::bt709::from::ICtCp(incorrect_ictcp);
+  return renodx::color::bt709::clamp::AP1(result);
+}
+
+
+
+float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma=2.2f) {
+  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
+
+  const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
+
+  float3 lum = incorrect_color * (y_in > 0 ?  y_out / y_in : 0.f);
+
+  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  float3 result = ColorCorrectChrominanceICtCp(lum, ch);
+
+  return result;
+}

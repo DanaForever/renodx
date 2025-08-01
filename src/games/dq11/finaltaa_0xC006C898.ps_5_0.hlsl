@@ -107,11 +107,11 @@ void main(
   // r1.yzw = log2(r1.yzw);
   // r1.yzw = float3(78.84375,78.84375,78.84375) * r1.yzw;
   // r1.yzw = exp2(r1.yzw);
-  r1.yzw = renodx::color::pq::EncodeSafe(r1.yzw, 1.f);
+  // r1.yzw = renodx::color::pq::EncodeSafe(r1.yzw, 1.f);
   r0.yzw = r0.yzw * r1.xxx + float3(0.00266771927,0.00266771927,0.00266771927);
   r0.yzw = log2(r0.yzw);
   r0.yzw = saturate(r0.yzw * float3(0.0714285746, 0.0714285746, 0.0714285746) + float3(0.610726953, 0.610726953, 0.610726953));
-  r0.yzw = r2.xxx ? r1.yzw : r0.yzw;
+  r0.yzw = r2.xxx ? renodx::color::pq::EncodeSafe(r1.yzw, 1.f) : r0.yzw;
 
   r0.yzw = r0.yzw * float3(0.96875,0.96875,0.96875) + float3(0.015625,0.015625,0.015625);
   r0.yzw = t3.Sample(s3_s, r0.yzw).xyz;

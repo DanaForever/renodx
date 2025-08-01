@@ -165,7 +165,7 @@ void main(
 
   o0.w = 1;
 
-  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  o0.rgb = RenderIntermediatePass(o0.rgb);
   o0.w = 1;
   return;
 }

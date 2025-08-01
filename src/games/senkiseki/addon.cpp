@@ -132,6 +132,15 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0xBDFDE2B7), // artifact
     CustomShaderEntry(0x4CB2EE15), // artifact
     CustomShaderEntry(0x1E7B91F3), // artifact
+    CustomShaderEntry(0x6E9186AE), // artifact
+    CustomShaderEntry(0x2DAF865D), // artifact
+    CustomShaderEntry(0x8BAAE7E7), // artifact
+    CustomShaderEntry(0xB57CA59A), // artifact
+    CustomShaderEntry(0x0368DF1C), // artifact
+    CustomShaderEntry(0xCCF227A3), // artifact
+    CustomShaderEntry(0xF6FA90E3), // artifact
+    CustomShaderEntry(0x9B942E73), // artifact
+    
     
 };
 
@@ -244,26 +253,6 @@ renodx::mods::shader::CustomShaders custom_shaders = {
 };
 
 
-renodx::mods::shader::CustomShaders generate_artifact_shaders(const std::string& folder_path) {
-    renodx::mods::shader::CustomShaders shaders;
-    std::regex filename_pattern(R"(0x([0-9A-Fa-f]+)\.ps_\d+_\d+\.hlsl)");
-
-    for (const auto& file : fs::directory_iterator(folder_path)) {
-        if (!file.is_regular_file())
-            continue;
-
-        const std::string filename = file.path().filename().string();
-        std::smatch match;
-
-        if (std::regex_match(filename, match, filename_pattern)) {
-            uint32_t hash = static_cast<uint32_t>(std::stoul(match[1].str(), nullptr, 16));
-            // shaders.insert(CustomShaderEntry(hash));
-            shaders.emplace(hash, renodx::mods::shader::CustomShader{hash});
-        }
-    }
-
-    return shaders;
-}
 
 
 ShaderInjectData shader_injection;
@@ -717,7 +706,7 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type > 0; },
         .parse = [](float value) { return value * 0.01f; },
         // .is_visible = []() { return current_settings_mode >= 1; },
-        .is_visible = []() { return false >= 1; },
+        .is_visible = []() { return false ; },
     },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeChrominanceCorrection",
@@ -731,7 +720,7 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type > 0; },
         .parse = [](float value) { return value * 0.01f; },
         // .is_visible = []() { return current_settings_mode >= 1; },
-        .is_visible = []() { return false >= 1; },
+        .is_visible = []() { return false ; },
     },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeHueCorrection",
@@ -745,7 +734,7 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type > 0; },
         .parse = [](float value) { return value * 0.01f; },
         // .is_visible = []() { return current_settings_mode >= 1; },
-        .is_visible = []() { return false >= 1; },
+        .is_visible = []() { return false ; },
     },
     new renodx::utils::settings::Setting{
         .key = "SwapChainCustomColorSpace",
@@ -876,31 +865,12 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_index = 13;
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
-        // renodx::mods::swapchain::force_borderless = false;
-        // renodx::mods::swapchain::swapchain_proxy_compatibility_mode = false;
-        // renodx::mods::swapchain::prevent_full_screen = false;
-        // renodx::mods::swapchain::swap_chain_proxy_shaders = {
-        //     {
-        //         reshade::api::device_api::d3d11,
-        //         {
-        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
-        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
-        //         },
-        //     },
-        //     {
-        //         reshade::api::device_api::d3d12,
-        //         {
-        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
-        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
-        //         },
-        //     },
-        // };
 
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_unorm,
             .new_format = reshade::api::format::r16g16b16a16_float,
-            //   .use_resource_view_cloning = true,
+            // .use_resource_view_cloning = true,
             .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
             .usage_include = reshade::api::resource_usage::render_target
         });
@@ -909,6 +879,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         bool is_hdr10 = true;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);
         renodx::mods::swapchain::use_resize_buffer = false;
+        shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
+        shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.0f : 0.f;
         
 
         initialized = true;
@@ -923,7 +895,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   renodx::utils::settings::Use(fdw_reason, &settings, &OnPresetOff);
   renodx::mods::swapchain::Use(fdw_reason, &shader_injection);
 
-//   auto artifact_shaders = generate_artifact_shaders("artifacts");
   custom_shaders.insert(artifact_shaders.begin(), artifact_shaders.end());
   renodx::mods::shader::Use(fdw_reason, custom_shaders, &shader_injection);
 

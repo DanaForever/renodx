@@ -40,6 +40,7 @@ void main(
   float4 fDest;
 
   r0.xyzw = samplerSrc0Texture.Sample(samplerSrc0_s, v1.xy).xyzw;
+  r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
   o0.w = r0.w;
 
   if (RENODX_TONE_MAP_TYPE <= 1.f) {

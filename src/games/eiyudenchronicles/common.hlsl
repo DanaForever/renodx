@@ -1,5 +1,6 @@
 
 #include "./shared.h"
+#include "./colorcorrect.hlsl"
 #include "DICE.hlsl"
 
 float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_max = 1.f) {
@@ -499,4 +500,66 @@ float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
   upgradedPerCh = max(-10000000000000000000000000000000000000.f, upgradedPerCh);  // bandaid for NaNs
 
   return upgradedPerCh;
+}
+
+float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
+  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
+
+  const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
+
+  float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
+
+  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  float3 result = renodx::color::correct::ChrominanceICtCp(lum, ch);
+
+  return result;
+}
+
+float3 RenderIntermediatePass(float3 color) {
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+  color *= config.intermediate_scaling;
+  color = renodx::draw::EncodeColor(color, config.intermediate_encoding);
+
+  return color;
+}
+
+float4 SwapChainPass(float4 inputColor) {
+  float w = inputColor.w;
+  float3 color = inputColor.rgb;
+
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+
+  // color = renodx::draw::DecodeColor(color, config.swap_chain_decoding);
+
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = GammaCorrectHuePreserving(color, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = GammaCorrectHuePreserving(color, 2.4f);
+  }
+
+  color *= config.swap_chain_scaling_nits;
+
+  [branch]
+  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+    color = renodx::color::bt709::from::BT709D93(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
+    color = renodx::color::bt709::from::BT601NTSCU(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
+    color = renodx::color::bt709::from::ARIBTRB9(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  }
+
+  color = min(color, config.swap_chain_clamp_nits);  // Clamp UI or Videos
+
+  color = renodx::color::bt709::clamp::BT2020(color);
+
+  color = renodx::draw::EncodeColor(color, config.swap_chain_encoding);
+
+  inputColor.rgb = color;
+
+  return inputColor;
+
 }

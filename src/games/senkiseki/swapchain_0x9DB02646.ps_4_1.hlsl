@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 16:40:11 2025
 #include "shared.h"
+#include "cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -93,16 +94,12 @@ void main(
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 color = o0.rgb;
 
-  color = renodx::draw::DecodeColor(color, config.swap_chain_decoding);
+  color = renodx::color::srgb::DecodeSafe(color);
 
-  if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-  } else if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = GammaCorrectHuePreserving(color, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = GammaCorrectHuePreserving(color, 2.4f);
   }
 
   color *= config.swap_chain_scaling_nits;
@@ -124,12 +121,6 @@ void main(
 
   color = min(color, config.swap_chain_clamp_nits);  // Clamp UI or Videos
 
-  // [branch]
-  // if (shader_injection.tone_map_clamp_color_space == 1.f) {
-  //   color = renodx::color::bt709::clamp::BT2020(color);
-  // } else {
-  //   color = renodx::color::bt709::clamp::BT709(color);
-  // }
 
   color = renodx::color::bt2020::from::BT709(color);
   color = max(0.f, color);
@@ -140,7 +131,6 @@ void main(
     color = renodx::color::bt709::from::BT2020(color);
     color = color / 80.f;
   }
-  // color = renodx::draw::EncodeColor(color, config.swap_chain_encoding);
 
   o0.rgb = color;
   return;

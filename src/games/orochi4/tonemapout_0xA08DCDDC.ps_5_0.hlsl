@@ -1,7 +1,7 @@
 // ---- Created with 3Dmigoto v1.3.16 on Wed May 14 11:39:13 2025
 #include "./common.hlsl"
 #include "./shared.h"
-#include "./rcas.hlsl"
+#include "./DICE.hlsl"
 
 Texture2D<float4> t2 : register(t2);
 
@@ -126,6 +126,8 @@ void main(
   r0.xyz = r1.xyz / r0.xyz;
   r0.xyz = -cb0[6].xxx + r0.xyz;
   r0.xyz = cb0[6].yyy * r0.xyz;
+
+  float3 sdr = r0.xyz;
   
   // gamma slider
   // r0.xyz = renodx::math::SignPow(r0.xyz, cb0[6].z);
@@ -134,6 +136,24 @@ void main(
     // Gamma Encoding for SDR
     r0.xyz = renodx::math::SignPow(r0.xyz, cb0[6].z);
     o0.xyz = r0.xyz;
+  } else if (shader_injection.tone_map_type == 2.f) {
+    // tonemap (0.18) to find mid gray
+    r0.xyz = float3(0.18f, 0.18f, 0.18f);
+    r1.xyz = cb0[4].www * r0.xyz + cb0[5].xxx;
+    r1.xyz = r0.xyz * r1.xyz + cb0[5].yyy;
+    r2.xyz = cb0[4].www * r0.xyz + cb0[5].zzz;
+    r0.xyz = r0.xyz * r2.xyz + cb0[5].www;
+    r0.xyz = r1.xyz / r0.xyz;
+    r0.xyz = -cb0[6].xxx + r0.xyz;
+    r0.xyz = cb0[6].yyy * r0.xyz;
+
+    float mid_gray = renodx::color::y::from::BT709(r0.xyz);
+    untonemapped *= mid_gray / 0.18f;
+
+    float3 hdr = DICEToneMap(untonemapped);
+    o0.rgb = renodx::color::correct::Hue(hdr, sdr, RENODX_TONE_MAP_HUE_CORRECTION, RENODX_TONE_MAP_HUE_PROCESSOR);
+    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+
   } else {
     float3 sdr = r0.xyz;
     // tonemap (0.18) to find mid gray
@@ -162,7 +182,9 @@ void main(
 
   }
 
-  o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
+
+  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
 
   return;
 }
