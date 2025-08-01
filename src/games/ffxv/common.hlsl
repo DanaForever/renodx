@@ -398,27 +398,6 @@ float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
 //   // return renodx::color::bt709::from::BT2020(bt2020);
 // }
 
-float3 ColorCorrectChrominanceICtCp(float3 incorrect_color, float3 correct_color, float strength = 1.f) {
-  if (strength == 0.f) return incorrect_color;
-
-  float3 incorrect_ictcp = renodx::color::ictcp::from::BT709(incorrect_color);
-  float3 correct_ictcp = renodx::color::ictcp::from::BT709(correct_color);
-
-  float2 incorrect_ctcp = incorrect_ictcp.yz;
-  float2 correct_ctcp = correct_ictcp.yz;
-
-  // Compute chrominance (magnitude of the Ct–Cp vector)
-  float incorrect_chrominance = length(incorrect_ctcp);
-  float correct_chrominance = length(correct_ctcp);
-
-  // Scale chrominance vector to match target chrominance
-  float chroma_ratio = renodx::math::DivideSafe(correct_chrominance, incorrect_chrominance, 1.f);
-  float scale = lerp(1.f, chroma_ratio, strength);
-  incorrect_ictcp.yz = incorrect_ctcp * scale;
-
-  float3 result = renodx::color::bt709::from::ICtCp(incorrect_ictcp);
-  return renodx::color::bt709::clamp::AP1(result);
-}
 
 
 
@@ -431,7 +410,7 @@ float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma=2.2f) {
   float3 lum = incorrect_color * (y_in > 0 ?  y_out / y_in : 0.f);
 
   // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  float3 result = ColorCorrectChrominanceICtCp(lum, ch);
+  float3 result = renodx::color::correct::ChrominanceICtCp(lum, ch);
 
   return result;
 }

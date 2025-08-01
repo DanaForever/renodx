@@ -1,6 +1,5 @@
 
 #include "./shared.h"
-#include "./colorcorrect.hlsl"
 #include "DICE.hlsl"
 
 float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_max = 1.f) {
