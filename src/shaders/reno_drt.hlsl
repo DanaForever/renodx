@@ -3,8 +3,10 @@
 
 #include "./color.hlsl"
 #include "./color_convert.hlsl"
+#include "./colorgrade.hlsl"
 #include "./math.hlsl"
 #include "./reinhard.hlsl"
+#include "./tonemap/daniele.hlsl"
 
 namespace renodx {
 namespace tonemap {
@@ -101,155 +103,20 @@ Config Create(
 }
 }
 
-float CustomizeLuminance(float value, float highlights = 1.f, float shadows = 1.f, float contrast = 1.f) {
-  value = value / 0.18f;
-  [branch]
-  if (highlights != 1.f) {
-    value = lerp(
-        value,
-        pow(value, highlights),
-        saturate(value));
-  }
-
-  [branch]
-  if (shadows != 1.f) {
-    value = lerp(
-        pow(value, 2.f - shadows),
-        value,
-        saturate(value));
-  }
-
-  [branch]
-  if (contrast != 1.f) {
-    value = pow(value, contrast);
-  }
-  value *= 0.18f;
-  return value;
-}
-
-float3x3 Invert3x3(float3x3 m) {
-  float a = m[0][0], b = m[0][1], c = m[0][2];
-  float d = m[1][0], e = m[1][1], f = m[1][2];
-  float g = m[2][0], h = m[2][1], i = m[2][2];
-
-  float A = (e * i - f * h);
-  float B = -(d * i - f * g);
-  float C = (d * h - e * g);
-  float D = -(b * i - c * h);
-  float E = (a * i - c * g);
-  float F = -(a * h - b * g);
-  float G = (b * f - c * e);
-  float H = -(a * f - c * d);
-  float I = (a * e - b * d);
-
-  float det = a * A + b * B + c * C;
-  float invDet = 1.0 / det;
-
-  return float3x3(
-             A, D, G,
-             B, E, H,
-             C, F, I)
-         * invDet;
-}
-
-
 float3 BT709(float3 bt709, Config current_config) {
-  
-  // if (current_config.working_color_space == 2) {
-  //   bt709 *= current_config.exposure;
-  //   float y_original = renodx::color::y::from::BT709(abs(bt709));
-    
-  //   // Von-Kries LMS
-  //   static const float3x3 XYZ_TO_LMS_D65_MAT = float3x3(
-  //       0.4002400f, 0.7076000f, -0.0808100f,
-  //       -0.2263000f, 1.1653200f, 0.0457000f,
-  //       0.0000000f, 0.0000000f, 0.9182200f);
-    
+  const float reference_white = 100.f;
 
-  //   // static const float3x3 XYZ_TO_LMS_D65_MAT = float3x3(
-  //   //     0.8562f, 0.3372f, -0.1934f,
-  //   //     -0.8360f, 1.8327f, 0.0033f,
-  //   //     0.0357f, -0.0469f, 1.0112f);
-
-  //   // static const float3x3 XYZ_TO_LMS_D65_MAT = float3x3(
-  //   //     0.8951f, 0.2664f, -0.1614,
-  //   //     -0.7502f, 1.7135f, 0.0367f,
-  //   //     0.0389f, -0.0685f, 1.0296f);
-
-  //   float3 lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(bt709));
-  //   float3 midgray_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(0.18f));
-
-  //   // midgray match
-  //   lms = renodx::math::DivideSafe(lms, midgray_lms, 1.f);
-  //   lms = sign(lms) * pow(abs(lms), current_config.contrast);
-  //   lms *= midgray_lms;
-
-  //   const float human_vision_peak = 4000 / 203.f;
-  //   float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(human_vision_peak));
-
-  //   // Naka Rushton per cone
-  //   float3 new_lms = float3(
-  //       sign(lms.x) * renodx::tonemap::ReinhardScalableExtended(abs(lms.x), 100.f, peak_lms.x, 0.f, abs(midgray_lms.x), abs(midgray_lms.x)),
-  //       sign(lms.y) * renodx::tonemap::ReinhardScalableExtended(abs(lms.y), 100.f, peak_lms.y, 0.f, abs(midgray_lms.y), abs(midgray_lms.y)),
-  //       sign(lms.z) * renodx::tonemap::ReinhardScalableExtended(abs(lms.z), 100.f, peak_lms.z, 0.f, abs(midgray_lms.z), abs(midgray_lms.z)));
-
-  //   float3 new_xyz = mul(Invert3x3(XYZ_TO_LMS_D65_MAT), new_lms);
-  //   float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);
-
-  //   // float input = y_original;
-  //   float input = renodx::color::y::from::BT709(input_color);
-  //   float rolloff_start = 0.20f;
-  //   float output_max = current_config.nits_peak / 100.f;
-  //   float rolloff_size = output_max - rolloff_start;
-    
-  //   float overage = -max((float)0, input - rolloff_start);  // very negative if input >>>>> rolloff_start
-  //   float rolloff_value = (float)1.0f - exp(overage / rolloff_size); // rolloff_value to zero?
-  //   float new_overage = mad(rolloff_size, rolloff_value, overage); 
-  //   float new_y = input + new_overage;
-
-  //   float3 final = input_color * renodx::math::DivideSafe(new_y, (input), 1.f);
-
-  //   return final;
-  // }
-  const float n_r = 100.f;
-  float n = 1000.f;
-
-  // drt cam
-  // n_r = 100
-  // g = 1.15
-  // c = 0.18
-  // c_d = 10.013
-  // w_g = 0.14
-  // t_1 = 0.04
-  // r_hit_min = 128
-  // r_hit_max = 896
-
-  float g = 1.1;            // gamma/contrast
-  float c = 0.18;           // scene-referred gray
-  float c_d = 10.013;       // output gray in nits
-  const float w_g = 0.00f;  // gray change
-  float t_1 = 0.01;         // shadow toe
-  const float r_hit_min = 128;
-  const float r_hit_max = 256;
-
-  float white_clip = 100.f;
-
-  g = current_config.contrast;
-  c = current_config.mid_gray_value;
-  c_d = current_config.mid_gray_nits;
-  n = current_config.nits_peak;
-  t_1 = current_config.flare;
-  white_clip = current_config.white_clip;
+  float peak = (current_config.nits_peak / reference_white);
 
   float3 input_color;
   float y_original;
 
   float current_color_space = current_config.working_color_space;
 
-  if (current_config.working_color_space == 2) {
+  if (current_color_space == 2) {
     input_color = max(0, renodx::color::ap1::from::BT709(bt709));
     y_original = renodx::color::y::from::AP1(input_color);
-  } else if (current_config.working_color_space == 1) {
+  } else if (current_color_space == 1) {
     input_color = renodx::color::bt2020::from::BT709(bt709);
     y_original = renodx::color::y::from::BT2020(abs(input_color));
   } else {
@@ -260,7 +127,15 @@ float3 BT709(float3 bt709, Config current_config) {
   float y = y_original;
 
   y *= current_config.exposure;
-  y = CustomizeLuminance(y, current_config.highlights, current_config.shadows);
+  [branch]
+  if (current_config.highlights != 1.f) {
+    y = renodx::color::grade::Highlights(y, current_config.highlights, current_config.mid_gray_value);
+  }
+
+  [branch]
+  if (current_config.shadows != 1.f) {
+    y = renodx::color::grade::Shadows(y, current_config.shadows, current_config.mid_gray_value);
+  }
 
   float3 per_channel_color;
   [branch]
@@ -270,84 +145,92 @@ float3 BT709(float3 bt709, Config current_config) {
     per_channel_color = input_color;
   }
 
-  float m_0 = (n / n_r);
-
   float3 color_output;
+
   [branch]
   if (current_config.tone_map_method == config::tone_map_method::DANIELE) {
-    float m_1 = 0.5 * (m_0 + sqrt(m_0 * (m_0 + (4.0 * t_1))));
-    float r_hit = r_hit_min + ((r_hit_max - r_hit_min) * (log(m_0) / log(10000.0 / 100.0)));
+    renodx::tonemap::daniele::Config daniele_config = renodx::tonemap::daniele::config::Create();
 
-    float u = pow((r_hit / m_1) / ((r_hit / m_1) + 1.0), g);
-    const float m = m_1 / u;
-    const float w_i = log(n / 100.0) / log(2.0);
-    const float c_t = (c_d / n_r) * (1.0 + (w_i * w_g));
-    const float g_ip = 0.5 * (c_t + sqrt(c_t * (c_t + (4.0 * t_1))));
-    const float g_ipp2 = -m_1 * pow(g_ip / m, 1.0 / g) / (pow(g_ip / m, 1.0 / g) - 1.0);
-    const float w_2 = c / g_ipp2;
-    const float s_2 = w_2 * m_1;
-    float u_2 = pow((r_hit / m_1) / ((r_hit / m_1) + w_2), g);
-    float m_2 = m_1 / u_2;
+    daniele_config.n_r = reference_white;               // reference nits
+    daniele_config.n = current_config.nits_peak;        // peak nits
+    daniele_config.g = current_config.contrast;         // surround/contrast
+    daniele_config.c = current_config.mid_gray_value;   // scene-referred gray
+    daniele_config.c_d = current_config.mid_gray_nits;  // output gray in nits
+    daniele_config.w_g = 0;                             // gray change
+    daniele_config.t_1 = current_config.flare;          // shadow toe
 
     [branch]
     if (current_config.per_channel) {
-      float3 ts3 = pow(max(0, per_channel_color) / (per_channel_color + s_2), g) * m_2;
-      float3 flared3 = max(0, (ts3 * ts3) / (ts3 + t_1));
+      float3 ts3 = float3(
+          renodx::tonemap::daniele::ToneMap(per_channel_color.r, daniele_config),
+          renodx::tonemap::daniele::ToneMap(per_channel_color.g, daniele_config),
+          renodx::tonemap::daniele::ToneMap(per_channel_color.b, daniele_config));
 
-      color_output = clamp(flared3, 0, m_0);
+      color_output = clamp(ts3, 0, peak);
     } else {
-      float ts = pow(max(0, y) / (y + s_2), g) * m_2;
-      float flared = max(0, (ts * ts) / (ts + t_1));
+      float ts = renodx::tonemap::daniele::ToneMap(y, daniele_config);
 
-      float y_new = clamp(flared, 0, m_0);
+      float y_new = clamp(ts, 0, peak);
 
       color_output = input_color * (y_original > 0 ? (y_new / y_original) : 0);
     }
   } else if (current_config.tone_map_method == config::tone_map_method::REINHARD) {
-    white_clip = max(white_clip, m_0);
-    white_clip = CustomizeLuminance(white_clip, current_config.highlights, current_config.shadows, current_config.contrast);
+    float white_clip = max(current_config.white_clip, peak);
+    [branch]
+    if (current_config.highlights != 1.f) {
+      white_clip = renodx::color::grade::Highlights(white_clip, current_config.highlights, current_config.mid_gray_value);
+    }
+
+    [branch]
+    if (current_config.shadows != 1.f) {
+      white_clip = renodx::color::grade::Shadows(white_clip, current_config.shadows, current_config.mid_gray_value);
+    }
+
+    float computed_contrast = 1.f;
+    [branch]
+    if (current_config.contrast != 1.f || current_config.flare != 0.f) {
+      y /= current_config.mid_gray_value;
+      float computed_flare = renodx::math::DivideSafe(y + current_config.flare, y, 1.f);
+      computed_flare = lerp(computed_flare, 1.f, saturate(y));
+      y *= current_config.mid_gray_value;
+      computed_contrast = current_config.contrast * computed_flare;
+
+      white_clip = renodx::color::grade::Contrast(white_clip, current_config.contrast, current_config.mid_gray_value);
+    }
 
     [branch]
     if (current_config.per_channel) {
       color_output = per_channel_color;
-      color_output /= 0.18f;
       float3 signs = sign(color_output);
       color_output = abs(color_output);
-
-      // No guard for oversized flare
-      float3 new_flare = math::DivideSafe(color_output + current_config.flare, color_output, 1.f);
-
-      float3 exponent = current_config.contrast * new_flare;
-
-      color_output = pow(color_output, exponent);
-
-      color_output *= 0.18f;
+      [branch]
+      if (current_config.contrast != 1.f || current_config.flare != 0.f) {
+        color_output /= current_config.mid_gray_value;
+        color_output = pow(color_output, computed_contrast);
+        color_output *= current_config.mid_gray_value;
+      }
 
       color_output = ReinhardScalableExtended(
           color_output,
           white_clip,
-          m_0,
+          peak,
           0,
-          0.18f,
+          current_config.mid_gray_value,
           current_config.mid_gray_nits / 100.f);
 
       color_output *= signs;
 
     } else {
-      y /= 0.18f;
-
-      // No guard for oversized flare
-      float new_flare = math::DivideSafe(y + current_config.flare, y, 1.f);
-      float exponent = current_config.contrast * new_flare;
-      y = math::SignPow(y, exponent);
-      y *= 0.18f;
+      if (current_config.contrast != 1.f || current_config.flare != 0.f) {
+        y = renodx::color::grade::Contrast(y, computed_contrast, current_config.mid_gray_value);
+      }
 
       float y_new = ReinhardScalableExtended(
           y,
           white_clip,
-          m_0,
+          peak,
           0,
-          0.18f,
+          current_config.mid_gray_value,
           current_config.mid_gray_nits / 100.f);
 
       color_output = input_color * (y_original > 0 ? (y_new / y_original) : 0);
@@ -446,7 +329,7 @@ float3 BT709(float3 bt709, Config current_config) {
   [branch]
   if (current_config.clamp_peak != -1.f) {
     color_output = renodx::color::convert::ColorSpaces(color_output, current_color_space, current_config.clamp_peak);
-    color_output = min(color_output, m_0);
+    color_output = min(color_output, peak);
     current_color_space = current_config.clamp_peak;
   }
 
