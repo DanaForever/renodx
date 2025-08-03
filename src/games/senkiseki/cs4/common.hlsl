@@ -419,3 +419,9 @@ float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
 
   return result;
 }
+
+
+float calculateLuminanceSRGB(float3 color) {
+
+  return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+}

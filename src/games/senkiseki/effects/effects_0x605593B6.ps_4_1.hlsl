@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Mon Jul 14 23:43:52 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -115,7 +116,7 @@ void main(
   r1.x = PointLightColor.y * r1.x + 1;
   r0.xyz = GameMaterialEmission.xyz * r1.xxx + r0.xyz;
   o0.w = r0.w;
-  r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r0.w = calculateLuminanceSRGB(r0.rgb);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

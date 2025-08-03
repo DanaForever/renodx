@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 01:20:28 2025
 #include "../shared.h"
+#include "./common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -161,8 +162,8 @@ void main(
   r0.z = dot(r5.xyz, r5.xyz);
   r0.z = rsqrt(r0.z);
   r6.xyz = r5.xyz * r0.zzz;
-  // r0.w = saturate(dot(r4.xyz, r6.xyz));
-  r0.w = (dot(r4.xyz, r6.xyz));
+  r0.w = saturate(dot(r4.xyz, r6.xyz));
+  // r0.w = (dot(r4.xyz, r6.xyz));
   r1.z = dot(Light0.m_direction.xyz, r4.xyz);
   r1.z = r1.z * 0.5 + 0.5;
   r1.z = r1.z * r1.z;
@@ -171,8 +172,8 @@ void main(
   r0.z = dot(r5.xyz, r5.xyz);
   r0.z = rsqrt(r0.z);
   r5.xyz = r5.xyz * r0.zzz;
-  // r0.z = saturate(dot(r4.xyz, r5.xyz));
-  r0.z = (dot(r4.xyz, r5.xyz));
+  r0.z = saturate(dot(r4.xyz, r5.xyz));
+  // r0.z = (dot(r4.xyz, r5.xyz));
   // r0.z = log2(r0.z);
   // r0.z = SpecularPower * r0.z;
   // r0.z = exp2(r0.z);
@@ -233,7 +234,7 @@ void main(
   }
   r0.xyz = r0.www * -r0.xyz + r0.xyz;
   // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

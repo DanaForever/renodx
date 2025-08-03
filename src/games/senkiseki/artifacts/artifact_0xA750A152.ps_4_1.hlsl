@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Tue Jul 15 19:40:44 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -586,8 +587,8 @@ void main(
   r0.w = dot(r4.xyz, r4.xyz);
   r0.w = rsqrt(r0.w);
   r5.xyz = r4.xyz * r0.www;
-  // r1.z = saturate(dot(r3.xyz, r5.xyz));
-  r1.z = (dot(r3.xyz, r5.xyz));
+  r1.z = saturate(dot(r3.xyz, r5.xyz));
+  // r1.z = (dot(r3.xyz, r5.xyz));
   r1.y = Shininess * r1.y;
   r1.w = dot(Light0.m_direction.xyz, r3.xyz);
   r1.w = r1.w * 0.5 + 0.5;
@@ -596,8 +597,8 @@ void main(
   r0.w = dot(r4.xyz, r4.xyz);
   r0.w = rsqrt(r0.w);
   r4.xyz = r4.xyz * r0.www;
-  // r0.w = saturate(dot(r3.xyz, r4.xyz));
-  r0.w = (dot(r3.xyz, r4.xyz));
+  r0.w = saturate(dot(r3.xyz, r4.xyz));
+  // r0.w = (dot(r3.xyz, r4.xyz));
   // r0.w = log2(r0.w);
   // r0.w = SpecularPower * r0.w;
   // r0.w = exp2(r0.w);
@@ -655,12 +656,12 @@ void main(
   r0.w = -r0.w * 0.5 + 1;
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
-  r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r1.xyz = BloomIntensity * r0.xyz;
-  r1.x = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = calculateLuminanceSRGB(r1.xyz);
   r1.x = -scene.MiscParameters2.z + r1.x;
   r1.x = max(0, r1.x);
   r1.x = 0.5 * r1.x;

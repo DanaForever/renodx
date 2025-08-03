@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Wed Jul 02 06:47:14 2025
 #include "../shared.h"
+#include "./common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -108,8 +109,8 @@ void main(
   r0.w = dot(v5.xyz, v5.xyz);
   r0.w = rsqrt(r0.w);
   r1.xyz = v5.xyz * r0.www;
-  // r0.x = saturate(dot(r1.xyz, r0.xyz));
-  r0.x = (dot(r1.xyz, r0.xyz));
+  r0.x = saturate(dot(r1.xyz, r0.xyz));
+  // r0.x = (dot(r1.xyz, r0.xyz));
   o1.xyz = r1.xyz * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);
   r0.x = 1 + -r0.x;
   // r0.x = log2(r0.x);
@@ -126,14 +127,14 @@ void main(
   r1.xyz = r2.xyz * r1.xyz;
   r0.xyz = r1.xyz * GameMaterialDiffuse.xyz + r0.xyz;
   // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r1.xyz = BloomIntensity * r0.xyz;
   o0.xyz = r0.xyz;
   // r0.x = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.x = renodx::color::y::from::NTSC1953(r1.xyz);
+  r0.x = calculateLuminanceSRGB(r1.xyz);
   r0.x = -scene.MiscParameters2.z + r0.x;
   r0.x = max(0, r0.x);
   r0.x = 0.5 * r0.x;

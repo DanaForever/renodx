@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 21:38:30 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -195,8 +196,8 @@ void main(
   r2.w = dot(r4.xyz, r4.xyz);
   r2.w = rsqrt(r2.w);
   r4.xyz = r4.xyz * r2.www;
-  // r0.x = saturate(dot(r0.xyz, r4.xyz));
-  r0.x = (dot(r0.xyz, r4.xyz));
+  r0.x = saturate(dot(r0.xyz, r4.xyz));
+  // r0.x = (dot(r0.xyz, r4.xyz));
   // r0.x = log2(r0.x);
   // r0.x = SpecularPower * r0.x;
   // r0.x = exp2(r0.x);
@@ -255,7 +256,7 @@ void main(
   r1.xyz = scene.FogColor.xyz + -r0.xyz;
   r0.xyz = r0.www * r1.xyz + r0.xyz;
   // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = renodx::color::y::from::BT709(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

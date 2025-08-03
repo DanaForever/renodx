@@ -149,6 +149,8 @@ cbuffer shader_injection : register(b13) {
 
 #include "../../shaders/renodx.hlsl"
 
+
+
 #endif
 
 #endif  // SRC_TEMPLATE_SHARED_H_

@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sun Jun 08 15:57:47 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -550,10 +551,9 @@ void main(
   r4.xyz = r3.xyz * scene.MiscParameters1.xyz + -r3.xyz;
   r3.xyz = r0.www * r4.xyz + r3.xyz;
   r0.w = 1 + -r3.w;
-  // r0.w = log2(r0.w);
-  // r2.w = RimLitPower * r0.w;
-  // r2.w = exp2(r2.w);
-  
+  r0.w = log2(r0.w);
+  r2.w = RimLitPower * r0.w;
+  r2.w = exp2(r2.w);
   r2.w = RimLitIntensity * r2.w;
   r4.xyz = RimLitColor.xyz * r2.www;
   r3.xyz = r4.xyz * r2.xyz + r3.xyz;
@@ -592,7 +592,7 @@ void main(
   }
   r1.xyz = scene.FogColor.xyz + -r0.xyz;
   r0.xyz = r0.www * r1.xyz + r0.xyz;
-  r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r0.w = calculateLuminanceSRGB(r0.rgb);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

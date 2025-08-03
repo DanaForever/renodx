@@ -1,6 +1,7 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sat Jun 07 19:28:12 2025
 // rising nova
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -150,8 +151,8 @@ void main(
   r0.z = dot(-r3.xyz, r4.xyz);
   r0.z = r0.z + r0.z;
   r5.xyz = r4.xyz * -r0.zzz + -r3.xyz;
-  // r0.z = saturate(dot(r4.xyz, r3.xyz));
-  r0.z = (dot(r4.xyz, r3.xyz));
+  r0.z = saturate(dot(r4.xyz, r3.xyz));
+  // r0.z = (dot(r4.xyz, r3.xyz));
   r1.w = dot(LightDirForChar.xyz, r4.xyz);
   r2.x = r1.w * 0.5 + 0.5;
   r0.z = 1 + -r0.z;
@@ -197,7 +198,7 @@ void main(
   r0.xyz = GameMaterialEmission.xyz * r0.yyy + r1.xyz;
   o0.w = r1.w;
   // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

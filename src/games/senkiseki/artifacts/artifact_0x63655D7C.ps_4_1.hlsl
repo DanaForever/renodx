@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Wed Jul 16 13:22:37 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -531,8 +532,8 @@ void main(
   r1.w = dot(r3.xyz, r3.xyz);
   r1.w = rsqrt(r1.w);
   r3.xyz = r3.xyz * r1.www;
-  // r1.w = saturate(dot(r2.xyz, r3.xyz));
-  r1.w = (dot(r2.xyz, r3.xyz));
+  r1.w = saturate(dot(r2.xyz, r3.xyz));
+  // r1.w = (dot(r2.xyz, r3.xyz));
   r2.w = dot(LightDirForChar.xyz, r2.xyz);
   r3.x = r2.w * 0.5 + 0.5;
   r3.y = 0;
@@ -580,12 +581,12 @@ void main(
   r0.w = -r0.w * 0.5 + 1;
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
-  r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r1.xyz = BloomIntensity * r0.xyz;
-  r1.x = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = calculateLuminanceSRGB(r1.xyz);
   r1.x = -scene.MiscParameters2.z + r1.x;
   r1.x = max(0, r1.x);
   r1.x = 0.5 * r1.x;

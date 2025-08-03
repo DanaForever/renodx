@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 20:43:30 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -550,7 +551,6 @@ void main(
   // r1.w = log2(r1.w);
   // r1.w = SpecularPower * r1.w;
   // r1.w = exp2(r1.w);
-
   r1.w = renodx::math::SafePow(r1.w, SpecularPower);
   r1.w = min(1, r1.w);
   r1.w = Shininess * r1.w;
@@ -595,13 +595,13 @@ void main(
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
   // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = renodx::color::y::from::BT709(r0.xyz);
+  r1.x = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r1.xyz = BloomIntensity * r0.xyz;
   // r1.x = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = renodx::color::y::from::BT709(r1.xyz);
+  r1.x = calculateLuminanceSRGB(r1.xyz);
   r1.x = -scene.MiscParameters2.z + r1.x;
   r1.x = max(0, r1.x);
   r1.x = 0.5 * r1.x;
@@ -609,24 +609,24 @@ void main(
   o0.w = r1.x * r0.w;
   o1.xyz = r2.xyz * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);
   o1.w = 0.466666698 + MaskEps;
-  // r0.w = v7.z / v7.w;
-  // r1.x = 256 * r0.w;
-  // r1.x = trunc(r1.x);
-  // r0.w = r0.w * 256 + -r1.x;
-  // r1.w = 256 * r0.w;
-  // r1.y = trunc(r1.w);
-  // r1.z = r0.w * 256 + -r1.y;
-  // o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
-  o2.xyz = v7.z / v7.w;
+  r0.w = v7.z / v7.w;
+  r1.x = 256 * r0.w;
+  r1.x = trunc(r1.x);
+  r0.w = r0.w * 256 + -r1.x;
+  r1.w = 256 * r0.w;
+  r1.y = trunc(r1.w);
+  r1.z = r0.w * 256 + -r1.y;
+  o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
+  // o2.xyz = v7.z / v7.w;
   o0.xyz = r0.xyz;
   o2.w = MaskEps;
 
-  // o0 = saturate(o0);
-  // o1 = saturate(o1);
-  // o2 = saturate(o2);
+  o0 = saturate(o0);
+  o1 = saturate(o1);
+  o2 = saturate(o2);
 
-  o0 = clamp(o0, 0.f, 1.f);
-  o1 = clamp(o1, 0.f, 1.f);
-  o2 = clamp(o2, 0.f, 1.f);
+  // o0 = clamp(o0, 0.f, 1.f);
+  // o1 = clamp(o1, 0.f, 1.f);
+  // o2 = clamp(o2, 0.f, 1.f);
   return;
 }

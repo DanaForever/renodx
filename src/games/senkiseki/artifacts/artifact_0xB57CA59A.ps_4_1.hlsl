@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sun Jul 27 15:12:04 2025
-
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -591,12 +591,12 @@ void main(
   r0.w = -r0.w * 0.5 + 1;
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
-  r1.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.w = calculateLuminanceSRGB(r0.xyz);
   r2.xyz = r1.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r2.xyz = r2.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r2.xyz + r0.xyz;
   r2.xyz = BloomIntensity * r0.xyz;
-  r1.w = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.w = calculateLuminanceSRGB(r2.xyz);
   r1.w = -scene.MiscParameters2.z + r1.w;
   r1.w = max(0, r1.w);
   r1.w = 0.5 * r1.w;

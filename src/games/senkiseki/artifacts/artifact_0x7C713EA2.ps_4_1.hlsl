@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 02:30:32 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -550,8 +551,8 @@ void main(
   r2.w = dot(r2.xyz, r2.xyz);
   r2.w = rsqrt(r2.w);
   r3.xyz = r2.xyz * r2.www;
-  // r3.x = saturate(dot(r1.yzw, r3.xyz));
-  r3.x = (dot(r1.yzw, r3.xyz));
+  r3.x = saturate(dot(r1.yzw, r3.xyz));
+  // r3.x = (dot(r1.yzw, r3.xyz));
   r1.x = Shininess * r1.x;
   r3.y = dot(Light0.m_direction.xyz, r1.yzw);
   r3.y = r3.y * 0.5 + 0.5;
@@ -560,8 +561,8 @@ void main(
   r2.w = dot(r2.xyz, r2.xyz);
   r2.w = rsqrt(r2.w);
   r2.xyz = r2.xyz * r2.www;
-  // r2.x = saturate(dot(r1.yzw, r2.xyz));
-  r2.x = (dot(r1.yzw, r2.xyz));
+  r2.x = saturate(dot(r1.yzw, r2.xyz));
+  // r2.x = (dot(r1.yzw, r2.xyz));
   // r2.x = log2(r2.x);
   // r2.x = SpecularPower * r2.x;
   // r2.x = exp2(r2.x);
@@ -607,13 +608,13 @@ void main(
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
   // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = renodx::color::y::from::BT709(r0.xyz);
+  r1.x = calculateLuminanceSRGB(r0.xyz);
   r2.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r2.xyz = r2.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r2.xyz + r0.xyz;
   r2.xyz = BloomIntensity * r0.xyz;
   // r1.x = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = renodx::color::y::from::BT709(r2.xyz);
+  r1.x = calculateLuminanceSRGB(r2.xyz);
   r1.x = -scene.MiscParameters2.z + r1.x;
   r1.x = max(0, r1.x);
   r1.x = 0.5 * r1.x;

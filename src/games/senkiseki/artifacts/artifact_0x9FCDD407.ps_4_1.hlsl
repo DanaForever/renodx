@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Tue Jul 15 19:57:29 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -576,8 +577,8 @@ void main(
   r1.w = dot(r3.xyz, r3.xyz);
   r1.w = rsqrt(r1.w);
   r3.xyz = r3.xyz * r1.www;
-  // r1.w = saturate(dot(r2.xyz, r3.xyz));
-  r1.w = (dot(r2.xyz, r3.xyz));
+  r1.w = saturate(dot(r2.xyz, r3.xyz));
+  // r1.w = (dot(r2.xyz, r3.xyz));
   // r1.w = log2(r1.w);
   // r1.w = SpecularPower * r1.w;
   // r1.w = exp2(r1.w);
@@ -632,13 +633,13 @@ void main(
   r0.w = -r0.w * 0.5 + 1;
   r0.w = r0.w * r0.w;
   r0.w = PointLightParams.z * r0.w;
-  r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = calculateLuminanceSRGB(r0.rgb);
   r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r1.x = GlareMapSampler.Sample(GlareMapSamplerSampler_s, v3.xy).x;
   r1.yzw = BloomIntensity * r0.xyz;
-  r1.y = dot(r1.yzw, float3(0.298999995,0.587000012,0.114));
+  r1.y = calculateLuminanceSRGB(r1.yzw);
   r1.y = -scene.MiscParameters2.z + r1.y;
   r1.y = max(0, r1.y);
   r1.y = 0.5 * r1.y;

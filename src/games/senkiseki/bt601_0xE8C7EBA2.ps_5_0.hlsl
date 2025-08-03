@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 16:40:11 2025
 #include "./shared.h"
+#include "./cs4/common.hlsl"
 SamplerState PointClampSampler_s : register(s0);
 Texture2D<float4> ColorBuffer : register(t0);
 
@@ -20,7 +21,7 @@ void main(
   r0.xyz = ColorBuffer.SampleLevel(PointClampSampler_s, v1.xy, 0).xyz;
 
   // BT.601 luma
-  o0.w = renodx::color::y::from::NTSC1953(r0.xyz);
+  o0.w = calculateLuminanceSRGB(r0.xyz);
   o0.xyz = r0.xyz;
   return;
 }

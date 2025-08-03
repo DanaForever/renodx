@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Wed Jul 09 18:19:34 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -114,11 +115,11 @@ void main(
   r1.w = dot(-r1.xyz, r2.xyz);
   r1.w = r1.w + r1.w;
   r3.xyz = r2.xyz * -r1.www + -r1.xyz;
-  // r1.x = saturate(dot(r2.xyz, r1.xyz));
-  r1.x = (dot(r2.xyz, r1.xyz));
+  r1.x = saturate(dot(r2.xyz, r1.xyz));
+  // r1.x = (dot(r2.xyz, r1.xyz));
   r1.x = 1 + -r1.x;
   float l = r1.x;
-  r1.x = log2(r1.x);
+  // r1.x = log2(r1.x);
   r2.x = dot(r3.xyz, scene.View._m00_m10_m20);
   r2.y = dot(r3.xyz, scene.View._m01_m11_m21);
   r1.yz = v0.xy / scene.ViewportWidthHeight.xy;
@@ -157,7 +158,7 @@ void main(
   r0.xyz = GameMaterialEmission.xyz * r1.xxx + r0.xyz;
   o0.w = r0.w;
   // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
