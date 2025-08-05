@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sat Jul 19 17:03:38 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
   uint4 DuranteSettings : packoffset(c0);
@@ -158,7 +159,7 @@ void main(
   r0.xyz = float3(1,1,1) + -r0.xyz;
   r1.xyz = r0.xyz * r0.www;
   // r1.w = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.w = renodx::color::y::from::NTSC1953(r1.xyz);
+  r1.w = calculateLuminanceSRGB(r1.xyz);
   r2.xyz = r1.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r0.xyz = -r0.xyz * r0.www + r2.xyz;
   o0.w = r0.w;

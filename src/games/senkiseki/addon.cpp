@@ -140,6 +140,7 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0xCCF227A3), // artifact
     CustomShaderEntry(0xF6FA90E3), // artifact
     CustomShaderEntry(0x9B942E73), // artifact
+    CustomShaderEntry(0x03B8A7E5), // artifact
     
     
 };
@@ -292,7 +293,8 @@ renodx::utils::settings::Settings settings = {
         .label = "Bloom Approximation",
         .labels = {"Perception", "Luminance"},
         .is_global = true,
-        .is_visible = []() { return shader_injection.bloom == 0.f && current_settings_mode >= 1; },
+        // .is_visible = []() { return shader_injection.bloom == 0.f && current_settings_mode >= 1; },
+        .is_visible = []() { return false; },
     },
     // new renodx::utils::settings::Setting{
     //     .key = "SettingsBloomRescale",

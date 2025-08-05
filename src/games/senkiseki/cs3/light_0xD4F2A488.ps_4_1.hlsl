@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 17:22:33 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
   uint4 DuranteSettings : packoffset(c0);
@@ -104,8 +105,8 @@ void main(
   r1.w = dot(v5.xyz, v5.xyz);
   r1.w = rsqrt(r1.w);
   r2.xyz = v5.xyz * r1.www;
-  // r1.x = saturate(dot(r2.xyz, r1.xyz));
-  r1.x = (dot(r2.xyz, r1.xyz));
+  r1.x = saturate(dot(r2.xyz, r1.xyz));
+  // r1.x = (dot(r2.xyz, r1.xyz));
   r1.x = 1 + -r1.x;
   // r1.x = log2(r1.x);
   // r1.x = RimLitPower * r1.x;
@@ -125,7 +126,7 @@ void main(
   r0.xyz = r1.xyz * r0.xyz;
   r0.xyz = r0.xyz * GameMaterialDiffuse.xyz + GameMaterialEmission.xyz;
   r0.xyz = v2.xyz + r0.xyz;
-  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

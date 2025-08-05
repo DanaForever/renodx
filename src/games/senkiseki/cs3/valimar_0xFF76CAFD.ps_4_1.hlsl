@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 18:18:04 2025
 #include "../shared.h"
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
   uint4 DuranteSettings : packoffset(c0);
@@ -587,13 +588,13 @@ void main(
   r1.xyz = scene.FogColor.xyz + -r0.xyz;
   r0.xyz = v2.www * r1.xyz + r0.xyz;
   // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r1.xyz = BloomIntensity * r0.xyz;
   // r0.w = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = renodx::color::y::from::NTSC1953(r1.xyz);
+  r0.w = calculateLuminanceSRGB(r1.xyz);
   r0.w = -scene.MiscParameters2.z + r0.w;
   r0.w = max(0, r0.w);
   r0.w = 0.5 * r0.w;

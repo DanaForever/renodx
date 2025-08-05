@@ -1,6 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 17:55:15 2025
 #include "../shared.h"
-
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
   uint4 DuranteSettings : packoffset(c0);
@@ -547,8 +547,8 @@ void main(
   r2.w = dot(r3.xyz, r3.xyz);
   r2.w = rsqrt(r2.w);
   r4.xyz = r3.xyz * r2.www;
-  // r3.w = saturate(dot(r2.xyz, r4.xyz));
-  r3.w = (dot(r2.xyz, r4.xyz));
+  r3.w = saturate(dot(r2.xyz, r4.xyz));
+  // r3.w = (dot(r2.xyz, r4.xyz));
   r4.x = dot(r2.xyz, scene.View._m00_m10_m20);
   r4.y = dot(r2.xyz, scene.View._m01_m11_m21);
   r4.xy = r4.xy * float2(0.5,0.5) + float2(0.5,0.5);
@@ -559,8 +559,8 @@ void main(
   r2.w = dot(r3.xyz, r3.xyz);
   r2.w = rsqrt(r2.w);
   r3.xyz = r3.xyz * r2.www;
-  // r2.w = saturate(dot(r2.xyz, r3.xyz));
-  r2.w = (dot(r2.xyz, r3.xyz));
+  r2.w = saturate(dot(r2.xyz, r3.xyz));
+  // r2.w = (dot(r2.xyz, r3.xyz));
   // r2.w = log2(r2.w);
   // r2.w = SpecularPower * r2.w;
   // r2.w = exp2(r2.w);
@@ -601,14 +601,14 @@ void main(
   r1.xyz = scene.FogColor.xyz + -r0.xyz;
   r0.xyz = v2.www * r1.xyz + r0.xyz;
   // r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
-  r0.w = renodx::color::y::from::NTSC1953(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   r0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   r0.w = GlareMapSampler.Sample(GlareMapSamplerSampler_s, v3.xy).x;
   r1.xyz = BloomIntensity * r0.xyz;
   // r1.x = dot(r1.xyz, float3(0.298999995, 0.587000012, 0.114));
-  r1.x = renodx::color::y::from::NTSC1953(r1.xyz);
+  r1.x = calculateLuminanceSRGB(r1.xyz);
   r1.x = -scene.MiscParameters2.z + r1.x;
   r1.x = max(0, r1.x);
   r1.x = 0.5 * r1.x;

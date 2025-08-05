@@ -389,17 +389,9 @@ float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
 
   float3 unscaledColor = color;
   color = scaleByPerceptualLuminance(unscaledColor, bloomColor, max_scale);
-  
 
   float3 scaledColor;
-  if (BLOOM_APPROX_METHOD == 0.f) {
-    scaledColor = color;
-
-  } else {
-    scaledColor = color;
-    // float3 lum_color = scaleByLuminance(unscaledColor, bloomColor, max_scale);
-    scaledColor = renodx::color::correct::ChrominanceICtCp(scaledColor, bloomColor, 1.0f);
-  }
+  scaledColor = color;
 
   color = scaledColor;
   

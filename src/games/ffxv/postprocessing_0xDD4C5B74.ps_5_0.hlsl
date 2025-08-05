@@ -61,6 +61,7 @@ void main(
     // gamma scaling
     if (RENODX_TONE_MAP_TYPE == 0.f) {
       // SDR gamma = 1.0, HDR gamma = 1.3
+      // this can be considered as a poor attempt to correct gamma
       r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
 
       // r0.w = 0.587700009 * r0.y;
@@ -81,6 +82,13 @@ void main(
       // r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
       // gamma should be 1.0 in SDR
       // o0.xyz = saturate(r0.xyz);
+
+      if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+        r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+      } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+        r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+      }
+
       o0.xyz = (r0.xyz);
 
       o0.xyz *= RENODX_GRAPHICS_WHITE_NITS;
@@ -90,7 +98,11 @@ void main(
   }
 
   else if (FFXV_HDR_GRADING == 1.f) {
-    // r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+    }
     r1.rgb = SE_Saturation(r0);
     // r1.xyz = renodx::math::SignPow(r1.xyz, 1.0f / gamma);
     o0.rgb = r1.rgb;
@@ -102,14 +114,6 @@ void main(
   float3 color = o0.rgb;
 
   float swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-
-  // GammaCorrectHuePreserving
-
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = GammaCorrectHuePreserving(color, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = GammaCorrectHuePreserving(color, 2.4f);
-  }
 
   color *= RENODX_GRAPHICS_WHITE_NITS;
 

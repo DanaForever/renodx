@@ -64,6 +64,10 @@ cbuffer COLOR_FILTER_PARMS : register(b0)
 SamplerState g_sSampler_s : register(s0);
 Texture2D<float4> g_tTex : register(t0);
 
+
+
+
+
 float3 colorGrade(float3 ungraded) {
   float4 r0, r1, r2, r3, r4, r5;
   r0.rgb = ungraded;
