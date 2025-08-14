@@ -101,6 +101,7 @@ cbuffer shader_injection : register(b13) {
   ShaderInjectData shader_injection : packoffset(c0);
 }
 
+#define RENODX_COLOR_GRADE_HIGHLIGHTS_VERSION 2
 #define RENODX_TONE_MAP_TYPE                 shader_injection.tone_map_type
 #define RENODX_PEAK_WHITE_NITS               shader_injection.peak_white_nits
 #define RENODX_DIFFUSE_WHITE_NITS            shader_injection.diffuse_white_nits

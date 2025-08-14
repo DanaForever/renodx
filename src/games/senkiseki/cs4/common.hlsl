@@ -213,7 +213,7 @@ float3 SDRTonemap(float3 color) {
   color = max(0.f, color);
 
   if (tone_map_hue_correction_method == 2.f) {
-    sdr_color = renodx::tonemap::dice::BT709(color, 1.f, 0.25f);
+    sdr_color = renodx::tonemap::dice::BT709(color, 1.f, 0.f);
   } else if (tone_map_hue_correction_method == 1.f) {
     sdr_color = renodx::tonemap::renodrt::NeutralSDR(color);
   } else if (tone_map_hue_correction_method == 0.f) {
@@ -372,8 +372,9 @@ float3 processAndToneMap(float3 color) {
   color = correctHue(color, color);
   color = expandColorGamut(color);
   
-
   // color = renodx::draw::RenderIntermediatePass(color);
+
+  // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
   color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
   color = renodx::color::srgb::EncodeSafe(color);
   return color;
@@ -389,11 +390,6 @@ float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
 
   float3 unscaledColor = color;
   color = scaleByPerceptualLuminance(unscaledColor, bloomColor, max_scale);
-
-  float3 scaledColor;
-  scaledColor = color;
-
-  color = scaledColor;
   
   return color;
 }
@@ -401,13 +397,15 @@ float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
 float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
 
+  // return ch;
   const float y_in = renodx::color::y::from::BT709(incorrect_color);
   const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
 
   float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
 
   // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  float3 result = renodx::color::correct::ChrominanceICtCp(lum, ch);
+  // float3 result = renodx::color::correct::ChrominanceICtCp(lum, ch);
+  float3 result = renodx::color::correct::Chrominance(lum, ch);
 
   return result;
 }

@@ -141,6 +141,8 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0xF6FA90E3), // artifact
     CustomShaderEntry(0x9B942E73), // artifact
     CustomShaderEntry(0x03B8A7E5), // artifact
+    CustomShaderEntry(0x0B878318), // artifact
+    CustomShaderEntry(0x5B6BFD59), // artifact
     
     
 };

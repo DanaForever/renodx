@@ -98,13 +98,19 @@ void main(
   }
 
   else if (FFXV_HDR_GRADING == 1.f) {
+
+    // the game uses a gamma/contrast boost for "gamma correction"
+    // replaced with actual gamma correction
+    
     if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+      // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+      r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
     } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+      // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+      r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
     }
+
     r1.rgb = SE_Saturation(r0);
-    // r1.xyz = renodx::math::SignPow(r1.xyz, 1.0f / gamma);
     o0.rgb = r1.rgb;
   } else {
     o0.rgb = r0.rgb;
