@@ -16,18 +16,6 @@ Texture2D<float4> g_BrightTex : register(t0);
 // 3Dmigoto declarations
 #define cmp -
 
-float3 decode_srgb_wrong(float3 c) {
-  return (pow((c + 0.055f) / 1.055f, 2.4f));
-}
-
-// float3 decode_srgb_wrong(float3 c) {
-//   c.r = decode_srgb_wrong(c.r);
-//   c.g = decode_srgb_wrong(c.g);
-//   c.b = decode_srgb_wrong(c.b);
-
-//   return c;
-// }
-
 
 void main(
   float4 v0 : SV_POSITION0,

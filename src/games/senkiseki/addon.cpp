@@ -875,12 +875,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .old_format = reshade::api::format::r8g8b8a8_unorm,
             .new_format = reshade::api::format::r16g16b16a16_float,
             // .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+            // .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+            .ignore_size = true,
             .usage_include = reshade::api::resource_usage::render_target
         });
 
 
-        bool is_hdr10 = true;
+        bool is_hdr10 = false;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);
         renodx::mods::swapchain::use_resize_buffer = false;
         shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;

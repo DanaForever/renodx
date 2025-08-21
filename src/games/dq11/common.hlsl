@@ -148,11 +148,12 @@ float3 UpgradeToneMapPerChannel(float3 color_hdr, float3 color_sdr, float3 post_
   float3 color_scaled = max(0, bt2020_post_process * ratio);
   color_scaled = renodx::color::bt709::from::BT2020(color_scaled);
   float peak_correction = saturate(1.f - renodx::color::y::from::BT2020(bt2020_post_process));
-  color_scaled = renodx::color::correct::Hue(color_scaled, post_process_color, peak_correction);
+  color_scaled = renodx::color::correct::Hue(color_scaled, post_process_color, peak_correction, RENODX_TONE_MAP_HUE_PROCESSOR);
   return lerp(color_hdr, color_scaled, post_process_strength);
 }
 
 float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
+  // graded = saturate(graded);
   float hueCorrection = 1.f - CUSTOM_TONEMAP_UPGRADE_HUECORR;
   float satStrength = 1.f - CUSTOM_TONEMAP_UPGRADE_STRENGTH;
 
@@ -173,7 +174,8 @@ float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
 
   upgradedPerCh = renodx::color::bt709::from::OkLCh(upgradedPerCh_okLCH);
 
-  upgradedPerCh = max(-10000000000000000000000000000000000000.f, upgradedPerCh);  // bandaid for NaNs
+  // upgradedPerCh = max(-10000000000000000000000000000000000000.f, upgradedPerCh);  // bandaid for NaNs
+  upgradedPerCh = renodx::color::bt709::clamp::AP1(upgradedPerCh);
 
   return upgradedPerCh;
 }
@@ -212,18 +214,18 @@ void SetTonemappedBT709(inout float color_red, inout float color_green, inout fl
   float3 color = float3(color_red, color_green, color_blue);
   RENODX_UE_CONFIG.tonemapped_bt709 = color;
 
-  // if (CUSTOM_COLOR_GRADE_BLOWOUT_RESTORATION != 0.f
-  //     || CUSTOM_COLOR_GRADE_HUE_CORRECTION != 0.f
-  //     || CUSTOM_COLOR_GRADE_SATURATION_CORRECTION != 0.f
-  //     || CUSTOM_COLOR_GRADE_HUE_SHIFT != 0.f) {
-  //   color = renodx::draw::ApplyPerChannelCorrection(
-  //       RENODX_UE_CONFIG.untonemapped_bt709,
-  //       float3(color_red, color_green, color_blue),
-  //       CUSTOM_COLOR_GRADE_BLOWOUT_RESTORATION,
-  //       CUSTOM_COLOR_GRADE_HUE_CORRECTION,
-  //       CUSTOM_COLOR_GRADE_SATURATION_CORRECTION,
-  //       CUSTOM_COLOR_GRADE_HUE_SHIFT);
-  // }
+  if (CUSTOM_COLOR_GRADE_BLOWOUT_RESTORATION != 0.f
+      || CUSTOM_COLOR_GRADE_HUE_CORRECTION != 0.f
+      || CUSTOM_COLOR_GRADE_SATURATION_CORRECTION != 0.f
+      || CUSTOM_COLOR_GRADE_HUE_SHIFT != 0.f) {
+    color = renodx::draw::ApplyPerChannelCorrection(
+        RENODX_UE_CONFIG.untonemapped_bt709,
+        float3(color_red, color_green, color_blue),
+        CUSTOM_COLOR_GRADE_BLOWOUT_RESTORATION,
+        CUSTOM_COLOR_GRADE_HUE_CORRECTION,
+        CUSTOM_COLOR_GRADE_SATURATION_CORRECTION,
+        CUSTOM_COLOR_GRADE_HUE_SHIFT);
+  }
 
   color = abs(color);
   color_red = color.r;
@@ -272,32 +274,14 @@ renodx::draw::Config GetOutputConfig(uint OutputDevice = 0u) {
 
 float4
 GenerateOutput(uint OutputDevice = 0u) {
-  // renodx::draw::Config config = renodx::draw::BuildConfig();
   renodx::draw::Config config = GetOutputConfig(OutputDevice);
   float3 untonemapped_graded;
-  // float3 untonemapped_graded = renodx::draw::ComputeUntonemappedGraded(
-  //   RENODX_UE_CONFIG.untonemapped_bt709,
-  //   RENODX_UE_CONFIG.graded_bt709,
-  //   config);
   float3 graded_bt709 = RENODX_UE_CONFIG.graded_bt709;
-  float3 neutral_sdr_color = renodx::tonemap::renodrt::NeutralSDR(RENODX_UE_CONFIG.untonemapped_bt709);
-  if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
-    if (CUSTOM_COLOR_GRADE_BLOWOUT_RESTORATION != 0.f
-        || CUSTOM_COLOR_GRADE_HUE_CORRECTION != 0.f
-        || CUSTOM_COLOR_GRADE_SATURATION_CORRECTION != 0.f
-        || CUSTOM_COLOR_GRADE_HUE_SHIFT != 0.f) {
-      graded_bt709 = renodx::draw::ApplyPerChannelCorrection(
-          RENODX_UE_CONFIG.untonemapped_bt709,
-          graded_bt709,
-          CUSTOM_COLOR_GRADE_BLOWOUT_RESTORATION,
-          CUSTOM_COLOR_GRADE_HUE_CORRECTION,
-          CUSTOM_COLOR_GRADE_SATURATION_CORRECTION,
-          CUSTOM_COLOR_GRADE_HUE_SHIFT);
-    }
 
+  if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
     untonemapped_graded = renodx::tonemap::UpgradeToneMap(
         RENODX_UE_CONFIG.untonemapped_bt709,
-        neutral_sdr_color,
+        renodx::tonemap::renodrt::NeutralSDR(RENODX_UE_CONFIG.untonemapped_bt709),
         graded_bt709,
         config.color_grade_strength,
         config.tone_map_pass_autocorrection);
@@ -313,4 +297,21 @@ GenerateOutput(uint OutputDevice = 0u) {
 float4 GenerateOutput(float3 graded_bt709, uint OutputDevice = 0u) {
   SetGradedBT709(graded_bt709);
   return GenerateOutput(OutputDevice);
+}
+
+
+float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
+  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
+
+  // return ch;
+  const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
+
+  float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
+
+  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  // float3 result = renodx::color::correct::ChrominanceICtCp(lum, ch);
+  float3 result = renodx::color::correct::Chrominance(lum, ch);
+
+  return result;
 }

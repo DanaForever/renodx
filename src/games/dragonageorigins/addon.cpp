@@ -1027,13 +1027,16 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       renodx::mods::swapchain::prevent_full_screen = true;
       renodx::mods::swapchain::force_borderless = true;
 
-      // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      //     .old_format = reshade::api::format::r8g8b8a8_unorm,
-      //     .new_format = reshade::api::format::r16g16b16a16_float,
-      //     //.ignore_size = true
-      //     .aspect_ratio = 16.f / 9.f
-      //     //.dimensions = { 3840, 2160 }
-      // });
+      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r8g8b8a8_unorm,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+          .ignore_size = true,
+          .use_resource_view_cloning = true,
+          // .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          //.dimensions = { 3840, 2160 }
+      });
+
+      
 
       {
         float screen_width = GetSystemMetrics(SM_CXSCREEN);

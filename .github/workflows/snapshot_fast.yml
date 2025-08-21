@@ -48,6 +48,9 @@ jobs:
       - name: Build (x64) for Sen no Kiseki (3-4-5)
         run: cmake --build --preset clang-x64-release --target senkiseki --verbose
       
+      - name: Build (x64) for Sora no Kiseki 
+        run: cmake --build --preset clang-x64-release --target sorakiseki --verbose
+      
       - name: Build (x64) for Final Fantasy XV
         run: cmake --build --preset clang-x64-release --target ffxv --verbose
       

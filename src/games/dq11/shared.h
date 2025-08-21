@@ -80,6 +80,11 @@ struct ShaderInjectData {
   float custom_tonemap_upgrade_type;
   float custom_tonemap_upgrade_huecorr;
   float custom_tonemap_upgrade_strength;
+
+  float dice_tone_map_type;
+  float dice_shoulder_start;
+  float dice_desaturation;
+  float dice_darkening;
 };
 
 #ifndef __cplusplus
