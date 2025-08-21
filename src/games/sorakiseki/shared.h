@@ -54,6 +54,7 @@ struct ShaderInjectData {
   float tone_map_flare;
   float tone_map_white_clip;
   float tone_map_hue_correction;
+  float bloom_hue_correction;
   float tone_map_hue_shift;
   float tone_map_hue_correction_method;
   float tone_map_working_color_space;

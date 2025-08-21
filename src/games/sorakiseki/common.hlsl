@@ -2,6 +2,14 @@
 #include "./shared.h"
 #include "DICE.hlsl"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#define FLT16_MAX 65504.f
+#define FLT_MIN   asfloat(0x00800000)  // 1.175494351e-38f
+#define FLT_MAX   asfloat(0x7F7FFFFF)  // 3.402823466e+38f
+
 /// Applies Exponential Roll-Off tonemapping using the maximum channel.
 /// Used to fit the color into a 0–output_max range for SDR LUT compatibility.
 float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_max = 1.f) {
@@ -158,6 +166,7 @@ float3 processAndToneMap(float3 color) {
 
   color = ToneMap(color);
   color = correctHue(color, color);
+  color = renodx::color::bt709::clamp::BT2020(color);
   
   // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
   color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
@@ -187,4 +196,41 @@ float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   float3 result = renodx::color::correct::Chrominance(lum, ch);
 
   return result;
+}
+
+float3 RestoreHue(float3 targetColor, float3 sourceColor, float amount = 0.5)
+{
+  float3 oklch = renodx::color::oklch::from::BT709(sourceColor);
+  float3 rgb = sourceColor;
+
+  // Invalid or black colors fail oklab conversions or ab blending so early out
+  float y = renodx::color::y::from::BT709(targetColor);
+  float bloom_y = renodx::color::y::from::BT709(targetColor);
+
+  if (bloom_y < FLT_MIN)
+  {
+    // Optionally we could blend the target towards the source, or towards black, but there's no need until proven otherwise
+    return targetColor;
+  }
+
+  const float3 targetOklab = renodx::color::oklab::from::BT709(targetColor);
+  const float3 targetOklch = renodx::color::oklch::from::OkLab(targetOklab);
+  const float3 sourceOklab = renodx::color::oklab::from::BT709(sourceColor);
+
+  // First correct both hue and chrominance at the same time (oklab a and b determine both, they are the color xy coordinates basically).
+  // As long as we don't restore the hue to a 100% (which should be avoided), this will always work perfectly even if the source color is pure white (or black, any "hueless" and "chromaless" color).
+  // This method also works on white source colors because the center of the oklab ab diagram is a "white hue", thus we'd simply blend towards white (but never flipping beyond it (e.g. from positive to negative coordinates)),
+  // and then restore the original chrominance later (white still conserving the original hue direction, so likely spitting out the same color as the original, or one very close to it).
+  float3 correctedTargetOklab = float3(targetOklab.x, lerp(targetOklab.yz, sourceOklab.yz, amount));
+
+  // Then restore chrominance
+  float3 correctedTargetOklch = renodx::color::oklch::from::OkLab(correctedTargetOklab);
+  correctedTargetOklch.y = targetOklch.y;
+
+  // return renodx::color::bt709::from::OkLCh(correctedTargetOklch);
+  float3 output = renodx::color::bt709::from::OkLCh(correctedTargetOklch);
+
+  output = renodx::color::bt709::clamp::BT2020(output);
+
+  return output;
 }
