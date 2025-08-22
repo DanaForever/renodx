@@ -234,3 +234,64 @@ float3 RestoreHue(float3 targetColor, float3 sourceColor, float amount = 0.5)
 
   return output;
 }
+
+
+float UpgradeToneMapRatio(float color_hdr, float color_sdr) {
+  if (color_hdr < color_sdr) {
+    // If substracting (user contrast or paperwhite) scale down instead
+    // Should only apply on mismatched HDR
+    return 1.f;
+  } else {
+    float ap1_delta = color_hdr - color_sdr;
+    ap1_delta = max(0, ap1_delta);  // Cleans up NaN
+    const float ap1_new = color_sdr + ap1_delta;
+
+    const bool ap1_valid = (color_sdr > 0.f && color_hdr > 0.f);  // Cleans up NaN and ignore black
+    return ap1_valid ? (ap1_new / color_sdr) : 1.f;
+  }
+}
+
+
+
+float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_scale = 4.f) {
+
+
+  float3 originalColor = color;
+  float3 bloomColor_perceptual = renodx::color::ictcp::from::BT709(bloomColor);
+  float3 color_perceptual = renodx::color::ictcp::from::BT709(color);
+
+  // compute Luminance
+  float bloomL = bloomColor_perceptual.x;
+  float L = color_perceptual.x;
+
+  float bloom_chrominance = (length(bloomColor_perceptual.yz));  // eg: 0.80
+  float chrominance = (length(color_perceptual.yz));      // eg: 0.20
+  float new_chroma_len = max(chrominance, bloom_chrominance);
+
+  float scale = UpgradeToneMapRatio(bloomL, L);
+  float chrominance_scale = UpgradeToneMapRatio(bloom_chrominance, chrominance);
+
+  // scale y and z by chrominance scale causes artifact (exhibited in the bloomColor)
+  // chrominance_scale = 1.f;
+  scale = clamp(scale, 1.0f, max_scale);
+
+  color_perceptual = float3(color_perceptual.x * scale, color_perceptual.y * chrominance_scale, color_perceptual.z * chrominance_scale);
+
+  color = renodx::color::bt709::from::ICtCp(color_perceptual);
+  color = renodx::color::bt709::clamp::BT2020(color);
+
+  return color;
+}
+
+float3 scaleByLuminance(float3 color, float3 bloomColor, float max_scale = 4.f) {
+  float bloomY = renodx::color::y::from::BT709(bloomColor);
+  float Y = renodx::color::y::from::BT709(color);
+
+  float scale = UpgradeToneMapRatio(bloomY, Y);
+
+  scale = clamp(scale, 1.0f, max_scale);
+  color = color * scale;
+
+  
+  return color;
+}

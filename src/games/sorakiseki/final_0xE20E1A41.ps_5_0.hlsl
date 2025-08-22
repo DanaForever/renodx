@@ -29,13 +29,16 @@ void main(
   // r0.xyz = exp2(r0.xyz);
   // r0.rgb = renodx::math::SafePow(r0.rgb, 2.3f);
 
-  if (shader_injection.gamma == 1.f)
-    r0.rgb = renodx::color::gamma::DecodeSafe(r0.rgb, 2.3f);
-  else
-    r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+  
 
 
   if (RENODX_TONE_MAP_TYPE > 0) {
+
+    if (shader_injection.gamma == 1.f)
+      r0.rgb = renodx::color::gamma::DecodeSafe(r0.rgb, 2.3f);
+    else
+      r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+
     o0 = r0;
 
     renodx::draw::Config config = renodx::draw::BuildConfig();
@@ -71,7 +74,9 @@ void main(
     o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / 80.f;
   }
   else {
+    r0.rgb = renodx::color::gamma::DecodeSafe(r0.rgb, 2.3f);
     r0.xyz = hdrPeakBrightness * r0.xyz;
+    // r0.xyz = RENODX_GRAPHICS_WHITE_NITS / 80.f * r0.xyz;
     r0.xyz = max(float3(0,0,0), r0.xyz);
     o0.xyz = min(float3(200,200,200), r0.xyz);
   }
