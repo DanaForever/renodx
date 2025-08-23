@@ -34,7 +34,7 @@ void main(
 
   if (RENODX_TONE_MAP_TYPE > 0) {
 
-    if (shader_injection.gamma == 1.f)
+    if (shader_injection.gamma == 0.f)
       r0.rgb = renodx::color::gamma::DecodeSafe(r0.rgb, 2.3f);
     else
       r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
@@ -43,7 +43,7 @@ void main(
 
     renodx::draw::Config config = renodx::draw::BuildConfig();
 
-    if (shader_injection.gamma == 0.f) { 
+    if (shader_injection.gamma == 1.f) { 
       if (config.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
         o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
       } else if (config.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {

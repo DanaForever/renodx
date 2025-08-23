@@ -30,27 +30,23 @@ Texture2D<float4> blurTexture5 : register(t5);
 // 3Dmigoto declarations
 #define cmp -
 
-float3 hdrScreenBlend2(float3 base, float3 blend, float weight) {
-
-  float y = renodx::color::y::from::BT709(base);
-  float yb = renodx::color::y::from::BT709(blend);
-  float g = 1.0 / (1.0 + y);
-  float gain = 1.0 + g * yb;
-  
-  return base * gain;
-
-	// return base + (blend / (1.f + base));
+// Geometric weights: w_l = 4^{-l} normalized so sum(w_l)=1
+// For N levels this constant normalizer is: norm = 0.75 / (1 - pow(0.25, N))
+float weight_for_level(int level, int N)
+{
+    float norm = 0.75 / (1.0 - pow(0.25, N));
+    return norm * pow(0.25, level);
 }
 
-float3 hdrScreenBlend(float3 base, float3 blend, float weight) {
 
-  return base + (blend / (1.f + base));
+float3 hdrScreenBlend(float3 base, float3 blend) {
 
-  // float y = renodx::color::y::from::BT709(base);
-  // float g = 1.0 / (1.0 + y);
-  // return base + blend * g;
+  blend *= shader_injection.bloom_strength; 
+
+  float3 bloom = base + (blend / (1.f + base));
+  return bloom;
   
-	}
+}
 
 float3 one_minus(float3 x)  {
 
@@ -110,7 +106,7 @@ void main(
     out float4 o0 : SV_Target0)
 {
     float4 sdr = blendBloomLinear(samLinear_s, v1);
-    if (RENODX_TONE_MAP_TYPE == 0)  {
+    if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f)  {
       o0 = sdr;
       return;
     }
@@ -125,8 +121,8 @@ void main(
     float3 blur2 = blurTexture2.SampleLevel(samLinear_s, clampedUV0.zw, 0).xyz;
     blur2 = renodx::color::srgb::DecodeSafe(blur2);
 
-    hdr = hdrScreenBlend(hdr, blur1, 1.f);
-    hdr = hdrScreenBlend(hdr, blur2, 1.f);
+    hdr = hdrScreenBlend(hdr, blur1);
+    hdr = hdrScreenBlend(hdr, blur2);
     
     float4 clampedUV1 = min(uv_clamp1_g, v1.xyxy);
     float3 blur3 = blurTexture3.SampleLevel(samLinear_s, clampedUV1.xy, 0).xyz;
@@ -134,14 +130,26 @@ void main(
     blur3 = renodx::color::srgb::DecodeSafe(blur3);
     blur4 = renodx::color::srgb::DecodeSafe(blur4);
     
-    hdr = hdrScreenBlend(hdr, blur3, 1.f);
-    hdr = hdrScreenBlend(hdr, blur4, 1.f);
+    hdr = hdrScreenBlend(hdr, blur3);
+    hdr = hdrScreenBlend(hdr, blur4);
     
     float2 clampedUV2 = min(uv_clamp2_g.xy, v1.xy);
     float3 blur5 = blurTexture5.SampleLevel(samLinear_s, clampedUV2, 0).xyz;
     blur5 = renodx::color::srgb::DecodeSafe(blur5);
 
-    hdr = hdrScreenBlend(hdr, blur5, 1.f);
+    hdr = hdrScreenBlend(hdr, blur5);
+
+    // Compute weights for N=5 levels (l=0..4 == b1..b5)
+    // const int N = 5;
+    // float w1 = weight_for_level(0, N);
+    // float w2 = weight_for_level(1, N);
+    // float w3 = weight_for_level(2, N);
+    // float w4 = weight_for_level(3, N);
+    // float w5 = weight_for_level(4, N);
+
+    // // One weighted sum, then one screen-blend
+    // float3 blended = (w1*blur1 + w2*blur2 + w3*blur3 + w4*blur4 + w5*blur5);
+    // hdr = hdrScreenBlend(hdr, blended);
 
     float3 sat = saturate(renodx::color::srgb::DecodeSafe(sdr.rgb));
 

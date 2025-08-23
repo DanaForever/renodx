@@ -160,7 +160,7 @@ float3 correctHue(float3 color, float3 correctColor) {
 float3 processAndToneMap(float3 color, bool decoding = true) {
 
   if (decoding) {
-    if (shader_injection.gamma == 0.f)  {
+    if (shader_injection.gamma == 1.f)  {
       color = renodx::color::srgb::DecodeSafe(color);
     } else {
       color = renodx::color::gamma::DecodeSafe(color, 2.3f);
@@ -173,10 +173,9 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
   
   // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
   color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-  // color = renodx::color::srgb::EncodeSafe(color);
-  // color = renodx::color::gamma::EncodeSafe(color, 2.3f);
 
-  if (shader_injection.gamma == 0.f)  {
+
+  if (shader_injection.gamma == 1.f)  {
     color = renodx::color::srgb::EncodeSafe(color);
   } else {
     color = renodx::color::gamma::EncodeSafe(color, 2.3f);

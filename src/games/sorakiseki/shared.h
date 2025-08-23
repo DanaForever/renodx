@@ -38,6 +38,8 @@
 // Should be 4x32
 struct ShaderInjectData {
   float gamma;
+  float bloom;
+  float bloom_strength;
 
   float peak_white_nits;
   float diffuse_white_nits;
