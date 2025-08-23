@@ -143,7 +143,7 @@ void main(
 
     hdr = hdrScreenBlend(hdr, blur5, 1.f);
 
-    float3 sat = (renodx::color::srgb::DecodeSafe(sdr.rgb));
+    float3 sat = saturate(renodx::color::srgb::DecodeSafe(sdr.rgb));
 
     // hue and chrominance correction if desaturation is desired
     hdr = renodx::color::correct::ChrominanceICtCp(hdr, sat, shader_injection.bloom_hue_correction);

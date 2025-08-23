@@ -72,6 +72,7 @@ float3 ToneMap(float3 color) {
   
   }
 
+  // copied from ToneMapPass
   renodx::draw::Config draw_config = renodx::draw::BuildConfig();
   draw_config.reno_drt_tone_map_method = renodx::tonemap::renodrt::config::tone_map_method::REINHARD;
 
@@ -200,100 +201,4 @@ float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   return result;
 }
 
-float3 RestoreHue(float3 targetColor, float3 sourceColor, float amount = 0.5)
-{
-  float3 oklch = renodx::color::oklch::from::BT709(sourceColor);
-  float3 rgb = sourceColor;
 
-  // Invalid or black colors fail oklab conversions or ab blending so early out
-  float y = renodx::color::y::from::BT709(targetColor);
-  float bloom_y = renodx::color::y::from::BT709(targetColor);
-
-  if (bloom_y < FLT_MIN)
-  {
-    // Optionally we could blend the target towards the source, or towards black, but there's no need until proven otherwise
-    return targetColor;
-  }
-
-  const float3 targetOklab = renodx::color::oklab::from::BT709(targetColor);
-  const float3 targetOklch = renodx::color::oklch::from::OkLab(targetOklab);
-  const float3 sourceOklab = renodx::color::oklab::from::BT709(sourceColor);
-
-  // First correct both hue and chrominance at the same time (oklab a and b determine both, they are the color xy coordinates basically).
-  // As long as we don't restore the hue to a 100% (which should be avoided), this will always work perfectly even if the source color is pure white (or black, any "hueless" and "chromaless" color).
-  // This method also works on white source colors because the center of the oklab ab diagram is a "white hue", thus we'd simply blend towards white (but never flipping beyond it (e.g. from positive to negative coordinates)),
-  // and then restore the original chrominance later (white still conserving the original hue direction, so likely spitting out the same color as the original, or one very close to it).
-  float3 correctedTargetOklab = float3(targetOklab.x, lerp(targetOklab.yz, sourceOklab.yz, amount));
-
-  // Then restore chrominance
-  float3 correctedTargetOklch = renodx::color::oklch::from::OkLab(correctedTargetOklab);
-  correctedTargetOklch.y = targetOklch.y;
-
-  // return renodx::color::bt709::from::OkLCh(correctedTargetOklch);
-  float3 output = renodx::color::bt709::from::OkLCh(correctedTargetOklch);
-
-  output = renodx::color::bt709::clamp::BT2020(output);
-
-  return output;
-}
-
-
-float UpgradeToneMapRatio(float color_hdr, float color_sdr) {
-  if (color_hdr < color_sdr) {
-    // If substracting (user contrast or paperwhite) scale down instead
-    // Should only apply on mismatched HDR
-    return 1.f;
-  } else {
-    float ap1_delta = color_hdr - color_sdr;
-    ap1_delta = max(0, ap1_delta);  // Cleans up NaN
-    const float ap1_new = color_sdr + ap1_delta;
-
-    const bool ap1_valid = (color_sdr > 0.f && color_hdr > 0.f);  // Cleans up NaN and ignore black
-    return ap1_valid ? (ap1_new / color_sdr) : 1.f;
-  }
-}
-
-
-
-float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_scale = 4.f) {
-
-
-  float3 originalColor = color;
-  float3 bloomColor_perceptual = renodx::color::ictcp::from::BT709(bloomColor);
-  float3 color_perceptual = renodx::color::ictcp::from::BT709(color);
-
-  // compute Luminance
-  float bloomL = bloomColor_perceptual.x;
-  float L = color_perceptual.x;
-
-  float bloom_chrominance = (length(bloomColor_perceptual.yz));  // eg: 0.80
-  float chrominance = (length(color_perceptual.yz));      // eg: 0.20
-  float new_chroma_len = max(chrominance, bloom_chrominance);
-
-  float scale = UpgradeToneMapRatio(bloomL, L);
-  float chrominance_scale = UpgradeToneMapRatio(bloom_chrominance, chrominance);
-
-  // scale y and z by chrominance scale causes artifact (exhibited in the bloomColor)
-  // chrominance_scale = 1.f;
-  scale = clamp(scale, 1.0f, max_scale);
-
-  color_perceptual = float3(color_perceptual.x * scale, color_perceptual.y * chrominance_scale, color_perceptual.z * chrominance_scale);
-
-  color = renodx::color::bt709::from::ICtCp(color_perceptual);
-  color = renodx::color::bt709::clamp::BT2020(color);
-
-  return color;
-}
-
-float3 scaleByLuminance(float3 color, float3 bloomColor, float max_scale = 4.f) {
-  float bloomY = renodx::color::y::from::BT709(bloomColor);
-  float Y = renodx::color::y::from::BT709(color);
-
-  float scale = UpgradeToneMapRatio(bloomY, Y);
-
-  scale = clamp(scale, 1.0f, max_scale);
-  color = color * scale;
-
-  
-  return color;
-}

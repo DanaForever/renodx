@@ -238,10 +238,10 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
         .binding = &shader_injection.bloom_hue_correction,
-        .default_value = 75.f,
-        .label = "Hue Correction Strength for Bloom",
+        .default_value = 50.f,
+        .label = "Bloom Color Correction",
         .section = "Hue Correction",
-        .tooltip = "Hue retention strength.",
+        .tooltip = "Correcting the colors after rewriting the Bloom.",
         .min = 0.f,
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
