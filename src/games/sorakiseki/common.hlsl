@@ -156,12 +156,14 @@ float3 correctHue(float3 color, float3 correctColor) {
 }
 
 
-float3 processAndToneMap(float3 color) {
+float3 processAndToneMap(float3 color, bool decoding = true) {
 
-  if (shader_injection.gamma == 0.f)  {
-    color = renodx::color::srgb::DecodeSafe(color);
-  } else {
-    color = renodx::color::gamma::DecodeSafe(color, 2.3f);
+  if (decoding) {
+    if (shader_injection.gamma == 0.f)  {
+      color = renodx::color::srgb::DecodeSafe(color);
+    } else {
+      color = renodx::color::gamma::DecodeSafe(color, 2.3f);
+    }
   }
 
   color = ToneMap(color);

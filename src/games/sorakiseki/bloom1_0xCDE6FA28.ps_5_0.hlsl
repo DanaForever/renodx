@@ -101,8 +101,8 @@ void main(
   r3.w = r3.w * -3.75 + 4;
   // r0.y = dot(r0.yzw, float3(0.298999995,0.587000012,0.114));
   // r0.z = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.y = renodx::color::y::from::BT709(r0.yzw);
-  r0.z = renodx::color::y::from::BT709(r1.xyz);
+  r0.y = renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(r0.yzw));
+  r0.z = renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(r1.xyz));
   r0.y = r0.y + -r0.z;
   r5.xyz = min(r4.xyz, r3.xyz);
   r5.xyz = -r3.www * abs(r0.yyy) + r5.xyz;

@@ -23,7 +23,8 @@ void main(
 
   if (RENODX_TONE_MAP_TYPE > 0) {
     
-    o0.rgb = processAndToneMap(o0.rgb);
+    bool decoding = true;
+    o0.rgb = processAndToneMap(o0.rgb, decoding);
   }
 
   o0.w = 1;
