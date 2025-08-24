@@ -201,3 +201,20 @@ float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
 }
 
 
+float3 srgbDecode(float3 color) {
+
+  if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f) {
+    return color;
+  }
+
+  return renodx::color::srgb::DecodeSafe(color);
+}
+
+float3 srgbEncode(float3 color) {
+
+  if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f) {
+    return color;
+  }
+
+  return renodx::color::srgb::EncodeSafe(color);
+}

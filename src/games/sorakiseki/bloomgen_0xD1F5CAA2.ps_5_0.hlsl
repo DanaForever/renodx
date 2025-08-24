@@ -1,5 +1,6 @@
-// ---- Created with 3Dmigoto v1.3.16 on Thu Aug 21 16:18:31 2025
-#include "shared.h"
+// ---- Created with 3Dmigoto v1.3.16 on Sat Aug 23 09:40:57 2025
+#include "./shared.h"
+#include "./common.hlsl"
 cbuffer cb_scene : register(b0)
 {
   float4x4 view_g : packoffset(c0);
@@ -47,21 +48,23 @@ cbuffer cb_scene : register(b0)
   float4x4 shadowMtx_g[4] : packoffset(c58);
 }
 
-cbuffer cb_godray : register(b2)
+cbuffer cb_glow : register(b2)
 {
-  float2 blurCenter_g : packoffset(c0);
-  float2 blurScale_g : packoffset(c0.z);
-  float zThreshold_g : packoffset(c1);
-  float isFlip_g : packoffset(c1.y);
-  float brightnessThreshold_g : packoffset(c1.z);
-  float centricSharpness_g : packoffset(c1.w);
-  float3 godrayColor_g : packoffset(c2);
-  float4 uvClamp_g : packoffset(c3);
+  float4 uv_clamp0_g : packoffset(c0);
+  float4 uv_clamp1_g : packoffset(c1);
+  float2 uv_clamp2_g : packoffset(c2);
+  float2 intensityLum_g : packoffset(c2.z);
+  float2 chrIntensityLum_g : packoffset(c3);
+  float atmosphereFadeBegin_g : packoffset(c3.z);
+  float atmosphereFadeRangeInv_g : packoffset(c3.w);
+  float atmosphereIntensity_g : packoffset(c4);
 }
 
 SamplerState samLinear_s : register(s0);
 Texture2D<float4> colorTexture : register(t0);
-Texture2D<float4> depthTexture : register(t1);
+Texture2D<uint4> mrtTexture0 : register(t1);
+Texture2D<uint4> mrtTexture1 : register(t2);
+Texture2D<float4> depthTexture : register(t3);
 
 
 // 3Dmigoto declarations
@@ -73,42 +76,50 @@ void main(
   float4 v1 : TEXCOORD0,
   out float4 o0 : SV_Target0)
 {
-  float4 r0,r1;
+  float4 r0,r1,r2;
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  r0.xy = blurCenter_g.xy + -v1.xy;
-  r0.x = dot(r0.xy, r0.xy);
-  r0.x = sqrt(r0.x);
-  r0.x = min(1, r0.x);
-  r0.x = 1 + -r0.x;
-  // r0.x = log2(r0.x);
-  // r0.x = centricSharpness_g * r0.x;
-  // r0.x = exp2(r0.x);
-  r0.x = renodx::math::SafePow(r0.x, centricSharpness_g);
-  r0.yz = blurCenter_g.xy + float2(-0.5,-0.5);
-  r0.y = dot(r0.yz, r0.yz);
-  r0.y = sqrt(r0.y);
-  r0.y = min(1, r0.y);
-  r0.y = 1 + -r0.y;
-  r0.x = r0.y * r0.x;
+  mrtTexture1.GetDimensions(0, fDest.x, fDest.y, fDest.z);
+  r0.xy = fDest.xy;
+  r0.zw = float2(0.25,0.25) / r0.xy;
+  r0.zw = v1.xy + r0.zw;
+  r0.xy = r0.zw * r0.xy;
+  r0.xy = (int2)r0.xy;
+  r0.zw = float2(0,0);
+  r0.x = mrtTexture1.Load(r0.xyz).y;
+  r0.x = (uint)r0.x;
+  r0.y = 0.0392156877 * r0.x;
+  r0.x = cmp(0 >= r0.x);
+  mrtTexture0.GetDimensions(0, fDest.x, fDest.y, fDest.z);
+  r0.zw = fDest.xy;
+  r1.xy = float2(0.25,0.25) / r0.zw;
+  r1.xy = v1.xy + r1.xy;
+  r0.zw = r1.xy * r0.zw;
+  r1.xy = (int2)r0.zw;
+  r1.zw = float2(0,0);
+  r0.z = mrtTexture0.Load(r1.xyz).w;
+  r0.z = (int)r0.z & 1;
+  r0.zw = r0.zz ? chrIntensityLum_g.xy : intensityLum_g.xy;
   r1.xyzw = colorTexture.SampleLevel(samLinear_s, v1.xy, 0).xyzw;
-  // r0.y = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.y = renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(r1.xyz));
-  r0.y = -brightnessThreshold_g + r0.y;
-  r0.y = max(0, r0.y);
-  r0.yzw = r1.xyz * r0.yyy;
+  r1.rgb = srgbDecode(r1.rgb);
+  r2.xyz = r1.xyz * r0.zzz;
+  r2.xyz = r0.xxx ? r2.xyz : r1.xyz;
+  r0.xyz = r2.xyz * r0.yyy;
+  r2.xyz = r2.xyz + -r0.www;
+  r0.xyz = max(r2.xyz, r0.xyz);
+  r2.x = depthTexture.SampleLevel(samLinear_s, v1.xy, 0).x;
+  r2.y = 1;
+  r0.w = dot(projInv_g._m22_m32, r2.xy);
+  r2.x = dot(projInv_g._m23_m33, r2.xy);
+  r0.w = r0.w / r2.x;
+  r0.w = -atmosphereFadeBegin_g + -r0.w;
+  r0.w = saturate(atmosphereFadeRangeInv_g * r0.w);
+  r1.xyz = r1.xyz * r0.www;
   o0.w = r1.w;
-  r0.xyz = r0.yzw * r0.xxx;
-  r1.x = depthTexture.SampleLevel(samLinear_s, v1.xy, 0).x;
-  r1.y = 1;
-  r0.w = dot(projInv_g._m22_m32, r1.xy);
-  r1.x = dot(projInv_g._m23_m33, r1.xy);
-  r0.w = r0.w / r1.x;
-  r0.w = cmp(-r0.w < zThreshold_g);
-  r0.w = r0.w ? 0 : 1;
-  r0.xyz = r0.xyz * r0.www;
-  r0.w = cmp(isFlip_g < 0);
-  o0.xyz = r0.www ? float3(0,0,0) : r0.xyz;
+  r1.xyz = atmosphereIntensity_g * r1.xyz;
+  o0.xyz = max(r1.xyz, r0.xyz);
+
+  o0.rgb = srgbEncode(o0.rgb);
   return;
 }

@@ -59,7 +59,7 @@ float3 vanillaSdrBlend(float3 base, float3 blend) {
   return 1.f - one_minus(base) * one_minus(blend);
 }
 
-float4 blendBloomLinear(SamplerState samLinear_s, float4 v1) {
+float4 blendBloomSrgb(SamplerState samLinear_s, float4 v1) {
 
   float4 r0, r1, r2, r3;
   float4 output;
@@ -105,7 +105,7 @@ void main(
     float4 v1 : TEXCOORD0,
     out float4 o0 : SV_Target0)
 {
-    float4 sdr = blendBloomLinear(samLinear_s, v1);
+    float4 sdr = blendBloomSrgb(samLinear_s, v1);
     if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f)  {
       o0 = sdr;
       return;

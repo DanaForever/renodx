@@ -22,8 +22,12 @@ namespace {
 renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xE20E1A41), // final
     CustomShaderEntry(0xC9FA40B7), // tonemap
-    CustomShaderEntry(0xCDE6FA28), // tonemap
-    CustomShaderEntry(0xD6CF040B), // tonemap
+    CustomShaderEntry(0xCDE6FA28), // bloomTAA
+    CustomShaderEntry(0xD6CF040B), // bloom blend
+    CustomShaderEntry(0x0F66FA5C), // bloom
+    CustomShaderEntry(0xD1F5CAA2), // bloom
+    CustomShaderEntry(0x1343A4D6), // bloom
+    CustomShaderEntry(0x2333272C), // bloom
     // CustomShaderEntry(0xC006C898), // final_taa
     // CustomShaderEntry(0x2179DAD2), // lut builder
     // CustomShaderEntry(0xCA80A1BE), // lut builder
@@ -84,7 +88,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Game Settings",
         .tooltip = "Controls Bloom Strength",
         .max = 100.f,
-        .parse = [](float value) { return value * 0.1f; },
+        .parse = [](float value) { return value * 0.01f; },
         .is_visible = []() { return shader_injection.bloom == 1; },
     },
     new renodx::utils::settings::Setting{
