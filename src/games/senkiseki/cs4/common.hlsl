@@ -171,7 +171,7 @@ float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_sca
   float chrominance_scale = UpgradeToneMapRatio(bloom_chrominance, chrominance);
 
   // scale y and z by chrominance scale causes artifact (exhibited in the bloomColor)
-  chrominance_scale = 1.f;
+  // chrominance_scale = 1.f;
   scale = clamp(scale, 1.0f, max_scale);
 
   color_perceptual = float3(color_perceptual.x * scale, color_perceptual.y * chrominance_scale, color_perceptual.z * chrominance_scale);
@@ -414,4 +414,29 @@ float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
 float calculateLuminanceSRGB(float3 color) {
 
   return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+
+  // if (shader_injection.bloom_processing_space == 0.f) {
+  //   return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+  // }
+  // else  {
+  //   return renodx::color::y::from::BT709(color);
+  // }
+}
+
+float3 srgbDecode(float3 color) {
+
+  if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom_processing_space == 0.f) {
+    return color;
+  }
+
+  return renodx::color::srgb::DecodeSafe(color);
+}
+
+float3 srgbEncode(float3 color) {
+
+  if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom_processing_space == 0.f) {
+    return color;
+  }
+
+  return renodx::color::srgb::EncodeSafe(color);
 }

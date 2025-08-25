@@ -100,14 +100,15 @@ float3 CompositeColor(float4 depthInput, float2 v1, bool Bloom) {
   r3.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r3.xy, 0).xyz;
   r3.xyz = processColorBuffer(r3.xyz);
   r4.xyz = ToneFactor.xxx * r3.xyz;
-  r3.xyz = -r3.xyz * ToneFactor.xxx + float3(1, 1, 1);
+  r3.xyz = max(0.f, -r3.xyz * ToneFactor.xxx + float3(1, 1, 1));
   r0.yzw = r0.yzw * r3.xyz + r4.xyz;
-  r3.xyz = float3(1, 1, 1) + -r0.yzw;
+  r3.xyz = max(0.f, float3(1, 1, 1) + -r0.yzw);
   r2.xyz = r2.xyz * r3.xyz + r0.yzw;
   r0.xyz = r1.xyz * r0.xxx + r0.yzw;
-  r1.xyz = r2.xyz + -r0.xyz;
+  r1.xyz = max(0.f, r2.xyz + -r0.xyz);
   float3 output = r1.xyz * float3(0.5, 0.5, 0.5) + r0.xyz;
 
+  output = max(0.f, output);
   output = decodeColor(output);
 
   return output;

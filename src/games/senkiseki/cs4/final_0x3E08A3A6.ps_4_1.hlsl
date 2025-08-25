@@ -86,7 +86,7 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
   // r1.xyz is the difference between a blurred (focus) and sharp (color) buffer.
   r1.xyz = focusInput;
   r2.xyz = colorInput;
-  r1.xyz = -r2.xyz + r1.xyz;
+  r1.xyz = max(0.f, -r2.xyz + r1.xyz);
 
   // If out of focus, more blurred (focus buffer)
   // If in focus, just sharp (color buffer)
@@ -96,19 +96,21 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
   r1.xyz = ToneFactor.xxx * r0.yzw;
 
   // Computes 1 - (color * scale) for later masking/blending.
-  r0.yzw = -r0.yzw * ToneFactor.xxx + float3(1, 1, 1);
+  r0.yzw = max(0.f, -r0.yzw * ToneFactor.xxx + float3(1, 1, 1));
 
   // Additional Texture Sampling (for Filters/Bloom)
   r2.xy = v1.xy * float2(1, -1) + float2(0, 1);
 
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  r3.xyz = postProcessBloomBuffer(r3.xyz);
+  r3.xyz = processColorBuffer(r3.xyz);
   r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  r2.rgb = processColorBuffer(r2.xyz);
 
   r2.xyzw = FilterColor.xyzw * r2.xyzw;
   r2.xyz = r2.xyz * r2.www;
 
   r3.xyz = GlowIntensity.w * r3.xyz;
+  r3.xyz = max(0.f, r3.xyz);
   if (!Bloom) {
     r3.xyz = 0.f;
   }
@@ -118,13 +120,15 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
   r0.yzw = r3.xyz * r0.yzw + r1.xyz;
 
   // Compositing colors
-  r1.xyz = float3(1, 1, 1) + -r0.yzw;
+  r1.xyz = max(0.f, float3(1, 1, 1) + -r0.yzw);
   r3.xyz = r2.xyz * r0.xxx;
   r2.xyz = r2.xyz * r0.xxx + r0.yzw;
   r0.xyz = r3.xyz  * r1.xyz + r0.yzw;
-  r0.xyz = r0.xyz + -r2.xyz;
-  float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
+  // r0.xyz = max(0.f, r0.xyz + -r2.xyz);
+  // float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
+  float3 output = 0.5 * (r0.xyz + r2.xyz);
 
+  // output = max(0.f, output);
   output = decodeColor(output);
 
   return output;

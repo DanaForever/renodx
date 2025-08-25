@@ -84,7 +84,7 @@ float3 CompositeColor(float4 r0, float4 r1, bool Bloom) {
     r0.xyz = 0.f;
   }
   r2.xyz = ToneFactor.xxx * r1.xyz;
-  r1.xyz = -r1.xyz * ToneFactor.xxx + float3(1, 1, 1);
+  r1.xyz = max(0.f, -r1.xyz * ToneFactor.xxx + float3(1, 1, 1));
   float3 output = r0.xyz * r1.xyz + r2.xyz;
 
   output = decodeColor(output);

@@ -92,7 +92,7 @@ float3 CompositeColor(float3 colorBuffer, float3 toneColor, float2 v1, bool Bloo
   }
 
   r0.xyz = r3.xyz * r0.xyz + r1.xyz;
-  r1.xyz = float3(1, 1, 1) + -r0.xyz;
+  r1.xyz = max(0.f, float3(1, 1, 1) + -r0.xyz);
   r3.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
   r2.xyzw = FadingTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
   r3.xyzw = FilterColor.xyzw * r3.xyzw;
@@ -101,11 +101,12 @@ float3 CompositeColor(float3 colorBuffer, float3 toneColor, float2 v1, bool Bloo
   r0.xyz = r4.xyz * r1.xyz + r0.xyz;
   r0.xyz = r0.xyz + -r3.xyz;
   r0.xyz = r0.xyz * float3(0.5, 0.5, 0.5) + r3.xyz;
-  r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
+  // r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
+  r0.w = calculateLuminanceSRGB(r0.rgb);
   r1.xyz = r0.www * _MonotoneMul.xyz + _MonotoneAdd.xyz;
-  r1.xyz = r1.xyz + -r0.xyz;
+  r1.xyz = max(0.f, r1.xyz + -r0.xyz);
   r0.xyz = _MonotoneMul.www * r1.xyz + r0.xyz;
-  r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
+  r1.xyz = max(0.f, r2.xyz * FadingColor.xyz + -r0.xyz);
   r0.w = FadingColor.w * r2.w;
   float3 output = r0.www * r1.xyz + r0.xyz;
   output = decodeColor(output);

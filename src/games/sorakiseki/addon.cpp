@@ -28,6 +28,9 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xD1F5CAA2), // bloom
     CustomShaderEntry(0x1343A4D6), // bloom
     CustomShaderEntry(0x2333272C), // bloom
+    CustomShaderEntry(0xEA80BE9C), // ao
+    CustomShaderEntry(0xAD69DC2B), // sky
+    CustomShaderEntry(0x2026566A), // smoke
     // CustomShaderEntry(0xC006C898), // final_taa
     // CustomShaderEntry(0x2179DAD2), // lut builder
     // CustomShaderEntry(0xCA80A1BE), // lut builder

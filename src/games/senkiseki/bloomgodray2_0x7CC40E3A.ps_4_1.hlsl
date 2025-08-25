@@ -98,16 +98,16 @@ void main(
   DepthBuffer.GetDimensions(uiDest.x, uiDest.y, uiDest.z);
   r0.xy = uiDest.xy;
   r0.xy = (uint2)r0.xy;
-  r0.zw = v4.xy * float2(1,-1) + float2(0,1);
+  r0.zw = max(0.f, v4.xy * float2(1,-1) + float2(0,1));
   r0.xy = r0.zw * r0.xy + float2(0.5,0.5);
-  r1.xyz = FocusBuffer.SampleLevel(PointClampSamplerState_s, r0.zw, 0).xyz;
+  r1.xyz = FocusBuffer.SampleLevel(PointClampSamplerState_s, r0.xy, 0).xyz;
   r0.xy = (int2)r0.xy;
   r0.zw = float2(0,0);
   r0.x = DepthBuffer.Load(r0.xy, 0).x;
-  // r0.y = r1.z * 0.00390625 + r1.y;
-  // r0.y = r0.y * 0.00390625 + r1.x;
-  // r0.x = cmp(r0.x < r0.y);  
-  r0.x = cmp(r0.x < r1.x);  
+  r0.y = r1.z * 0.00390625 + r1.y;
+  r0.y = r0.y * 0.00390625 + r1.x;
+  r0.x = cmp(r0.x < r0.y);  
+  // r0.x = cmp(r0.x < r1.x);  
   r0.yz = w1.xy * float2(1,-1) + float2(0,1);
   r0.y = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r0.yz, 0).x;
   r0.z = FilterTexture.SampleLevel(LinearClampSamplerState_s, w4.xy, 0).x;
@@ -118,25 +118,33 @@ void main(
   float3 unbloom = r0.yzw;
 
   r1.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.xy), 0).xyzw);
+  r1.rgb = srgbDecode(r1.rgb);
   r1 = processBloomBuffer(r1);
   r1.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v1.xy), 0).xyzw);
+  r2.rgb = srgbDecode(r2.rgb);
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v2.zw), 0).xyzw);
+  r2.rgb = srgbDecode(r2.rgb);
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.200000006, 0.200000006, 0.200000006, 0.200000006) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v3.xy), 0).xyzw);
+  r2.rgb = srgbDecode(r2.rgb);
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, (v3.zw), 0).xyzw);
+  r2.rgb = srgbDecode(r2.rgb);
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r1.xyzw;
 
-  r1.xyz = lerp(r1.xyz, 1.0, r0.yzw);
+  r2.xyz = max(0.f, float3(1, 1, 1) + - r0.yzw);
+  r1.xyz = r1.xyz * r2.xyz + r0.yzw;
+
+  // r1.xyz = lerp(r1.xyz, 1.0, r0.yzw);
 
   o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
-  o0 = max(o0, 0);
-  o0.w = saturate(o0.w);
+  o0.rgb = max(0.f, o0.rgb);
+  o0.rgb = srgbEncode(o0.rgb);
   return;
 }

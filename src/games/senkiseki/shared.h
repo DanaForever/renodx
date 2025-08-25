@@ -84,6 +84,7 @@ struct ShaderInjectData {
 
   float bloom;
   float bloom_approx_method;
+  float bloom_processing_space;
   float fxaa;
 
   float dice_tone_map_type;

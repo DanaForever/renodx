@@ -90,10 +90,10 @@ float3 CompositeColor(float4 focusInput, float3 colorInput, float2 v1, bool Bloo
   // r1.xyz is the difference between a blurred (focus) and sharp (color) buffer.
   r1.xyz = colorInput;
 
-  r0.yzw = -r1.xyz + r0.yzw;
+  r0.yzw = max(0.f, -r1.xyz + r0.yzw);
   r0.xyz = r0.xxx * r0.yzw + r1.xyz;
   r1.xyz = ToneFactor.xxx * r0.xyz;
-  r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1, 1, 1);
+  r0.xyz = max(0.f, -r0.xyz * ToneFactor.xxx + float3(1, 1, 1));
   r2.xy = v1.xy * float2(1, -1) + float2(0, 1);
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
   r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
@@ -103,13 +103,13 @@ float3 CompositeColor(float4 focusInput, float3 colorInput, float2 v1, bool Bloo
     r3.xyz = 0.f;
   }
   r0.xyz = r3.xyz * r0.xyz + r1.xyz;
-  r1.xyz = float3(1, 1, 1) + -r0.xyz;
+  r1.xyz = max(0.f, float3(1, 1, 1) + -r0.xyz);
   r3.xyz = r2.xyz * r2.www;
   r2.xyz = r2.xyz * r2.www + r0.xyz;
   r0.xyz = r3.xyz * r1.xyz + r0.xyz;
   r0.xyz = r0.xyz + -r2.xyz;
   float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
-
+  output = max(0.f, output);
   output = decodeColor(output);
 
   return output;

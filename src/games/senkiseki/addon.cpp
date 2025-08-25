@@ -298,6 +298,18 @@ renodx::utils::settings::Settings settings = {
         // .is_visible = []() { return shader_injection.bloom == 0.f && current_settings_mode >= 1; },
         .is_visible = []() { return false; },
     },
+    new renodx::utils::settings::Setting{
+        .key = "SettingsBloom",
+        .binding = &shader_injection.bloom_processing_space,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Bloom Processing Space",
+        .labels = {"sRGB", "Linear"},
+        .is_global = true,
+        // .is_visible = []() { return shader_injection.bloom == 0.f && current_settings_mode >= 1; },
+        // .is_visible = []() { return false; },
+    },
     // new renodx::utils::settings::Setting{
     //     .key = "SettingsBloomRescale",
     //     .binding = &shader_injection.bloom_rescale,

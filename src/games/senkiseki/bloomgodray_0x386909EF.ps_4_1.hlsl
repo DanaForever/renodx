@@ -119,25 +119,32 @@ void main(
   r0.yzw = GodrayColor.xyz * r0.yyy;
 
   r1.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw);
+  r1.rgb = srgbDecode(r1.rgb);
   r1 = processBloomBuffer(r1);
   r1.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw);
+  r2.rgb = srgbDecode(r2.rgb);
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw);
+  r2.rgb = srgbDecode(r2.rgb);
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw);
+  r2.rgb = srgbDecode(r2.rgb);
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r1.xyzw;
   r2.xyzw = (ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw);
+  r2.rgb = srgbDecode(r2.rgb);
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r1.xyzw;
-  // r2.xyz = float3(1, 1, 1) + -r1.xyz;
-  // r1.xyz = r0.yzw * r2.xyz + r1.xyz;
-  r1.xyz = lerp(r0.yzw, 1.0f, r1.xyz);
+  r2.xyz = max(0.f, float3(1, 1, 1) + -r1.xyz);
+  r1.xyz = r0.yzw * r2.xyz + r1.xyz;
+  // r1.xyz = lerp(r0.yzw, 1.0f, r1.xyz);
     
   o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
+
+  o0.rgb = srgbEncode(o0.rgb);
 
   return;
 }
