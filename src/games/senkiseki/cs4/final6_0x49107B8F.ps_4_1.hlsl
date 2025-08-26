@@ -107,9 +107,10 @@ float3 CompositeColor(float4 depthInput, float3 colorInput, float3 focusInput, f
   r3.xyz = r2.xyz * r0.xxx;
   r2.xyz = r2.xyz * r0.xxx + r0.yzw;
   r0.xyz = r3.xyz * r1.xyz + r0.yzw;
-  r0.xyz = max(0.f, r0.xyz + -r2.xyz);
-  float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
+  // r0.xyz = max(0.f, r0.xyz + -r2.xyz);
+  // float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
 
+  float3 output = 0.5 * (r0.xyz + r2.xyz);
   output = decodeColor(output);
 
   return output;

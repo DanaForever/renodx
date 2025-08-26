@@ -102,14 +102,16 @@ float3 CompositeColor(float4 focusInput, float3 colorInput, float2 v1, bool Bloo
   if (!Bloom) {
     r3.xyz = 0.f;
   }
-  r0.xyz = r3.xyz * r0.xyz + r1.xyz;
-  r1.xyz = max(0.f, float3(1, 1, 1) + -r0.xyz);
+  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  // r1.xyz = max(0.f, float3(1, 1, 1) + -r0.xyz);
+  r1.xyz = max(0.f, (1 - r1.xyz)) * max(0.f, (1 - r3.xyz));
   r3.xyz = r2.xyz * r2.www;
   r2.xyz = r2.xyz * r2.www + r0.xyz;
   r0.xyz = r3.xyz * r1.xyz + r0.xyz;
-  r0.xyz = r0.xyz + -r2.xyz;
-  float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
-  output = max(0.f, output);
+  // r0.xyz = r0.xyz + -r2.xyz;
+  // float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
+  float3 output = 0.5 * (r0.xyz + r2.xyz);
+
   output = decodeColor(output);
 
   return output;

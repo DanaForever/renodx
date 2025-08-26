@@ -250,6 +250,12 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xFF76CAFD), // valimar2
     CustomShaderEntry(0x1355F463), // house light
     CustomShaderEntry(0x63462E18), // smoke
+    CustomShaderEntry(0x0EA0D071), // sky
+    CustomShaderEntry(0x728F5ED1), // sky
+    CustomShaderEntry(0xE645FEED), // sky
+    CustomShaderEntry(0xD589DF82), // sky
+    CustomShaderEntry(0x523978D3), // lantern 5
+    CustomShaderEntry(0xCDCBC858), // window light
     
     // CustomSwapchainShader(0x00000000),
     // BypassShaderEntry(0x00000000)

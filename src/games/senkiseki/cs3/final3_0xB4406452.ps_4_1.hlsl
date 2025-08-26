@@ -91,8 +91,9 @@ float3 CompositeColor(float4 depthColor, float4 toneColor, float4 glareColor, fl
   r3.xyz = r2.xyz * r0.xxx;
   r2.xyz = r2.xyz * r0.xxx + r0.yzw;
   r0.xyz = r3.xyz * r1.xyz + r0.yzw;
-  r0.xyz = r0.xyz + -r2.xyz;
-  float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
+  // r0.xyz = r0.xyz + -r2.xyz;
+  // float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
+  float3 output = 0.5 * (r0.xyz + r2.xyz);
 
   output = decodeColor(output);
 

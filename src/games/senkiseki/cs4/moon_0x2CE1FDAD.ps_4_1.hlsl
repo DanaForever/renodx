@@ -194,7 +194,7 @@ void main(
   r0.w = saturate(dot(r1.xyz, r2.xyz));
   // r0.w = (dot(r1.xyz, r2.xyz));
   r2.xyz = max(float3(1,1,1), scene.GlobalAmbientColor.xyz);
-  r2.xyz = min(float3(1.5,1.5,1.5), r2.xyz);
+  // r2.xyz = min(float3(1.5,1.5,1.5), r2.xyz);
   r2.xyz = v1.xyz * r2.xyz;
   r0.xyz = r2.xyz * r0.xyz;
   r0.w = 1 + -r0.w;
@@ -209,8 +209,9 @@ void main(
   // r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
   r0.w = calculateLuminanceSRGB(r0.xyz);
   r2.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
-  r2.xyz = r2.xyz + -r0.xyz;
-  o0.xyz = GameMaterialMonotone * r2.xyz + r0.xyz;
+  // r2.xyz = r2.xyz + -r0.xyz;
+  // o0.xyz = GameMaterialMonotone * r2.xyz + r0.xyz;
+  o0.rgb = lerp(r0.rgb, r2.rgb, GameMaterialMonotone);
   o0.w = min(1, GlareIntensity);
   o1.xyz = r1.xyz * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);
   o1.w = 0.466666698 + MaskEps;
@@ -223,6 +224,5 @@ void main(
   r1.z = r0.x * 256 + -r1.y;
   o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
   o2.w = MaskEps;
-
   return;
 }

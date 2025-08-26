@@ -99,8 +99,9 @@ float3 CompositeColor(float3 colorBuffer, float3 toneColor, float2 v1, bool Bloo
   r4.xyz = r3.xyz * r3.www;
   r3.xyz = r3.xyz * r3.www + r0.xyz;
   r0.xyz = r4.xyz * r1.xyz + r0.xyz;
-  r0.xyz = max(0.f, r0.xyz + -r3.xyz);
-  r0.xyz = r0.xyz * float3(0.5, 0.5, 0.5) + r3.xyz;
+  // r0.xyz = max(0.f, r0.xyz + -r3.xyz);
+  // r0.xyz = r0.xyz * float3(0.5, 0.5, 0.5) + r3.xyz;
+  r0.xyz = 0.5 * (r0.xyz + r3.xyz);
   r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
   r0.w = FadingColor.w * r2.w;
   float3 output = r0.www * r1.xyz + r0.xyz;

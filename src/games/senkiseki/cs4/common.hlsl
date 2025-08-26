@@ -152,7 +152,7 @@ float max_scale_icp(
   return s_lo;  // Best found scale that is safe
 }
 
-float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_scale = 4.f) {
+float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_scale = 9999.f) {
 
 
   float3 originalColor = color;
@@ -380,7 +380,13 @@ float3 processAndToneMap(float3 color) {
   return color;
 }
 
-float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
+float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 9999.f) {
+
+  float3 noBloom = color;
+  // reduce the color loss of Bloom
+  // bloomColor = renodx::color::correct::Hue(bloomColor, max(color, 0.f), 
+  //   RENODX_TONE_MAP_HUE_CORRECTION, RENODX_TONE_MAP_HUE_PROCESSOR);
+
   if (BROKEN_BLOOM == 2.f) {
     return color;
   }
@@ -390,6 +396,9 @@ float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
 
   float3 unscaledColor = color;
   color = scaleByPerceptualLuminance(unscaledColor, bloomColor, max_scale);
+
+  color = renodx::color::bt709::clamp::BT2020(color);
+
   
   return color;
 }
@@ -439,4 +448,14 @@ float3 srgbEncode(float3 color) {
   }
 
   return renodx::color::srgb::EncodeSafe(color);
+}
+
+float3 PositiveMul(float3 x, float3 y)  {
+
+  return max(0.f, x) * max(0.f, y);
+}
+
+float4 PositiveMul(float4 x, float4 y)  {
+
+  return max(0.f, x) * max(0.f, y);
 }

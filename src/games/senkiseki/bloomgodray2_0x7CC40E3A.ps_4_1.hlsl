@@ -97,20 +97,26 @@ void main(
 
   DepthBuffer.GetDimensions(uiDest.x, uiDest.y, uiDest.z);
   r0.xy = uiDest.xy;
-  r0.xy = (uint2)r0.xy;
-  r0.zw = max(0.f, v4.xy * float2(1,-1) + float2(0,1));
-  r0.xy = r0.zw * r0.xy + float2(0.5,0.5);
-  r1.xyz = FocusBuffer.SampleLevel(PointClampSamplerState_s, r0.xy, 0).xyz;
-  r0.xy = (int2)r0.xy;
-  r0.zw = float2(0,0);
-  r0.x = DepthBuffer.Load(r0.xy, 0).x;
-  r0.y = r1.z * 0.00390625 + r1.y;
-  r0.y = r0.y * 0.00390625 + r1.x;
-  r0.x = cmp(r0.x < r0.y);  
+  // r0.xy = (uint2)r0.xy;
+  // r0.zw = v4.xy * float2(1,-1) + float2(0,1);
+  // r0.xy = r0.zw * r0.xy + float2(0.5,0.5);
+  float2 uv = v4.xy * float2(1,-1) + float2(0,1);      // normalized screen uv
+  // r1.xyz = FocusBuffer.SampleLevel(PointClampSamplerState_s, uv, 0).xyz;
+  float3 focusRGB = FocusBuffer.SampleLevel(PointClampSamplerState_s, uv, 0).xyz;
+  // r0.xy = (int2)r0.xy;
+  // r0.zw = float2(0,0);
+
+  int2 px = int2(uv * uiDest.xy);                      // no +0.5, no cast before scaling
+  // r0.x = DepthBuffer.Load(r0.xy, 0).x;
+  float  depth = DepthBuffer.Load(px, 0).x;
+  // r0.y = r1.z * 0.00390625 + r1.y;
+  // r0.y = r0.y * 0.00390625 + r1.x;
+  // r0.x = cmp(r0.x < r0.y);  
   // r0.x = cmp(r0.x < r1.x);  
+  r0.x =  (depth < focusRGB.x);
   r0.yz = w1.xy * float2(1,-1) + float2(0,1);
   r0.y = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r0.yz, 0).x;
-  r0.z = FilterTexture.SampleLevel(LinearClampSamplerState_s, w4.xy, 0).x;
+  r0.z = FilterTexture.SampleLevel(LinearClampSamplerState_s, r0.yz, 0).x; 
   r0.y = r0.y * r0.z;
   r0.y = GodrayColor.w * r0.y;
   r0.yzw = GodrayColor.xyz * r0.yyy;
@@ -143,6 +149,7 @@ void main(
 
   // r1.xyz = lerp(r1.xyz, 1.0, r0.yzw);
 
+  // o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
   o0.xyzw = r0.xxxx ? float4(0, 0, 0, 0) : r1.xyzw;
   o0.rgb = max(0.f, o0.rgb);
   o0.rgb = srgbEncode(o0.rgb);
