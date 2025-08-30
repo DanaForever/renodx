@@ -89,9 +89,10 @@ float3 CompositeColor(float4 depthInput, float2 v1, bool Bloom) {
 
   r0.yzw = GlowIntensity.www * r0.yzw;
 
-  if (!Bloom) {
-    r0.yzw = 0.f;
-  }
+  float3 bloom = r0.yzw;
+  // if (!Bloom) {
+  //   r0.yzw = 0.f;
+  // }
 
   r1.xyzw = FilterColor.xyzw * r1.xyzw;
   r1.xyz = r1.xyz * r1.www;
@@ -100,8 +101,9 @@ float3 CompositeColor(float4 depthInput, float2 v1, bool Bloom) {
   r3.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r3.xy, 0).xyz;
   r3.xyz = processColorBuffer(r3.xyz);
   r4.xyz = ToneFactor.xxx * r3.xyz;
-  r3.xyz = max(0.f, -r3.xyz * ToneFactor.xxx + float3(1, 1, 1));
-  r0.yzw = r0.yzw * r3.xyz + r4.xyz;
+  // r3.xyz = max(0.f, -r3.xyz * ToneFactor.xxx + float3(1, 1, 1));
+  // r0.yzw = r0.yzw * r3.xyz + r4.xyz;
+  r0.yzw = r4.xyz;
   r3.xyz = max(0.f, float3(1, 1, 1) + -r0.yzw);
   r2.xyz = r2.xyz * r3.xyz + r0.yzw;
   r0.xyz = r1.xyz * r0.xxx + r0.yzw;
@@ -138,11 +140,11 @@ void main(
   r0.x = ToneFactor.y + r0.x;
   r0.x = min(1, r0.x);
 
-  float3 bloomOutput = CompositeColor(r0.xyzw, v1, true);
-  float3 noBloomOutput = CompositeColor(r0.xyzw, v1, false);
+  o0.rgb = CompositeColor(r0.xyzw, v1, true);
+  // float3 noBloomOutput = CompositeColor(r0.xyzw, v1, false);
 
-  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  float3 scaledColor = o0.rgb;
+  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  // float3 scaledColor = o0.rgb;
   o0.w = 1;
 
   o0.rgb = processAndToneMap(o0.rgb);

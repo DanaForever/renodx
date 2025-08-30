@@ -87,11 +87,12 @@ float3 CompositeColor(float3 colorBuffer, float3 toneColor, float2 v1, bool Bloo
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
   r3.xyz = GlowIntensity.www * r3.xyz;
 
-  if (!Bloom) {
-    r3.xyz = 0.f;
-  }
+  // if (!Bloom) {
+  //   r3.xyz = 0.f;
+  // }
+  float3 bloom = r3.rgb;
 
-  r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  r0.xyz =  r1.xyz;
   r1.xyz = max(0.f, float3(1, 1, 1) + -r0.xyz);
   r3.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
   r2.xyzw = FadingTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
@@ -107,6 +108,10 @@ float3 CompositeColor(float3 colorBuffer, float3 toneColor, float2 v1, bool Bloo
   float3 output = r0.www * r1.xyz + r0.xyz;
 
   output = decodeColor(output);
+
+  bloom = decodeColor(bloom);
+
+  output = hdrScreenBlend(output, bloom);
 
   return output;
 }
@@ -126,13 +131,13 @@ void main(
   r0.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
   r0.xyz = processColorBuffer(r0.xyz);
   r1.xyz = ToneFactor.xxx * r0.xyz;
-  r0.xyz = max(0.f, -r0.xyz * ToneFactor.xxx + float3(1,1,1));
+  // r0.xyz = max(0.f, -r0.xyz * ToneFactor.xxx + float3(1,1,1));
 
-  float3 bloomOutput = CompositeColor(r0.xyz, r1.xyz, v1, true);
-  float3 noBloomOutput = CompositeColor(r0.xyz, r1.xyz, v1, false);
+  o0.rgb = CompositeColor(r0.xyz, r1.xyz, v1, true);
+  // float3 noBloomOutput = CompositeColor(r0.xyz, r1.xyz, v1, false);
 
-  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  float3 scaledColor = o0.rgb;
+  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  // float3 scaledColor = o0.rgb;
   o0.w = 1;
 
   // ToneMapPass here?

@@ -164,8 +164,9 @@ void main(
   // r1.x = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
   r1.x = calculateLuminanceSRGB(r0.xyz);
   r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
-  r1.xyz = r1.xyz + -r0.xyz;
-  o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
+  // r1.xyz = r1.xyz + -r0.xyz;
+  // o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
+  o0.rgb = lerp(r0.xyz, r1.rgb, GameMaterialMonotone);
   o0.w = r0.w;
   return;
 }

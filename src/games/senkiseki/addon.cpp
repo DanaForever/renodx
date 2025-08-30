@@ -143,6 +143,7 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x03B8A7E5), // artifact
     CustomShaderEntry(0x0B878318), // artifact
     CustomShaderEntry(0x5B6BFD59), // artifact
+    CustomShaderEntry(0x6F6DE38C), // artifact
     
     
 };
@@ -271,6 +272,7 @@ ShaderInjectData shader_injection;
 
 float current_settings_mode = 0;
 
+
 renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "SettingsMode",
@@ -286,14 +288,39 @@ renodx::utils::settings::Settings settings = {
         .key = "SettingsBloom",
         .binding = &shader_injection.bloom,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
+        .default_value = 1.f,
         .can_reset = false,
         .label = "Game Bloom",
         .labels = {"Enabled (Approximated)", "Enabled", "Disabled"},
+        
+        .is_global = true,
+        .is_visible = []() { return false; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "SettingsSafeClamp",
+        .binding = &shader_injection.safe_clamp,
+        .default_value = 200.f,
+        .label = "Safe Clamp",
+        .tooltip = "Safe Clamp values for base rendering. Lower is safer but can clamp HDR values.",
+        .min = 100.f,
+        .max = 500.f,
+        .parse = [](float value) { return value * 0.01f; },
+        // .is_visible = []() { return false; },
         .is_global = true,
     },
     new renodx::utils::settings::Setting{
-        .key = "SettingsBloom",
+        .key = "SettingsBloomStrength",
+        .binding = &shader_injection.bloom_strength,
+        .default_value = 100.f,
+        .label = "Bloom Strength",
+        .tooltip = "Bloom Strength.",
+        .min = 100.f,
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return false; }
+    },
+    new renodx::utils::settings::Setting{
+        .key = "SettingsBloomMethod",
         .binding = &shader_injection.bloom_approx_method,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
         .default_value = 0.f,
@@ -305,14 +332,16 @@ renodx::utils::settings::Settings settings = {
         .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
-        .key = "SettingsBloom",
+        .key = "SettingsBloomSpace",
         .binding = &shader_injection.bloom_processing_space,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
         .default_value = 0.f,
         .can_reset = false,
         .label = "Bloom Processing Space",
         .labels = {"sRGB", "Linear"},
+        // .is_visible = []() { return false; },
         .is_global = true,
+        .is_visible = []() { return false; },
         // .is_visible = []() { return shader_injection.bloom == 0.f && current_settings_mode >= 1; },
         // .is_visible = []() { return false; },
     },

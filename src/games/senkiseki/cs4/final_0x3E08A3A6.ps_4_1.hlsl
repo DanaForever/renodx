@@ -112,7 +112,7 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
   r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
 
-  r2.xyzw = PositiveMul(FilterColor.xyzw, r2.xyzw);
+  r2.xyzw = FilterColor.xyzw * r2.xyzw;
   r2.xyz = r2.xyz * r2.www;
 
   r3.xyz = GlowIntensity.w * r3.xyz;
@@ -120,15 +120,11 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
     r3.xyz = 0.f;
   }
 
+  float3 bloom = r3.rgb;
+
   // Multiply “main color” by Bloom
   // If glare is strong, this can significantly brighten or “glow up” highlights.
-  r0.yzw = PositiveMul(r3.xyz, r0.yzw) + r1.xyz;
-
-  // r3.xyz * (1 - r1.xyz) + r1.xyz = (1 - r3.xyz) * r1.xyz + r3.xyz;
-
-  // (1 - r3.xyz) - (1 - r3.xyz) * r1.xyz
-
-  // (1 - r1.xyz) * (1 - r3.xyz)
+  r0.yzw = r1.xyz;
 
   // Compositing colors
   // r1.xyz = max(0.f, float3(1, 1, 1) + -r0.yzw);
@@ -136,13 +132,17 @@ float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, f
   r1.xyz = max(0.f, (1 - r1.xyz)) * max(0.f, (1 - r3.xyz));
   r3.xyz = r2.xyz * r0.xxx;
   r2.xyz = r2.xyz * r0.xxx + r0.yzw;
-  r0.xyz = PositiveMul(r3.xyz, r1.xyz) + r0.yzw;
+  r0.xyz = r3.xyz * r1.xyz + r0.yzw;
   // r0.xyz = max(0.f, r0.xyz + -r2.xyz);
   // float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
   float3 output = 0.5 * (r0.xyz + r2.xyz);
 
   // output = max(0.f, output);
   output = decodeColor(output);
+
+  bloom = decodeColor(bloom);
+
+  output = hdrScreenBlend(output, bloom);
 
   return output;
 }
@@ -184,11 +184,11 @@ void main(
   r2.xyz = processColorBuffer(r2.xyz);
 
   float3 bloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, true);
-  float3 noBloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, false);
+  // float3 noBloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, false);
 
-  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  float3 scaledColor = o0.rgb;
-  // o0.rgb
+  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  // float3 scaledColor = o0.rgb;
+  o0.rgb = bloomOutput;
 
   o0.w = 1;
   o0.rgb = processAndToneMap(o0.rgb);

@@ -1,3 +1,4 @@
+
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 17:09:30 2025
 #include "../cs4/common.hlsl"
 #include "../shared.h"
@@ -74,14 +75,20 @@ float3 CompositeColor(float4 color, float4 glareColor, bool Bloom) {
   r1 = color;
 
   r0.xyz = GlowIntensity.www * r0.xyz;
-  if (!Bloom) {
-    r0.xyz = 0.f;
-  }
+  // if (!Bloom) {
+  //   r0.xyz = 0.f;
+  // }
+  float3 bloom = r0.rgb;
+
   r2.xyz = ToneFactor.xxx * r1.xyz;
-  r1.xyz = -r1.xyz * ToneFactor.xxx + float3(1, 1, 1);
-  float3 output = r0.xyz * r1.xyz + r2.xyz;
+  // r1.xyz = -r1.xyz * ToneFactor.xxx + float3(1, 1, 1);
+  float3 output = r2.xyz;
 
   output = decodeColor(output);
+  bloom = decodeColor(bloom);
+
+  output = hdrScreenBlend(output, bloom);
+  
   return output;
 }
 
@@ -106,11 +113,11 @@ void main(
   r0.xy = v1.xy * float2(1,-1) + float2(0,1);
   r0.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
 
-  float3 bloomOutput = CompositeColor(r1, r0, true);
-  float3 noBloomOutput = CompositeColor(r1, r0, false);
+  o0.rgb = CompositeColor(r1, r0, true);
+  // float3 noBloomOutput = CompositeColor(r1, r0, false);
 
-  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  float3 scaledColor = o0.rgb;
+  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  // float3 scaledColor = o0.rgb;
   o0.rgb = processAndToneMap(o0.rgb);
   o0.w = 1;
 

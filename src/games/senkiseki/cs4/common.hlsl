@@ -207,6 +207,16 @@ float3 decodeColor(float3 color, bool srgb = true) {
 
 }
 
+
+float3 encodeColor(float3 color, bool srgb = true) {
+  if (srgb) {
+    return renodx::color::srgb::EncodeSafe(color);
+  } else {
+    return renodx::color::gamma::EncodeSafe(color, 2.2f);
+  }
+
+}
+
 float3 SDRTonemap(float3 color) {
   float tone_map_hue_correction_method = RENODX_TONE_MAP_HUE_CORRECTION_METHOD;
   float3 sdr_color;
@@ -253,8 +263,8 @@ float3 processBloomBuffer(float3 color) {
 }
 
 float4 processBloomBuffer(float4 color) {
-  color.rgb = processColorBuffer(color.rgb);
-  color.w = saturate(color.w);
+  // color.rgb = processColorBuffer(color.rgb);
+  color.w = saturate(color.w);  
 
   return color;
 }
@@ -432,6 +442,29 @@ float calculateLuminanceSRGB(float3 color) {
   // }
 }
 
+
+float calculateLuminance(float3 color) {
+
+  return renodx::color::y::from::BT709(color);
+
+  // if (shader_injection.bloom_processing_space == 0.f) {
+  //   return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+  // }
+  // else  {
+  //   return renodx::color::y::from::BT709(color);
+  // }
+}
+
+float safePow(float x, float y)  {
+
+  return renodx::math::SafePow(x, y);
+}
+
+float3 safePow(float3 x, float y)  {
+
+  return renodx::math::SafePow(x, y);
+}
+
 float3 srgbDecode(float3 color) {
 
   if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom_processing_space == 0.f) {
@@ -450,12 +483,14 @@ float3 srgbEncode(float3 color) {
   return renodx::color::srgb::EncodeSafe(color);
 }
 
-float3 PositiveMul(float3 x, float3 y)  {
 
-  return max(0.f, x) * max(0.f, y);
-}
+float3 hdrScreenBlend(float3 base, float3 blend, float strength = 1.0f) {
 
-float4 PositiveMul(float4 x, float4 y)  {
+  blend *= strength; 
 
-  return max(0.f, x) * max(0.f, y);
+  float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
+
+  float3 output = base + addition;
+  return output;
+  
 }

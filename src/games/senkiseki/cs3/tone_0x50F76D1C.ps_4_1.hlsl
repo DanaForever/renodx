@@ -1,6 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 16:53:09 2025
+// ---- Created with 3Dmigoto v1.3.16 on Tue Aug 26 19:05:35 2025
 #include "../cs4/common.hlsl"
-#include "../shared.h"
 cbuffer _Globals : register(b0)
 {
   uint4 DuranteSettings : packoffset(c0);
@@ -64,35 +63,8 @@ cbuffer _Globals : register(b0)
   float GlobalTexcoordFactor : packoffset(c63);
 }
 
-SamplerState LinearClampSamplerState_s : register(s0);
+SamplerState PointClampSamplerState_s : register(s0);
 Texture2D<float4> ColorBuffer : register(t0);
-Texture2D<float4> GlareBuffer : register(t1);
-Texture2D<float4> FilterTexture : register(t2);
-
-float3 CompositeColor(float4 color, float4 toneColor, float4 glareColor, float4 filterColor, bool Bloom) {
-  float4 r0, r1, r2, r3;
-  r0 = color;
-  r1 = toneColor;
-  r2 = filterColor;
-  r3 = glareColor;
-
-  r3.xyz = GlowIntensity.www * r3.xyz;
-  if (!Bloom) {
-    r3.xyz = 0.f;
-  }
-  r0.xyz = r3.xyz * r0.xyz + r1.xyz;
-  r1.xyz = float3(1, 1, 1) + -r0.xyz;
-  r3.xyz = r2.xyz * r2.www;
-  r2.xyz = r2.xyz * r2.www + r0.xyz;
-  r0.xyz = r3.xyz * r1.xyz + r0.xyz;
-  // r0.xyz = r0.xyz + -r2.xyz;
-  // float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
-  float3 output = 0.5 * (r0.xyz + r2.xyz);
-
-  output = decodeColor(output);
-
-  return output;
-}
 
 
 // 3Dmigoto declarations
@@ -102,40 +74,21 @@ float3 CompositeColor(float4 color, float4 toneColor, float4 glareColor, float4 
 void main(
   float4 v0 : SV_POSITION0,
   float2 v1 : TEXCOORD0,
-  float2 w1 : TEXCOORD1,
   out float4 o0 : SV_TARGET0)
 {
-  float4 r0,r1,r2,r3;
+  float4 r0;
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  r0.xy = v1.xy * UvScaleBias.xy + UvScaleBias.zw;
-  r0.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
-  r0.xyz = processColorBuffer(r0.xyz);
-  r1.xyz = ToneFactor.xxx * r0.xyz;
-  r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
-  r2.xy = v1.xy * float2(1,-1) + float2(0,1);
-  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
-  r2.xyzw = FilterColor.xyzw * r2.xyzw;
-
-  float3 bloomOutput = CompositeColor(r0, r1, r3, r2, true);
-  float3 noBloomOutput = CompositeColor(r0, r1, r3, r2, false);
-
-  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  float3 scaledColor = o0.rgb;
-
-  // ToneMapPass here?
-  o0.rgb = processAndToneMap(o0.rgb);
-  o0.w = 1;
-  // r3.xyz = GlowIntensity.www * r3.xyz;
-  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
-  // r1.xyz = float3(1,1,1) + -r0.xyz;
-  // r3.xyz = r2.xyz * r2.www;
-  // r2.xyz = r2.xyz * r2.www + r0.xyz;
-  // r0.xyz = r3.xyz * r1.xyz + r0.xyz;
-  // r0.xyz = r0.xyz + -r2.xyz;
-  // o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
-  // o0.w = 1;
+  r0.xyzw = ColorBuffer.SampleLevel(PointClampSamplerState_s, v1.xy, 0).wxyz;
+  // r0.x = saturate(r0.x);
+  // r0.x = log2(r0.x);
+  // r0.x = ToneFactor.z * r0.x;
+  // r0.x = exp2(r0.x);
+  r0.x = renodx::math::SafePow(r0.x, ToneFactor.z);
+  o0.xyz = r0.yzw * r0.xxx;
+  r0.x = -0.5 + r0.x;
+  r0.x = max(0, r0.x);
+  o0.w = r0.x * r0.x;
   return;
 }

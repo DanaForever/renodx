@@ -93,18 +93,18 @@ float3 CompositeColor(float4 focusInput, float3 colorInput, float2 v1, bool Bloo
   r0.yzw = max(0.f, -r1.xyz + r0.yzw);
   r0.xyz = r0.xxx * r0.yzw + r1.xyz;
   r1.xyz = ToneFactor.xxx * r0.xyz;
-  r0.xyz = max(0.f, -r0.xyz * ToneFactor.xxx + float3(1, 1, 1));
+  // r0.xyz = max(0.f, -r0.xyz * ToneFactor.xxx + float3(1, 1, 1));
   r2.xy = v1.xy * float2(1, -1) + float2(0, 1);
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
   r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
   r2.xyzw = FilterColor.xyzw * r2.xyzw;
   r3.xyz = GlowIntensity.www * r3.xyz;
-  if (!Bloom) {
-    r3.xyz = 0.f;
-  }
-  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
-  // r1.xyz = max(0.f, float3(1, 1, 1) + -r0.xyz);
-  r1.xyz = max(0.f, (1 - r1.xyz)) * max(0.f, (1 - r3.xyz));
+
+
+  float3 bloom = r3.rgb;
+  r0.xyz = r1.xyz;
+  r1.xyz = max(0.f, float3(1, 1, 1) + -r0.xyz);
+  // r1.xyz = max(0.f, (1 - r1.xyz)) * max(0.f, (1 - r3.xyz));
   r3.xyz = r2.xyz * r2.www;
   r2.xyz = r2.xyz * r2.www + r0.xyz;
   r0.xyz = r3.xyz * r1.xyz + r0.xyz;
@@ -113,6 +113,11 @@ float3 CompositeColor(float4 focusInput, float3 colorInput, float2 v1, bool Bloo
   float3 output = 0.5 * (r0.xyz + r2.xyz);
 
   output = decodeColor(output);
+
+  bloom = decodeColor(bloom);
+
+  output = hdrScreenBlend(output, bloom);
+
 
   return output;
 
@@ -163,11 +168,11 @@ void main(
   // r0.xyz = r0.xyz + -r2.xyz;
   // o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
 
-  float3 bloomOutput = CompositeColor(r0.xyzw, r1.xyz, v1, true);
-  float3 noBloomOutput = CompositeColor(r0.xyzw, r1.xyz, v1, false);
+  o0.rgb = CompositeColor(r0.xyzw, r1.xyz, v1, true);
+  // float3 noBloomOutput = CompositeColor(r0.xyzw, r1.xyz, v1, false);
 
-  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  float3 scaledColor = o0.rgb;
+  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  // float3 scaledColor = o0.rgb;
   o0.w = 1;
 
   o0.rgb = processAndToneMap(o0.rgb);

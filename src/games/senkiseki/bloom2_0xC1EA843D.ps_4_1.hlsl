@@ -22,26 +22,20 @@ void main(
   float4 fDest;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
-  r0.rgb = srgbDecode(r0.rgb);
   r0 = processBloomBuffer(r0);
   r0.xyzw = float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) * r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-  r1.rgb = srgbDecode(r1.rgb);
   r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.400000006, 0.400000006, 0.400000006, 0.400000006) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
-  r1.rgb = srgbDecode(r1.rgb);
   r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
-  r1.rgb = srgbDecode(r1.rgb);
   r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.200000003, 0.200000003, 0.200000003, 0.200000003) + r0.xyzw;
   r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
-  r1.rgb = srgbDecode(r1.rgb);
   r1 = processBloomBuffer(r1);
   o0.xyzw = r1.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r0.xyzw;
 
-  o0.rgb = srgbEncode(o0.rgb);
   return;
 }

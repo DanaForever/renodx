@@ -80,14 +80,21 @@ float3 CompositeColor(float4 r0, float4 r1, bool Bloom) {
   float4 r2;
 
   r0.xyz = GlowIntensity.www * r0.xyz;
-  if (!Bloom) {
-    r0.xyz = 0.f;
-  }
+  // if (!Bloom) {
+  //   r0.xyz = 0.f;
+  // }
+  float3 bloom = r0.rgb;
   r2.xyz = ToneFactor.xxx * r1.xyz;
-  r1.xyz = max(0.f, -r1.xyz * ToneFactor.xxx + float3(1, 1, 1));
-  float3 output = r0.xyz * r1.xyz + r2.xyz;
+  // r1.xyz = max(0.f, -r1.xyz * ToneFactor.xxx + float3(1, 1, 1));
+  // float3 output = r0.xyz * r1.xyz + r2.xyz;
+  float3 output = r2.rgb;
 
   output = decodeColor(output);
+
+  bloom = decodeColor(bloom);
+
+  output = hdrScreenBlend(output, bloom);
+
   return output;
 }
 
@@ -109,12 +116,12 @@ void main(
   r1.xy = v1.xy * UvScaleBias.xy + UvScaleBias.zw;
   r1.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r1.xy, 0).xyz;
 
-  float3 bloomOutput = CompositeColor(r0, r1, true);
-  float3 noBloomOutput = CompositeColor(r0, r1, false);
+  o0.rgb = CompositeColor(r0, r1, true);
+  // float3 noBloomOutput = CompositeColor(r0, r1, false);
 
-  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  float3 scaledColor = o0.rgb;
-  o0.w = 1;
+  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  // float3 scaledColor = o0.rgb;
+  // o0.w = 1;
 
   // ToneMapPass here?
   o0.rgb = processAndToneMap(o0.rgb);

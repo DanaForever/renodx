@@ -1,4 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 19:01:09 2025
+// ---- Created with 3Dmig#include "../cs4/common.hlsl"
 #include "../cs4/common.hlsl"
 #include "../shared.h"
 cbuffer _Globals : register(b0)
@@ -66,25 +66,39 @@ cbuffer _Globals : register(b0)
 
 SamplerState LinearClampSamplerState_s : register(s0);
 Texture2D<float4> ColorBuffer : register(t0);
-Texture2DMS<float> DepthBuffer : register(t1);
-Texture2D<float4> GlareBuffer : register(t2);
-Texture2D<float4> FocusBuffer : register(t3);
+Texture2D<float4> GlareBuffer : register(t1);
+Texture2D<float4> FadingTexture : register(t2);
 
 
 // 3Dmigoto declarations
 #define cmp -
 
-float3 CompositeColor(float4 r0, float4 r1, float4 r2, bool Bloom) {
-  r2.xyz = GlowIntensity.www * r2.xyz;
-  if (!Bloom) {
-    r0.xyz = 0.f;
-  }
-  float3 output = r2.xyz * r0.xyz + r1.xyz;
+float3 CompositeColor(float4 color, float4 toneColor, float4 glareColor, float4 fadingColor, bool Bloom) {
+  float4 r0, r1, r2, r3;
+  r0 = color;
+  r1 = toneColor;
+  r2 = fadingColor;
+  r3 = glareColor;
+
+  r3.xyz = GlowIntensity.www * r3.xyz;
+  // if (!Bloom) {
+  //   r3.xyz = 0.f;
+  // }
+  float3 bloom = r3.rgb;
+  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  r0.xyz = r1.xyz;
+  r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
+  r0.w = FadingColor.w * r2.w;
+  float3 output = r0.www * r1.xyz + r0.xyz;
 
   output = decodeColor(output);
+
+  bloom = decodeColor(bloom);
+
+  output = hdrScreenBlend(output, bloom);
+
   return output;
 }
-
 
 void main(
   float4 v0 : SV_POSITION0,
@@ -92,41 +106,32 @@ void main(
   float2 w1 : TEXCOORD1,
   out float4 o0 : SV_TARGET0)
 {
-  float4 r0,r1,r2;
+  float4 r0,r1,r2,r3;
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  DepthBuffer.GetDimensions(uiDest.x, uiDest.y, uiDest.z);
-  r0.xy = uiDest.xy;
-  r0.xy = (uint2)r0.xy;
-  r0.xy = w1.xy * r0.xy;
-  r0.xy = (int2)r0.xy;
-  r0.zw = float2(0,0);
-  r0.x = DepthBuffer.Load(r0.xy, 0).x;
-  r0.x = DofParams.x + -r0.x;
-  r0.x = saturate(DofParams.y / r0.x);
-  r0.x = -DofParams.z + r0.x;
-  r0.x = saturate(DofParams.w * abs(r0.x));
-  r0.x = r0.x * r0.x;
-  r0.x = DofParams2.y * r0.x;
-  r0.yzw = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
-  r1.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
-  r1.xyz = processColorBuffer(r1.xyz);
+  r0.xy = v1.xy * UvScaleBias.xy + UvScaleBias.zw;
+  r0.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
+  r0.xyz = processColorBuffer(r0.xyz);
 
-  r0.yzw = -r1.xyz + r0.yzw;
-  r0.xyz = r0.xxx * r0.yzw + r1.xyz;
   r1.xyz = ToneFactor.xxx * r0.xyz;
   r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
   r2.xy = v1.xy * float2(1,-1) + float2(0,1);
-  r2.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  // r2.xyz = GlowIntensity.www * r2.xyz;
-  // o0.xyz = r2.xyz * r0.xyz + r1.xyz;
+  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
+  r2.xyzw = FadingTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  // r3.xyz = GlowIntensity.www * r3.xyz;
+  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  // r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
+  // r0.w = FadingColor.w * r2.w;
+  // o0.xyz = r0.www * r1.xyz + r0.xyz;
 
-  float3 bloomOutput = CompositeColor(r0, r1, r2, true);
-  float3 noBloomOutput = CompositeColor(r0, r1, r2, false);
+  o0.rgb = CompositeColor(r0, r1, r3, r2, true);
+  // float3 noBloomOutput = CompositeColor(r0, r1, r3, r2, false);
 
-  o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
+  // float3 scaledColor = o0.rgb;
   o0.rgb = processAndToneMap(o0.rgb);
   o0.w = 1;
+
   return;
 }
