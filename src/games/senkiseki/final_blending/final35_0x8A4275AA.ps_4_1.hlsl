@@ -1,7 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 16:56:24 2025
-#include "cs4/common.hlsl"
-#include "shared.h"
-
+// ---- Created with 3Dmigoto v1.3.16 on Sun Aug 31 02:26:46 2025
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -72,6 +70,7 @@ cbuffer _Globals : register(b0)
 SamplerState LinearClampSamplerState_s : register(s0);
 Texture2D<float4> ColorBuffer : register(t0);
 Texture2D<float4> GlareBuffer : register(t1);
+Texture2D<float4> FilterTexture : register(t2);
 
 
 // 3Dmigoto declarations
@@ -81,42 +80,66 @@ Texture2D<float4> GlareBuffer : register(t1);
 void main(
   float4 v0 : SV_POSITION0,
   float2 v1 : TEXCOORD0,
-  float2 w1 : TEXCOORD7,
-  float4 v2 : TEXCOORD1,
-  float4 v3 : TEXCOORD2,
+  float2 w1 : TEXCOORD1,
   out float4 o0 : SV_TARGET0)
 {
-  float4 r0,r1,r2;
+  float4 r0,r1,r2,r3;
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  float gaussian_blur_w = GaussianBlurParams.w;
-  float gaussian_blur_z = GaussianBlurParams.z;
+  r0.xy = float2(-0.5,-0.5) + v1.yx;
+  r1.x = CommonParams.z;
+  r1.y = 1.25;
+  r0.xy = r1.yx * r0.xy;
+  r0.z = dot(r0.xy, r0.xy);
+  r0.w = r0.z / WhirlPinchParams.z;
+  r0.w = sqrt(r0.w);
+  r1.z = 1.57079637 * r0.w;
+  r0.w = 1 + -r0.w;
+  r1.z = sin(r1.z);
+  r1.z = log2(abs(r1.z));
+  r1.z = -WhirlPinchParams.y * r1.z;
+  r1.z = exp2(r1.z);
+  r0.xy = r1.zz * r0.xy;
+  r1.z = WhirlPinchParams.x * r0.w;
+  r0.w = r1.z * r0.w;
+  sincos(r0.w, r2.x, r3.x);
+  r1.zw = r2.xx * r0.xy;
+  r2.x = r3.x * r0.y + -r1.z;
+  r2.y = r3.x * r0.x + r1.w;
+  r0.xy = r2.xy / r1.xy;
+  r1.xy = float2(0.5,0.5) + r0.xy;
+  r1.zw = r1.xy * UvScaleBias.xy + UvScaleBias.zw;
+  r0.x = cmp(r0.z < WhirlPinchParams.z);
+  r0.y = cmp(0 < r0.z);
+  r0.x = r0.y ? r0.x : 0;
 
-  r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
-  r0 = processBloomBuffer(r0);
-  r0.xyzw = float4(0.100000001,0.100000001,0.100000001,0.100000001) * r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-  r1 = processBloomBuffer(r1);
-  r0.xyzw = r1.xyzw * float4(0.400000006,0.400000006,0.400000006,0.400000006) + r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
-  r1 = processBloomBuffer(r1);
-  r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
-  r1 = processBloomBuffer(r1);
-  r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
-  r1 = processBloomBuffer(r1);
-  r0.xyzw = r1.xyzw * float4(0.100000001,0.100000001,0.100000001,0.100000001) + r0.xyzw;
-  r1.x = gaussian_blur_w * r0.w;
-  r2.xyzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyzw;
-  r2.xyz = r2.xyz * r1.xxx;
+  float4 coord = float4(v1.x, v1.y, w1.x, w1.y);
+  r0.xyzw = r0.xxxx ? r1.xyzw : coord.xyzw;
+  r0.xy = r0.xy * float2(1,-1) + float2(0,1);
+  r1.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.zw, 0).xyz;
+  r0.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
+  r0.xyz = GlowIntensity.www * r0.xyz;
+  float3 bloom = r0.rgb;
+  r2.xyz = ToneFactor.xxx * r1.xyz;
+  r1.xyz = -r1.xyz * ToneFactor.xxx + float3(1,1,1);
+  // r0.xyz = r0.xyz * r1.xyz + r2.xyz;
+  r0.xyz = r2.xyz;
+  r1.xyz = float3(1,1,1) + -r0.xyz;
+  r2.xy = v1.xy * float2(1,-1) + float2(0,1);
+  r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  r2.xyzw = FilterColor.xyzw * r2.xyzw;
+  r3.xyz = r2.xyz * r2.www;
+  r2.xyz = r2.xyz * r2.www + r0.xyz;
+  r0.xyz = r3.xyz * r1.xyz + r0.xyz;
+  r0.xyz = r0.xyz + -r2.xyz;
+  o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
 
-  r0.xyzw = r2.xyzw + r0.xyzw;
-  o0.xyzw = gaussian_blur_z * r0.xyzw;
+  o0.rgb = decodeColor(o0.rgb);
+  bloom = decodeColor(bloom);
+  o0.rgb = hdrScreenBlend(o0.rgb, bloom);
+  o0.rgb = processAndToneMap(o0.rgb);
 
-  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
-  
-  
+  o0.w = 1;
   return;
 }

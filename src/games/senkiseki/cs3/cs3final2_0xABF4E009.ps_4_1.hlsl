@@ -132,7 +132,7 @@ void main(
   // float3 scaledColor = o0.rgb;
 
   // // ToneMapPass here?
-  // o0.rgb = processAndToneMap(o0.rgb);
+  o0.rgb = processAndToneMap(o0.rgb);
   o0.w = 1;
   // r3.xyz = GlowIntensity.www * r3.xyz;
   // r0.xyz = r3.xyz * r0.xyz + r1.xyz;

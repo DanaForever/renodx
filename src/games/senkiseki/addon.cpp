@@ -173,6 +173,52 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x4D291F04), // Final 21
     CustomShaderEntry(0x4E97BECA), // Final 22
     CustomShaderEntry(0x4F6D55D7), // Final 23
+    CustomShaderEntry(0x5F75A7B5), // Final 24
+    CustomShaderEntry(0x6417B671), // Final 25
+    CustomShaderEntry(0x575568A5), // Final 26
+    CustomShaderEntry(0x68F73C03), // Final 27
+    CustomShaderEntry(0x71DC9089), // Final 28
+    CustomShaderEntry(0x762A5B0E), // Final 29
+    CustomShaderEntry(0x7DD4CB97), // Final 30
+    CustomShaderEntry(0x7E245ADC), // Final 31
+    CustomShaderEntry(0x83446FEF), // Final 32
+    CustomShaderEntry(0x84648647), // Final 33
+    CustomShaderEntry(0x8589D7AF), // Final 34
+    CustomShaderEntry(0x8A4275AA), // Final 35
+    CustomShaderEntry(0x8F06D84C), // Final 36
+    CustomShaderEntry(0xA07D8921), // Final 37
+    CustomShaderEntry(0x94889944), // Final 38
+    CustomShaderEntry(0x9BF2734C), // Final 39
+    CustomShaderEntry(0xA01BCC76), // Final 40
+    CustomShaderEntry(0xA20ECB4B), // Final 41
+    CustomShaderEntry(0xA210474C), // Final 42
+    CustomShaderEntry(0xA4560071), // Final 43
+    CustomShaderEntry(0xA6A642EC), // Final 44
+    CustomShaderEntry(0xA716393F), // Final 45
+    CustomShaderEntry(0xA7C2CED9), // Final 46
+    CustomShaderEntry(0xAC7DDDAC), // Final 47
+    CustomShaderEntry(0xB1E0A90D), // Final 48
+    CustomShaderEntry(0xB41DEC9B), // Final 49
+    CustomShaderEntry(0xB573287E), // Final 50
+    CustomShaderEntry(0xB59D548A), // Final 51
+    CustomShaderEntry(0xB5A7008B), // Final 52
+    CustomShaderEntry(0xB936A99B), // Final 53
+    CustomShaderEntry(0xBB0DEC2A), // Final 54
+    CustomShaderEntry(0xBEE3AF35), // Final 55
+    CustomShaderEntry(0xCC00713E), // Final 56
+    CustomShaderEntry(0xCF4D44BC), // Final 57
+    CustomShaderEntry(0xD01F775C), // Final 58
+    CustomShaderEntry(0xD0D6FE14), // Final 59
+    CustomShaderEntry(0xDA5C467F), // Final 60
+    CustomShaderEntry(0xDBC91624), // Final 61
+    CustomShaderEntry(0xDECB5EF1), // Final 62
+    CustomShaderEntry(0xE1D7A2B6), // Final 63
+    CustomShaderEntry(0xE65E731D), // Final 64
+    CustomShaderEntry(0xEC63410F), // Final 65
+    CustomShaderEntry(0xED6722DC), // Final 66
+    CustomShaderEntry(0xED849BD1), // Final 67
+    CustomShaderEntry(0xF0566A0F), // Final 68
+    CustomShaderEntry(0xFCBCF123), // Final 69
 
     CustomShaderEntry(0x256687A6), // sun
     CustomShaderEntry(0x2403F73F), // ui
@@ -262,6 +308,11 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x95F02C1D), // CS3 final 4
     CustomShaderEntry(0x26217A30), // CS3 final 5
     CustomShaderEntry(0x46DC6C58), // CS3 final 6
+    CustomShaderEntry(0x5A5A4C5A), // CS3 final 7
+    CustomShaderEntry(0x322E20D4), // CS3 final 8
+
+
+
     CustomShaderEntry(0x70EAAEFC), // lighthouse
     CustomShaderEntry(0xD4F2A488), // ortis light
     CustomShaderEntry(0xA7E488FF), // aion

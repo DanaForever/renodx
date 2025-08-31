@@ -1,7 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 16:56:24 2025
-#include "cs4/common.hlsl"
-#include "shared.h"
-
+// ---- Created with 3Dmigoto v1.3.16 on Sun Aug 31 02:27:12 2025
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -70,8 +68,13 @@ cbuffer _Globals : register(b0)
 }
 
 SamplerState LinearClampSamplerState_s : register(s0);
+SamplerState PointClampSamplerState_s : register(s1);
 Texture2D<float4> ColorBuffer : register(t0);
-Texture2D<float4> GlareBuffer : register(t1);
+Texture2D<float4> DepthBuffer : register(t1);
+Texture2D<float4> GlareBuffer : register(t2);
+Texture2D<float4> FocusBuffer : register(t3);
+Texture2D<float4> FilterTexture : register(t4);
+Texture2D<float4> FadingTexture : register(t5);
 
 
 // 3Dmigoto declarations
@@ -81,42 +84,54 @@ Texture2D<float4> GlareBuffer : register(t1);
 void main(
   float4 v0 : SV_POSITION0,
   float2 v1 : TEXCOORD0,
-  float2 w1 : TEXCOORD7,
-  float4 v2 : TEXCOORD1,
-  float4 v3 : TEXCOORD2,
+  float2 w1 : TEXCOORD1,
   out float4 o0 : SV_TARGET0)
 {
-  float4 r0,r1,r2;
+  float4 r0,r1,r2,r3,r4;
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  float gaussian_blur_w = GaussianBlurParams.w;
-  float gaussian_blur_z = GaussianBlurParams.z;
+  r0.x = DepthBuffer.SampleLevel(PointClampSamplerState_s, w1.xy, 0).x;
+  r0.x = r0.x * scene.cameraFarMinusNear + -scene.cameraNearFar.y;
+  r0.x = scene.cameraNearTimesFar / r0.x;
+  r0.x = -r0.x / scene.cameraNearFar.y;
+  r0.y = -DofParams.x + r0.x;
+  r0.x = ToneFactor.y + r0.x;
+  r0.x = min(1, r0.x);
+  r0.y = saturate(DofParams.y * abs(r0.y));
+  r0.y = r0.y * r0.y;
+  r0.y = DofParams.z * r0.y;
+  r1.xyz = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
+  r2.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
+  r1.xyz = -r2.xyz + r1.xyz;
+  r0.yzw = r0.yyy * r1.xyz + r2.xyz;
+  r1.xyz = ToneFactor.xxx * r0.yzw;
+  r0.yzw = -r0.yzw * ToneFactor.xxx + float3(1,1,1);
+  r2.xy = v1.xy * float2(1,-1) + float2(0,1);
+  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
+  r3.xyz = GlowIntensity.www * r3.xyz;
+  float3 bloom = r3.rgb;
+  // r0.yzw = r3.xyz * r0.yzw + r1.xyz;
+  r0.yzw = r1.xyz;
+  r1.xyz = float3(1,1,1) + -r0.yzw;
+  r3.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  r2.xyzw = FadingTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  r3.xyzw = FilterColor.xyzw * r3.xyzw;
+  r3.xyz = r3.xyz * r3.www;
+  r4.xyz = r3.xyz * r0.xxx;
+  r3.xyz = r3.xyz * r0.xxx + r0.yzw;
+  r0.xyz = r4.xyz * r1.xyz + r0.yzw;
+  r0.xyz = r0.xyz + -r3.xyz;
+  r0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r3.xyz;
+  r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
+  r0.w = FadingColor.w * r2.w;
+  o0.xyz = r0.www * r1.xyz + r0.xyz;
 
-  r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.xy, 0).xyzw;
-  r0 = processBloomBuffer(r0);
-  r0.xyzw = float4(0.100000001,0.100000001,0.100000001,0.100000001) * r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-  r1 = processBloomBuffer(r1);
-  r0.xyzw = r1.xyzw * float4(0.400000006,0.400000006,0.400000006,0.400000006) + r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v2.zw, 0).xyzw;
-  r1 = processBloomBuffer(r1);
-  r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.xy, 0).xyzw;
-  r1 = processBloomBuffer(r1);
-  r0.xyzw = r1.xyzw * float4(0.200000003,0.200000003,0.200000003,0.200000003) + r0.xyzw;
-  r1.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
-  r1 = processBloomBuffer(r1);
-  r0.xyzw = r1.xyzw * float4(0.100000001,0.100000001,0.100000001,0.100000001) + r0.xyzw;
-  r1.x = gaussian_blur_w * r0.w;
-  r2.xyzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyzw;
-  r2.xyz = r2.xyz * r1.xxx;
+  o0.rgb = decodeColor(o0.rgb);
+  bloom = decodeColor(bloom);
+  o0.rgb = hdrScreenBlend(o0.rgb, bloom);
+  o0.rgb = processAndToneMap(o0.rgb);
 
-  r0.xyzw = r2.xyzw + r0.xyzw;
-  o0.xyzw = gaussian_blur_z * r0.xyzw;
-
-  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
-  
-  
+  o0.w = 1;
   return;
 }

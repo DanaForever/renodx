@@ -105,5 +105,7 @@ void main(
   r1 = processBloomBuffer(r1);
   o0.xyzw = r1.xyzw * GaussianBlurParams.wwww + r0.xyzw;
 
+  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
+
   return;
 }

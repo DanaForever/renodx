@@ -44,6 +44,9 @@ void main(
   r2.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
   r2.xyz = processBloomBuffer(r2.xyz);
   o0.xyz = r2.xyz * r1.xyz + r0.xyz;
+
+  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
+
   o0.w = r0.w;
   
   return;

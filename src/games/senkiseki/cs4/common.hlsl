@@ -248,7 +248,8 @@ float3 processColorBuffer(float3 color) {
 
 float4 processColorBuffer(float4 color) {
 
-  color.rgb = processColorBuffer(color.rgb);
+  // color.rgb = processColorBuffer(color.rgb);
+  // color.rgb = saturate(color.rgb);
   color.w = saturate(color.w);
 
   return color;
@@ -488,8 +489,8 @@ float3 hdrScreenBlend(float3 base, float3 blend, float strength = 1.0f) {
 
   blend *= strength; 
 
-  float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
-
+  // float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
+  float3 addition = blend;
   float3 output = base + addition;
   return output;
   
