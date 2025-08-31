@@ -1,6 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Thu Jul 03 01:07:42 2025
-#include "../shared.h"
-#include "./common.hlsl"
+// ---- Created with 3Dmigoto v1.3.16 on Sat Aug 30 23:59:45 2025
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -80,49 +79,6 @@ Texture2D<float4> FilterTexture : register(t4);
 // 3Dmigoto declarations
 #define cmp -
 
-float3 CompositeColor(float4 depthInput, float3 colorInput, float3 focusInput, float2 v1, bool Bloom) {
-  float4 r0, r1, r2, r3;
-  r0 = depthInput;
-
-  r1.xyz = focusInput;
-  r2.xyz = colorInput;
-
-  r1.xyz = max(0.f, -r2.xyz + r1.xyz);
-  r0.yzw = r0.yyy * r1.xyz + r2.xyz;
-  r1.xyz = ToneFactor.xxx * r0.yzw;
-  // r0.yzw = max(0.f, -r0.yzw * ToneFactor.xxx + float3(1, 1, 1));
-  r2.xy = v1.xy * float2(1, -1) + float2(0, 1);
-  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
-  r2.xyzw = FilterColor.xyzw * r2.xyzw;
-  r2.xyz = r2.xyz * r2.www;
-  r3.xyz = GlowIntensity.www * r3.xyz;
-
-  // if (!Bloom) {
-  //   r3.xyz = 0.f;
-  // }
-  float3 bloom = r3.rgb;
-
-  // r0.yzw = r3.xyz * r0.yzw + r1.xyz;
-  r0.yzw = r1.xyz;
-  r1.xyz = max(0.f, float3(1, 1, 1) + -r0.yzw);
-  r3.xyz = r2.xyz * r0.xxx;
-  r2.xyz = r2.xyz * r0.xxx + r0.yzw;
-  r0.xyz = r3.xyz * r1.xyz + r0.yzw;
-  // r0.xyz = max(0.f, r0.xyz + -r2.xyz);
-  // float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
-
-  float3 output = 0.5 * (r0.xyz + r2.xyz);
-  output = decodeColor(output);
-
-  bloom = decodeColor(bloom);
-
-  output = hdrScreenBlend(output, bloom);
-
-
-  return output;
-}
-
 
 void main(
   float4 v0 : SV_POSITION0,
@@ -138,24 +94,42 @@ void main(
   r0.x = r0.x * scene.cameraFarMinusNear + -scene.cameraNearFar.y;
   r0.x = scene.cameraNearTimesFar / r0.x;
   r0.x = -r0.x / scene.cameraNearFar.y;
-  r0.y = -DofParams.x + r0.x;
-  r0.x = ToneFactor.y + r0.x;
-  r0.x = min(1, r0.x);
-  r0.y = saturate(DofParams.y * abs(r0.y));
-  r0.y = r0.y * r0.y;
-  r0.y = DofParams.z * r0.y;
-  r1.xyz = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
-  r2.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
-  r2.xyz = processColorBuffer(r2.xyz);
-
-  o0.rgb = CompositeColor(r0, r2.xyz, r1.xyz, v1, true);
-  // float3 noBloomOutput = CompositeColor(r0, r2.xyz, r1.xyz, v1, false);
-
-  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  // float3 scaledColor = o0.rgb;
-  o0.w = 1;
-
-  // ToneMapPass here?
+  r0.x = -DofParams.x + r0.x;
+  r0.x = saturate(DofParams.y * abs(r0.x));
+  r0.x = r0.x * r0.x;
+  r0.x = DofParams.z * r0.x;
+  r0.yzw = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
+  r1.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
+  r0.yzw = -r1.xyz + r0.yzw;
+  r0.xyz = r0.xxx * r0.yzw + r1.xyz;
+  r1.xyz = ToneFactor.xxx * r0.xyz;
+  r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
+  r2.xy = v1.xy * float2(1,-1) + float2(0,1);
+  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
+  r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  r2.xyzw = FilterColor.xyzw * r2.xyzw;
+  r3.xyz = GlowIntensity.www * r3.xyz;
+  float3 bloom = r3.rgb;
+  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  r0.xyz = r1.xyz;
+  r1.xyz = float3(1,1,1) + -r0.xyz;
+  r3.xyz = r2.xyz * r2.www;
+  r2.xyz = r2.xyz * r2.www + r0.xyz;
+  r0.xyz = r3.xyz * r1.xyz + r0.xyz;
+  // r0.xyz = r0.xyz + -r2.xyz;
+  // r0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
+  r0.rgb = 0.5f * (r0.rgb + r2.rgb);
+  // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r0.w = calculateLuminanceSRGB(r0.rgb);
+  r1.xyz = r0.www * _MonotoneMul.xyz + _MonotoneAdd.xyz;
+  r1.xyz = r1.xyz + -r0.xyz;
+  o0.xyz = _MonotoneMul.www * r1.xyz + r0.xyz;
+  
+  o0.rgb = decodeColor(o0.rgb);
+  bloom = decodeColor(bloom);
+  o0.rgb = hdrScreenBlend(o0.rgb, bloom);
   o0.rgb = processAndToneMap(o0.rgb);
+
+  o0.w = 1;
   return;
 }

@@ -149,6 +149,31 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
 };
 
 renodx::mods::shader::CustomShaders custom_shaders = {
+
+    CustomShaderEntry(0x46A727D9), // final 4
+    CustomShaderEntry(0x2BF0C94B), // Final 3
+    CustomShaderEntry(0x3E08A3A6), // Final 
+    CustomShaderEntry(0x2A8422DE), // Final 2
+    CustomShaderEntry(0x49107B8F), // Final 6
+    CustomShaderEntry(0x1C7DCC30), // Final 7
+    CustomShaderEntry(0x3541804A), // Final 8
+    CustomShaderEntry(0xFD245ECC), // Final 9
+    CustomShaderEntry(0x93DEF816), // Final 10
+    CustomShaderEntry(0x0469E6D6), // Final 11
+    CustomShaderEntry(0x16DA1605), // Final 12
+    CustomShaderEntry(0xC2D07E63), // Final 5
+    CustomShaderEntry(0x1ABB15C9), // Final 13
+    CustomShaderEntry(0x228096A4), // Final 14
+    CustomShaderEntry(0x2005E90C), // Final 15
+    CustomShaderEntry(0x2F2D2517), // Final 16
+    CustomShaderEntry(0x30064E3D), // Final 17
+    CustomShaderEntry(0x38B0F676), // Final 18
+    CustomShaderEntry(0x46589838), // Final 19
+    CustomShaderEntry(0x4C17DC8C), // Final 20
+    CustomShaderEntry(0x4D291F04), // Final 21
+    CustomShaderEntry(0x4E97BECA), // Final 22
+    CustomShaderEntry(0x4F6D55D7), // Final 23
+
     CustomShaderEntry(0x256687A6), // sun
     CustomShaderEntry(0x2403F73F), // ui
     CustomShaderEntry(0xD6241E03), // ui
@@ -156,13 +181,13 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x0844C159), // ui
     CustomShaderEntry(0xB55FDE0D), // ui
     CustomShaderEntry(0x131CC98E),
-    CustomShaderEntry(0x46A727D9), // final4
-    CustomShaderEntry(0xC2D07E63), // final-Scraft
+    
+    
     CustomShaderEntry(0x9DB02646), // swapchain unclamp
     CustomShaderEntry(0xF0FA2768), // artifact
     CustomShaderEntry(0x386909EF), // bloom artifact
     CustomShaderEntry(0xE8C7EBA2), // bloom artifact
-    CustomShaderEntry(0x96BB8CFF), // MSAA
+    // CustomShaderEntry(0x96BB8CFF), // FXAA
     CustomShaderEntry(0xC5F739B8), // Tone
     CustomShaderEntry(0x312CE29D), // PreBloom
     CustomShaderEntry(0x640BFEB8), // Bloom
@@ -189,14 +214,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     
     // CustomShaderEntry(0x6C72EE93), // Bloom Generator
     // CS4
-    CustomShaderEntry(0x2BF0C94B), // Final 3
-    CustomShaderEntry(0x3E08A3A6), // Final 2
-    CustomShaderEntry(0x2A8422DE), // Final 1
-    CustomShaderEntry(0x49107B8F), // Final 6
-    CustomShaderEntry(0x1C7DCC30), // Final 7
-    CustomShaderEntry(0x3541804A), // Final 8
-    CustomShaderEntry(0xFD245ECC), // Final 9
-    CustomShaderEntry(0x93DEF816), // Final 10
+    
     CustomShaderEntry(0xE92523E6), // Light 
     CustomShaderEntry(0x2CE1FDAD), // Moon
     CustomShaderEntry(0x7CC40E3A), // Artifact 

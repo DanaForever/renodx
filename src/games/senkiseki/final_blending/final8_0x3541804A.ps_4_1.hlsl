@@ -1,6 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Mon Jun 23 16:42:42 2025
-#include "../shared.h"
-#include "./common.hlsl"
+// ---- Created with 3Dmigoto v1.3.16 on Sun Aug 31 00:00:07 2025
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -69,52 +68,15 @@ cbuffer _Globals : register(b0)
 }
 
 SamplerState LinearClampSamplerState_s : register(s0);
-SamplerState PointClampSamplerState_s : register(s1);
 Texture2D<float4> ColorBuffer : register(t0);
-Texture2D<float4> DepthBuffer : register(t1);
-Texture2D<float4> GlareBuffer : register(t2);
-Texture2D<float4> FilterTexture : register(t3);
+Texture2D<float4> GlareBuffer : register(t1);
+Texture2D<float4> FilterTexture : register(t2);
+Texture2D<float4> FadingTexture : register(t3);
 
 
 // 3Dmigoto declarations
 #define cmp -
 
-float3 CompositeColor(float4 depthInput, float2 v1, bool Bloom) {
-  float4 r0, r1, r2, r3, r4;
-  r0 = depthInput;
-
-  r1.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r0.yz, 0).xyzw;
-  r0.yzw = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r0.yz, 0).xyz;
-  r0.yzw = GlowIntensity.www * r0.yzw;
-
-  // if (!Bloom) {
-  //   r0.yzw = 0.f;
-  // }
-  float3 bloom = r0.yzw;
-
-  r1.xyzw = FilterColor.xyzw * r1.xyzw;
-  r1.xyz = r1.xyz * r1.www;
-  r2.xyz = r1.xyz * r0.xxx;
-  r3.xy = v1.xy * UvScaleBias.xy + UvScaleBias.zw;
-  r3.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r3.xy, 0).xyz;
-  r3.xyz = processColorBuffer(r3.xyz);
-  r4.xyz = ToneFactor.xxx * r3.xyz;
-  // r3.xyz = max(0.f, -r3.xyz * ToneFactor.xxx + float3(1, 1, 1));
-  r0.yzw = r4.xyz;
-  r3.xyz = max(0.f, float3(1, 1, 1) + -r0.yzw);
-  r2.xyz = r2.xyz * r3.xyz + r0.yzw;
-  r0.xyz = r1.xyz * r0.xxx + r0.yzw;
-  // r1.xyz = max(0.f, r2.xyz + -r0.xyz);
-  // float3 output = r1.xyz * float3(0.5, 0.5, 0.5) + r0.xyz;
-  float3 output = 0.5 * (r0.xyz + r2.xyz);
-
-  output = decodeColor(output);
-  bloom = decodeColor(bloom);
-
-  output = hdrScreenBlend(output, bloom);
-
-  return output;
-}
 
 void main(
   float4 v0 : SV_POSITION0,
@@ -126,23 +88,35 @@ void main(
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  r0.x = DepthBuffer.SampleLevel(PointClampSamplerState_s, w1.xy, 0).x;
-  r0.x = r0.x * scene.cameraFarMinusNear + -scene.cameraNearFar.y;
-  r0.x = scene.cameraNearTimesFar / r0.x;
-  r0.x = -r0.x / scene.cameraNearFar.y;
-  r0.x = ToneFactor.y + r0.x;
-  r0.x = min(1, r0.x);
-  r0.yz = v1.xy * float2(1,-1) + float2(0,1);
+  r0.xy = v1.xy * UvScaleBias.xy + UvScaleBias.zw;
+  r0.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
+  r1.xyz = ToneFactor.xxx * r0.xyz;
+  r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
+  r2.xy = v1.xy * float2(1,-1) + float2(0,1);
+  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
+  r3.xyz = GlowIntensity.www * r3.xyz;
+  float3 bloom = r3.xyz;
+  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  r0.xyz = r1.xyz;
+  r1.xyz = float3(1,1,1) + -r0.xyz;
+  r3.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  r2.xyzw = FadingTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  r3.xyzw = FilterColor.xyzw * r3.xyzw;
+  r4.xyz = r3.xyz * r3.www;
+  r3.xyz = r3.xyz * r3.www + r0.xyz;
+  r0.xyz = r4.xyz * r1.xyz + r0.xyz;
+  // r0.xyz = r0.xyz + -r3.xyz;
+  // r0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r3.xyz;
+  r0.xyz = 0.5f * (r3.rgb + r0.rgb);
+  r1.xyz = r2.xyz * FadingColor.xyz + -r0.xyz;
+  r0.w = FadingColor.w * r2.w;
+  o0.xyz = r0.www * r1.xyz + r0.xyz;
 
-  o0.rgb = CompositeColor(r0, v1, true);
-  // float3 noBloomOutput = CompositeColor(r0, v1, false);
-
-  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  // float3 scaledColor = o0.rgb;
-  o0.w = 1;
-
-  // ToneMapPass here?
+  o0.rgb = decodeColor(o0.rgb);
+  bloom = decodeColor(bloom);
+  o0.rgb = hdrScreenBlend(o0.rgb, bloom);
   o0.rgb = processAndToneMap(o0.rgb);
+
   o0.w = 1;
   return;
 }

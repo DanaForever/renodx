@@ -1,11 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Fri Jun 06 22:21:56 2025
-#include "../shared.h"
-#include "./common.hlsl"
-
-float3 LogMap(float3 c) { return log(1.0 + c); }
-float3 LogMapInv(float3 l) { return exp(l) - 1.0; }
-
-
+// ---- Created with 3Dmigoto v1.3.16 on Sat Aug 30 23:59:57 2025
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -84,70 +78,6 @@ Texture2D<float4> FilterTexture : register(t4);
 // 3Dmigoto declarations
 #define cmp -
 
-float3 CompositeColor(float3 depthInput, float3 colorInput, float3 focusInput, float2 v1, bool Bloom) {
-  float4 r0, r1, r2, r3;
-  r0.xyz = depthInput;
-
-  // r1.xyz is the difference between a blurred (focus) and sharp (color) buffer.
-  r1.xyz = max(focusInput, 0.f);
-  r2.xyz = max(colorInput, 0.f);
-  // r1.xyz = -r2.xyz + r1.xyz;
-
-  // If out of focus, more blurred (focus buffer)
-  // If in focus, just sharp (color buffer)
-  // r0.yzw = r0.yyy * r1.xyz + r2.xyz;
-
-  float y = max(0.f, 1 - r0.y);
-  r0.yzw = y * r2.xyz + r0.y * r1.xyz;
-
-  // Applies a per-channel scale (ToneFactor) to the color.
-  r1.xyz = ToneFactor.xxx * r0.yzw;
-
-  // Computes 1 - (color * scale) for later masking/blending.
-  r0.yzw = max(0.f, -r1.xyz + float3(1, 1, 1));
-
-  // Additional Texture Sampling (for Filters/Bloom)
-  r2.xy = v1.xy * float2(1, -1) + float2(0, 1);
-
-  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
-
-  r2.xyzw = FilterColor.xyzw * r2.xyzw;
-  r2.xyz = r2.xyz * r2.www;
-
-  r3.xyz = GlowIntensity.w * r3.xyz;
-  if (!Bloom) {
-    r3.xyz = 0.f;
-  }
-
-  float3 bloom = r3.rgb;
-
-  // Multiply “main color” by Bloom
-  // If glare is strong, this can significantly brighten or “glow up” highlights.
-  r0.yzw = r1.xyz;
-
-  // Compositing colors
-  // r1.xyz = max(0.f, float3(1, 1, 1) + -r0.yzw);
-
-  r1.xyz = max(0.f, (1 - r1.xyz)) * max(0.f, (1 - r3.xyz));
-  r3.xyz = r2.xyz * r0.xxx;
-  r2.xyz = r2.xyz * r0.xxx + r0.yzw;
-  r0.xyz = r3.xyz * r1.xyz + r0.yzw;
-  // r0.xyz = max(0.f, r0.xyz + -r2.xyz);
-  // float3 output = r0.xyz * float3(0.5, 0.5, 0.5) + r2.xyz;
-  float3 output = 0.5 * (r0.xyz + r2.xyz);
-
-  // output = max(0.f, output);
-  output = decodeColor(output);
-
-  bloom = decodeColor(bloom);
-
-  output = hdrScreenBlend(output, bloom);
-
-  return output;
-}
-
-
 
 void main(
   float4 v0 : SV_POSITION0,
@@ -159,8 +89,6 @@ void main(
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  float glowIntensity = GlowIntensity.w;
-
   DepthBuffer.GetDimensions(uiDest.x, uiDest.y, uiDest.z);
   r0.xy = uiDest.xy;
   r0.xy = (uint2)r0.xy;
@@ -171,28 +99,38 @@ void main(
   r0.x = r0.x * scene.cameraFarMinusNear + -scene.cameraNearFar.y;
   r0.x = scene.cameraNearTimesFar / r0.x;
   r0.x = -r0.x / scene.cameraNearFar.y;
-  r0.y = -DofParams.x + r0.x;
-  r0.x = ToneFactor.y + r0.x;
-  r0.x = min(1, r0.x);
-  r0.y = saturate(DofParams.y * abs(r0.y));
-  r0.y = r0.y * r0.y;
-  r0.y = DofParams.z * r0.y;
+  r0.x = -DofParams.x + r0.x;
+  r0.x = saturate(DofParams.y * abs(r0.x));
+  r0.x = r0.x * r0.x;
+  r0.x = DofParams.z * r0.x;
+  r0.yzw = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
+  r1.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
+  r0.yzw = -r1.xyz + r0.yzw;
+  r0.xyz = r0.xxx * r0.yzw + r1.xyz;
+  r1.xyz = ToneFactor.xxx * r0.xyz;
+  r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
+  r2.xy = v1.xy * float2(1,-1) + float2(0,1);
+  r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
+  r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
+  r2.xyzw = FilterColor.xyzw * r2.xyzw;
+  r3.xyz = GlowIntensity.www * r3.xyz;
+  float3 bloom = r3.rgb;
 
-  // r1.xyz is the difference between a blurred (focus) and sharp (color) buffer.
-  r1.xyz = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
-  r2.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
-  r2.xyz = processColorBuffer(r2.xyz);
+  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  r0.xyz = r1.xyz;
+  r1.xyz = float3(1,1,1) + -r0.xyz;
+  r3.xyz = r2.xyz * r2.www;
+  r2.xyz = r2.xyz * r2.www + r0.xyz;
+  r0.xyz = r3.xyz * r1.xyz + r0.xyz;
+  // r0.xyz = r0.xyz + -r2.xyz;
+  // o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
 
-  float3 bloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, true);
-  // float3 noBloomOutput = CompositeColor(r0.xyz, r2.xyz, r1.xyz, v1, false);
+  o0.rgb = 0.5f * (r2.rgb + r0.rgb);
 
-  // o0.rgb = scaleColor(noBloomOutput, bloomOutput);
-  // float3 scaledColor = o0.rgb;
-  o0.rgb = bloomOutput;
-
-  o0.w = 1;
+  o0.rgb = decodeColor(o0.rgb);
+  bloom = decodeColor(bloom);
+  o0.rgb = hdrScreenBlend(o0.rgb, bloom);
   o0.rgb = processAndToneMap(o0.rgb);
-  
-
+  o0.w = 1;
   return;
 }

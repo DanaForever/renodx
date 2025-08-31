@@ -171,7 +171,7 @@ float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_sca
   float chrominance_scale = UpgradeToneMapRatio(bloom_chrominance, chrominance);
 
   // scale y and z by chrominance scale causes artifact (exhibited in the bloomColor)
-  // chrominance_scale = 1.f;
+  chrominance_scale = 1.f;
   scale = clamp(scale, 1.0f, max_scale);
 
   color_perceptual = float3(color_perceptual.x * scale, color_perceptual.y * chrominance_scale, color_perceptual.z * chrominance_scale);
@@ -397,12 +397,12 @@ float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 9999.f) {
   // bloomColor = renodx::color::correct::Hue(bloomColor, max(color, 0.f), 
   //   RENODX_TONE_MAP_HUE_CORRECTION, RENODX_TONE_MAP_HUE_PROCESSOR);
 
-  if (BROKEN_BLOOM == 2.f) {
-    return color;
-  }
-  else if (BROKEN_BLOOM == 1.f) {
-    return bloomColor;
-  }
+  // if (BROKEN_BLOOM == 2.f) {
+  //   return color;
+  // }
+  // else if (BROKEN_BLOOM == 1.f) {
+  //   return bloomColor;
+  // }
 
   float3 unscaledColor = color;
   color = scaleByPerceptualLuminance(unscaledColor, bloomColor, max_scale);
@@ -494,3 +494,14 @@ float3 hdrScreenBlend(float3 base, float3 blend, float strength = 1.0f) {
   return output;
   
 }
+
+
+float3 hdrBlend(float3 base, float3 blend, float strength = 1.0f) {
+
+  return base + strength * blend / ( 1.f + base);
+}
+
+// float3 hdrBlendSum(float3 base, float3 blend, float strength = 1.0f) {
+
+//   return base + strength * blend;
+// }
