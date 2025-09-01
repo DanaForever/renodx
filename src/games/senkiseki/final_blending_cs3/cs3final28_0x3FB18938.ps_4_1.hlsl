@@ -109,13 +109,18 @@ void main(
   r0.xyz = r1.xyz * r0.xxx + r0.yzw;
   r1.xyz = r2.xyz + -r0.xyz;
   r0.xyz = r1.xyz * float3(0.5,0.5,0.5) + r0.xyz;
-  r1.xyz = FadingColor.xyz + -r0.xyz;
-  o0.xyz = FadingColor.www * r1.xyz + r0.xyz;
+  // r1.xyz = FadingColor.xyz + -r0.xyz;
+  // o0.xyz = FadingColor.www * r1.xyz + r0.xyz;
+  o0 = r0;
 
   o0.rgb = decodeColor(o0.rgb);
   bloom = decodeColor(bloom);
   o0.rgb = hdrScreenBlend(o0.rgb, bloom);
   o0.rgb = processAndToneMap(o0.rgb);
+
+  float3 fade = FadingColor.xyz;
+  float fs = FadingColor.w;
+  o0.rgb = fadingBlend(o0.rgb, fade, fs);
   o0.w = 1;
   return;
 }

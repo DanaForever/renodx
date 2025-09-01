@@ -520,7 +520,7 @@ float3 hdrBlend(float3 base, float3 blend, float strength = 1.0f) {
   return base + strength * blend / ( 1.f + base);
 }
 
-float3 fadingBlend(float3 base, float3 fadeColor, float strength, bool decode = true) {
+float3 fadingBlend(float3 base, float3 fadeColor, float strength) {
 
   fadeColor = max(0.f, fadeColor);
 
