@@ -522,9 +522,6 @@ float3 hdrBlend(float3 base, float3 blend, float strength = 1.0f) {
 
 float3 fadingBlend(float3 base, float3 fadeColor, float strength, bool decode = true) {
 
-  if (decode)
-    fadeColor = decodeColor(fadeColor);
-
   fadeColor = max(0.f, fadeColor);
 
   return lerp(base, fadeColor, saturate(strength));

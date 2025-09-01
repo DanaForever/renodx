@@ -119,7 +119,8 @@ void main(
   r3.xyz = GlowIntensity.www * r3.xyz;
   float3 bloom = r3.rgb;
 
-  r0.yzw = r3.xyz * r0.yzw + r1.xyz;
+  // r0.yzw = r3.xyz * r0.yzw + r1.xyz;
+  r0.yzw = r1.xyz;
   r1.xyz = float3(1,1,1) + -r0.yzw;
   r3.xyz = r2.xyz * r0.xxx;
   r2.xyz = r2.xyz * r0.xxx + r0.yzw;

@@ -128,9 +128,10 @@ void main(
 
   float3 fade = FadingColor.xyz;
   float fs = FadingColor.w;
-  o0.rgb = fadingBlend(o0.rgb, fade, fs);
+  
 
   o0.rgb = processAndToneMap(o0.rgb);
+  o0.rgb = fadingBlend(o0.rgb, fade, fs);
   o0.w = 1;
   return;
 }
