@@ -15,10 +15,6 @@ void main(
   out float4 o0 : SV_TARGET0)
 {
   o0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
-  //
-  // o0.rgb = processColorBuffer(o0.rgb);
-  // o0 = saturate(o0);
   o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
-  // o0.rgb = renodx::tonemap::Reinhard(o0.rgb);
   return;
 }

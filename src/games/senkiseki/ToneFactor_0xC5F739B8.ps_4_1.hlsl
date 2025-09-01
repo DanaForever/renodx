@@ -85,15 +85,16 @@ void main(
   float4 fDest;
 
   r0.xyzw = ColorBuffer.SampleLevel(PointClampSamplerState_s, v1.xy, 0).wxyz;
+  r0.rgb = min(r0.rgb, shader_injection.safe_clamp);
   // r0.x = saturate(r0.x);
   r0.x = max(r0.x, 0.f);
-  // r0.x = log2(r0.x);
-  // r0.x = ToneFactor.z * r0.x;
-  // r0.x = exp2(r0.x);
-  r0.x = renodx::math::SafePow(r0.x, ToneFactor.z);
+  r0.x = log2(r0.x);
+  r0.x = ToneFactor.z * r0.x;
+  r0.x = exp2(r0.x);
+  // r0.x = renodx::math::SafePow(r0.x, ToneFactor.z);
   o0.xyz = r0.yzw * r0.xxx;
   r0.x = -0.5 + r0.x;
   o0.w = r0.x * r0.x;
-  
+
   return;
 }

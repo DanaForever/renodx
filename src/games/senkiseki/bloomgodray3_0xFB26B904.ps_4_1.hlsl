@@ -117,8 +117,9 @@ void main(
   r2.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v3.zw, 0).xyzw;
   r2 = processBloomBuffer(r2);
   r1.xyzw = r2.xyzw * float4(0.100000001,0.100000001,0.100000001,0.100000001) + r1.xyzw;
-  r2.xyz = max(0.f, float3(1, 1, 1) + -r1.xyz);
-  r1.xyz = r0.xyz * r2.xyz + r1.xyz;
+  // r2.xyz = max(0.f, float3(1, 1, 1) + -r1.xyz);
+  // r1.xyz = r0.xyz * r2.xyz + r1.xyz;
+  r1.rgb = r0.rgb + r1.rgb; // linear blend
 
   // r1.xyz = lerp(r0.xyz, 1.f, r1.xyz);
 

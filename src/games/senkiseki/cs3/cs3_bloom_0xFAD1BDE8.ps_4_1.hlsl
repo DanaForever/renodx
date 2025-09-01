@@ -39,13 +39,14 @@ void main(
   r1 = processBloomBuffer(r1);
   r0.xyzw = r1.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r0.xyzw;
 
-  r1.xyz = float3(1, 1, 1) + -r0.xyz;
+  // r1.xyz = float3(1, 1, 1) + -r0.xyz;
   r2.xy = w1.xy * float2(1, -1) + float2(0, 1);
   r2.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
   r2.xyz = processBloomBuffer(r2.xyz);
-  o0.xyz = r2.xyz * r1.xyz + r0.xyz;
-
-  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
+  // o0.xyz = r2.xyz * r1.xyz + r0.xyz;
+  o0.rgb = r2.rgb + r0.rgb;
+  
+  // o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
 
   o0.w = r0.w;
   

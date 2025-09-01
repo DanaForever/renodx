@@ -115,7 +115,9 @@ void main(
   r0.xyzw = r2.xyzw + r0.xyzw;
   o0.xyzw = gaussian_blur_z * r0.xyzw;
 
-  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
+  o0.rgb = max(o0.rgb, 0.f);
+
+  // o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
   
   
   return;

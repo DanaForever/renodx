@@ -144,6 +144,7 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x0B878318), // artifact
     CustomShaderEntry(0x5B6BFD59), // artifact
     CustomShaderEntry(0x6F6DE38C), // artifact
+    CustomShaderEntry(0xF5810D76), // artifact
     
     
 };
@@ -229,6 +230,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x131CC98E),
     
     
+    
     CustomShaderEntry(0x9DB02646), // swapchain unclamp
     CustomShaderEntry(0xF0FA2768), // artifact
     CustomShaderEntry(0x386909EF), // bloom artifact
@@ -299,6 +301,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
 
     // CS3
     CustomShaderEntry(0xDB20052A), // CS3 swapchain
+    CustomShaderEntry(0x50F76D1C), // tone
     CustomShaderEntry(0xFAD1BDE8), // CS3 bloom
     CustomShaderEntry(0x8E0121CE), // CS3 bloom
     CustomShaderEntry(0x36ED28F7), // CS3 bloom
@@ -310,9 +313,13 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x46DC6C58), // CS3 final 6
     CustomShaderEntry(0x5A5A4C5A), // CS3 final 7
     CustomShaderEntry(0x322E20D4), // CS3 final 8
+    CustomShaderEntry(0x00C4E2A6), // CS3 final 9
+    CustomShaderEntry(0x0161438C), // CS3 final 10
+    CustomShaderEntry(0x01E1FF0F), // CS3 final 11
+    CustomShaderEntry(0x02E4863E), // CS3 final 12
 
 
-
+    CustomShaderEntry(0x547D8B6A), // dragon boss
     CustomShaderEntry(0x70EAAEFC), // lighthouse
     CustomShaderEntry(0xD4F2A488), // ortis light
     CustomShaderEntry(0xA7E488FF), // aion
@@ -368,7 +375,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "SettingsSafeClamp",
         .binding = &shader_injection.safe_clamp,
-        .default_value = 200.f,
+        .default_value = 150.f,
         .label = "Safe Clamp",
         .tooltip = "Safe Clamp values for base rendering. Lower is safer but can clamp HDR values.",
         .min = 100.f,
