@@ -90,7 +90,7 @@ void main(
   r0.xy = v1.xy * UvScaleBias.xy + UvScaleBias.zw;
   r0.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, r0.xy, 0).xyz;
   r1.xyz = ToneFactor.xxx * r0.xyz;
-  r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
+  r0.xyz =  -r0.xyz * ToneFactor.xxx + float3(1,1,1);
   r2.xy = v1.xy * float2(1,-1) + float2(0,1);
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
   r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
@@ -103,10 +103,10 @@ void main(
   r3.xyz = r2.xyz * r2.www;
   r2.xyz = r2.xyz * r2.www + r0.xyz;
   r0.xyz = r3.xyz * r1.xyz + r0.xyz;
-  // r0.xyz = r0.xyz + -r2.xyz;
-  // o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
+  r0.xyz = r0.xyz + -r2.xyz;
+  o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
 
-  o0.rgb = 0.5f * (r2.rgb + r0.rgb);
+  // o0.rgb = 0.5f * (r2.rgb + r0.rgb);
   o0.rgb = decodeColor(o0.rgb);
   bloom = decodeColor(bloom);
   o0.rgb = hdrScreenBlend(o0.rgb, bloom);

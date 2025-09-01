@@ -105,7 +105,7 @@ void main(
   r0.xyz = -r0.xyz * ToneFactor.xxx + float3(1,1,1);
   r2.xy = v1.xy * float2(1,-1) + float2(0,1);
   r2.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  // r2.xyz = GlowIntensity.www * r2.xyz;
+  r2.xyz = GlowIntensity.www * r2.xyz;
   float3 bloom = r2.rgb;
   // r0.xyz = r2.xyz * r0.xyz + r1.xyz;
   r0.xyz = r1.xyz;

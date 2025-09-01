@@ -725,8 +725,10 @@ renodx::utils::settings::Settings settings = {
         .section = "Color Space",
         .tooltip = "Hue-shift emulation strength.",
         .labels = {"BT709", "BT2020"},
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 2; },
+        // .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .is_enabled = []() { return false; },
+        // .is_visible = []() { return current_settings_mode >= 2; },
+        .is_visible = []() { return false; },
     },
     // new renodx::utils::settings::Setting{
     //     .key = "ToneMapClampPeak",

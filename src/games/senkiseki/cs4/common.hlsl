@@ -488,11 +488,28 @@ float3 srgbEncode(float3 color) {
 float3 hdrScreenBlend(float3 base, float3 blend, float strength = 1.0f) {
 
   blend *= strength; 
+  // if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
+  //   base = renodx::color::bt2020::from::BT709(base);
+  //   blend = renodx::color::bt2020::from::BT709(blend);
+  // } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
+  //   base = renodx::color::ap1::from::BT709(base);
+  //   blend = renodx::color::ap1::from::BT709(blend);
+  // }
+
+  base = max(0.f, base);
+  blend = max(0.f, blend);
 
   float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
   // float3 addition = blend; 
   // blending like this better. 
   float3 output = base + addition;
+
+  // if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
+  //   output = renodx::color::bt709::from::BT2020(output);
+  // } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
+  //   output = renodx::color::bt709::from::AP1(output);
+  // }
+
   return output;
   
 }
