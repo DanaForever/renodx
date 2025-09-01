@@ -1,4 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sun Aug 31 00:00:15 2025
+// ---- Created with 3Dmigoto v1.3.16 on Sun Aug 31 02:25:12 2025
 #include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
@@ -107,35 +107,31 @@ void main(
   r0.y = DofParams.z * r0.y;
   r1.xyz = FocusBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyz;
   r2.xyz = ColorBuffer.SampleLevel(LinearClampSamplerState_s, w1.xy, 0).xyz;
-
   r1.xyz = -r2.xyz + r1.xyz;
   r0.yzw = r0.yyy * r1.xyz + r2.xyz;
   r1.xyz = ToneFactor.xxx * r0.yzw;
   r0.yzw = -r0.yzw * ToneFactor.xxx + float3(1,1,1);
   r2.xy = v1.xy * float2(1,-1) + float2(0,1);
   r3.xyz = GlareBuffer.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyz;
-  float3 glare = r3.rgb;
   r2.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
-  float3 filter = r3.rgb;
   r2.xyzw = FilterColor.xyzw * r2.xyzw;
   r2.xyz = r2.xyz * r2.www;
   r3.xyz = GlowIntensity.www * r3.xyz;
   float3 bloom = r3.rgb;
-  // r0.yzw = r3.xyz * r0.yzw + r1.xyz;
-  r0.yzw = r1.xyz;
+
+  r0.yzw = r3.xyz * r0.yzw + r1.xyz;
   r1.xyz = float3(1,1,1) + -r0.yzw;
   r3.xyz = r2.xyz * r0.xxx;
-  r2.xyz = r3.xyz + r0.yzw;
+  r2.xyz = r2.xyz * r0.xxx + r0.yzw;
   r0.xyz = r3.xyz * r1.xyz + r0.yzw;
+  r0.xyz = r0.xyz + -r2.xyz;
+  o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
 
-  
-  // r0.xyz = r0.xyz + -r2.xyz;
-  // o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
-
-  o0.rgb = 0.5f * (r2.rgb + r0.rgb);
   o0.rgb = decodeColor(o0.rgb);
   bloom = decodeColor(bloom);
   o0.rgb = hdrScreenBlend(o0.rgb, bloom);
+
+  // o0.rgb = filterBlend(o0.rgb, filter);
   o0.rgb = processAndToneMap(o0.rgb);
 
   o0.w = 1;

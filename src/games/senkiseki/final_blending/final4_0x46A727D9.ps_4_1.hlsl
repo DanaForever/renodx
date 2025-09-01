@@ -122,8 +122,6 @@ void main(
   // o0.xyz = r1.xyz * float3(0.5,0.5,0.5) + r0.xyz;
 
   o0.rgb = 0.5f * (r2.rgb + r0.rgb);
-  // r0.xyz = r0.xyz + -r2.xyz;
-  // o0.xyz = r0.xyz * float3(0.5,0.5,0.5) + r2.xyz;
   o0.rgb = decodeColor(o0.rgb);
   bloom = decodeColor(bloom);
   o0.rgb = hdrScreenBlend(o0.rgb, bloom);

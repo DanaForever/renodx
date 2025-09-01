@@ -520,6 +520,27 @@ float3 hdrBlend(float3 base, float3 blend, float strength = 1.0f) {
   return base + strength * blend / ( 1.f + base);
 }
 
+float3 fadingBlend(float3 base, float3 fadeColor, float strength, bool decode = true) {
+
+  if (decode)
+    fadeColor = decodeColor(fadeColor);
+
+  fadeColor = max(0.f, fadeColor);
+
+  return lerp(base, fadeColor, saturate(strength));
+}
+
+float3 filterBlend(float3 base, float3 filter, bool decode = true)  {
+
+  if (decode)
+    filter = decodeColor(filter);
+
+  float3 add = base + filter;
+  float3 blend = hdrScreenBlend(base, filter, 1.0f);
+
+  return (add + blend) * 0.5f;
+}
+
 // float3 hdrBlendSum(float3 base, float3 blend, float strength = 1.0f) {
 
 //   return base + strength * blend;
