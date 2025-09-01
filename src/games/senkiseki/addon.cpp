@@ -297,6 +297,8 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x01906E4B), // lantern
     CustomShaderEntry(0x4C831242), // lantern 
     CustomShaderEntry(0xCD0D39E7), // light
+    CustomShaderEntry(0x124B65AE), // mcburn effect
+    CustomShaderEntry(0x80752CEC), // mcburn effect
     
 
     // CS3
@@ -317,6 +319,63 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x0161438C), // CS3 final 10
     CustomShaderEntry(0x01E1FF0F), // CS3 final 11
     CustomShaderEntry(0x02E4863E), // CS3 final 12
+    CustomShaderEntry(0x0EBE33EC), // CS3 final 13
+    CustomShaderEntry(0x11CAE0E6), // CS3 final 14
+    CustomShaderEntry(0x1486065D), // CS3 final 15
+    CustomShaderEntry(0x160A4895), // CS3 final 16
+    CustomShaderEntry(0x167A12F5), // CS3 final 17
+    CustomShaderEntry(0x1D403F97), // CS3 final 18
+    CustomShaderEntry(0x1EDECCEC), // CS3 final 19
+    CustomShaderEntry(0x215168AB), // CS3 final 20
+    CustomShaderEntry(0x2594FB2C), // CS3 final 21
+    CustomShaderEntry(0x269DDBDF), // CS3 final 22
+    CustomShaderEntry(0x281F2814), // CS3 final 23
+    CustomShaderEntry(0x31E727B4), // CS3 final 24
+    CustomShaderEntry(0x3415A1BE), // CS3 final 25
+    CustomShaderEntry(0x34EAE8B6), // CS3 final 26
+    CustomShaderEntry(0x38BB9A49), // CS3 final 27
+    CustomShaderEntry(0x3FB18938), // CS3 final 28
+    CustomShaderEntry(0x513CF99F), // CS3 final 29
+    CustomShaderEntry(0x517BF7B2), // CS3 final 30
+    CustomShaderEntry(0x51DB8AC5), // CS3 final 31
+    CustomShaderEntry(0x52DBC392), // CS3 final 32
+    CustomShaderEntry(0x53B8577C), // CS3 final 33
+    CustomShaderEntry(0x5A1C72D5), // CS3 final 34
+    CustomShaderEntry(0x5BBE9F57), // CS3 final 35
+    CustomShaderEntry(0x67F0BD68), // CS3 final 36
+    CustomShaderEntry(0x6C550D4F), // CS3 final 37
+    CustomShaderEntry(0x78F1AC05), // CS3 final 38
+    CustomShaderEntry(0x884D23A7), // CS3 final 39
+    CustomShaderEntry(0x8923A287), // CS3 final 40
+    CustomShaderEntry(0x8BDD1E5D), // CS3 final 41
+    CustomShaderEntry(0x90180FAF), // CS3 final 42
+    CustomShaderEntry(0x9655B4B2), // CS3 final 43
+    CustomShaderEntry(0x97EB039C), // CS3 final 44
+    CustomShaderEntry(0x9B0A1C60), // CS3 final 45
+    CustomShaderEntry(0xA4945FF3), // CS3 final 46
+    CustomShaderEntry(0xA4D9C6FD), // CS3 final 47
+    CustomShaderEntry(0xA671C250), // CS3 final 48
+    CustomShaderEntry(0xA9F09088), // CS3 final 49
+    CustomShaderEntry(0xABE9BEE1), // CS3 final 50
+    CustomShaderEntry(0xAC84E828), // CS3 final 51
+    CustomShaderEntry(0xACFCDFC2), // CS3 final 52
+    CustomShaderEntry(0xB32BC083), // CS3 final 53
+    CustomShaderEntry(0xB3BF88B3), // CS3 final 54
+    CustomShaderEntry(0xB78778F5), // CS3 final 55
+    CustomShaderEntry(0xBA62ACD7), // CS3 final 56
+    CustomShaderEntry(0xC2DFA434), // CS3 final 57
+    CustomShaderEntry(0xCED8E8A8), // CS3 final 58
+    CustomShaderEntry(0xCFF51135), // CS3 final 59
+    CustomShaderEntry(0xD7BC302F), // CS3 final 60
+    CustomShaderEntry(0xD8F91B51), // CS3 final 61
+    CustomShaderEntry(0xE0E54773), // CS3 final 62
+    CustomShaderEntry(0xE13AAD9B), // CS3 final 63
+    CustomShaderEntry(0xE2FC9C22), // CS3 final 64
+    CustomShaderEntry(0xE52B3C27), // CS3 final 65
+    CustomShaderEntry(0xE742F2C3), // CS3 final 66
+    CustomShaderEntry(0xEC64A31A), // CS3 final 67
+    CustomShaderEntry(0xEFAC375C), // CS3 final 68
+    CustomShaderEntry(0xEFC9A329), // CS3 final 69
 
 
     CustomShaderEntry(0x547D8B6A), // dragon boss

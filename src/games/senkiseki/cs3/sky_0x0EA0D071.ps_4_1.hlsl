@@ -95,7 +95,7 @@ void main(
   r0.xyz = r0.xyz * UVaMUvColor.xyz + -r1.xyz;
   r0.xyz = r0.www * r0.xyz + r1.xyz;
   r1.xyz = max(float3(1,1,1), scene.GlobalAmbientColor.xyz);
-  r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
+  // r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
   r1.xyz = v1.xyz * r1.xyz;
   r0.xyz = r1.xyz * r0.xyz;
   r0.xyz = r0.xyz * GameMaterialDiffuse.xyz + GameMaterialEmission.xyz;
