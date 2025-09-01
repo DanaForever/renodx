@@ -392,6 +392,8 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xD589DF82), // sky
     CustomShaderEntry(0x523978D3), // lantern 5
     CustomShaderEntry(0xCDCBC858), // window light
+    CustomShaderEntry(0xC7E8E2F6), // hbao
+    CustomShaderEntry(0x036B0D74), // ao
     
     // CustomSwapchainShader(0x00000000),
     // BypassShaderEntry(0x00000000)
