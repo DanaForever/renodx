@@ -572,6 +572,6 @@ void main(
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   o0.w = r0.w;
 
-  o0 = saturate(o0);
+  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   return;
 }

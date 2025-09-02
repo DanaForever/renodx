@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Tue Aug 26 23:29:31 2025
-
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -609,7 +609,7 @@ void main(
   o0.xyz = r0.xyz;
   o2.w = MaskEps;
 
-  o0 = saturate(o0);
+  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   o1 = saturate(o1);
   o2 = saturate(o2);
   return;

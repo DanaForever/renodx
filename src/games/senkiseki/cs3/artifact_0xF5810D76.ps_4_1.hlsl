@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sun Aug 31 21:49:36 2025
-
+#include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
   uint4 DuranteSettings : packoffset(c0);
@@ -695,7 +695,7 @@ void main(
   o1.w = 0.75;
   o2.w = 0;
 
-  o0 = saturate(o0);
+  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   o1 = saturate(o1);
   o2 = saturate(o2);
   return;

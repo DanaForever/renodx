@@ -230,9 +230,9 @@ float3 SDRTonemap(float3 color) {
     sdr_color = renodx::tonemap::Reinhard(max(color, 0.f));
   } else if (tone_map_hue_correction_method == 3.f) {
     sdr_color = renodx::tonemap::uncharted2::BT709(max(color, 0.f));
-  } else if (tone_map_hue_correction_method == 3.f) {
-    sdr_color = renodx::tonemap::ACESFittedAP1(color);
   } else if (tone_map_hue_correction_method == 4.f) {
+    sdr_color = renodx::tonemap::ACESFittedAP1(color);
+  } else if (tone_map_hue_correction_method == 5.f) {
     sdr_color = saturate(color);
   }
 
@@ -280,17 +280,13 @@ float3 correctHue(float3 color, float3 correctColor) {
     return color;
   }
 
-  float3 sdrColor = SDRTonemap(correctColor);
-
-  // this fixes the math error artifacts 
-  color = renodx::color::bt709::clamp::BT709(color);
-
   // float hue_correction_strength = saturate(renodx::color::y::from::BT709(color));
   float hue_correction_strength = RENODX_TONE_MAP_HUE_CORRECTION;
 
-  color = renodx::color::correct::Hue(color, sdrColor,
-                                      hue_correction_strength,
-                                      RENODX_TONE_MAP_HUE_PROCESSOR);
+  if (hue_correction_strength > 0.f)  
+    color = renodx::color::correct::Hue(color, correctColor,
+                                        hue_correction_strength,
+                                        RENODX_TONE_MAP_HUE_PROCESSOR);
 
 
   return color;
@@ -379,8 +375,10 @@ float3 ToneMap(float3 color) {
 }
 
 float3 processAndToneMap(float3 color) {
+
+  float3 sdrColor = SDRTonemap(color);
   color = ToneMap(color);
-  color = correctHue(color, color);
+  color = correctHue(color, sdrColor);
   color = expandColorGamut(color);
   
   // color = renodx::draw::RenderIntermediatePass(color);
@@ -542,3 +540,10 @@ float3 filterBlend(float3 base, float3 filter, bool decode = true)  {
 
 //   return base + strength * blend;
 // }
+
+float3 lightToneMap(float3 color) {
+
+  color = max(0.f, color);
+  color = renodx::tonemap::dice::BT709(color, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS, 0.5f);
+  return color;
+}

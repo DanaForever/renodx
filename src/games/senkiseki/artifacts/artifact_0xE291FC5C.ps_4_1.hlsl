@@ -614,7 +614,7 @@ void main(
   o2.xyz = float3(0.00390625,0.00390625,1) * r1.xyz;
   o0.xyz = r0.xyz;
 
-  o0 = saturate(o0);
+  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   o2.w = MaskEps;
   return;
 }

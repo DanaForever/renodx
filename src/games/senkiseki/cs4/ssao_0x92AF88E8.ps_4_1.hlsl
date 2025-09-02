@@ -101,6 +101,6 @@ void main(
   o0.w = r2.w;
   o0.xyz = r0.xxx * r1.xyz + r0.yzw;
 
-  // o0 = saturate(o0);
+  // o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   return;
 }

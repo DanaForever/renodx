@@ -1096,9 +1096,29 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             // .ignore_size = true,
             .usage_include = reshade::api::resource_usage::render_target
         });
+        
+
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::b8g8r8a8_unorm,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     // .use_resource_view_cloning = true,
+        //     .use_resource_view_cloning = true,
+        //     .use_resource_view_hot_swap = true,
+        //     .aspect_ratio = 1.f,
+        //     // .ignore_size = true,
+        //     .usage_include = reshade::api::resource_usage::shader_resource
+        // });
+
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //   .old_format = reshade::api::format::r8g8b8a8_unorm,
+        //   .new_format = reshade::api::format::r16g16b16a16_float,
+        //   .use_resource_view_cloning = true,
+        //   .use_resource_view_hot_swap = true,
+        //   .aspect_ratio = 1.f,
+        // });
 
 
-        bool is_hdr10 = false;
+        bool is_hdr10 = true;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);
         renodx::mods::swapchain::use_resize_buffer = false;
         shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;

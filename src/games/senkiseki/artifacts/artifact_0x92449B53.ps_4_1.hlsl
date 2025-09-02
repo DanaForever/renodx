@@ -595,7 +595,6 @@ void main(
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
   o0.w = r1.w;
 
-  // o0 = saturate(o0);
   o0.w = max(o0.w, 0.f);
   // o1 = saturate(o1);
   // o2 = saturate(o2);

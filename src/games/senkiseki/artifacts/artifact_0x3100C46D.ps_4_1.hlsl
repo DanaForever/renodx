@@ -624,7 +624,6 @@ void main(
   o0.xyz = r0.xyz;
   o2.w = MaskEps;
 
-  // o0 = saturate(o0);
   o0 = clamp(o0, 0.f, shader_injection.safe_clamp);
   o1 = saturate(o1);
   o2 = saturate(o2);

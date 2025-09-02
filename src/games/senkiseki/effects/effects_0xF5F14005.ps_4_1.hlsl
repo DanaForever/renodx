@@ -145,7 +145,8 @@ void main(
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
 
-  // o0 = saturate(o0);
-  o0.rgb = clamp(o0.rgb, 0.f, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
+  // o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
+  // o0.rgb = clamp(o0.rgb, 0.f, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
+  o0.rgb = lightToneMap(o0.rgb);
   return;
 }

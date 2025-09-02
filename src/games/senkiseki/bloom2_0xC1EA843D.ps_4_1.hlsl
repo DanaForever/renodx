@@ -37,8 +37,7 @@ void main(
   r1 = processBloomBuffer(r1);
   o0.xyzw = r1.xyzw * float4(0.100000001, 0.100000001, 0.100000001, 0.100000001) + r0.xyzw;
   o0.rgb = max(o0.rgb, 0.f);
-  // o0 = clamp(o0, 0.f, shader_injection.safe_clamp);
-  // o0 = saturate(o0);
+
 
   return;
 }

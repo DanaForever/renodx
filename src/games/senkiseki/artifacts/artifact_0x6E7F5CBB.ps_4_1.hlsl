@@ -263,6 +263,6 @@ void main(
   o0.w = r1.w;
 
   // o0 = max(o0, 0.f);
-  o0 = saturate(o0);
+  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   return;
 }

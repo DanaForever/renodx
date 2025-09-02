@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Sat Jun 21 00:36:27 2025
-
+#include "cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
 
@@ -110,6 +110,7 @@ void main(
   r0.y = r0.w ? r0.z : r0.y;
   r0.y = 1 + -r0.y;
   r1.xyzw = AOColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
+  r1.rgb = decodeColor(r1.rgb);
   r2.xyz = float3(-0.929411769,-0.854901969,-0.709803939) + r1.xyz;
   r0.z = dot(r2.xyz, r2.xyz);
   r0.z = sqrt(r0.z);
@@ -130,6 +131,8 @@ void main(
   o0.xyz = r0.xxx * r1.xyz;
   o0.w = r1.w;
 
-  o0 = saturate(o0);
+  o0.rgb = encodeColor(o0.rgb);
+
+  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   return;
 }

@@ -102,8 +102,8 @@ void main(
   float4 fDest;
 
   r0.xyzw = TextureSampler.Sample(VariableSamplerState_s, v3.xy).xyzw;
-  
   r1.x = r0.w * v1.w + -inputAlphaThreshold;
+
   r0.xyzw = v1.xyzw * r0.xyzw;
   r1.x = cmp(r1.x < 0);
   // if (r1.x != 0) discard;
@@ -113,6 +113,6 @@ void main(
   // o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
   o0.rgb = clamp(o0.rgb, FLT_MIN, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
 
-  // o0 = saturate(o0);
+  // o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   return;
 }

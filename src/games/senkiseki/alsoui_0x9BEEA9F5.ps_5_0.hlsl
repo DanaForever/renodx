@@ -18,6 +18,5 @@ void main(
 {
   o0.xyzw = Color.xyzw;
 
-  // o0 = saturate(o0);
   return;
 }
