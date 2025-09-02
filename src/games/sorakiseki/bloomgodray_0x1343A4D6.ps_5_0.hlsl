@@ -20,10 +20,16 @@ Texture2D<float4> godrayTexture : register(t1);
 
 float3 hdrScreenBlend(float3 base, float3 blend) {
 
+  blend = max(0.f, blend);
   blend *= shader_injection.bloom_strength; 
 
-  float3 bloom = base + (blend / (1.f + base));
-  return bloom;
+  // float3 bloom = base + (blend / (1.f + base));
+
+  base = max(0.f, base);
+  
+  float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
+
+  return base + addition;
   
 }
 

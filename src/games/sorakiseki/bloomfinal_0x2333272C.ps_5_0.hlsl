@@ -83,10 +83,10 @@ void main(
   r0.x = sqrt(r0.x);
   r0.x = min(1, r0.x);
   r0.x = 1 + -r0.x;
-  // r0.x = log2(r0.x);
-  // r0.x = centricSharpness_g * r0.x;
-  // r0.x = exp2(r0.x);
-  r0.x = renodx::math::SafePow(r0.x, centricSharpness_g);
+  r0.x = log2(r0.x);
+  r0.x = centricSharpness_g * r0.x;
+  r0.x = exp2(r0.x);
+  // r0.x = renodx::math::SafePow(r0.x, centricSharpness_g);
   r0.yz = blurCenter_g.xy + float2(-0.5,-0.5);
   r0.y = dot(r0.yz, r0.yz);
   r0.y = sqrt(r0.y);

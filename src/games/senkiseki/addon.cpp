@@ -145,6 +145,9 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x5B6BFD59), // artifact
     CustomShaderEntry(0x6F6DE38C), // artifact
     CustomShaderEntry(0xF5810D76), // artifact
+    CustomShaderEntry(0x9CCE33D1), // artifact
+    CustomShaderEntry(0xB68A3D3F), // artifact
+    CustomShaderEntry(0x3100C46D), // artifact
     
     
 };
@@ -299,6 +302,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xCD0D39E7), // light
     CustomShaderEntry(0x124B65AE), // mcburn effect
     CustomShaderEntry(0x80752CEC), // mcburn effect
+    CustomShaderEntry(0xBF10EB11), // ssao
     
 
     // CS3
@@ -1063,6 +1067,25 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_index = 13;
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
+        
+        // Note: using proxy shaders break CS4's HUD
+        
+        // renodx::mods::swapchain::swap_chain_proxy_shaders = {
+        //     {
+        //         reshade::api::device_api::d3d11,
+        //         {
+        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
+        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
+        //         },
+        //     },
+        //     {
+        //         reshade::api::device_api::d3d12,
+        //         {
+        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
+        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
+        //         },
+        //     },
+        // };
 
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
