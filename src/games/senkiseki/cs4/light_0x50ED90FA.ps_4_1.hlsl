@@ -155,7 +155,7 @@ void main(
   r1.x = max(0.00100000005, Light0.m_colorIntensity.z);
   r0.w = max(r1.x, r0.w);
   r1.xyz = Light0.m_colorIntensity.xyz / r0.www;
-  r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
+  // r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
   r1.xyz = v1.xyz * r1.xyz;
   r2.xyz = r1.xyz * r0.xyz;
   r0.xyzw = GameMaterialDiffuse.xyzw * r2.xyzw;

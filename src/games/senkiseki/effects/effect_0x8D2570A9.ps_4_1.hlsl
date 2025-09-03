@@ -1,6 +1,7 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Jul 19 18:24:19 2025
-#include "../shared.h"
+// ---- Created with 3Dmigoto v1.3.16 on Wed Sep 03 17:47:22 2025
 #include "../cs4/common.hlsl"
+// Cedric's scraft effect
+
 cbuffer _Globals : register(b0)
 {
 
@@ -120,8 +121,7 @@ void main(
   r1.xyz = r1.xyz * -r2.www + -r2.xyz;
   r1.w = 1 + -abs(r1.w);
   r1.w = max(0, r1.w);
-  float l = r1.w;
-  // r1.w = log2(r1.w);
+  r1.w = log2(r1.w);
   r2.x = dot(r1.xyz, scene.View._m00_m10_m20);
   r2.y = dot(r1.xyz, scene.View._m01_m11_m21);
   r1.xy = v0.xy / scene.ViewportWidthHeight.xy;
@@ -133,14 +133,12 @@ void main(
   r1.xyz = RefractionTexture.Sample(LinearClampSamplerState_s, r1.xy).xyz;
   r0.xyz = -r1.xyz + r0.xyz;
   r0.w = v1.w * r0.w;
-  // r2.x = RimLitPower * r1.w;
-  // r1.w = PointLightColor.x * r1.w;
-  // r1.w = exp2(r1.w);
-  r2.x = renodx::math::SafePow(l, RimLitPower);
-  r1.w = renodx::math::SafePow(l, PointLightColor.x);
+  r2.x = RimLitPower * r1.w;
+  r1.w = PointLightColor.x * r1.w;
+  r1.w = exp2(r1.w);
   r1.w = -1 + r1.w;
   r1.w = PointLightColor.y * r1.w + 1;
-  // r2.x = exp2(r2.x);
+  r2.x = exp2(r2.x);
   r2.x = -r2.x * RimLitIntensity + 1;
   r2.w = r2.x * r0.w;
   r0.w = PointLightParams.w * r2.w;
@@ -149,7 +147,8 @@ void main(
   r1.x = max(0.00100000005, Light0.m_colorIntensity.z);
   r0.w = max(r1.x, r0.w);
   r1.xyz = Light0.m_colorIntensity.xyz / r0.www;
-  // r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
+  r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
+  r1.xyz = max(scene.GlobalAmbientColor.xyz, r1.xyz);
   r1.xyz = v1.xyz * r1.xyz;
   r3.xyz = r1.xyz * r0.xyz;
   r0.xyz = -r0.xyz * r1.xyz + r0.xyz;
@@ -160,7 +159,7 @@ void main(
   r0.xyz = GameMaterialEmission.xyz * r1.www + r0.xyz;
   o0.w = r0.w;
   // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.w = calculateLuminanceSRGB(r0.xyz);
+  r0.w = calculateLuminanceSRGB(r0.rgb);
   r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;

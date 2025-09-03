@@ -116,7 +116,7 @@ void main(
   r2.w = v1.w * r1.w;
   r0.xyz = r2.www * r1.xyz + r0.xyz;
   r1.xyz = max(float3(1,1,1), scene.GlobalAmbientColor.xyz);
-  r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
+  // r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
   r1.xyz = v1.xyz * r1.xyz;
   r2.xyz = r1.xyz * r0.xyz;
   r0.xyzw = GameMaterialDiffuse.xyzw * r2.xyzw;

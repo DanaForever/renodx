@@ -102,12 +102,9 @@ void main(
   float4 fDest;
 
   r0.xyzw = TextureSampler.Sample(VariableSamplerState_s, v3.xy).xyzw;
-  r0.rgb = processColorBuffer(r0.rgb);
   r1.xyzw = Texture1Sampler.Sample(VariableSamplerState1_s, w3.xy).xyzw;
-  r1.rgb = processColorBuffer(r1.rgb);
   r0.xyzw = r1.xyzw * r0.xyzw;
   r1.xyzw = Texture2Sampler.Sample(VariableSamplerState2_s, v4.xy).xyzw;
-  r1.rgb = processColorBuffer(r1.rgb);
   r0.xyzw = r1.xyzw * r0.xyzw;
   r1.x = r0.w * v1.w + -inputAlphaThreshold;
   r0.xyzw = v1.xyzw * r0.xyzw;
@@ -115,8 +112,6 @@ void main(
   if (r1.x != 0) discard;
   o0.xyz = v2.xyz * v2.www + r0.xyz;
   o0.w = r0.w;
-
-  o0 = max(o0, 0.f);
 
   return;
 }

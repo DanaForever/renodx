@@ -93,7 +93,7 @@ void main(
   r1.x = cmp(r1.x < 0);
   if (r1.x != 0) discard;
   r1.xyz = max(float3(1,1,1), scene.GlobalAmbientColor.xyz);
-  r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
+  // r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
   r1.xyz = v1.xyz * r1.xyz;
   r1.xyz = r1.xyz * r0.xyz;
   r1.w = v1.w * r0.w;

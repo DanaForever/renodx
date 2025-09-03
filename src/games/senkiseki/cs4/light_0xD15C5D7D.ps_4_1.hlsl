@@ -121,7 +121,7 @@ void main(
   r1.z = max(0.00100000005, Light0.m_colorIntensity.z);
   r1.y = max(r1.y, r1.z);
   r1.yzw = Light0.m_colorIntensity.xyz / r1.yyy;
-  r1.yzw = min(float3(1.5,1.5,1.5), r1.yzw);
+  // r1.yzw = min(float3(1.5,1.5,1.5), r1.yzw);
   r0.w = 1 + -r0.w;
   // r0.w = log2(r0.w);
   // r2.x = RimLitPower * r0.w;

@@ -109,7 +109,7 @@ void main(
   r0.x = PointLightColor.y * r0.x + 1;
   r0.xyz = GameMaterialEmission.xyz * r0.xxx;
   r1.xyz = max(float3(1,1,1), scene.GlobalAmbientColor.xyz);
-  r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
+  // r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
   r1.xyz = v1.xyz * r1.xyz;
   r2.xyz = DiffuseMapSampler.Sample(DiffuseMapSamplerSampler_s, v3.xy).xyz;
   r1.xyz = r2.xyz * r1.xyz;

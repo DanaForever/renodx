@@ -82,10 +82,10 @@ void main(
   r0.y = r0.y + r1.y;
   r0.x = r1.y * r1.x + r0.x;
   r0.x = saturate(r0.x / r0.y);
-  // r0.x = log2(r0.x);
-  // r0.x = cb0[4].z * r0.x;
-  // o0.xyzw = exp2(r0.xxxx);
-  o0 = renodx::math::SafePow(r0.x, cb0[4].z);
+  r0.x = log2(r0.x);
+  r0.x = cb0[4].z * r0.x;
+  o0.xyzw = exp2(r0.xxxx);
+  // o0 = renodx::math::SafePow(r0.x, cb0[4].z);
   // o0.y = renodx::math::SafePow(r0.x, cb0[4].z);
   // o0.z = renodx::math::SafePow(r0.x, cb0[4].z);
   // o0.w = renodx::math::SafePow(r0.x, cb0[4].z);

@@ -97,7 +97,8 @@ void main(
   r3.xyz = GlowIntensity.www * r3.xyz;
   float3 bloom = r3.xyz;
   
-  r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
+  r0.xyz = r1.xyz;
   r1.xyz = float3(1,1,1) + -r0.xyz;
   r3.xyzw = FilterTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;
   r2.xyzw = FadingTexture.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).xyzw;

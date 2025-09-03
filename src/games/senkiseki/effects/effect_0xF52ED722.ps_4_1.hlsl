@@ -153,7 +153,7 @@ void main(
   r1.y = max(0.00100000005, Light0.m_colorIntensity.z);
   r0.w = max(r1.y, r0.w);
   r1.yzw = Light0.m_colorIntensity.xyz / r0.www;
-  r1.yzw = min(float3(1.5,1.5,1.5), r1.yzw);
+  // r1.yzw = min(float3(1.5,1.5,1.5), r1.yzw);
   r1.yzw = max(scene.GlobalAmbientColor.xyz, r1.yzw);
   r1.yzw = v1.xyz * r1.yzw;
   r3.xyz = r1.yzw * r0.xyz;

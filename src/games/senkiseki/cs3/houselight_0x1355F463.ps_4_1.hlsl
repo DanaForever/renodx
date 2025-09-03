@@ -88,7 +88,7 @@ void main(
   float4 fDest;
 
   r0.xyz = max(float3(1,1,1), scene.GlobalAmbientColor.xyz);
-  r0.xyz = min(float3(1.5,1.5,1.5), r0.xyz);
+  // r0.xyz = min(float3(1.5,1.5,1.5), r0.xyz);
   r0.xyz = v1.xyz * r0.xyz;
   r1.xyz = DiffuseMapSampler.Sample(DiffuseMapSamplerSampler_s, v3.xy).xyz;
   r0.xyz = r1.xyz * r0.xyz;

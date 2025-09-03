@@ -160,7 +160,7 @@ void main(
   r1.y = r1.w * 0.5 + 0.5;
   r1.y = r1.y * r1.y;
   r1.yzw = Light0.m_colorIntensity.xyz * r1.yyy + scene.GlobalAmbientColor.xyz;
-  r1.yzw = min(float3(1.5,1.5,1.5), r1.yzw);
+  // r1.yzw = min(float3(1.5,1.5,1.5), r1.yzw);
   r1.yzw = Light0.m_colorIntensity.xyz * r0.www + r1.yzw;
   r1.yzw = v1.xyz * r1.yzw;
   r2.xyz = r1.yzw * r0.xyz;

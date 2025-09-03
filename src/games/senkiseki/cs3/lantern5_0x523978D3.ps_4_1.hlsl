@@ -99,7 +99,7 @@ void main(
   r0.y = max(0.00100000005, Light0.m_colorIntensity.z);
   r0.x = max(r0.x, r0.y);
   r0.xyz = Light0.m_colorIntensity.xyz / r0.xxx;
-  // r0.xyz = min(float3(1.5,1.5,1.5), r0.xyz);
+  // // r0.xyz = min(float3(1.5,1.5,1.5), r0.xyz);
   r0.xyz = max(scene.GlobalAmbientColor.xyz, r0.xyz);
   r0.xyz = v1.xyz * r0.xyz;
   r1.xyz = DiffuseMapSampler.Sample(DiffuseMapSamplerSampler_s, v3.xy).xyz;

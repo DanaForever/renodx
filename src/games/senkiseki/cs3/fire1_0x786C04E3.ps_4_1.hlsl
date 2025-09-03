@@ -1,5 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Jul 19 17:15:16 2025
-#include "../shared.h"
+// ---- Created with 3Dmigoto v1.3.16 on Wed Sep 03 04:44:34 2025
 #include "../cs4/common.hlsl"
 cbuffer _Globals : register(b0)
 {
@@ -64,18 +63,19 @@ cbuffer _Globals : register(b0)
   float4 UVaMUv2Texcoord : packoffset(c59) = {0,0,1,1};
   float4 UVaDuDvTexcoord : packoffset(c60) = {0,0,1,1};
   float AlphaThreshold : packoffset(c61) = {0.5};
-  float3 ShadowColorShift : packoffset(c61.y) = {0.100000001,0.0199999996,0.0199999996};
-  float3 RimLitColor : packoffset(c62) = {1,1,1};
-  float RimLitIntensity : packoffset(c62.w) = {4};
-  float RimLitPower : packoffset(c63) = {2};
-  float RimLightClampFactor : packoffset(c63.y) = {2};
-  float BloomIntensity : packoffset(c63.z) = {1};
-  float4 PointLightParams : packoffset(c64) = {0,0,0,0};
-  float4 PointLightColor : packoffset(c65) = {0,0,0,0};
+  float2 DuDvMapImageSize : packoffset(c61.y) = {256,256};
+  float2 DuDvScale : packoffset(c62) = {4,4};
+  float BloomIntensity : packoffset(c62.z) = {1};
+  float4 PointLightParams : packoffset(c63) = {0,0,0,0};
+  float4 PointLightColor : packoffset(c64) = {0,0,0,0};
 }
 
-SamplerState DiffuseMapSamplerSampler_s : register(s0);
+SamplerState LinearClampSamplerState_s : register(s0);
+SamplerState DiffuseMapSamplerSampler_s : register(s1);
+SamplerState DuDvMapSamplerSampler_s : register(s2);
 Texture2D<float4> DiffuseMapSampler : register(t0);
+Texture2D<float4> DuDvMapSampler : register(t1);
+Texture2D<float4> RefractionTexture : register(t2);
 
 
 // 3Dmigoto declarations
@@ -86,60 +86,51 @@ void main(
   float4 v0 : SV_POSITION0,
   float4 v1 : COLOR0,
   float4 v2 : COLOR1,
-  float4 v3 : TEXCOORD0,
+  float2 v3 : TEXCOORD0,
+  float2 w3 : TEXCOORD5,
   float4 v4 : TEXCOORD1,
   float3 v5 : TEXCOORD4,
   out float4 o0 : SV_TARGET0)
 {
-  float4 r0,r1,r2,r3;
+  float4 r0,r1;
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  r0.xyzw = DiffuseMapSampler.Sample(DiffuseMapSamplerSampler_s, v3.xy).xyzw;
-  r1.x = r0.w * v1.w + -0.00400000019;
-  r1.x = cmp(r1.x < 0);
-  if (r1.x != 0) discard;
-  r1.x = max(Light0.m_colorIntensity.x, Light0.m_colorIntensity.y);
-  r1.y = max(0.00100000005, Light0.m_colorIntensity.z);
-  r1.x = max(r1.x, r1.y);
-  r1.xyz = Light0.m_colorIntensity.xyz / r1.xxx;
+  r0.xy = DuDvMapSampler.Sample(DuDvMapSamplerSampler_s, w3.xy).xy;
+  r0.xy = r0.xy * float2(2,2) + float2(-1,-1);
+  r0.zw = DuDvScale.xy / DuDvMapImageSize.xy;
+  r1.xy = r0.xy * r0.zw + v3.xy;
+  r0.xy = r0.xy * r0.zw;
+  r1.xyzw = DiffuseMapSampler.Sample(DiffuseMapSamplerSampler_s, r1.xy).xyzw;
+  r0.z = r1.w * v1.w + -0.00400000019;
+  r0.z = cmp(r0.z < 0);
+  if (r0.z != 0) discard;
+  r0.zw = scene.ViewportWidthHeight.xy / DuDvMapImageSize.xy;
+  r0.xy = r0.xy * r0.zw;
+  r0.zw = v0.xy / scene.ViewportWidthHeight.xy;
+  r0.xy = r0.zw * v0.ww + r0.xy;
+  r0.xy = r0.xy / v0.ww;
+  r0.xyz = RefractionTexture.Sample(LinearClampSamplerState_s, r0.xy).xyz;
+  r1.xyz = r1.xyz + -r0.xyz;
+  r0.w = v1.w * r1.w;
+  r0.xyz = r0.www * r1.xyz + r0.xyz;
+  r0.w = GameMaterialDiffuse.w * r0.w;
+  o0.w = r0.w;
+  r0.w = max(Light0.m_colorIntensity.x, Light0.m_colorIntensity.y);
+  r1.x = max(0.00100000005, Light0.m_colorIntensity.z);
+  r0.w = max(r1.x, r0.w);
+  r1.xyz = Light0.m_colorIntensity.xyz / r0.www;
   // // r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
-  // r2.xyz = min(float3(1,1,1), r1.xyz);
-  r2.rgb = r1.rgb;
-  r2.xyz = float3(1,1,1) + -r2.xyz;
-  r2.xyz = ShadowColorShift.xyz * r2.xyz;
-  r3.xyz = Light0.m_colorIntensity.xyz + Light0.m_colorIntensity.xyz;
-  r3.xyz = max(float3(1,1,1), r3.xyz);
-  r1.xyz = r2.xyz * r3.xyz + r1.xyz;
   r1.xyz = v1.xyz * r1.xyz;
   r0.xyz = r1.xyz * r0.xyz;
-  r0.w = v1.w * r0.w;
   r0.xyz = r0.xyz * GameMaterialDiffuse.xyz + GameMaterialEmission.xyz;
   r0.xyz = v2.xyz + r0.xyz;
-  // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = calculateLuminanceSRGB(r0.xyz);
-  r1.xyz = r1.xxx * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
-  // r1.xyz = r1.xyz + -r0.xyz;
-  // o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
-  o0.rgb = lerp(r0.rgb, r1.rgb, GameMaterialMonotone);
-  r0.xyz = scene.EyePosition.xyz + -v4.xyz;
-  r1.x = dot(r0.xyz, r0.xyz);
-  r1.x = rsqrt(r1.x);
-  r0.xyz = r1.xxx * r0.xyz;
-  r1.x = dot(v5.xyz, v5.xyz);
-  r1.x = rsqrt(r1.x);
-  r1.xyz = v5.xyz * r1.xxx;
-  r0.x = saturate(dot(r1.xyz, r0.xyz));
-  // r0.x = (dot(r1.xyz, r0.xyz));
-  r0.x = 1 + -r0.x;
-  // r0.x = log2(r0.x);
-  // r0.x = RimLitPower * r0.x;
-  // r0.x = exp2(r0.x);
-  r0.x = renodx::math::SafePow(r0.x, RimLitPower);
-  r0.x = -r0.x * RimLitIntensity + 1;
-  r0.x = r0.w * r0.x;
-  r0.x = GameMaterialDiffuse.w * r0.x;
-  o0.w = r0.x;
+  r0.xyz = v2.www * -r0.xyz + r0.xyz;
+  // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r0.w = calculateLuminanceSRGB(r0.rgb);
+  r1.xyz = r0.www * scene.MonotoneMul.xyz + scene.MonotoneAdd.xyz;
+  r1.xyz = r1.xyz + -r0.xyz;
+  o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
 
   o0.w = max(o0.w, 0.f);
   return;

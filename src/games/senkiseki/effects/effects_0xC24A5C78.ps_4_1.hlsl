@@ -181,7 +181,7 @@ void main(
   r2.y = 0;
   r1.x = CartoonMapSampler.SampleLevel(LinearClampSamplerState_s, r2.xy, 0).x;
   r1.xyz = Light0.m_colorIntensity.xyz * r1.xxx + scene.GlobalAmbientColor.xyz;
-  r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
+  // r1.xyz = min(float3(1.5,1.5,1.5), r1.xyz);
   r2.xyz = min(float3(1,1,1), r1.xyz);
   r2.xyz = float3(1,1,1) + -r2.xyz;
   r2.xyz = ShadowColorShift.xyz * r2.xyz;

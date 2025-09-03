@@ -303,6 +303,9 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x124B65AE), // mcburn effect
     CustomShaderEntry(0x80752CEC), // mcburn effect
     CustomShaderEntry(0xBF10EB11), // ssao
+    CustomShaderEntry(0x6FFD6C4A), // effect
+    CustomShaderEntry(0x8D2570A9), // effect
+
     
 
     // CS3
@@ -398,6 +401,8 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xCDCBC858), // window light
     CustomShaderEntry(0xC7E8E2F6), // hbao
     CustomShaderEntry(0x036B0D74), // ao
+    CustomShaderEntry(0x786C04E3), // fire 1
+    CustomShaderEntry(0x1132F020), // fire 2
     
     // CustomSwapchainShader(0x00000000),
     // BypassShaderEntry(0x00000000)
