@@ -31,15 +31,12 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xEA80BE9C), // ao
     CustomShaderEntry(0xAD69DC2B), // sky
     CustomShaderEntry(0x2026566A), // smoke
-    // CustomShaderEntry(0xC006C898), // final_taa
-    // CustomShaderEntry(0x2179DAD2), // lut builder
-    // CustomShaderEntry(0xCA80A1BE), // lut builder
-    // CustomShaderEntry(0x18F043C6), // lut builder
-    // CustomShaderEntry(0x27777E76), // lut builder
-    // CustomShaderEntry(0xF2945EFB), // lut builder
-    // CustomShaderEntry(0xE6C6A918), // fmv
-    // CustomShaderEntry(0x14C532E6), // ui
-    // CustomShaderEntry(0x645078BA), // ui
+    
+
+    //  Kuro
+    // CustomShaderEntry(0xAD51B4B0), // Kuro final
+    // CustomShaderEntry(0x28FFFB4A), // Kuro tonemap
+    // CustomShaderEntry(0x034581D3), // Kuro overlay blending
     // CustomSwapchainShader(0x00000000),
     // BypassShaderEntry(0x00000000)
 };
@@ -69,6 +66,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Game Settings",
         .tooltip = "The game defaults to 2.3 Gamma.",
         .labels = {"Falcom (2.3)", "sRGB"},
+        .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "bloom",
@@ -86,7 +84,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "fxBloom",
         .binding = &shader_injection.bloom_strength,
-        .default_value = 50.f,
+        .default_value = 100.f,
         .label = "Bloom Strength",
         .section = "Game Settings",
         .tooltip = "Controls Bloom Strength",
@@ -95,9 +93,9 @@ renodx::utils::settings::Settings settings = {
         .is_visible = []() { return shader_injection.bloom == 1; },
     },
     new renodx::utils::settings::Setting{
-        .key = "ToneMapHueCorrection",
+        .key = "fxBloomCorrection",
         .binding = &shader_injection.bloom_hue_correction,
-        .default_value = 50.f,
+        .default_value = 25.f,
         .label = "Bloom Color Correction",
         .section = "Game Settings",
         .tooltip = "Correcting the colors after rewriting the Bloom.",
@@ -155,11 +153,11 @@ renodx::utils::settings::Settings settings = {
         .key = "GammaCorrection",
         .binding = &shader_injection.gamma_correction,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
+        .default_value = 3.f,
         .label = "Gamma Correction",
         .section = "Tone Mapping",
         .tooltip = "Emulates a display EOTF.",
-        .labels = {"Off", "2.2", "BT.1886"},
+        .labels = {"Off", "2.2", "BT.1886", "Falcom (2.3)"},
         .is_visible = []() { return current_settings_mode >= 1 && shader_injection.gamma == 1; },
     },
     // new renodx::utils::settings::Setting{
@@ -523,8 +521,17 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .new_format = reshade::api::format::r16g16b16a16_float,
             .use_resource_view_cloning = true,
             .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-            .usage_include = reshade::api::resource_usage::render_target
+            .usage_include = reshade::api::resource_usage::render_target | reshade::api::resource_usage::unordered_access,
         });
+
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r8g8b8a8_unorm,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     // .use_resource_view_cloning = true,
+        //     .aspect_ratio = 1.f,
+        //     .usage_include = reshade::api::resource_usage::render_target
+        // });
+
 
         // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
         //     .old_format = reshade::api::format::r8g8b8a8_uint,

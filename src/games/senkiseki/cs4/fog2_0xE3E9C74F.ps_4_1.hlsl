@@ -114,8 +114,8 @@ void main(
   r0.w = dot(r2.xyz, r2.xyz);
   r0.w = rsqrt(r0.w);
   r2.xyz = r2.xyz * r0.www;
-  // r0.w = saturate(dot(r1.yzw, r2.xyz));
-  r0.w = (dot(r1.yzw, r2.xyz));
+  r0.w = saturate(dot(r1.yzw, r2.xyz));
+  // r0.w = (dot(r1.yzw, r2.xyz));
   r1.y = max(Light0.m_colorIntensity.x, Light0.m_colorIntensity.y);
   r1.z = max(0.00100000005, Light0.m_colorIntensity.z);
   r1.y = max(r1.y, r1.z);
@@ -129,10 +129,10 @@ void main(
   r2.x = -r2.x * RimLitIntensity + 1;
   r2.w = r2.x * r1.x;
   r3.xyz = Light0.m_colorIntensity.xyz + Light0.m_colorIntensity.xyz;
-  // r3.xyz = max(float3(1,1,1), r3.xyz);
-  // r4.xyz = min(float3(1,1,1), r1.yzw);
-  r3.xyz = (float3(1,1,1), r3.xyz);
-  r4.xyz = (float3(1,1,1), r1.yzw);
+  r3.xyz = max(float3(1,1,1), r3.xyz);
+  r4.xyz = min(float3(1,1,1), r1.yzw);
+  // r3.xyz = (float3(1,1,1), r3.xyz);
+  // r4.xyz = (float3(1,1,1), r1.yzw);
   r4.xyz = float3(1,1,1) + -r4.xyz;
   r4.xyz = ShadowColorShift.xyz * r4.xyz;
   r1.xyz = r4.xyz * r3.xyz + r1.yzw;

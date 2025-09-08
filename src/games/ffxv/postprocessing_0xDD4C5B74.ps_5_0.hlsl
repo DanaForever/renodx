@@ -83,10 +83,17 @@ void main(
       // gamma should be 1.0 in SDR
       // o0.xyz = saturate(r0.xyz);
 
+      // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      //   r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+      // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      //   r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+      // }
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-        r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
       } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-        r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
       }
 
       o0.xyz = (r0.xyz);
@@ -97,24 +104,34 @@ void main(
     }
   }
 
-  else if (FFXV_HDR_GRADING == 1.f) {
+  // else if (FFXV_HDR_GRADING == 1.f) {
 
-    // the game uses a gamma/contrast boost for "gamma correction"
-    // replaced with actual gamma correction
+  //   // the game uses a gamma/contrast boost for "gamma correction"
+  //   // replaced with actual gamma correction
     
-    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
-      r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
-    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
-      r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
-    }
+    
 
-    r1.rgb = SE_Saturation(r0);
-    o0.rgb = r1.rgb;
-  } else {
-    o0.rgb = r0.rgb;
+  //   r1.rgb = SE_Saturation(r0);
+  //   o0.rgb = r1.rgb;
+  // } else {
+  //   o0.rgb = r0.rgb;
+  // }
+
+  // the game uses a gamma/contrast boost for "gamma correction"
+  // replaced with actual gamma correction
+
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+    r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+    r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
   }
+
+  if (FFXV_HDR_GRADING == 1.f)
+    r0.rgb = SE_Saturation(r0);
+
+  o0.rgb = r0.rgb;
 
   // renodx swapchainpass
   float3 color = o0.rgb;

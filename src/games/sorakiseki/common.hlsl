@@ -160,26 +160,35 @@ float3 correctHue(float3 color, float3 correctColor) {
 float3 processAndToneMap(float3 color, bool decoding = true) {
 
   if (decoding) {
-    if (shader_injection.gamma == 1.f)  {
-      color = renodx::color::srgb::DecodeSafe(color);
-    } else {
-      color = renodx::color::gamma::DecodeSafe(color, 2.3f);
-    }
+    color = renodx::color::srgb::DecodeSafe(color);
   }
 
   color = ToneMap(color);
   color = correctHue(color, color);
   color = renodx::color::bt709::clamp::BT2020(color);
+
+  [branch]
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.3f);
+  } 
   
   // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
   color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
 
-
-  if (shader_injection.gamma == 1.f)  {
-    color = renodx::color::srgb::EncodeSafe(color);
-  } else {
-    color = renodx::color::gamma::EncodeSafe(color, 2.3f);
+  [branch]
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.3f);
   }
+
+  color = renodx::color::srgb::EncodeSafe(color);
   return color;
 }
 
@@ -217,4 +226,16 @@ float3 srgbEncode(float3 color) {
   }
 
   return renodx::color::srgb::EncodeSafe(color);
+}
+
+float calculateLuminanceSRGB(float3 color) {
+
+  return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+
+  // if (shader_injection.bloom_processing_space == 0.f) {
+  //   return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+  // }
+  // else  {
+  //   return renodx::color::y::from::BT709(color);
+  // }
 }

@@ -46,7 +46,7 @@ float3 hdrScreenBlend(float3 base, float3 blend) {
 
   // float3 bloom = base + (blend / (1.f + base));
 
-  base = max(0.f, base);
+  // base = max(0.f, base);
   
   float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
 

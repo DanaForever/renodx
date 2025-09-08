@@ -29,27 +29,24 @@ void main(
   // r0.xyz = exp2(r0.xyz);
   // r0.rgb = renodx::math::SafePow(r0.rgb, 2.3f);
 
-  
-
-
   if (RENODX_TONE_MAP_TYPE > 0) {
 
-    if (shader_injection.gamma == 0.f)
-      r0.rgb = renodx::color::gamma::DecodeSafe(r0.rgb, 2.3f);
-    else
-      r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
-
-    o0 = r0;
+    r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
     renodx::draw::Config config = renodx::draw::BuildConfig();
 
-    if (shader_injection.gamma == 1.f) { 
-      if (config.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-        o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
-      } else if (config.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-          o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
-      } 
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+      r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+      r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
+    } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+      // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+      r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.3f);
     }
+
+    o0 = r0;
 
     float3 color = o0.rgb;
     

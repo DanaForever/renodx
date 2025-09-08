@@ -148,6 +148,9 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x9CCE33D1), // artifact
     CustomShaderEntry(0xB68A3D3F), // artifact
     CustomShaderEntry(0x3100C46D), // artifact
+    CustomShaderEntry(0x11149045), // artifact
+    CustomShaderEntry(0xBD20A5EA), // artifact
+    CustomShaderEntry(0xD2EAD98A), // artifact
     
     
 };
@@ -305,6 +308,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xBF10EB11), // ssao
     CustomShaderEntry(0x6FFD6C4A), // effect
     CustomShaderEntry(0x8D2570A9), // effect
+    CustomShaderEntry(0xBB1F4A52), // effect
 
     
 
