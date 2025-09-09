@@ -103,9 +103,11 @@ void main(
   //   color = GammaCorrectHuePreserving(color, 2.4f);
   // }
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    // color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    color = GammaCorrectHuePreserving(color, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    // color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    color = GammaCorrectHuePreserving(color, 2.4f);
   }
 
   color *= config.swap_chain_scaling_nits;
