@@ -36,37 +36,18 @@ float3 ToneMap(float3 color) {
   float3 originalColor = color;
 
   if (RENODX_TONE_MAP_TYPE == 0.f) {
-    return saturate(color);
+    // return saturate(color);
+    return color;
   } else if (shader_injection.tone_map_type == 1.f) {
-    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
-      color = renodx::color::bt2020::from::BT709(color);
-    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
-      color = renodx::color::ap1::from::BT709(color);
-    }
-
+    
     color = FrostbiteToneMap(color);
 
-    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
-      color = renodx::color::bt709::from::BT2020(color);
-    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
-      color = renodx::color::bt709::from::AP1(color);
-    }
     return color;
   }
   else if (shader_injection.tone_map_type == 2.f) {
-    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
-      color = renodx::color::bt2020::from::BT709(color);
-    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
-      color = renodx::color::ap1::from::BT709(color);
-    }
-    
-    color = DICEToneMap(color);
+   
 
-    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
-      color = renodx::color::bt709::from::BT2020(color);
-    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
-      color = renodx::color::bt709::from::AP1(color);
-    }
+    color = DICEToneMap(color);
 
     return color;
   
@@ -239,4 +220,25 @@ float calculateLuminanceSRGB(float3 color) {
   // else  {
   //   return renodx::color::y::from::BT709(color);
   // }
+}
+
+float3 compress(float3 color) {
+
+  return saturate(color);
+  // return ToneMapMaxCLL(color);
+  // return renodx::tonemap::dice::BT709(color, 2.0f, 0.25f);
+  // return renodx::tonemap::frostbite::BT709(color, 1.0f, 0.25f);
+  // return DICEToneMap(color);
+  // return max(0.f, color);
+  // return renodx::tonemap::renodrt::NeutralSDR(color);
+  // return color;
+}
+
+float4 compress(float4 color) {
+
+  color.rgb = compress(color.rgb);
+
+  color.w = saturate(color.w);
+
+  return color;
 }

@@ -164,8 +164,9 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
   }
 
   color = ToneMap(color);
-  color = correctHue(color, color);
   color = renodx::color::bt709::clamp::BT2020(color);
+
+  // RenderIntermediatePass
 
   [branch]
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
@@ -176,7 +177,6 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
     color = renodx::color::correct::GammaSafe(color, false, 2.3f);
   } 
   
-  // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
   color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
 
   [branch]
@@ -239,3 +239,88 @@ float calculateLuminanceSRGB(float3 color) {
   //   return renodx::color::y::from::BT709(color);
   // }
 }
+
+
+
+
+
+float computeScale(float color_hdr, float color_sdr) {
+  if (color_hdr < color_sdr) {
+    // only scale up Brightness
+    return 1.f;
+  } else {
+    float ap1_delta = color_hdr - color_sdr;
+    ap1_delta = max(0, ap1_delta);  // Cleans up NaN
+    const float ap1_new = color_sdr + ap1_delta;
+
+    const bool ap1_valid = (color_sdr > 0.f && color_hdr > 0.f);  // Cleans up NaN and ignore black
+    return ap1_valid ? (ap1_new / color_sdr) : 1.f;
+  }
+}
+
+
+
+float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_scale = 9999.f) {
+
+
+  float3 originalColor = color;
+  float3 bloomColor_perceptual = renodx::color::ictcp::from::BT709(bloomColor);
+  float3 color_perceptual = renodx::color::ictcp::from::BT709(color);
+
+  // compute Luminance
+  float bloomL = bloomColor_perceptual.x;
+  float L = color_perceptual.x;
+
+  float bloom_chrominance = (length(bloomColor_perceptual.yz));  // eg: 0.80
+  float chrominance = (length(color_perceptual.yz));      // eg: 0.20
+  float new_chroma_len = max(chrominance, bloom_chrominance);
+
+  float scale = computeScale(bloomL, L);
+
+  // scale y and z by chrominance scale causes artifact (exhibited in the bloomColor)
+  float chrominance_scale = 1.f;
+  scale = clamp(scale, 1.0f, max_scale);
+
+  color_perceptual = float3(color_perceptual.x * scale, color_perceptual.y * chrominance_scale, color_perceptual.z * chrominance_scale);
+
+  color = renodx::color::bt709::from::ICtCp(color_perceptual);
+
+  return color;
+}
+
+
+
+float3 addBloom(float3 base, float3 blend)  {
+
+  float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
+    
+  return base + addition;
+}
+
+
+
+
+float3 hdrScreenBlend(float3 base, float3 blend, float scale = 0.f) {
+
+
+  blend = max(0.f, blend);
+
+   if (shader_injection.bloom != 2.f) 
+    blend *= shader_injection.bloom_strength;
+
+  float3 bloom_texture = blend;
+  
+  float mid_gray_bloomed = (0.18 + renodx::color::y::from::BT709(bloom_texture)) / 0.18;
+  
+  float scene_luminance = renodx::color::y::from::BT709(base) * mid_gray_bloomed;
+  float bloom_blend = saturate(smoothstep(0.f, 0.18f, scene_luminance));
+
+  float3 bloom_scaled = lerp(float3(0.f, 0.f, 0.f), bloom_texture, bloom_blend); // = bloom_blend 
+  bloom_texture = lerp(bloom_texture, bloom_scaled, 0.5f);
+
+  blend = bloom_texture;
+
+  return addBloom(base, blend);
+}
+
+

@@ -35,6 +35,5 @@ void main(
   r0.xyz = r1.xyz + r0.xyz;
   r1.xyz = blurTexture5.SampleLevel(samLinear_s, v1.zw, 0).xyz;
   o0.xyz = r1.xyz + r0.xyz;
-
   return;
 }

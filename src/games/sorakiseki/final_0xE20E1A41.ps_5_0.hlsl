@@ -33,10 +33,12 @@ void main(
 
     r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
+    // Swapchain Pass
+
     renodx::draw::Config config = renodx::draw::BuildConfig();
 
     if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+      r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
       // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
     } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
       r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);

@@ -72,15 +72,28 @@ void main(
   // r3.xyz = r3.xyz ? float3(1,1,1) : 0;
   float3 Dark  = 2.0 * C * B;
   float3 Light = 1.0 - 2.0 * (1.0 - C) * (1.0 - saturate(B));
-
-  if (shader_injection.bloom == 1.f)
+  float3 oldLight = Light;
+  
+  if (shader_injection.bloom == 1.f)  {
     Light = Dark;
-
+  }
   // per-channel mask: 1 when C <= 0.5, else 0
   float3 M = step(C, 0.5f);
 
   // overlay result (per channel)
   float3 Overlay = lerp(Light, Dark, M);
+
+  if (shader_injection.bloom == 1.f)  {
+    
+    float3 oldOverlay = lerp(oldLight, Dark, M);  
+    oldOverlay = renodx::tonemap::ReinhardExtended(oldOverlay);
+    // oldOverlay = saturate(oldOverlay);
+
+    if (shader_injection.bloom_hue_correction > 0.f)  {
+      Overlay = renodx::color::correct::Chrominance(Overlay, oldOverlay, shader_injection.bloom_hue_correction);
+      Overlay = renodx::color::correct::Hue(Overlay, oldOverlay, shader_injection.bloom_hue_correction);
+    }
+  }
 
   // final: add delta scaled by alpha
   // float3 Out = C + alpha * (Overlay - C);

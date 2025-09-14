@@ -84,11 +84,11 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "fxBloom",
         .binding = &shader_injection.bloom_strength,
-        .default_value = 100.f,
+        .default_value = 500.f,
         .label = "Bloom Strength",
         .section = "Game Settings",
         .tooltip = "Controls Bloom Strength",
-        .max = 100.f,
+        .max = 1000.f,
         .parse = [](float value) { return value * 0.01f; },
         .is_visible = []() { return shader_injection.bloom == 1; },
     },

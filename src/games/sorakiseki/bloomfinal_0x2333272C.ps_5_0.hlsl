@@ -94,7 +94,7 @@ void main(
   r0.y = 1 + -r0.y;
   r0.x = r0.y * r0.x;
   r1.xyzw = colorTexture.SampleLevel(samLinear_s, v1.xy, 0).xyzw;
-  r1.rgb = srgbDecode(r1.xyz);
+  // r1.rgb = srgbDecode(r1.xyz);
   // r0.y = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
   r0.y = renodx::color::y::from::BT709(r1.rgb);
   r0.y = -brightnessThreshold_g + r0.y;
@@ -113,6 +113,6 @@ void main(
   r0.w = cmp(isFlip_g < 0);
   o0.xyz = r0.www ? float3(0,0,0) : r0.xyz;
 
-  o0.rgb = srgbEncode(o0.rgb);
+  // o0.rgb = srgbEncode(o0.rgb);
   return;
 }

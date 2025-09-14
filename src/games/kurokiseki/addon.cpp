@@ -71,8 +71,8 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0x5BB549F7), // blur gen
     UpgradeRTVReplaceShader(0xCE7C6E9D), // depth
     UpgradeRTVReplaceShader(0x43E0BB74), // blur
-    UpgradeRTVReplaceShader(0xAF7B0499), // refraction
-    UpgradeRTVReplaceShader(0xE7562C18), // refraction
+    // UpgradeRTVReplaceShader(0xAF7B0499), // refraction
+    // UpgradeRTVReplaceShader(0xE7562C18), // refraction
 
     // UpgradeRTVShader(0x1336F6F8),
     // UpgradeRTVShader(0xEF0CAEEA),
@@ -143,8 +143,8 @@ renodx::utils::settings::Settings settings = {
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return false; },
-        // .is_visible = []() { return current_settings_mode >= 2; },
+        // .is_visible = []() { return false; },
+        .is_visible = []() { return current_settings_mode >= 2; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapType",

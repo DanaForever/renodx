@@ -102,7 +102,7 @@ void main(
   r0.z = (int)r0.z & 1;
   r0.zw = r0.zz ? chrIntensityLum_g.xy : intensityLum_g.xy;
   r1.xyzw = colorTexture.SampleLevel(samLinear_s, v1.xy, 0).xyzw;
-  r1.rgb = srgbDecode(r1.rgb);
+  // r1.rgb = srgbDecode(r1.rgb);
   r2.xyz = r1.xyz * r0.zzz;
   r2.xyz = r0.xxx ? r2.xyz : r1.xyz;
   r0.xyz = r2.xyz * r0.yyy;
@@ -120,6 +120,6 @@ void main(
   r1.xyz = atmosphereIntensity_g * r1.xyz;
   o0.xyz = max(r1.xyz, r0.xyz);
 
-  o0.rgb = srgbEncode(o0.rgb);
+  // o0.rgb = srgbEncode(o0.rgb);
   return;
 }

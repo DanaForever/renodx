@@ -77,7 +77,6 @@ void main(
   }
 
   else if (FFXV_HDR_GRADING == 1.f) {
-    r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
     r1.rgb = SE_Saturation(r0);
     r1.xyz = renodx::math::SignPow(r1.xyz, 1.0f / gamma);
     o0.rgb = r1.rgb;

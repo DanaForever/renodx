@@ -105,6 +105,6 @@ void main(
   r0.xyz = r0.yzw * r0.xxx;
   r0.w = cmp(isFlip_g < 0);
   o0.xyz = r0.www ? float3(0,0,0) : r0.xyz;
-
+  o0 = saturate(o0);
   return;
 }
