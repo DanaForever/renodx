@@ -86,13 +86,10 @@ void main(
   if (shader_injection.bloom == 1.f)  {
     
     float3 oldOverlay = lerp(oldLight, Dark, M);  
-    oldOverlay = renodx::tonemap::ReinhardExtended(oldOverlay);
-    // oldOverlay = saturate(oldOverlay);
+    float3 sat = saturate(oldOverlay);
 
-    if (shader_injection.bloom_hue_correction > 0.f)  {
-      Overlay = renodx::color::correct::Chrominance(Overlay, oldOverlay, shader_injection.bloom_hue_correction);
-      Overlay = renodx::color::correct::Hue(Overlay, oldOverlay, shader_injection.bloom_hue_correction);
-    }
+    Overlay = renodx::tonemap::UpgradeToneMap(Overlay, renodx::tonemap::renodrt::NeutralSDR(Overlay), oldOverlay, shader_injection.bloom_hue_correction);
+
   }
 
   // final: add delta scaled by alpha
