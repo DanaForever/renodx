@@ -118,9 +118,6 @@ float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_ma
 
 float3 ToneMap(float3 color) {
   
-
-  color = max(color, 0.f);
-
   float3 originalColor = color;
 
   if (RENODX_TONE_MAP_TYPE == 0.f) {
@@ -227,6 +224,7 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
     color = renodx::color::srgb::DecodeSafe(color);
   }
 
+  color = renodx::color::bt709::clamp::BT709(color);
   color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
   color = ToneMap(color);
   color = renodx::color::bt709::clamp::BT2020(color);
