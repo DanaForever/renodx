@@ -10,6 +10,73 @@
 #define FLT_MIN   asfloat(0x00800000)  // 1.175494351e-38f
 #define FLT_MAX   asfloat(0x7F7FFFFF)  // 3.402823466e+38f
 
+static const float3x3 XYZ_2_sRGB_MAT = float3x3(
+	3.2409699419, -1.5373831776, -0.4986107603,
+	-0.9692436363, 1.8759675015, 0.0415550574,
+	0.0556300797, -0.2039769589, 1.0569715142);
+static const float3x3 sRGB_2_XYZ_MAT = float3x3(
+	0.4124564, 0.3575761, 0.1804375,
+	0.2126729, 0.7151522, 0.0721750,
+	0.0193339, 0.1191920, 0.9503041);
+static const float3x3 XYZ_2_AP1_MAT = float3x3(
+	1.6410233797, -0.3248032942, -0.2364246952,
+	-0.6636628587, 1.6153315917, 0.0167563477,
+	0.0117218943, -0.0082844420, 0.9883948585);
+static const float3x3 D65_2_D60_CAT = float3x3(
+	1.01303, 0.00610531, -0.014971,
+	0.00769823, 0.998165, -0.00503203,
+	-0.00284131, 0.00468516, 0.924507);
+static const float3x3 D60_2_D65_CAT = float3x3(
+	0.987224, -0.00611327, 0.0159533,
+	-0.00759836, 1.00186, 0.00533002,
+	0.00307257, -0.00509595, 1.08168);
+static const float3x3 AP1_2_XYZ_MAT = float3x3(
+	0.6624541811, 0.1340042065, 0.1561876870,
+	0.2722287168, 0.6740817658, 0.0536895174,
+	-0.0055746495, 0.0040607335, 1.0103391003);
+static const float3 AP1_RGB2Y = float3(
+	0.2722287168, //AP1_2_XYZ_MAT[0][1],
+	0.6740817658, //AP1_2_XYZ_MAT[1][1],
+	0.0536895174 //AP1_2_XYZ_MAT[2][1]
+);
+// Bizarre matrix but this expands sRGB to between P3 and AP1
+// CIE 1931 chromaticities:	x		y
+//				Red:		0.6965	0.3065
+//				Green:		0.245	0.718
+//				Blue:		0.1302	0.0456
+//				White:		0.31271	0.32902
+static const float3x3 Wide_2_XYZ_MAT = float3x3(
+    0.5441691, 0.2395926, 0.1666943,
+    0.2394656, 0.7021530, 0.0583814,
+    -0.0023439, 0.0361834, 1.0552183);
+
+float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
+{
+    const float3x3 sRGB_2_AP1 = mul(XYZ_2_AP1_MAT, mul(D65_2_D60_CAT, sRGB_2_XYZ_MAT));
+    const float3x3 AP1_2_sRGB = mul(XYZ_2_sRGB_MAT, mul(D60_2_D65_CAT, AP1_2_XYZ_MAT));
+    const float3x3 Wide_2_AP1 = mul(XYZ_2_AP1_MAT, Wide_2_XYZ_MAT);
+    const float3x3 ExpandMat = mul(Wide_2_AP1, AP1_2_sRGB);
+
+    float3 ColorAP1 = mul(sRGB_2_AP1, vHDRColor);
+
+    float LumaAP1 = dot(ColorAP1, AP1_RGB2Y);
+    if (LumaAP1 <= 0.f)
+    {
+        return vHDRColor;
+    }
+    float3 ChromaAP1 = ColorAP1 / LumaAP1;
+
+    float ChromaDistSqr = dot(ChromaAP1 - 1, ChromaAP1 - 1);
+    float ExpandAmount = (1 - exp2(-4 * ChromaDistSqr)) * (1 - exp2(-4 * fExpandGamut * LumaAP1 * LumaAP1));
+
+    float3 ColorExpand = mul(ExpandMat, ColorAP1);
+    ColorAP1 = lerp(ColorAP1, ColorExpand, ExpandAmount);
+
+    vHDRColor = mul(AP1_2_sRGB, ColorAP1);
+    return vHDRColor;
+}
+
+
 /// Applies Exponential Roll-Off tonemapping using the maximum channel.
 /// Used to fit the color into a 0–output_max range for SDR LUT compatibility.
 float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_max = 1.f) {
@@ -26,6 +93,36 @@ float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_ma
   float scale = exp2(log_mapped - log_peak);  // How much to compress all channels
 
   return min(output_max, color * scale);
+}
+
+
+float3 ExponentialRollOffByLum(float3 color, float output_luminance_max, float highlights_shoulder_start = 0.f) {
+  const float source_luminance = renodx::color::y::from::BT709(color);
+
+  [branch]
+  if (source_luminance > 0.0f) {
+    const float compressed_luminance = renodx::tonemap::ExponentialRollOff(source_luminance, highlights_shoulder_start, output_luminance_max);
+    color *= compressed_luminance / source_luminance;
+  }
+
+  return color;
+}
+
+
+float3 ApplyExponentialRollOff(float3 color) {
+  const float paperWhite = RENODX_DIFFUSE_WHITE_NITS / renodx::color::srgb::REFERENCE_WHITE;
+
+  const float peakWhite = RENODX_PEAK_WHITE_NITS / renodx::color::srgb::REFERENCE_WHITE;
+
+  // const float highlightsShoulderStart = paperWhite;
+  const float highlightsShoulderStart = 1.f;
+
+  [branch]
+  if (RENODX_TONE_MAP_PER_CHANNEL == 0.f) {
+    return ExponentialRollOffByLum(color * paperWhite, peakWhite, highlightsShoulderStart) / paperWhite;
+  } else {
+    return renodx::tonemap::ExponentialRollOff(color * paperWhite, highlightsShoulderStart, peakWhite) / paperWhite;
+  }
 }
 
 float3 ToneMap(float3 color) {
@@ -51,6 +148,22 @@ float3 ToneMap(float3 color) {
 
     return color;
   
+  }
+
+  else if (shader_injection.tone_map_type == 4.f) {
+
+    renodx::draw::Config draw_config = renodx::draw::BuildConfig();
+    draw_config.peak_white_nits = 10000.f;
+    draw_config.tone_map_hue_correction = 0.f;
+    draw_config.tone_map_hue_shift = 0.f;
+    draw_config.tone_map_per_channel = 0.f;
+    draw_config.tone_map_type = 3.f;
+    draw_config.swap_chain_clamp_nits = 10000.f;
+
+    float3 renodrt_color = renodx::draw::ToneMapPass(color, draw_config);
+
+    color = ApplyExponentialRollOff(renodrt_color);
+
   }
 
   // copied from ToneMapPass
@@ -120,17 +233,12 @@ float3 correctHue(float3 color, float3 correctColor) {
   if (RENODX_TONE_MAP_HUE_CORRECTION <= 0.f) {
     return color;
   }
-
-  float3 sdrColor = SDRTonemap(correctColor);
-
-  // this fixes the math error artifacts 
-  color = renodx::color::bt709::clamp::BT709(color);
-
+  
   // float hue_correction_strength = saturate(renodx::color::y::from::BT709(color));
   // float hue_correction_strength = RENODX_TONE_MAP_HUE_CORRECTION;
   float hue_correction_strength = RENODX_TONE_MAP_HUE_CORRECTION;
 
-  color = renodx::color::correct::Hue(color, sdrColor,
+  color = renodx::color::correct::Hue(color, correctColor,
                                       hue_correction_strength,
                                       RENODX_TONE_MAP_HUE_PROCESSOR);
 
@@ -145,8 +253,10 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
     color = renodx::color::srgb::DecodeSafe(color);
   }
 
+  float3 sdr_color = SDRTonemap(color);
+
   color = ToneMap(color);
-  color = correctHue(color, color);
+  color = correctHue(color, sdr_color);
   color = renodx::color::bt709::clamp::BT2020(color);
 
   [branch]
@@ -236,7 +346,8 @@ float3 compress(float3 color) {
 
 float4 compress(float4 color) {
 
-  color.rgb = compress(color.rgb);
+  // color.rgb = compress(color.rgb);
+  color.rgb = clamp(color.rgb, -999999999, 1.f);
 
   color.w = saturate(color.w);
 

@@ -153,16 +153,16 @@ void main(
   r2.zw = float2(1,1) + -r4.xy;
   r2.zw = r5.xy ? r2.zw : r4.xy;
   r4.xyz = distortionMap.Sample(distortionSampler_s, r2.zw).xyz;
-  r4.rgb = srgbDecode(r4.rgb);
+  // r4.rgb = srgbDecode(r4.rgb);
   r2.zw = r4.xy * r4.zz;
   r2.x = r1.w;
   r1.yw = r2.zw * r2.xy;
   r2.xy = r1.yw * float2(0.0625,0.0625) + r3.xy;
   r2.xyzw = colorMap.Sample(colorSampler_s, r2.xy).xyzw;
-  r2.rgb = srgbDecode(r2.rgb);
+  // r2.rgb = srgbDecode(r2.rgb);
   r1.yw = r1.yw * float2(0.0625,0.0625) + r3.zw;
   r3.xyzw = alphaMap.Sample(alphaSampler_s, r1.yw).xyzw;
-  r3.rgb = srgbDecode(r3.rgb);
+  // r3.rgb = srgbDecode(r3.rgb);
   r0.w = -0.00100000005 + r3.w;
   r0.w = r0.w + -r1.z;
   r0.w = cmp(r0.w < 0);
@@ -206,6 +206,6 @@ void main(
   r0.xyz = r2.xyz * r0.zzz;
   o0.xyz = r5.zzz ? r0.xyz : r1.xyz;
   o0.w = (r0.w);
-  o0.rgb = srgbEncode(o0.rgb);
+  // o0.rgb = srgbEncode(o0.rgb);
   return;
 }

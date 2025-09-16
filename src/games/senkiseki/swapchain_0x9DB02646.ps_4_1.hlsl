@@ -96,19 +96,19 @@ void main(
 
   color = renodx::color::srgb::DecodeSafe(color);
 
-  // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-  //   // color = GammaCorrectHuePreserving(color, 2.2f);
-  //   color = renodx::color::correct::GammaSafe(color, 2.2f);
-  // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-  //   color = GammaCorrectHuePreserving(color, 2.4f);
-  // }
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     // color = renodx::color::correct::GammaSafe(color, false, 2.2f);
     color = GammaCorrectHuePreserving(color, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     // color = renodx::color::correct::GammaSafe(color, false, 2.4f);
     color = GammaCorrectHuePreserving(color, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    // color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    color = GammaCorrectHuePreserving(color, 2.3f);
   }
+
+  // Pumbo's color gamut expansion
+  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
 
   color *= config.swap_chain_scaling_nits;
 
@@ -130,6 +130,7 @@ void main(
   color = min(color, config.swap_chain_clamp_nits);  // Clamp UI or Videos
 
 
+  // final encoding for output
   color = renodx::color::bt2020::from::BT709(color);
   color = max(0.f, color);
 

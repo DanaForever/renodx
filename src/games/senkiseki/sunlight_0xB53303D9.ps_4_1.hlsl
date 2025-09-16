@@ -133,6 +133,5 @@ void main(
 
   o0.rgb = encodeColor(o0.rgb);
 
-  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
   return;
 }

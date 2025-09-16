@@ -174,6 +174,7 @@ void main(
   o0.xyz = GameMaterialMonotone * r1.xyz + r0.xyz;
 
   // this is must
-  o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
+  // o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);;
+  o0 = saturate(o0);
   return;
 }

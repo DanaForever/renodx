@@ -96,7 +96,7 @@ void main(
   r1.xyzw = colorTexture.SampleLevel(samLinear_s, v1.xy, 0).xyzw;
   // r1.rgb = srgbDecode(r1.xyz);
   // r0.y = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.y = renodx::color::y::from::BT709(r1.rgb);
+  r0.y = calculateLuminanceSRGB(r1.rgb);
   r0.y = -brightnessThreshold_g + r0.y;
   r0.y = max(0, r0.y);
   r0.yzw = r1.xyz * r0.yyy;

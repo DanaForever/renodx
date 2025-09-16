@@ -147,7 +147,7 @@ void main(
   r0.xy = r0.xy * dudvScale_g + v3.xy;
   r0.z = 1 + -r0.y;
   r1.xyzw = Tex0.Sample(Smpl0_s, r0.xz).xyzw;
-  r1.rgb = srgbDecode(r1.rgb);
+  // r1.rgb = srgbDecode(r1.rgb);
   r2.x = r1.x;
   r2.w = 1;
   r0.xyzw = r0.wwww ? r2.xxxw : r1.xyzw;
@@ -180,7 +180,7 @@ void main(
   r1.z = r1.z * volumeCameraFarOverMaxFar_g + -volumeNearOverFarClip_g;
   r4.z = r1.z / r1.y;
   r5.xyzw = volumeFogTexture_g.SampleLevel(SmplLinearClamp_s, r4.xyz, 0).xyzw;
-  r5.rgb = srgbDecode(r5.rgb);
+  // r5.rgb = srgbDecode(r5.rgb);
   r1.y = texRefractionDepth.SampleLevel(SmplMirror_s, r4.xy, 0).x;
   r3.yzw = r0.xyz * r5.www + r5.xyz;
   r3.yzw = r3.yzw + -r0.xyz;
@@ -188,7 +188,7 @@ void main(
   r0.xyz = -r3.yzw + r0.xyz;
   r0.xyz = volumeFogInvalidity_g * r0.xyz + r3.yzw;
   o0.xyz = mapColor_g.xyz * r0.xyz;
-  o0.rgb = srgbEncode(o0.rgb);
+  // o0.rgb = srgbEncode(o0.rgb);
   r0.x = viewInv_g._m30 + -v2.x;
   r0.y = viewInv_g._m31 + -v2.y;
   r0.z = viewInv_g._m32 + -v2.z;

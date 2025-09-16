@@ -151,6 +151,7 @@ renodx::mods::shader::CustomShaders artifact_shaders = {
     CustomShaderEntry(0x11149045), // artifact
     CustomShaderEntry(0xBD20A5EA), // artifact
     CustomShaderEntry(0xD2EAD98A), // artifact
+    CustomShaderEntry(0x6FEA38DA), // artifact
     
     
 };
@@ -524,7 +525,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Gamma Correction",
         .section = "Tone Mapping",
         .tooltip = "Emulates a display EOTF.",
-        .labels = {"Off", "2.2", "BT.1886"},
+        .labels = {"Off", "2.2", "BT.1886", "Falcom (2.3)"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -570,18 +571,18 @@ renodx::utils::settings::Settings settings = {
         .min = 48.f,
         .max = 500.f,
     },
-    // new renodx::utils::settings::Setting{
-    //     .key = "InverseToneMapExtraHDRSaturation",
-    //     .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
-    //     .default_value = 0.f,
-    //     .can_reset = false,
-    //     .label = "Gamut Expansion",
-    //     .section = "Tone Mapping",
-    //     .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
-    //     .min = 0.f,
-    //     .max = 500.f,
-    //     .parse = [](float value) { return value * 0.01f; },
-    // },
+    new renodx::utils::settings::Setting{
+        .key = "InverseToneMapExtraHDRSaturation",
+        .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Gamut Expansion",
+        .section = "Tone Mapping",
+        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
+        .min = 0.f,
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.01f; },
+    },
     new renodx::utils::settings::Setting{
         .key = "DICEToneMapType",
         .binding = &shader_injection.dice_tone_map_type,
@@ -1105,28 +1106,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             // .ignore_size = true,
             .usage_include = reshade::api::resource_usage::render_target
         });
-        
-
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //     .old_format = reshade::api::format::b8g8r8a8_unorm,
-        //     .new_format = reshade::api::format::r16g16b16a16_float,
-        //     // .use_resource_view_cloning = true,
-        //     .use_resource_view_cloning = true,
-        //     .use_resource_view_hot_swap = true,
-        //     .aspect_ratio = 1.f,
-        //     // .ignore_size = true,
-        //     .usage_include = reshade::api::resource_usage::shader_resource
-        // });
-
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //   .old_format = reshade::api::format::r8g8b8a8_unorm,
-        //   .new_format = reshade::api::format::r16g16b16a16_float,
-        //   .use_resource_view_cloning = true,
-        //   .use_resource_view_hot_swap = true,
-        //   .aspect_ratio = 1.f,
-        // });
-
-
+    
         bool is_hdr10 = true;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);
         renodx::mods::swapchain::use_resize_buffer = false;

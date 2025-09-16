@@ -160,6 +160,19 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Off", "2.2", "BT.1886", "Falcom (2.3)"},
         .is_visible = []() { return current_settings_mode >= 1 && shader_injection.gamma == 1; },
     },
+
+    new renodx::utils::settings::Setting{
+        .key = "InverseToneMapExtraHDRSaturation",
+        .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Gamut Expansion",
+        .section = "Tone Mapping",
+        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
+        .min = 0.f,
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.01f; },
+    },
     // new renodx::utils::settings::Setting{
     //     .key = "InverseToneMapExtraHDRSaturation",
     //     .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,

@@ -175,20 +175,19 @@ void main(
     // hue and chrominance correction if desaturation is desired
     // hdr = renodx::color::correct::ChrominanceICtCp(hdr, sat, shader_injection.bloom_hue_correction);
     // hdr = renodx::color::correct::Hue(hdr, sat, shader_injection.bloom_hue_correction, RENODX_TONE_MAP_HUE_PROCESSOR);
-
-
     hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sat, shader_injection.bloom_hue_correction);
-
-
-    o0.rgb = hdr.rgb;
-
+    
     if (shader_injection.bloom == 2.f)  {
       float4 sdrLogSpace = blendBloomSrgbLogSpace(samLinear_s, v1);
       sdrLogSpace.rgb = srgbDecode(sdrLogSpace.rgb);
       float3 scaledBloom = scaleByPerceptualLuminance(hdr, sdrLogSpace.rgb);
 
-      o0.rgb = lerp(o0.rgb, scaledBloom, saturate(shader_injection.bloom_strength));
+      hdr = lerp(hdr, scaledBloom, saturate(shader_injection.bloom_strength));
     }
+
+    
+    o0.rgb = hdr.rgb;
+
     o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   
 }

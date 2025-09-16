@@ -97,6 +97,9 @@ void main(
     color = GammaCorrectHuePreserving(color, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     color = GammaCorrectHuePreserving(color, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    // color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    color = GammaCorrectHuePreserving(color, 2.3f);
   }
 
   color *= config.swap_chain_scaling_nits;
@@ -114,7 +117,10 @@ void main(
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     color = renodx::color::bt709::from::ARIBTRB9(color);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  }
+  } 
+
+  // Pumbo's color gamut expansion
+  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
 
   color = min(color, config.swap_chain_clamp_nits);  // Clamp UI or Videos
 
