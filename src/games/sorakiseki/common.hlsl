@@ -78,17 +78,21 @@ float3 hdrExtraSaturation(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
 
 float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
 
-    // Do this with a paper white of 203 nits, so it's balanced (the formula seems to be made for that),
-    // and gives consistent results independently of the user paper white
-    static const float sRGB_max_nits = 80.f;
-    static const float ReferenceWhiteNits_BT2408 = 203.f;
-    const float recommendedBrightnessScale = ReferenceWhiteNits_BT2408 / sRGB_max_nits;
+    if (fExpandGamut > 0.f) {
 
-    float3 vHDRColor = color * recommendedBrightnessScale;
+      // Do this with a paper white of 203 nits, so it's balanced (the formula seems to be made for that),
+      // and gives consistent results independently of the user paper white
+      static const float sRGB_max_nits = 80.f;
+      static const float ReferenceWhiteNits_BT2408 = 203.f;
+      const float recommendedBrightnessScale = ReferenceWhiteNits_BT2408 / sRGB_max_nits;
 
-    vHDRColor = hdrExtraSaturation(vHDRColor, fExpandGamut);
+      float3 vHDRColor = color * recommendedBrightnessScale;
 
-    color = vHDRColor /  recommendedBrightnessScale;
+      vHDRColor = hdrExtraSaturation(vHDRColor, fExpandGamut);
+
+      color = vHDRColor /  recommendedBrightnessScale;
+
+    }
 
     return color;
 
@@ -120,37 +124,16 @@ float3 ToneMap(float3 color) {
   float3 originalColor = color;
 
   if (RENODX_TONE_MAP_TYPE == 0.f) {
-    return saturate(color);
+    return color;
   } else if (shader_injection.tone_map_type == 1.f) {
-    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
-      color = renodx::color::bt2020::from::BT709(color);
-    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
-      color = renodx::color::ap1::from::BT709(color);
-    }
 
     color = FrostbiteToneMap(color);
 
-    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
-      color = renodx::color::bt709::from::BT2020(color);
-    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
-      color = renodx::color::bt709::from::AP1(color);
-    }
     return color;
   }
   else if (shader_injection.tone_map_type == 2.f) {
-    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
-      color = renodx::color::bt2020::from::BT709(color);
-    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
-      color = renodx::color::ap1::from::BT709(color);
-    }
-
+  
     color = DICEToneMap(color);
-
-    if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1) {
-      color = renodx::color::bt709::from::BT2020(color);
-    } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2) {
-      color = renodx::color::bt709::from::AP1(color);
-    }
 
     return color;
   
@@ -226,9 +209,6 @@ float3 correctHue(float3 color, float3 correctColor) {
 
   float3 sdrColor = SDRTonemap(correctColor);
 
-  // this fixes the math error artifacts 
-  color = renodx::color::bt709::clamp::BT709(color);
-
   // float hue_correction_strength = saturate(renodx::color::y::from::BT709(color));
   float hue_correction_strength = RENODX_TONE_MAP_HUE_CORRECTION;
 
@@ -247,6 +227,7 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
     color = renodx::color::srgb::DecodeSafe(color);
   }
 
+  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
   color = ToneMap(color);
   color = renodx::color::bt709::clamp::BT2020(color);
 

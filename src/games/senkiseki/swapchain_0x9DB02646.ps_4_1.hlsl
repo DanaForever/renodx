@@ -108,7 +108,7 @@ void main(
   }
 
   // Pumbo's color gamut expansion
-  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
+  // color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
 
   color *= config.swap_chain_scaling_nits;
 
