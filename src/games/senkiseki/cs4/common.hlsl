@@ -77,6 +77,10 @@ float3 hdrExtraSaturation(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
 
 float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
 
+    if (RENODX_TONE_MAP_TYPE == 0.f)  {
+      return color;
+    }
+
     if (fExpandGamut > 0.f) {
 
       // Do this with a paper white of 203 nits, so it's balanced (the formula seems to be made for that),
@@ -193,6 +197,11 @@ float3 postProcessBloomBuffer(float3 color) {
 }
 
 float3 correctHue(float3 color, float3 correctColor) {
+
+  if (RENODX_TONE_MAP_TYPE == 0.f)  {
+      return color;
+    }
+
   if (RENODX_TONE_MAP_HUE_CORRECTION <= 0.f) {
     return color;
   }
@@ -272,6 +281,7 @@ float3 processAndToneMap(float3 color) {
   float3 sdrColor = SDRTonemap(color);
 
   color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
+  // float3 sdrColor = SDRTonemap(color);
   color = ToneMap(color);
   color = correctHue(color, sdrColor);
   

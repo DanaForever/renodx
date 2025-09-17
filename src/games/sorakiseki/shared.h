@@ -116,7 +116,7 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_TONE_MAP_HUE_SHIFT            shader_injection.tone_map_hue_shift
 #define RENODX_TONE_MAP_HUE_CORRECTION_METHOD     shader_injection.tone_map_hue_correction_method
 #define RENODX_TONE_MAP_CLAMP_COLOR_SPACE    1.f // shader_injection.tone_map_clamp_color_space
-#define RENODX_TONE_MAP_CLAMP_PEAK           shader_injection.tone_map_clamp_peak
+#define RENODX_TONE_MAP_CLAMP_PEAK           1.f //
 #define RENODX_TONE_MAP_EXPOSURE             shader_injection.tone_map_exposure
 #define RENODX_TONE_MAP_HIGHLIGHTS           shader_injection.tone_map_highlights
 #define RENODX_COLOR_GRADE_HIGHLIGHTS_VERSION 2.f

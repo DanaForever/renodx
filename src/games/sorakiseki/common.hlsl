@@ -78,6 +78,10 @@ float3 hdrExtraSaturation(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
 
 float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
 
+    if (RENODX_TONE_MAP_TYPE == 0.f)  {
+      return color;
+    }
+
     if (fExpandGamut > 0.f) {
 
       // Do this with a paper white of 203 nits, so it's balanced (the formula seems to be made for that),
@@ -200,18 +204,25 @@ float3 SDRTonemap(float3 color) {
 
 
 float3 correctHue(float3 color, float3 correctColor) {
+
+  if (RENODX_TONE_MAP_TYPE == 0.f)  {
+      return color;
+    }
+
   if (RENODX_TONE_MAP_HUE_CORRECTION <= 0.f) {
     return color;
   }
 
-  float3 sdrColor = SDRTonemap(correctColor);
+  float3 sdrColor = correctColor;
 
   // float hue_correction_strength = saturate(renodx::color::y::from::BT709(color));
   float hue_correction_strength = RENODX_TONE_MAP_HUE_CORRECTION;
 
-  color = renodx::color::correct::Hue(color, sdrColor,
-                                      hue_correction_strength,
-                                      RENODX_TONE_MAP_HUE_PROCESSOR);
+  if (hue_correction_strength > 0.f)
+
+    color = renodx::color::correct::Hue(color, sdrColor,
+                                        hue_correction_strength,
+                                        RENODX_TONE_MAP_HUE_PROCESSOR);
 
 
   return color;
@@ -223,11 +234,13 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
   if (decoding) {
     color = renodx::color::srgb::DecodeSafe(color);
   }
-
+  
   color = renodx::color::bt709::clamp::BT709(color);
+  float3 sdrColor = SDRTonemap(color);
   color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
   color = ToneMap(color);
   color = renodx::color::bt709::clamp::BT2020(color);
+  color = correctHue(color, sdrColor);
 
   // RenderIntermediatePass
 
