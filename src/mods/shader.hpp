@@ -5,11 +5,16 @@
 
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <d3d11.h>
 #include <d3d12.h>
 #include <dxgi.h>
 #include <dxgi1_6.h>
 
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <functional>
@@ -50,6 +55,28 @@ struct CustomShader {
 };
 
 using CustomShaders = std::unordered_map<uint32_t, CustomShader>;
+
+template <std::size_t N>
+static CustomShaders DefineCustomShaders(const std::pair<uint32_t, CustomShader> (&items)[N]) {
+  CustomShaders cs;
+  for (const auto& item : items) {
+    if (!cs.contains(item.first)) {
+      cs.emplace(item.first, item.second);
+    }
+  }
+  return cs;
+}
+
+template <std::size_t N>
+static CustomShaders DefineCustomShaders(const std::array<std::pair<uint32_t, CustomShader>, N>& items) {
+  CustomShaders cs;
+  for (const auto& item : items) {
+    if (!cs.contains(item.first)) {
+      cs.emplace(item.first, item.second);
+    }
+  }
+  return cs;
+}
 
 static std::function<bool(reshade::api::command_list*)> invoked_custom_swapchain_shader = nullptr;
 
@@ -1039,8 +1066,9 @@ inline void OnPresent(
 
 static bool attached = false;
 
-template <typename T = float*>
-static void Use(DWORD fdw_reason, CustomShaders new_custom_shaders, T* new_injections = nullptr) {
+template <typename T = float*, std::ranges::range CustomShaderList>
+  requires std::convertible_to<std::ranges::range_value_t<CustomShaderList>, std::pair<uint32_t, CustomShader>>
+static void Use(DWORD fdw_reason, const CustomShaderList& new_custom_shaders, T* new_injections = nullptr) {
   renodx::utils::shader::Use(fdw_reason);
   if (resource_tag_float != nullptr) {
     renodx::utils::resource::Use(fdw_reason);
@@ -1063,10 +1091,16 @@ static void Use(DWORD fdw_reason, CustomShaders new_custom_shaders, T* new_injec
       reshade::register_event<reshade::addon_event::init_device>(OnInitDevice);
       reshade::register_event<reshade::addon_event::destroy_device>(OnDestroyDevice);
 
-      for (const auto& [hash, shader] : (new_custom_shaders)) {
-        if (shader.on_replace != nullptr) using_custom_replace = true;
-        if (shader.index != -1) using_counted_shaders = true;
+      // Copy from wrapper's native map into runtime mutable map
+      custom_shaders.clear();
+      custom_shaders.reserve(new_custom_shaders.size());
+      for (const auto& kv : new_custom_shaders) {
+        custom_shaders.emplace(kv.first, kv.second);
+        if (kv.second.on_replace != nullptr) using_custom_replace = true;
+        if (kv.second.index != -1) using_counted_shaders = true;
       }
+
+      custom_shaders.rehash(custom_shaders.size());
 
       if (using_counted_shaders || push_injections_on_present) {
         reshade::register_event<reshade::addon_event::present>(OnPresent);
@@ -1108,8 +1142,6 @@ static void Use(DWORD fdw_reason, CustomShaders new_custom_shaders, T* new_injec
       reshade::register_event<reshade::addon_event::dispatch>(OnDispatch);
       reshade::register_event<reshade::addon_event::draw_indexed>(OnDrawIndexed);
       reshade::register_event<reshade::addon_event::draw_or_dispatch_indirect>(OnDrawOrDispatchIndirect);
-
-      custom_shaders = new_custom_shaders;
 
       {
         std::stringstream s;

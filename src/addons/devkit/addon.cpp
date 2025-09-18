@@ -5,8 +5,6 @@
 
 #define ImTextureID ImU64
 
-#define NOMINMAX
-
 #include <d3d11.h>
 #include <d3d12.h>
 #include <Windows.h>
@@ -2688,14 +2686,18 @@ void RenderShadersPane(reshade::api::device* device, DeviceData* data) {
             renodx::utils::shader::dump::DumpShader(
                 shader_details->shader_hash,
                 shader_details->shader_data,
-                shader_details->shader_type);
+                shader_details->shader_type,
+                "",
+                device->get_api());
           }
 
           if (ImGui::Selectable("Locate Binary")) {
             auto dump_path = renodx::utils::shader::dump::GetShaderDumpPath(
                 shader_details->shader_hash,
                 shader_details->shader_data,
-                shader_details->shader_type);
+                shader_details->shader_type,
+                "",
+                device->get_api());
             renodx::utils::platform::OpenExplorerToFile(dump_path);
           }
 

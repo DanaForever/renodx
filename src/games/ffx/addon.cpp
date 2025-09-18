@@ -192,7 +192,7 @@ renodx::utils::settings::Settings settings = {
         .group = "button-line-1",
         .tint = 0x5865F2,
         .on_change = []() {
-          renodx::utils::platform::LaunchURL("https://discord.gg/5WZXDpmbpP");
+          renodx::utils::platform::LaunchURL("https://discord.gg/F6AUTeWJHM");
         },
     },
     new renodx::utils::settings::Setting{

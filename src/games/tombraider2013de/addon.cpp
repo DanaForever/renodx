@@ -4,7 +4,6 @@
  */
 
 #define ImTextureID ImU64
-#define NOMINMAX
 #define DEBUG_LEVEL_0
 
 #include <random>
@@ -444,7 +443,7 @@ renodx::utils::settings::Settings settings = {
         .group = "button-line-2",
         .tint = 0x5865F2,
         .on_change = []() {
-          renodx::utils::platform::LaunchURL("https://discord.gg/", "5WZXDpmbpP");
+          renodx::utils::platform::LaunchURL("https://discord.gg/", "F6AUTeWJHM");
         },
     },
     new renodx::utils::settings::Setting{

@@ -4,7 +4,6 @@
  */
 
 #define ImTextureID ImU64
-
 #define DEBUG_LEVEL_0
 
 #include <deps/imgui/imgui.h>
@@ -336,7 +335,7 @@ renodx::utils::settings::Settings info_settings = {
         .group = "button-line-2",
         .tint = 0x5865F2,
         .on_change = []() {
-          renodx::utils::platform::LaunchURL("https://discord.gg/", "5WZXDpmbpP");
+          renodx::utils::platform::LaunchURL("https://discord.gg/", "F6AUTeWJHM");
         },
     },
     new renodx::utils::settings::Setting{
@@ -582,6 +581,22 @@ const std::unordered_map<
             "Banishers: Ghosts of New Eden",
             {
                 {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
+            },
+        },
+        {
+            "Lost Soul Aside",
+            {
+                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
+                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
+            },
+        },
+        {
+            "Borderlands3.exe",
+            {
+              {"Upgrade_CopyDestinations", 1.f},  
+              {"Upgrade_R8G8B8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_RATIO},
+              {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_RATIO},
+              {"Upgrade_R11G11B10_FLOAT", UPGRADE_TYPE_OUTPUT_RATIO},
             },
         },
 
@@ -845,11 +860,14 @@ bool OnDraw(
       return false;
     }
 
+    std::string prefix = custom_shaders.contains(pixel_shader_hash)
+                             ? "lutbuilder_"
+                             : "lutbuilder_new_";
     renodx::utils::shader::dump::DumpShader(
         pixel_shader_hash,
         shader_data.value(),
         reshade::api::pipeline_subobject_type::pixel_shader,
-        "lutbuilder_");
+        prefix);
 
   } catch (...) {
     std::stringstream s;
@@ -875,7 +893,6 @@ bool OnDispatch(
 
   auto compute_shader_hash = renodx::utils::shader::GetCurrentComputeShaderHash(compute_state);
   if (compute_shader_hash == 0u) return false;
-  // if (custom_shaders.contains(compute_shader_hash)) return false;
   if (g_dumped_shaders.contains(compute_shader_hash)) return false;
 
   auto* cmd_list_data = renodx::utils::data::Get<CommandListData>(cmd_list);
@@ -1057,11 +1074,15 @@ bool OnDispatch(
       return false;
     }
 
+    std::string prefix = custom_shaders.contains(compute_shader_hash)
+                             ? "lutbuilder_"
+                             : "lutbuilder_new_";
+
     renodx::utils::shader::dump::DumpShader(
         compute_shader_hash,
         shader_data.value(),
         reshade::api::pipeline_subobject_type::pixel_shader,
-        "lutbuilder_");
+        prefix);
 
   } catch (...) {
     std::stringstream s;

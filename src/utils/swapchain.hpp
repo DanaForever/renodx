@@ -14,6 +14,7 @@
 #include <ios>
 #include <mutex>
 #include <optional>
+#include <sstream>
 #include <unordered_set>
 #include <vector>
 
@@ -185,7 +186,10 @@ static std::optional<float> GetPeakNits(reshade::api::swapchain* swapchain) {
   // Current display colorspace (not swapchain)
   if (output_desc->ColorSpace != DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020
       && output_desc->ColorSpace != DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709) {
-    reshade::log::message(reshade::log::level::warning, "GetPeakNits(Not HDR)");
+    std::stringstream s;
+    s << "GetPeakNits(Not HDR Color Space: " << static_cast<int>(output_desc->ColorSpace);
+    s << ", Peak Nits: " << output_desc->MaxLuminance << ")";
+    reshade::log::message(reshade::log::level::debug, s.str().c_str());
     // Not WCG/HDR
     return std::nullopt;
   }
@@ -230,6 +234,157 @@ static bool IsHDRColorSpace(reshade::api::swapchain* swapchain) {
   }
 }
 
+static bool GetHDRSupported(const DISPLAYCONFIG_PATH_INFO& path) {
+  DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO_2 advanced_color_info_2 = {};
+  advanced_color_info_2.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO_2;
+  advanced_color_info_2.header.size = sizeof(advanced_color_info_2);
+  advanced_color_info_2.header.adapterId = path.targetInfo.adapterId;
+  advanced_color_info_2.header.id = path.targetInfo.id;
+  if (DisplayConfigGetDeviceInfo(&advanced_color_info_2.header) == ERROR_SUCCESS) {
+    return advanced_color_info_2.highDynamicRangeSupported != 0;
+  }
+  // Fallback to older struct
+  DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO advanced_color_info_1 = {};
+  advanced_color_info_1.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+  advanced_color_info_1.header.size = sizeof(advanced_color_info_1);
+  advanced_color_info_1.header.adapterId = path.targetInfo.adapterId;
+  advanced_color_info_1.header.id = path.targetInfo.id;
+  if (DisplayConfigGetDeviceInfo(&advanced_color_info_1.header) == ERROR_SUCCESS) {
+    return advanced_color_info_1.advancedColorSupported != 0;
+  }
+  return false;
+}
+
+static bool GetHDREnabled(const DISPLAYCONFIG_PATH_INFO& path) {
+  DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO_2 advanced_color_info_2 = {};
+  advanced_color_info_2.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO_2;
+  advanced_color_info_2.header.size = sizeof(advanced_color_info_2);
+  advanced_color_info_2.header.adapterId = path.targetInfo.adapterId;
+  advanced_color_info_2.header.id = path.targetInfo.id;
+  if (DisplayConfigGetDeviceInfo(&advanced_color_info_2.header) == ERROR_SUCCESS) {
+    return advanced_color_info_2.highDynamicRangeUserEnabled != 0;
+  }
+  // Fallback to older struct
+  DISPLAYCONFIG_GET_ADVANCED_COLOR_INFO advanced_color_info_1 = {};
+  advanced_color_info_1.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_ADVANCED_COLOR_INFO;
+  advanced_color_info_1.header.size = sizeof(advanced_color_info_1);
+  advanced_color_info_1.header.adapterId = path.targetInfo.adapterId;
+  advanced_color_info_1.header.id = path.targetInfo.id;
+  if (DisplayConfigGetDeviceInfo(&advanced_color_info_1.header) == ERROR_SUCCESS) {
+    return advanced_color_info_1.advancedColorEnabled != 0;
+  }
+  return false;
+}
+
+static bool SetHDREnabled(const DISPLAYCONFIG_PATH_INFO& path, bool enabled = true) {
+  if (GetHDREnabled(path) == enabled) return true;
+
+  DISPLAYCONFIG_SET_HDR_STATE hdr_state = {};
+  hdr_state.header.type = DISPLAYCONFIG_DEVICE_INFO_SET_HDR_STATE;
+  hdr_state.header.size = sizeof(hdr_state);
+  hdr_state.header.adapterId = path.targetInfo.adapterId;
+  hdr_state.header.id = path.targetInfo.id;
+  hdr_state.enableHdr = enabled ? 1 : 0;
+  if (DisplayConfigSetDeviceInfo(&hdr_state.header) == ERROR_SUCCESS) {
+    return true;
+  }
+  // Fallback to older struct
+  DISPLAYCONFIG_SET_ADVANCED_COLOR_STATE advanced_color_state = {};
+  advanced_color_state.header.type = DISPLAYCONFIG_DEVICE_INFO_SET_ADVANCED_COLOR_STATE;
+  advanced_color_state.header.size = sizeof(advanced_color_state);
+  advanced_color_state.header.adapterId = path.targetInfo.adapterId;
+  advanced_color_state.header.id = path.targetInfo.id;
+  advanced_color_state.enableAdvancedColor = enabled ? 1 : 0;
+  return DisplayConfigSetDeviceInfo(&advanced_color_state.header) == ERROR_SUCCESS;
+}
+
+static bool SetHDREnabled(reshade::api::swapchain* swapchain, bool enabled = true) {
+  if (!IsDXGI(swapchain)) return false;
+
+  auto output_desc = GetDirectXOutputDesc1(swapchain);
+  if (!output_desc.has_value()) return false;
+
+  auto path = renodx::utils::platform::GetPathInfo(output_desc->Monitor);
+  if (!path.has_value()) return false;
+
+  return SetHDREnabled(path.value(), enabled);
+}
+
+struct DisplayInfo {
+  reshade::api::swapchain* swapchain = nullptr;
+  std::optional<DXGI_OUTPUT_DESC1> output_desc = std::nullopt;
+  std::optional<DISPLAYCONFIG_PATH_INFO> display_config = std::nullopt;
+  bool hdr_supported = false;
+  bool hdr_enabled = false;
+  bool hdr_forced = false;
+  float peak_nits = 1000.f;
+  float sdr_white_nits = 203.f;
+  // Unreliable
+  // reshade::api::format display_color_space = reshade::api::format::unknown;
+};
+
+static DisplayInfo GetDisplayInfo(reshade::api::swapchain* swapchain, bool force_hdr = false) {
+  DisplayInfo info;
+  if (!IsDXGI(swapchain)) return info;
+  info.output_desc = GetDirectXOutputDesc1(swapchain);
+  if (!info.output_desc.has_value()) return info;
+
+  info.display_config = renodx::utils::platform::GetPathInfo(info.output_desc->Monitor);
+  if (!info.display_config.has_value()) return info;
+
+  info.hdr_supported = GetHDRSupported(info.display_config.value());
+
+  info.hdr_enabled = GetHDREnabled(info.display_config.value());
+
+  if (force_hdr && info.hdr_supported && !info.hdr_enabled) {
+    if (SetHDREnabled(info.display_config.value(), true)) {
+      info.hdr_enabled = true;
+      info.hdr_forced = true;
+      info.output_desc = GetDirectXOutputDesc1(swapchain);
+    } else {
+      reshade::log::message(reshade::log::level::error, "GetDisplayInfo(Failed to enable HDR on display)");
+    }
+  }
+
+  // HDR needs to be enabled to get correct values
+  if (info.hdr_enabled) {
+    DISPLAYCONFIG_SDR_WHITE_LEVEL white_level = {};
+    white_level.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SDR_WHITE_LEVEL;
+    white_level.header.size = sizeof(white_level);
+    white_level.header.adapterId = info.display_config->targetInfo.adapterId;
+    white_level.header.id = info.display_config->targetInfo.id;
+    if (DisplayConfigGetDeviceInfo(&white_level.header) == ERROR_SUCCESS) {
+      info.sdr_white_nits = static_cast<float>(white_level.SDRWhiteLevel) / 1000 * 80;  // From wingdi.h.
+      if (info.sdr_white_nits == 200.f) {
+        info.sdr_white_nits = 203.f;
+      }
+    }
+    info.peak_nits = info.output_desc->MaxLuminance;
+  }
+
+  // DirectX still reports SDR color space when changing display mode to HDR
+
+  // switch (info.output_desc->ColorSpace) {
+  //   case DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709:
+  //     info.display_color_space = reshade::api::format::r16g16b16a16_float;
+  //     // assert(info.hdr_enabled == true);
+  //     break;
+  //   case DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020:
+  //     info.display_color_space = reshade::api::format::r10g10b10a2_unorm;
+  //     assert(info.hdr_enabled == true);
+  //     break;
+  //   default:
+  //     assert(false);
+  //     [[fallthrough]];
+  //   case DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709:
+  //     info.display_color_space = reshade::api::format::r8g8b8a8_unorm;
+  //     assert(info.hdr_enabled == false);
+  //     break;
+  // }
+
+  return info;
+}
+
 static std::optional<float> GetSDRWhiteNits(reshade::api::swapchain* swapchain) {
   if (!IsDXGI(swapchain)) return std::nullopt;
 
@@ -245,7 +400,11 @@ static std::optional<float> GetSDRWhiteNits(reshade::api::swapchain* swapchain) 
   white_level.header.adapterId = path->targetInfo.adapterId;
   white_level.header.id = path->targetInfo.id;
   if (DisplayConfigGetDeviceInfo(&white_level.header) == ERROR_SUCCESS) {
-    return static_cast<float>(white_level.SDRWhiteLevel) / 1000 * 80;  // From wingdi.h.
+    auto white_nits = static_cast<float>(white_level.SDRWhiteLevel) / 1000 * 80;  // From wingdi.h.
+    if (white_nits == 200.f) {
+      white_nits = 203.f;
+    }
+    return white_nits;
   }
 
   return std::nullopt;
@@ -403,10 +562,10 @@ namespace internal {
 static bool attached = false;
 static std::chrono::high_resolution_clock::time_point last_time_point;
 static float last_fps_limit;
-static auto spin_lock_duration = std::chrono::nanoseconds(0);
-static std::uint32_t spin_lock_failures = 0;
+static auto busy_spin_duration = std::chrono::nanoseconds(0);
+static std::uint32_t busy_spin_failures = 0;
 
-static std::deque<std::chrono::nanoseconds> sleep_latency_history;
+static std::deque<std::chrono::nanoseconds> wait_latency_history;
 static const size_t MAX_LATENCY_HISTORY_SIZE = 1000;
 
 static bool is_primary_hook = false;
@@ -561,8 +720,8 @@ static void OnPresent(
     const reshade::api::rect* dirty_rects) {
   // is_primary_hook not needed
   if (last_fps_limit != fps_limit) {
-    spin_lock_duration = std::chrono::nanoseconds(0);
-    sleep_latency_history.clear();
+    busy_spin_duration = std::chrono::nanoseconds(0);
+    wait_latency_history.clear();
     last_fps_limit = fps_limit;
   }
   if (fps_limit <= 0.f) return;
@@ -577,48 +736,65 @@ static void OnPresent(
     return;
   }
 
-  // Use sleep for as much as reliably possible
-  auto sleep_duration = time_till_next_frame - spin_lock_duration;
-  bool changed_spin_lock_duration = false;
-  if (sleep_duration.count() > 0) {
-    std::this_thread::sleep_for(sleep_duration);
-    auto after_sleep = std::chrono::high_resolution_clock::now();
-    auto actual_sleep_duration = after_sleep - now;
-    auto sleep_latency = actual_sleep_duration - sleep_duration;
+  // Use sleep/timer for as much as reliably possible
+  auto wait_duration = time_till_next_frame - busy_spin_duration;
+  bool changed_busy_spin_duration = false;
+  if (wait_duration.count() > 0) {
+#if defined(RENODX_FPS_LIMIT_HR_TIMER)
+    static const HANDLE WAITABLE_TIMER = CreateWaitableTimerExW(
+        nullptr, nullptr,
+        CREATE_WAITABLE_TIMER_HIGH_RESOLUTION,
+        TIMER_ALL_ACCESS);
+    auto remaining = wait_duration;
+    auto ticks = remaining.count() / 100;  // 100ns ticks
+    while (remaining.count() > 0) {
+      LARGE_INTEGER due;
+      due.QuadPart = -ticks;
+      SetWaitableTimerEx(WAITABLE_TIMER, &due, 0, nullptr, nullptr, nullptr, 0);
+      WaitForSingleObject(WAITABLE_TIMER, INFINITE);
+      remaining = next_time_point - busy_spin_duration - std::chrono::high_resolution_clock::now();
+    }
+#else
+    std::this_thread::sleep_for(wait_duration);
+#endif
 
-    // Record the sleep latency
-    sleep_latency_history.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(sleep_latency));
-    auto current_size = sleep_latency_history.size() + 1;
+    auto after_wait = std::chrono::high_resolution_clock::now();
+    auto actual_wait_duration = after_wait - now;
+    auto wait_latency = actual_wait_duration - wait_duration;
+
+    // Record the wait latency
+    wait_latency_history.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(wait_latency));
+    auto current_size = wait_latency_history.size() + 1;
     if (current_size > MAX_LATENCY_HISTORY_SIZE) {
-      sleep_latency_history.pop_front();
+      wait_latency_history.pop_front();
       --current_size;
     }
 
     // Calculate the worst 1% latency
     if (current_size >= MAX_LATENCY_HISTORY_SIZE * 0.10f) {  // Ensure enough data points
-      auto sorted_latencies = sleep_latency_history;
+      auto sorted_latencies = wait_latency_history;
       std::ranges::sort(sorted_latencies, std::greater<>());
       auto worst_1_percent = sorted_latencies[current_size * 0.01];
-      spin_lock_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(worst_1_percent * 1.5);
+      busy_spin_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(worst_1_percent * 1.5);
     }
 
-    spin_lock_failures = 0;
-    now = after_sleep;
+    busy_spin_failures = 0;
+    now = after_wait;
   } else {
-    ++spin_lock_failures;
+    ++busy_spin_failures;
 
-    if (spin_lock_failures > fps_limit) {
+    if (busy_spin_failures > fps_limit) {
       // Full second of failures, try increasing
-      spin_lock_failures = 0;
+      busy_spin_failures = 0;
 
-      if (sleep_latency_history.empty()) {
-        spin_lock_duration = std::chrono::nanoseconds(0);
+      if (wait_latency_history.empty()) {
+        busy_spin_duration = std::chrono::nanoseconds(0);
       } else {
-        auto sorted_latencies = sleep_latency_history;
+        auto sorted_latencies = wait_latency_history;
         std::ranges::sort(sorted_latencies, std::less<>());
         if (sorted_latencies[0] * 1.5 < time_per_frame) {
           // Decrease spin lock duration by 10%
-          spin_lock_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(spin_lock_duration * 0.90f);
+          busy_spin_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(busy_spin_duration * 0.90f);
         } else {
           // Lowest latency is longer than time per frame
         }
@@ -627,6 +803,7 @@ static void OnPresent(
   }
 
   while (now < next_time_point) {
+    YieldProcessor();  // __builtin_ia32_pause or _mm_pause
     // Spin lock until the next time point
     now = std::chrono::high_resolution_clock::now();
   }
