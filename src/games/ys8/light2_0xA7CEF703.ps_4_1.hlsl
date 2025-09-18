@@ -1,4 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jul 18 15:55:53 2025
+#include "./common.hlsl"
+
 Texture2D<float4> t1 : register(t1);
 
 Texture2D<float4> t0 : register(t0);
@@ -162,8 +164,11 @@ void main(
   r1.xyz = r5.xyz * float3(0.100000001,0.100000001,0.100000001) + v4.xyz;
   r0.xyz = r1.xyz + r0.xyz;
   r0.xyz = min(float3(1,1,1), r0.xyz);
-  r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = dot(v5.xyz, float3(0.298999995,0.587000012,0.114));
+  // r0.w = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  // r1.x = dot(v5.xyz, float3(0.298999995,0.587000012,0.114));
+  r0.w = calculateLuminanceSRGB(r0.rgb);
+  r1.x = calculateLuminanceSRGB(v5.rgb);
+    
   r0.w = -r1.x * 0.5 + r0.w;
   r0.w = max(0, r0.w);
   r1.x = 1 + -v5.w;

@@ -30,9 +30,12 @@ void main(
   r0.xy = float2(1,1) + -r1.xy;
   r0.xy = max(float2(0,0), r0.xy);
   r1.xyz = sunpos.www * encolor.xyz;
-  r0.yzw = -r1.xyz * r0.yyy + float3(1,1,1);
-  r1.xyz = -tatecolor.xyz * r0.xxx + float3(1,1,1);
-  o0.xyz = -r1.xyz * r0.yzw + float3(1,1,1);
+  // r0.yzw = -r1.xyz * r0.yyy + float3(1,1,1);
+  // r1.xyz = -tatecolor.xyz * r0.xxx + float3(1,1,1);
+  // o0.xyz = -r1.xyz * r0.yzw + float3(1,1,1);
+  o0.rgb = r1.rgb * r0.y + tatecolor.xyz * r0.x;
   o0.w = 1;
+
+  // o0.rgb *=
   return;
 }

@@ -151,23 +151,29 @@ float3 ToneMapPass(float3 untonemapped,
 
 float3 PostToneMapProcess(float3 output) {
 
-  [branch]
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    output = renodx::color::correct::GammaSafe(output, false, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    output = renodx::color::correct::GammaSafe(output, false, 2.4f);
-  }
+  if (RENODX_TONE_MAP_TYPE > 1.f) {
 
-  output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
+    [branch]
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      output = renodx::color::correct::GammaSafe(output, false, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      output = renodx::color::correct::GammaSafe(output, false, 2.4f);
+    }
 
-  [branch]
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    output = renodx::color::correct::GammaSafe(output, true, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    output = renodx::color::correct::GammaSafe(output, true, 2.4f);
+    output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
+
+    [branch]
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      output = renodx::color::correct::GammaSafe(output, true, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      output = renodx::color::correct::GammaSafe(output, true, 2.4f);
+    }
+
+
   }
 
   output = renodx::color::srgb::EncodeSafe(output);
+  // output = renodx::draw::RenderIntermediatePass(output);
 
   return output;
 
@@ -404,13 +410,24 @@ float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
 float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma=2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
 
-  const float y_in = renodx::color::y::from::BT709(incorrect_color);
-  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
+  // const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  // const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
 
-  float3 lum = incorrect_color * (y_in > 0 ?  y_out / y_in : 0.f);
+  // float3 lum = incorrect_color * (y_in > 0 ?  y_out / y_in : 0.f);
 
-  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  float3 result = renodx::color::correct::Chrominance(lum, ch);
+  // // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  // float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
+  float t0 = 0.0031308f;
+  // float t1 = 0.04045f;
+  float y = renodx::color::y::from::BT709(ch);
+  
+  // float w = 1.0 - smoothstep(t0, t1, y);  // Hermite S-curve
+  float w = 1.0f - step(t0, y);
+
+  float sharp = 1.0f;
+  w = pow(saturate(w), sharp);     
+
+  float3 result = lerp(ch, incorrect_color, w); 
 
   return result;
 }

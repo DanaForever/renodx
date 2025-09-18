@@ -14,8 +14,18 @@
 
 #include "../../mods/shader.hpp"
 #include "../../mods/swapchain.hpp"
+#include "../../utils/date.hpp"
+#include "../../utils/ini_file.hpp"
+#include "../../utils/path.hpp"
+#include "../../utils/random.hpp"
 #include "../../utils/settings.hpp"
 #include "./shared.h"
+
+static const float HDR_TYPE_SWAPCHAIN = 0.f;
+static const float HDR_TYPE_UNREAL = 1.f;
+
+static const float VALIDATION_TYPE_VALID = 0.f;
+static const float VALIDATION_TYPE_INVALID = 1.f;
 
 namespace {
 
@@ -34,7 +44,125 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     // BypassShaderEntry(0x00000000)
 };
 
+
+int lut_invalidation_level = VALIDATION_TYPE_VALID;
+int global_invalidation_level = 0;
+
+bool current_hdr_ini_enabled = false;
+float current_hdr_upgrade = HDR_TYPE_SWAPCHAIN;
+
+bool initial_hdr_ini_enabled = current_hdr_ini_enabled;
+float initial_hdr_upgrade = HDR_TYPE_SWAPCHAIN;
+
 ShaderInjectData shader_injection;
+
+std::string GetIniFolderPath() {
+  auto process_name = renodx::utils::platform::GetCurrentProcessPath();
+  bool is_game_pass = process_name.string().find("WinGDK") != std::string::npos;
+
+  auto envirables_variables = renodx::utils::platform::GetEnvironmentVariables();
+  auto user_profile_pair = envirables_variables.find("USERPROFILE");
+  if (user_profile_pair == envirables_variables.end()) return "";
+  auto user_profile = user_profile_pair->second;
+  if (user_profile.empty()) return "";
+
+  static const std::string ENGINE_INI_PATH = "/Documents/My Games/DRAGON QUEST XI S/Steam/Saved/Config/Windows/";
+  static const std::string GAME_PASS_ENGINE_INI_PATH = "/Documents/My Games/DRAGON QUEST XI S/Xbox/Saved/Config/Windows/";
+  auto ini_path = is_game_pass ? GAME_PASS_ENGINE_INI_PATH : ENGINE_INI_PATH;
+  return user_profile + ini_path;
+}
+
+
+bool CheckHDREnabled() {
+  const auto ini_folder_path = GetIniFolderPath();
+  auto engine_ini_path = ini_folder_path + "Engine.ini";
+  if (renodx::utils::path::CheckExistsFile(engine_ini_path)) {
+    auto ini_contents = renodx::utils::path::ReadTextFile(engine_ini_path);
+    auto ini_map = renodx::utils::ini_file::ParseIniContents(ini_contents);
+    const auto* entry = renodx::utils::ini_file::FindLastEntry(ini_map, "ConsoleVariables", "r.HDR.EnableHDROutput");
+    if (entry != nullptr) {
+      auto value = std::get<2>(*entry);
+      if (value == "1") {
+        reshade::log::message(reshade::log::level::info, "CheckHDREnabled: Enabled");
+        return true;
+      }
+    }
+    reshade::log::message(reshade::log::level::info, "CheckHDREnabled: Not Enabled");
+  }
+
+  return false;
+}
+
+
+bool EnableHDR() {
+  const auto ini_folder_path = GetIniFolderPath();
+  if (ini_folder_path.empty()) {
+    reshade::log::message(reshade::log::level::warning, "EnableHDR: Path not found");
+    return false;
+  }
+
+  renodx::utils::platform::UpdateReadOnlyAttribute(ini_folder_path + "Engine.ini", false);
+  if (renodx::utils::ini_file::UpdateIniFile(
+          ini_folder_path + "Engine.ini",
+          {{"ConsoleVariables", "r.HDR.EnableHDROutput", "1"}},
+          true,
+          true)) {
+    reshade::log::message(reshade::log::level::info, "EnableHDR: Updated");
+  } else {
+    reshade::log::message(reshade::log::level::warning, "EnableHDR: Failed");
+  }
+  renodx::utils::platform::UpdateReadOnlyAttribute(ini_folder_path + "Engine.ini", true);
+
+  return true;
+}
+
+bool DisableHDR() {
+  const auto ini_folder_path = GetIniFolderPath();
+  if (ini_folder_path.empty()) {
+    reshade::log::message(reshade::log::level::warning, "DisableHDR: Path not found");
+    return false;
+  }
+
+  renodx::utils::platform::UpdateReadOnlyAttribute(ini_folder_path + "Engine.ini", false);
+  if (renodx::utils::ini_file::UpdateIniFile(
+          ini_folder_path + "Engine.ini",
+          {{"ConsoleVariables", "r.HDR.EnableHDROutput", ""}},
+          false,
+          false)) {
+    reshade::log::message(reshade::log::level::info, "DisableHDR: Updated");
+  } else {
+    reshade::log::message(reshade::log::level::info, "DisableHDR: Not Updated");
+  }
+  renodx::utils::platform::UpdateReadOnlyAttribute(ini_folder_path + "Engine.ini", true);
+
+  return true;
+}
+
+void UpdateHDRIni() {
+  if (current_hdr_ini_enabled) {
+    if (current_hdr_upgrade != HDR_TYPE_UNREAL) {
+      reshade::log::message(reshade::log::level::info, "Should disable HDR");
+      DisableHDR();
+      current_hdr_ini_enabled = false;
+    }
+  } else {
+    if (current_hdr_upgrade == HDR_TYPE_UNREAL) {
+      reshade::log::message(reshade::log::level::info, "Should enable HDR");
+      EnableHDR();
+      current_hdr_ini_enabled = true;
+    }
+  }
+}
+
+
+bool UsingSwapchainUpgrade() {
+  return (initial_hdr_upgrade == HDR_TYPE_SWAPCHAIN);
+}
+
+bool UsingSwapchainUtil() {
+  return UsingSwapchainUpgrade();
+}
+
 
 float current_settings_mode = 0;
 
@@ -552,6 +680,12 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       if (!reshade::register_addon(h_module)) return FALSE;
 
       if (!initialized) {
+        initial_hdr_upgrade = current_hdr_upgrade;
+
+        initial_hdr_ini_enabled = CheckHDREnabled();
+        current_hdr_ini_enabled = initial_hdr_ini_enabled;
+        UpdateHDRIni();
+
         renodx::mods::shader::force_pipeline_cloning = true;
         renodx::mods::shader::expected_constant_buffer_space = 50;
         renodx::mods::shader::expected_constant_buffer_index = 13;
@@ -560,22 +694,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_index = 13;
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
-        // renodx::mods::swapchain::swap_chain_proxy_shaders = {
-        //     {
-        //         reshade::api::device_api::d3d11,
-        //         {
-        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
-        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
-        //         },
-        //     },
-        //     {
-        //         reshade::api::device_api::d3d12,
-        //         {
-        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
-        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
-        //         },
-        //     },
-        // };
+
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_typeless,

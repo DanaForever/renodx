@@ -518,7 +518,7 @@ float3 correctHue(float3 color, float3 correctColor) {
   if (RENODX_TONE_MAP_HUE_CORRECTION <= 0.f) {
     return color;
   }
-  float3 sdrColor = SDRTonemap(correctColor);
+  float3 sdrColor = correctColor;
 
   color = renodx::color::bt709::clamp::BT2020(color);
 
@@ -531,9 +531,6 @@ float3 correctHue(float3 color, float3 correctColor) {
 
 float3 ToneMap(float3 color) {
   
-
-  color = max(color, 0.f);
-
   float3 originalColor = color;
 
   if (RENODX_TONE_MAP_TYPE == 0.f) {
@@ -617,4 +614,20 @@ float3 processAndToneMap(float3 color) {
   color = expandColorGamut(color);
   color = renodx::draw::RenderIntermediatePass(color);
   return color;
+}
+
+float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
+  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
+
+  // return ch;
+  const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
+
+  float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
+
+  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  // float3 result = renodx::color::correct::ChrominanceICtCp(lum, ch);
+  float3 result = renodx::color::correct::Chrominance(lum, ch);
+
+  return result;
 }

@@ -465,10 +465,10 @@ renodx::utils::settings::Settings settings = {
         .default_value = 100.f,
         .label = "Bloom Strength",
         .tooltip = "Bloom Strength.",
-        .min = 100.f,
-        .max = 100.f,
+        .min = 0.f,
+        .max = 1000.f,
         .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return false; }
+        // .is_visible = []() { return false; }
     },
     new renodx::utils::settings::Setting{
         .key = "SettingsBloomMethod",

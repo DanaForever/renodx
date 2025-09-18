@@ -131,8 +131,17 @@ void main(
   }
   r1.w = cmp(0 != mulblend);
   r2.w = 1 + -r0.w;
-  r1.xyz = -r1.xyz * v3.xyz + float3(1,1,1);
-  r1.xyz = r2.www * r1.xyz + r2.xyz;
+  float3 bloom = r1.rgb * v3.rgb;
+  bloom = renodx::color::srgb::DecodeSafe(bloom);
+  float3 base = r2.rgb; 
+  base = renodx::color::srgb::DecodeSafe(base);
+
+
+  // r1.xyz = -r1.xyz * v3.xyz + float3(1,1,1);
+  // r1.xyz = r2.www * r1.xyz + r2.xyz;
+  r1.rgb = base + bloom / ( 1.f + base);
+
+  r1.rgb = renodx::color::srgb::EncodeSafe(r1.rgb);
   r0.xyz = r1.www ? r1.xyz : r2.xyz;
   r1.x = cmp(0 < zwrite);
   r1.y = cmp(8.000000 == zwrite);

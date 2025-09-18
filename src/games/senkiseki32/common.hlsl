@@ -610,3 +610,4 @@ float3 scaleColor(float3 color, float3 bloomColor, float max_scale = 4.f) {
 
   return color;
 }
+

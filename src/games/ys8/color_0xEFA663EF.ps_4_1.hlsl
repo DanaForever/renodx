@@ -21,28 +21,32 @@ Texture2D<float4> darktex_tex : register(t2);
 // 3Dmigoto declarations
 #define cmp -
 
-float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool bloom = true) {
+float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool hdr = true) {
   float4 r2, r3, r4;
+
+  if (!hdr) {
+    r1.rgb = saturate(r1.rgb);
+    r0.rgb = saturate(r0.rgb);
+  }
 
   r2.xyz = r1.xyz + r0.xyz;
   r0.xyz = -r0.xyz * r1.xyz + r2.xyz;
 
   float3 v = v2.xyz;
-  r1.xyz = v * r0.xyz;
+  r1.xyz = v * r0.xyz; // x
+
   r2.xyz = r1.xyz * r1.xyz;
-  r2.xyz = r2.xyz + r2.xyz;
-  r3.xyz = r1.xyz * float3(4, 4, 4) + -r2.xyz;
-  r3.xyz = float3(-1, -1, -1) + r3.xyz;
-  r4.xyz = cmp(float3(0.5, 0.5, 0.5) < r1.xyz);
-  r2.xyz = r4.xyz ? r3.xyz : r2.xyz;
+  r2.xyz = r2.xyz + r2.xyz; // 2 * x^2
 
-  if (bloom)
-    r0.xyz = -r0.xyz * v + r2.xyz;
-  else {
-    r0.xyz = -r0.xyz * v;
+  if (!hdr) {
+    r3.xyz = r1.xyz * float3(4, 4, 4) + -r2.xyz;
+    r3.xyz = float3(-1, -1, -1) + r3.xyz;
+    r4.xyz = cmp(float3(0.5, 0.5, 0.5) < r1.xyz);
+    r2.xyz = r4.xyz ? r3.xyz : r2.xyz;
   }
-  r0.xyz = fparam.xxx * r0.xyz + r1.xyz;
 
+  r0.xyz = -r0.xyz * v2.xyz + r2.xyz;
+  r0.xyz = fparam.xxx * r0.xyz + r1.xyz;
   r0.w = cmp(0 < fparam.y);
   if (r0.w != 0) {
     r1.xyzw = darktex_tex.Sample(darktex_samp_s, v1.xy).xyzw;
@@ -56,7 +60,7 @@ float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool bloom = t
   r1.xy = r1.xy * r1.xy;
   r1.xy = r1.xy * r1.xy;
   r1.x = max(r1.x, r1.y);
-  r1.y = renodx::color::y::from::NTSC1953(r0.xyz);
+  r1.y = calculateLuminanceSRGB(r0.rgb);
   r1.z = fparam3.w * 0.349999994;
   r2.xyz = r1.yyy + -r0.xyz;
   r1.yzw = r1.zzz * r2.xyz + r0.xyz;
@@ -83,20 +87,16 @@ void main(
   r1.xyz = gradtex_tex.Sample(gradtex_samp_s, v0.zw).xyz;
   // r2.xyz = r1.xyz + r0.xyz;
   // r0.xyz = -r0.xyz * r1.xyz + r2.xyz;
-
-  // float3 v = v2.xyz;
-  // r1.xyz = v * r0.xyz;
+  // r1.xyz = v2.xyz * r0.xyz;
   // r2.xyz = r1.xyz * r1.xyz;
   // r2.xyz = r2.xyz + r2.xyz;
-  // r3.xyz = r1.xyz * float3(4,4,4) + -r2.xyz;
-  // r3.xyz = float3(-1,-1,-1) + r3.xyz;
-  // r4.xyz = cmp(float3(0.5,0.5,0.5) < r1.xyz);
+  // r3.xyz = r1.xyz * float3(4, 4, 4) + -r2.xyz;
+  // r3.xyz = float3(-1, -1, -1) + r3.xyz;
+  // r4.xyz = cmp(float3(0.5, 0.5, 0.5) < r1.xyz);
   // r2.xyz = r4.xyz ? r3.xyz : r2.xyz;
 
-  // r0.xyz = -r0.xyz * v; // + r2.xyz;
+  // r0.xyz = -r0.xyz * v2.xyz + r2.xyz;
   // r0.xyz = fparam.xxx * r0.xyz + r1.xyz;
-
-
   // r0.w = cmp(0 < fparam.y);
   // if (r0.w != 0) {
   //   r1.xyzw = darktex_tex.Sample(darktex_samp_s, v1.xy).xyzw;
@@ -105,12 +105,12 @@ void main(
   //   r0.xyz = r0.www * r1.xyz + r0.xyz;
   // }
   // r0.w = cmp(0 < fparam3.w);
-  // r1.xy = float2(-0.5,-0.5) + v1.xy;
+  // r1.xy = float2(-0.5, -0.5) + v1.xy;
   // r1.xy = fparam3.ww * r1.xy;
   // r1.xy = r1.xy * r1.xy;
   // r1.xy = r1.xy * r1.xy;
   // r1.x = max(r1.x, r1.y);
-  // r1.y = renodx::color::y::from::NTSC1953(r0.xyz);
+  // r1.y = dot(r0.xyz, float3(0.298911989, 0.586610973, 0.114478));
   // r1.z = fparam3.w * 0.349999994;
   // r2.xyz = r1.yyy + -r0.xyz;
   // r1.yzw = r1.zzz * r2.xyz + r0.xyz;
@@ -118,28 +118,35 @@ void main(
   // r1.xyz = r1.xxx * r2.xyz + r1.yzw;
   // o0.xyz = r0.www ? r1.xyz : r0.xyz;
 
-  float3 color = compositeColor(r0, r1, v1, v2, false);
-  float3 bloomColor = compositeColor(r0, r1, v1, v2, true);
+  float3 sdr = compositeColor(r0, r1, v1, v2, false);
+  float3 hdr = compositeColor(r0, r1, v1, v2, true);
 
-  
   o0.w = 1;
 
   // ToneMapPass here?
   if (RENODX_TONE_MAP_TYPE > 0.f) {
-    o0.xyz = scaleByPerceptualLuminance(color, bloomColor);
-    o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+    sdr = renodx::color::srgb::DecodeSafe(sdr);
+    hdr = renodx::color::srgb::DecodeSafe(hdr);
+
+    float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(hdr);
+    sdr = saturate(sdr);
+
+    hdr = renodx::tonemap::UpgradeToneMap(hdr, neutral_sdr, sdr);
+
+    o0.rgb = hdr;
+    o0.rgb = expandColorGamut(o0.rgb);
     o0.rgb = ToneMap(o0.rgb);
     o0.rgb = correctHue(o0.rgb, o0.rgb);
-    o0.rgb = expandColorGamut(o0.rgb);
+    
     o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
   } else {
-    o0.xyz = bloomColor;
+    o0.rgb = sdr;
     o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
     o0.rgb = saturate(o0.rgb);
   }
 
   // o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
-  color = o0.rgb;
+  float3 color = o0.rgb;
   [branch]
   if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     color = renodx::color::correct::GammaSafe(color, false, 2.2f);

@@ -375,6 +375,8 @@ float3 hdrScreenBlend(float3 base, float3 blend, float strength = 1.0f) {
 
   blend *= strength; 
 
+  blend *= shader_injection.bloom_strength;
+
   base = max(0.f, base);
   blend = max(0.f, blend);
 

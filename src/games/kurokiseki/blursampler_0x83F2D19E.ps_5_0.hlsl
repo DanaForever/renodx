@@ -23,7 +23,7 @@ void main(
   float4 fDest;
 
 
-  if (shader_injection.bloom == 0.f)  {
+  if (shader_injection.bloom >= 0.f)  {
 
     r0.yz = offsetsAndWeights[1].xy + v1.xy;
     r0.x = min(offsetsAndWeights[1].w, r0.y);

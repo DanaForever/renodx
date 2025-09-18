@@ -618,3 +618,16 @@ float3 processAndToneMap(float3 color) {
   color = renodx::draw::RenderIntermediatePass(color);
   return color;
 }
+
+
+float calculateLuminanceSRGB(float3 color) {
+
+  return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+
+  // if (shader_injection.bloom_processing_space == 0.f) {
+  //   return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+  // }
+  // else  {
+  //   return renodx::color::y::from::BT709(color);
+  // }
+}

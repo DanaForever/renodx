@@ -27,6 +27,9 @@ void main(
   r1.xyzw = float4(1,1,1,1) + -v0.wxyz;
   r1.xyz = r1.xxx * r1.yzw + v0.xyz;
   o0.xyz = r0.xxx ? r1.xyz : v0.xyz;
+
+  // o0.rgb *= 
   o0.w = r0.y ? 1 : v0.w;
+
   return;
 }
