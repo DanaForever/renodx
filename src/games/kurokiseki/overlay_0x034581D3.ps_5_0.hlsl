@@ -15,30 +15,6 @@ Texture2D<float4> colorTexture : register(t0);
 Texture2D<float4> blurTexture : register(t1);
 
 
-float3 hdrScreenBlend(float3 base, float3 blend) {
-
-  blend = max(0.f, blend);
-
-  // blend *= shader_injection.bloom_strength; 
-  blend = srgbDecode(blend);
-
-  // float3 bloom = base + (blend / (1.f + base));
-
-  // base = max(0.f, base);
-  base = srgbDecode(base);
-  
-  float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
-
-  // float3 addition = base + blend;
-  // float3 out = base + addition;
-
-  // out = srgbEncode(out);
-
-  return srgbEncode(base + addition);
-  
-}
-
-
 // 3Dmigoto declarations
 #define cmp -
 
@@ -55,7 +31,6 @@ void main(
   float4 fDest;
 
   r0.xyz = blurTexture.SampleLevel(samLinear_s, v1.xy, 0).xyz;
-  // r0 = saturate(r0);
 
   float3 B = r0.rgb;
 
@@ -83,33 +58,32 @@ void main(
   // overlay result (per channel)
   float3 Overlay = lerp(Light, Dark, M);
 
+  [branch]
   if (shader_injection.bloom == 1.f)  {
     
-    float3 oldOverlay = lerp(oldLight, Dark, M);  
-    float3 sat = saturate(oldOverlay);
+    float3 sdr = lerp(oldLight, Dark, M);
+    float3 sat = saturate(sdr);
+    sdr = sat;
 
-    Overlay = renodx::tonemap::UpgradeToneMap(Overlay, renodx::tonemap::renodrt::NeutralSDR(Overlay), oldOverlay, shader_injection.bloom_hue_correction);
+    float3 hdr = Overlay;
 
+    sdr = lerp(C, sdr, alpha);
+    hdr = lerp(C, hdr, alpha);
+
+    sdr = srgbDecode(sdr);
+    hdr = srgbDecode(hdr);
+
+    hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
+    hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);
+
+    o0.rgb = srgbEncode(hdr);
+
+  } else {
+    // final: add delta scaled by alpha
+    float3 Out = C + alpha * (Overlay - C);
+    o0.rgb = Out;
   }
 
-  // final: add delta scaled by alpha
-  // float3 Out = C + alpha * (Overlay - C);
-  float3 Out = lerp(C, Overlay, alpha);
-
-  o0.rgb = Out;
-
-  // r0.xyz = r3.xyz * r0.xyz + r1.xyz;
-  // r0.xyz = r0.xyz + -r2.xyz;
-  // o0.xyz = alpha * r0.xyz + r2.xyz;
-  // color = srgbDecode(color);
-  // blur = srgbDecode(blur);
-  // o0.rgb = hdrScreenBlend(color, blur * alpha);
-  // float3 target = overlay(color, blur);
-  // o0.rgb = lerp(srgbEncode(color), srgbEncode(target), alpha);
-  // o0.rgb = color;
-
-  // o0.rgb = srgbEncode(o0.rgb);
-  // o0.rgb = r2.rgb;
   o0.w = r2.w;
 
   o0.rgb = processAndToneMap(o0.rgb, true);

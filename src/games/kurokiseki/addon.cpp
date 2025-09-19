@@ -65,14 +65,14 @@ renodx::mods::shader::CustomShaders custom_shaders = {
 
     //  Kuro
     CustomShaderEntry(0xAD51B4B0), // Kuro final
-    // UpgradeRTVReplaceShader(0x28FFFB4A), // Kuro tonemap
+    UpgradeRTVReplaceShader(0x28FFFB4A), // Kuro proxy
     UpgradeRTVReplaceShader(0x034581D3), // Kuro overlay blending
     UpgradeRTVReplaceShader(0x83F2D19E), // blur sampler
     UpgradeRTVReplaceShader(0x5BB549F7), // blur gen
     UpgradeRTVReplaceShader(0xCE7C6E9D), // depth
     UpgradeRTVReplaceShader(0x43E0BB74), // blur
     UpgradeRTVReplaceShader(0x2D620443), // blur
-    // UpgradeRTVReplaceShader(0xAF7B0499), // refraction
+    UpgradeRTVReplaceShader(0xAF7B0499), // refraction
     // UpgradeRTVReplaceShader(0xE7562C18), // refraction
 
     // UpgradeRTVShader(0x1336F6F8),
@@ -238,18 +238,7 @@ renodx::utils::settings::Settings settings = {
     //     .max = 500.f,
     //     .parse = [](float value) { return value * 0.01f; },
     // },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapWorkingColorSpace",
-        .binding = &shader_injection.tone_map_working_color_space,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .label = "Working Color Space",
-        .section = "Tone Mapping",
-        .labels = {"BT709", "BT2020", "AP1"},
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 1; },
-        // .is_visible = []() { return false; },
-    },
+    
     new renodx::utils::settings::Setting{
         .key = "DICEToneMapType",
         .binding = &shader_injection.dice_tone_map_type,
@@ -259,7 +248,8 @@ renodx::utils::settings::Settings settings = {
         .label = "DICE ToneMap Type",
         .section = "DICE Configuration",
         .tooltip = "Sets the DICE tone mapper type",
-        .labels = {"Luminance RGB", "Luminance PQ", "Luminance PQ w/ Channel Correction", "Channel PQ"},
+        .labels = {"Luminance PQ", "Luminance PQ w/ Channel Correction", "Channel PQ"},
+        .parse = [](float value) { return value + 1; },
         .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 2.f ; },
     },
     new renodx::utils::settings::Setting{
@@ -313,6 +303,18 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Luminance", "Per Channel"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type >= 3.f; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapWorkingColorSpace",
+        .binding = &shader_injection.tone_map_working_color_space,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "Working Color Space",
+        .section = "RenoDRT Configuration",
+        .labels = {"BT709", "BT2020", "AP1"},
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type >= 3.f; },
+        // .is_visible = []() { return false; },
     },
     // new renodx::utils::settings::Setting{
     //     .key = "ToneMapWhiteClip",

@@ -283,7 +283,7 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
   }
 
   float3 sdr_color = SDRTonemap(color);
-  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
+  // color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
   
   color = ToneMap(color);
   color = correctHue(color, sdr_color);
@@ -354,12 +354,6 @@ float calculateLuminanceSRGB(float3 color) {
 
   return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
 
-  // if (shader_injection.bloom_processing_space == 0.f) {
-  //   return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
-  // }
-  // else  {
-  //   return renodx::color::y::from::BT709(color);
-  // }
 }
 
 float3 compress(float3 color) {

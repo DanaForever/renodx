@@ -175,6 +175,7 @@ void main(
     // hue and chrominance correction if desaturation is desired
     // hdr = renodx::color::correct::ChrominanceICtCp(hdr, sat, shader_injection.bloom_hue_correction);
     // hdr = renodx::color::correct::Hue(hdr, sat, shader_injection.bloom_hue_correction, RENODX_TONE_MAP_HUE_PROCESSOR);
+    hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
     hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sat, shader_injection.bloom_hue_correction);
     
     if (shader_injection.bloom == 2.f)  {
