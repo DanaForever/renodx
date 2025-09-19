@@ -149,7 +149,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "fxBloomCorrection",
         .binding = &shader_injection.bloom_hue_correction,
-        .default_value = 25.f,
+        .default_value = 50.f,
         .label = "Bloom Color Correction",
         .section = "Game Settings",
         .tooltip = "Correcting the colors after rewriting the Bloom.",
@@ -362,7 +362,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
         .binding = &shader_injection.tone_map_hue_correction,
-        .default_value = 75.f,
+        .default_value = 50.f,
         .label = "Hue Correction Strength",
         .section = "Hue Correction",
         .tooltip = "Hue retention strength.",

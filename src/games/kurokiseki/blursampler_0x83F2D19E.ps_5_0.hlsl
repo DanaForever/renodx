@@ -23,7 +23,7 @@ void main(
   float4 fDest;
 
 
-  if (shader_injection.bloom >= 0.f)  {
+  if (shader_injection.bloom == 0.f)  {
 
     r0.yz = offsetsAndWeights[1].xy + v1.xy;
     r0.x = min(offsetsAndWeights[1].w, r0.y);
@@ -103,19 +103,8 @@ void main(
     r1.xyzw = colorTexture.SampleLevel(samLinear_s, r1.xz, 0).xyzw;
     r1 = compress(r1);
     o0.xyzw = r1.xyzw * offsetsAndWeights[14].zzzz + r0.xyzw;
+    o0 = saturate(o0);
   } else {
-    
-    // float4 acc_sdr = 0;
-
-    // [unroll]
-    // for (int i = 0; i < 15; ++i) {
-    //   float2 uv = v1.xy + offsetsAndWeights[i].xy; // fixed offsets from center
-    //   float  w  = offsetsAndWeights[i].z;
-    //   float4 c  = colorTexture.SampleLevel(samLinear_s, uv, 0);
-    //   c = compress(c);
-
-    //   acc_sdr  += c * w;
-    // }
 
     float4 acc = 0;
     float wsum = 0;
@@ -131,10 +120,10 @@ void main(
       wsum += w;
     }
 
-    // acc = lerp(acc, acc_sdr, 1.f);
-    // acc = lerp(acc, acc_sdr, saturate(acc_sdr.w));
-
+    // it seems this is sampling the position in 8bit unorm
     o0 = acc;
+    // o0 = acc / wsum;
+    o0 = saturate(o0);
 
   }
 
