@@ -42,8 +42,9 @@ float3 one_minus(float3 x)  {
 
 float3 vanillaSdrBlend(float3 base, float3 blend) {
 
-  
-  return blend * (1 - saturate(base)) + base;
+  float3 oneMinusBase = max(1 - base, 0.f);
+
+  return blend * oneMinusBase + base;
 }
 
 float4 blendBloomSrgb(SamplerState samLinear_s, float4 v1) {

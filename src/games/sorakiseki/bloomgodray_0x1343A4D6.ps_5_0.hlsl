@@ -25,10 +25,11 @@ float4 blendGodRaySrgb(Texture2D<float4> godrayTexture, Texture2D<float4> colorT
 
   float4 r0,r1,r2, output;
   r0.xyz = godrayTexture.SampleLevel(samLinear_s, v1.xy, 0).xyz;
+  // r0.rgb = saturate(r0.rgb);
   r0.xyz = godrayColor_g.xyz * r0.xyz;
   r1.xyzw = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyzw;
-  r2.xyz = float3(1,1,1) + -saturate(r1.xyz);
-  r2.xyz = max(float3(0,0,0), r2.xyz);
+  r2.xyz = float3(1, 1, 1) + (r1.xyz);
+  r2.rgb = max(0.f, r2.rgb);
   output.xyz = r0.xyz * r2.xyz + r1.xyz;
   output.w = r1.w;
 
@@ -58,9 +59,13 @@ void main(
   r1.rgb = renodx::color::srgb::DecodeSafe(r1.rgb);
 
   // o0.rgb = hdrScreenBlend(r1.rgb, r0.rgb);
-  o0.rgb = addBloom(r1.rgb, r0.rgb);
+  float3 hdr = addBloom(r1.rgb, r0.rgb);
 
-  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  float3 sdr = renodx::color::srgb::DecodeSafe(vanilla.rgb);
+
+  // hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);
+
+  o0.rgb = renodx::color::srgb::EncodeSafe(hdr);
   
   o0.w = r1.w;
   return;

@@ -115,7 +115,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "Frostbite", "DICE", "RenoDRT"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "RenoDRT", "RenoDRT + RollOff"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -195,7 +195,8 @@ renodx::utils::settings::Settings settings = {
         .label = "DICE ToneMap Type",
         .section = "DICE Configuration",
         .tooltip = "Sets the DICE tone mapper type",
-        .labels = {"Luminance RGB", "Luminance PQ", "Luminance PQ w/ Channel Correction", "Channel PQ"},
+        .labels = {"Luminance PQ", "Luminance PQ w/ Channel Correction", "Channel PQ"},
+        .parse = [](float value) { return value + 1; },
         .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 2.f ; },
     },
     new renodx::utils::settings::Setting{
