@@ -41,6 +41,7 @@ struct ShaderInjectData {
   float bloom;
   float bloom_strength;
   float inverse_tonemap_extra_hdr_saturation;
+  float lms_matrix;
 
   float peak_white_nits;
   float diffuse_white_nits;

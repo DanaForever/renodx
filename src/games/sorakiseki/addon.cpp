@@ -115,7 +115,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "Frostbite", "DICE", "RenoDRT", "RenoDRT + RollOff"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "RenoDRT", "RenoDRT + RollOff", "RenoDRT LMS"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -259,7 +259,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Luminance scales colors consistently while per-channel saturates and blows out sooner",
         .labels = {"Luminance", "Per Channel"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 3.f; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type >= 3.f; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapWhiteClip",
@@ -273,6 +273,18 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
         .parse = [](float value) { return value * 1.f; },
         .is_visible = []() { return current_settings_mode >= 1 && shader_injection.tone_map_type == 3.f; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapLMSMatrix",
+        .binding = &shader_injection.lms_matrix,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "LMS Matrix Transformation",
+        .section = "RenoDRT Configuration",
+        .labels = {"Von-Kries", "Bradford", "Fairchild"},
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 5.f; },
+        // .is_visible = []() { return false; },
     },
     
     new renodx::utils::settings::Setting{

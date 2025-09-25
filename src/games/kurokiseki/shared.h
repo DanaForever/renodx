@@ -40,8 +40,9 @@ struct ShaderInjectData {
   float gamma;
   float bloom;
   float bloom_strength;
-  float pause_brightness;
+  float bloom_space;
   float inverse_tonemap_extra_hdr_saturation;
+  float lms_matrix;
 
   float peak_white_nits;
   float diffuse_white_nits;
@@ -80,15 +81,15 @@ struct ShaderInjectData {
   float swap_chain_encoding;
   float swap_chain_encoding_color_space;
 
-  float color_grade_hue_correction;
-  float color_grade_saturation_correction;
-  float color_grade_hue_shift;
-  float color_grade_blowout_restoration;
+  // float color_grade_hue_correction;
+  // float color_grade_saturation_correction;
+  // float color_grade_hue_shift;
+  // float color_grade_blowout_restoration;
 
-  float custom_display_map_type;
-  float custom_tonemap_upgrade_type;
-  float custom_tonemap_upgrade_huecorr;
-  float custom_tonemap_upgrade_strength;
+  // float custom_display_map_type;
+  // float custom_tonemap_upgrade_type;
+  // float custom_tonemap_upgrade_huecorr;
+  // float custom_tonemap_upgrade_strength;
 
   float dice_tone_map_type;
   float dice_shoulder_start;
@@ -142,15 +143,6 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE shader_injection.swap_chain_encoding_color_space
 #define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::REINHARD
 
-#define CUSTOM_COLOR_GRADE_HUE_CORRECTION        shader_injection.color_grade_hue_correction
-#define CUSTOM_COLOR_GRADE_SATURATION_CORRECTION shader_injection.color_grade_saturation_correction
-#define CUSTOM_COLOR_GRADE_BLOWOUT_RESTORATION   shader_injection.color_grade_blowout_restoration
-#define CUSTOM_COLOR_GRADE_HUE_SHIFT             shader_injection.color_grade_hue_shift
-
-#define CUSTOM_DISPLAY_MAP_TYPE                   shader_injection.custom_display_map_type
-#define CUSTOM_TONEMAP_UPGRADE_TYPE               shader_injection.custom_tonemap_upgrade_type
-#define CUSTOM_TONEMAP_UPGRADE_HUECORR            shader_injection.custom_tonemap_upgrade_huecorr
-#define CUSTOM_TONEMAP_UPGRADE_STRENGTH           shader_injection.custom_tonemap_upgrade_strength
 
 #include "../../shaders/renodx.hlsl"
 

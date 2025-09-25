@@ -188,6 +188,7 @@ void main(
     }
 
     
+    
     o0.rgb = hdr.rgb;
 
     o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);

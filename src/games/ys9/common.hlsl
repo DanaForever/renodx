@@ -612,7 +612,37 @@ float3 ToneMap(float3 color) {
 float3 processAndToneMap(float3 color) {
   color = ToneMap(color);
   color = expandColorGamut(color);
-  color = renodx::draw::RenderIntermediatePass(color);
+  // color = renodx::draw::RenderIntermediatePass(color);
+
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+
+  [branch]
+  if (config.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+  } else if (config.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  } else if (config.gamma_correction == 3.f) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.3f);
+  }
+
+  // color *= config.intermediate_scaling;
+
+  [branch]
+  if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+  } else if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.4f);
+  } else if (config.swap_chain_gamma_correction == 3.f) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.3f);
+  }
+
+  color = renodx::color::convert::ColorSpaces(
+      color,
+      renodx::color::convert::COLOR_SPACE_BT709,
+      config.intermediate_color_space);
+
+  
+  color = renodx::color::srgb::EncodeSafe(color);
   return color;
 }
 

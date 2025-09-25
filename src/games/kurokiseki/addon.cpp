@@ -73,7 +73,8 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0x43E0BB74), // blur
     UpgradeRTVReplaceShader(0x2D620443), // blur
     UpgradeRTVReplaceShader(0xAF7B0499), // refraction
-    // UpgradeRTVReplaceShader(0xE7562C18), // refraction
+    UpgradeRTVReplaceShader(0xFA1A3F24), // atmosphere
+    UpgradeRTVReplaceShader(0x2D620443), // menublu
 
     // UpgradeRTVShader(0x1336F6F8),
     // UpgradeRTVShader(0xEF0CAEEA),
@@ -98,16 +99,15 @@ renodx::utils::settings::Settings settings = {
         .is_global = true,
     },
     new renodx::utils::settings::Setting{
-        .key = "gamma",
-        .binding = &shader_injection.gamma,
+        .key = "bloomSpace",
+        .binding = &shader_injection.bloom_space,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
+        .default_value = 0.f,
         .can_reset = true,
-        .label = "Gamma",
+        .label = "Bloom Space",
         .section = "Game Settings",
-        .tooltip = "The game defaults to 2.3 Gamma.",
-        .labels = {"Falcom (2.3)", "sRGB"},
-        .is_visible = []() { return false; },
+        .tooltip = "Falcom by default generates Bloom samples in sRGB.",
+        .labels = {"Falcom (sRGB)", "Linear"},
     },
     new renodx::utils::settings::Setting{
         .key = "bloom",
@@ -115,7 +115,7 @@ renodx::utils::settings::Settings settings = {
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
         .default_value = 1.f,
         .can_reset = true,
-        .label = "Bloom",
+        .label = "Bloom Blending",
         .section = "Game Settings",
         .tooltip = "Bloom blending method.",
         .labels = {"Falcom (SDR)", "HDR"},
@@ -164,12 +164,12 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapType",
         .binding = &shader_injection.tone_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 2.f,
+        .default_value = 5.f,
         .can_reset = true,
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "Frostbite", "DICE", "RenoDRT", "RenoDRTRollOff"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "RenoDRT", "RenoDRTRollOff", "LMS"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -314,6 +314,18 @@ renodx::utils::settings::Settings settings = {
         .labels = {"BT709", "BT2020", "AP1"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type >= 3.f; },
+        // .is_visible = []() { return false; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapLMSMatrix",
+        .binding = &shader_injection.lms_matrix,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "LMS Matrix Transformation",
+        .section = "RenoDRT Configuration",
+        .labels = {"Von-Kries", "Bradford", "Fairchild"},
+        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 5.f; },
         // .is_visible = []() { return false; },
     },
     // new renodx::utils::settings::Setting{

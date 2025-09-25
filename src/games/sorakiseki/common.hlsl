@@ -1,6 +1,8 @@
 
 #include "./shared.h"
 #include "DICE.hlsl"
+#include "lms_matrix.hlsl"
+
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -148,6 +150,66 @@ float3 ApplyExponentialRollOff(float3 color) {
   }
 }
 
+float3 LMS_ToneMap(float3 bt709, renodx::tonemap::renodrt::Config current_config) {
+  // static const float3x3 XYZ_TO_LMS_D65_MAT = float3x3(
+  //     0.4002400f, 0.7076000f, -0.0808100f,
+  //     -0.2263000f, 1.1653200f, 0.0457000f,
+  //     0.0000000f, 0.0000000f, 0.9182200f);
+  float3x3 XYZ_TO_LMS_D65_MAT;
+
+  switch (int(shader_injection.lms_matrix)) {
+    case 0:
+      XYZ_TO_LMS_D65_MAT = CAT_VON_KRIES;
+      break;
+    case 1:
+      XYZ_TO_LMS_D65_MAT = CAT_BRADFORD;
+      break;
+    case 2:
+      XYZ_TO_LMS_D65_MAT = CAT_FAIRCHILD;
+      break;
+    default:
+      XYZ_TO_LMS_D65_MAT = CAT_VON_KRIES;
+      break;
+  }
+
+  float3 lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(bt709));
+  float3 midgray_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(0.18f));
+
+  // midgray match
+  lms = renodx::math::DivideSafe(lms, midgray_lms, 1.f);
+  lms = sign(lms) * pow(abs(lms), current_config.contrast);
+  lms *= midgray_lms;
+
+  const float human_vision_peak = 4000 / 203.f;
+  float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(human_vision_peak));
+
+  // Naka Rushton per cone
+  float3 new_lms = float3(
+      sign(lms.x) * renodx::tonemap::ReinhardScalableExtended(abs(lms.x), 100.f, peak_lms.x, 0.f, abs(midgray_lms.x), abs(midgray_lms.x)),
+      sign(lms.y) * renodx::tonemap::ReinhardScalableExtended(abs(lms.y), 100.f, peak_lms.y, 0.f, abs(midgray_lms.y), abs(midgray_lms.y)),
+      sign(lms.z) * renodx::tonemap::ReinhardScalableExtended(abs(lms.z), 100.f, peak_lms.z, 0.f, abs(midgray_lms.z), abs(midgray_lms.z)));
+
+  float3 new_xyz = mul(renodx::math::Invert3x3(XYZ_TO_LMS_D65_MAT), new_lms);
+  float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);
+  return input_color;
+  // float y_original = renodx::color::y::from::BT709(abs(bt709));
+
+  // float input = renodx::color::y::from::BT709(input_color);
+  // float rolloff_start = 0.20f;
+  // float output_max = current_config.nits_peak / 100.f;
+  // float rolloff_size = output_max - rolloff_start;
+  // float overage = -max((float)0, input - rolloff_start);
+  // float rolloff_value = (float)1.0f - exp(overage / rolloff_size);
+  // float new_overage = mad(rolloff_size, rolloff_value, overage);
+  // float new_y = input + new_overage;
+  // // float3 final = input_color * (new_y / y_original);
+
+  // float3 final = input_color * renodx::math::DivideSafe(new_y, y_original, 1.f);
+
+  // final = renodx::color::bt709::clamp::BT2020(final);
+  // return final;
+}
+
 float3 ToneMap(float3 color) {
   
   float3 originalColor = color;
@@ -178,6 +240,71 @@ float3 ToneMap(float3 color) {
     float3 renodrt_color = renodx::draw::ToneMapPass(color, draw_config);
 
     color = ApplyExponentialRollOff(renodrt_color);
+    return color;
+    
+  } else if (shader_injection.tone_map_type == 5.f) {
+    renodx::draw::Config draw_config = renodx::draw::BuildConfig();
+    // draw_config.peak_white_nits = 10000.f;
+    renodx::tonemap::Config tone_map_config = renodx::tonemap::config::Create();
+    tone_map_config.peak_nits = draw_config.peak_white_nits;
+    tone_map_config.game_nits = draw_config.diffuse_white_nits;
+    tone_map_config.type = draw_config.tone_map_type;
+    tone_map_config.gamma_correction = draw_config.gamma_correction;
+    tone_map_config.exposure = draw_config.tone_map_exposure;
+    tone_map_config.highlights = draw_config.tone_map_highlights;
+    tone_map_config.shadows = draw_config.tone_map_shadows;
+    tone_map_config.contrast = draw_config.tone_map_contrast;
+    tone_map_config.saturation = draw_config.tone_map_saturation;
+
+    tone_map_config.mid_gray_value = 0.18f;
+    tone_map_config.mid_gray_nits = tone_map_config.mid_gray_value * 100.f;
+
+    tone_map_config.reno_drt_highlights = 1.0f;
+    tone_map_config.reno_drt_shadows = 1.0f;
+    tone_map_config.reno_drt_contrast = 1.0f;
+    tone_map_config.reno_drt_saturation = 1.0f;
+    tone_map_config.reno_drt_blowout = -1.f * (draw_config.tone_map_highlight_saturation - 1.f);
+    tone_map_config.reno_drt_dechroma = draw_config.tone_map_blowout;
+    tone_map_config.reno_drt_flare = 0.10f * pow(draw_config.tone_map_flare, 10.f);
+    tone_map_config.reno_drt_working_color_space = (uint)draw_config.tone_map_working_color_space;
+    tone_map_config.reno_drt_per_channel = draw_config.tone_map_per_channel == 1.f;
+    tone_map_config.reno_drt_hue_correction_method = (uint)draw_config.tone_map_hue_processor;
+    tone_map_config.reno_drt_clamp_color_space = draw_config.tone_map_clamp_color_space;
+    tone_map_config.reno_drt_clamp_peak = draw_config.tone_map_clamp_peak;
+    tone_map_config.reno_drt_tone_map_method = (uint)draw_config.reno_drt_tone_map_method;
+    tone_map_config.reno_drt_white_clip = draw_config.reno_drt_white_clip;
+
+    renodx::tonemap::renodrt::Config reno_drt_config = renodx::tonemap::renodrt::config::Create();
+
+    renodx::tonemap::Config tm_config = tone_map_config;
+    float reno_drt_max = (tm_config.peak_nits / tm_config.game_nits);
+    reno_drt_config.nits_peak = reno_drt_max * 100.f;
+    reno_drt_config.mid_gray_value = 0.18f;
+    reno_drt_config.mid_gray_nits = tm_config.mid_gray_nits;
+    reno_drt_config.exposure = tm_config.exposure;
+    reno_drt_config.highlights = tm_config.reno_drt_highlights;
+    reno_drt_config.shadows = tm_config.reno_drt_shadows;
+    reno_drt_config.contrast = tm_config.reno_drt_contrast;
+    reno_drt_config.saturation = tm_config.reno_drt_saturation;
+    reno_drt_config.dechroma = tm_config.reno_drt_dechroma;
+    reno_drt_config.flare = tm_config.reno_drt_flare;
+    reno_drt_config.hue_correction_strength = tm_config.hue_correction_strength;
+    reno_drt_config.hue_correction_type = renodx::tonemap::renodrt::config::hue_correction_type::CUSTOM;
+    reno_drt_config.hue_correction_source = color;
+    reno_drt_config.hue_correction_method = tm_config.reno_drt_hue_correction_method;
+    reno_drt_config.tone_map_method = tm_config.reno_drt_tone_map_method;
+    reno_drt_config.working_color_space = tm_config.reno_drt_working_color_space;
+    reno_drt_config.per_channel = tm_config.reno_drt_per_channel;
+    reno_drt_config.blowout = tm_config.reno_drt_blowout;
+    reno_drt_config.clamp_color_space = tm_config.reno_drt_clamp_color_space;
+    reno_drt_config.clamp_peak = tm_config.reno_drt_clamp_peak;
+    reno_drt_config.white_clip = tm_config.reno_drt_white_clip;
+
+    float3 lms_output = LMS_ToneMap(color, reno_drt_config);
+    color = ApplyExponentialRollOff(lms_output);
+    // color = lms_output;
+
+    return color;
   }
 
   // copied from ToneMapPass

@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Tue Sep 02 00:19:34 2025
-
+#include "common.hlsl"
 cbuffer cb_local : register(b2)
 {
   float2 blurCenter_g : packoffset(c0);
@@ -39,19 +39,35 @@ void main(
   r0.xy = r0.xy * r0.zz;
   r1.xyzw = colorTexture.SampleLevel(samLinear_s, r1.xy, 0).xyzw;
   r2.xyzw = colorTexture.SampleLevel(samLinear_s, v1.xy, 0).xyzw;
+
+  if (shader_injection.bloom_space == 1) {
+    r1.rgb = srgbDecode(r1.rgb);
+    r2.rgb = srgbDecode(r2.rgb);
+  }
   r2.xyzw = r2.xyzw * float4(0.189999998,0.189999998,0.189999998,0.189999998) + float4(0,0,0,1);
   r1.xyzw = r1.xyzw * float4(0.170000002,0.170000002,0.170000002,0.170000002) + r2.xyzw;
   r0.zw = r0.xy * float2(2,2) + v1.xy;
   r2.xyzw = colorTexture.SampleLevel(samLinear_s, r0.zw, 0).xyzw;
+  if (shader_injection.bloom_space == 1) {
+    r2.rgb = srgbDecode(r2.rgb);
+  }
   r1.xyzw = r2.xyzw * float4(0.150000006,0.150000006,0.150000006,0.150000006) + r1.xyzw;
   r2.xyzw = r0.xyxy * float4(3,3,4,4) + v1.xyxy;
   r3.xyzw = colorTexture.SampleLevel(samLinear_s, r2.xy, 0).xyzw;
   r2.xyzw = colorTexture.SampleLevel(samLinear_s, r2.zw, 0).xyzw;
+  if (shader_injection.bloom_space == 1) {
+    r2.rgb = srgbDecode(r2.rgb);
+    r3.rgb = srgbDecode(r3.rgb);
+  }
   r1.xyzw = r3.xyzw * float4(0.129999995,0.129999995,0.129999995,0.129999995) + r1.xyzw;
   r1.xyzw = r2.xyzw * float4(0.109999999,0.109999999,0.109999999,0.109999999) + r1.xyzw;
   r2.xyzw = r0.xyxy * float4(5,5,6,6) + v1.xyxy;
   r3.xyzw = colorTexture.SampleLevel(samLinear_s, r2.xy, 0).xyzw;
   r2.xyzw = colorTexture.SampleLevel(samLinear_s, r2.zw, 0).xyzw;
+  if (shader_injection.bloom_space == 1) {
+    r2.rgb = srgbDecode(r2.rgb);
+    r3.rgb = srgbDecode(r3.rgb);
+  }
   r1.xyzw = r3.xyzw * float4(0.0900000036,0.0900000036,0.0900000036,0.0900000036) + r1.xyzw;
   r1.xyzw = r2.xyzw * float4(0.0700000003,0.0700000003,0.0700000003,0.0700000003) + r1.xyzw;
   r2.xyzw = r0.xyxy * float4(7,7,8,8) + v1.xyxy;
@@ -59,8 +75,17 @@ void main(
   r0.xyzw = colorTexture.SampleLevel(samLinear_s, r0.xy, 0).xyzw;
   r3.xyzw = colorTexture.SampleLevel(samLinear_s, r2.xy, 0).xyzw;
   r2.xyzw = colorTexture.SampleLevel(samLinear_s, r2.zw, 0).xyzw;
+  if (shader_injection.bloom_space == 1) {
+    r2.rgb = srgbDecode(r2.rgb);
+    r3.rgb = srgbDecode(r3.rgb);
+    r0.rgb = srgbDecode(r0.rgb);
+  }
   r1.xyzw = r3.xyzw * float4(0.0500000007,0.0500000007,0.0500000007,0.0500000007) + r1.xyzw;
   r1.xyzw = r2.xyzw * float4(0.0299999993,0.0299999993,0.0299999993,0.0299999993) + r1.xyzw;
-  o0.xyzw = r0.xyzw * float4(0.00999999978,0.00999999978,0.00999999978,0.00999999978) + r1.xyzw;
+  o0.xyzw = r0.xyzw * float4(0.00999999978, 0.00999999978, 0.00999999978, 0.00999999978) + r1.xyzw;
+
+  if (shader_injection.bloom_space == 1) {
+    o0.rgb = srgbEncode(o0.rgb);
+  }
   return;
 }

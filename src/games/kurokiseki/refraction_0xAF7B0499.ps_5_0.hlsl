@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Tue Sep 02 00:24:04 2025
-
+#include "common.hlsl"
 cbuffer cb_scene : register(b0)
 {
   float4x4 view_g : packoffset(c0);
@@ -108,9 +108,16 @@ void main(
   r0.xy = view_g._m02_m12 * r0.ww + r0.xy;
   r0.xy = r0.xy * float2(0.00999999978,0.00999999978) + v1.xy;
   r0.xyw = refractionTexture.SampleLevel(samLinear_s, r0.xy, 0).xyz;
+  if (shader_injection.bloom_space == 1) {
+    r0.xyw = srgbDecode(r0.xyw);
+  }
   r0.xyw = r0.xyw + -r1.xyz;
   o0.xyz = r0.zzz * r0.xyw + r1.xyz;
   o0.w = r1.w;
+
+  if (shader_injection.bloom_space == 1) {
+    o0.xyz = srgbEncode(o0.xyz);
+  }
 
   return;
 }
