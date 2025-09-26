@@ -99,8 +99,9 @@ void main(
   if (shader_injection.bloom_space == 1) {
     r1.rgb = srgbDecode(r1.rgb);
   }
-  
+
   // r0.z = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
+  // r0.z = renodx::color::y::from::BT709(r1.rgb);
   
   r0.z = -brightnessThreshold_g + r0.z;
   r0.z = max(0, r0.z);

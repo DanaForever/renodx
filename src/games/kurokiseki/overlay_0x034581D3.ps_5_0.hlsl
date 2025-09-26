@@ -72,6 +72,7 @@ void main(
 
     sdr = srgbDecode(sdr);
     hdr = srgbDecode(hdr);
+    // sat = srgbDecode(sat);
 
     hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
     hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);

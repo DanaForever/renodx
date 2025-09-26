@@ -179,16 +179,7 @@ void main(
     hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
     hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sat, shader_injection.bloom_hue_correction);
     
-    if (shader_injection.bloom == 2.f)  {
-      float4 sdrLogSpace = blendBloomSrgbLogSpace(samLinear_s, v1);
-      sdrLogSpace.rgb = srgbDecode(sdrLogSpace.rgb);
-      float3 scaledBloom = scaleByPerceptualLuminance(hdr, sdrLogSpace.rgb);
 
-      hdr = lerp(hdr, scaledBloom, saturate(shader_injection.bloom_strength));
-    }
-
-    
-    
     o0.rgb = hdr.rgb;
 
     o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
