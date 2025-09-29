@@ -64,7 +64,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     
 
     //  Kuro
-    CustomShaderEntry(0xAD51B4B0), // Kuro final
+    CustomSwapchainShader(0xAD51B4B0), // Kuro final
     UpgradeRTVReplaceShader(0x28FFFB4A), // Kuro proxy
     UpgradeRTVReplaceShader(0x034581D3), // Kuro overlay blending
     UpgradeRTVReplaceShader(0x83F2D19E), // blur sampler
@@ -137,13 +137,13 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "fxBloom",
         .binding = &shader_injection.bloom_strength,
-        .default_value = 50.f,
+        .default_value = 100.f,
         .label = "Bloom Strength",
         .section = "Game Settings",
         .tooltip = "Controls Bloom Strength",
-        .max = 100.f,
+        .max = 500.f,
         .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return false; },
+        // .is_visible = []() { return false; },
     },
 
     new renodx::utils::settings::Setting{
@@ -169,7 +169,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff", "Mass Effect"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -237,7 +237,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Emulates a display EOTF.",
         .labels = {"Off", "2.2", "BT.1886", "Falcom (2.3)"},
-        .is_visible = []() { return current_settings_mode >= 1 && shader_injection.gamma == 1; },
+        .is_visible = []() { return current_settings_mode >= 1; },
     },
     // new renodx::utils::settings::Setting{
     //     .key = "InverseToneMapExtraHDRSaturation",
@@ -317,18 +317,18 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type >= 3.f; },
     },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapWorkingColorSpace",
-        .binding = &shader_injection.tone_map_working_color_space,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .label = "Working Color Space",
-        .section = "RenoDRT Configuration",
-        .labels = {"BT709", "BT2020", "AP1"},
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 2; },
-        // .is_visible = []() { return false; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapWorkingColorSpace",
+    //     .binding = &shader_injection.tone_map_working_color_space,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 0.f,
+    //     .label = "Working Color Space",
+    //     .section = "RenoDRT Configuration",
+    //     .labels = {"BT709", "BT2020", "AP1"},
+    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+    //     .is_visible = []() { return current_settings_mode >= 2; },
+    //     // .is_visible = []() { return false; },
+    // },
     
     // new renodx::utils::settings::Setting{
     //     .key = "ToneMapWhiteClip",

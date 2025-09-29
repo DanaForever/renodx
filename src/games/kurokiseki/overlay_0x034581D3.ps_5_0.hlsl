@@ -15,6 +15,82 @@ Texture2D<float4> colorTexture : register(t0);
 Texture2D<float4> blurTexture : register(t1);
 
 
+float3 addBloom(float3 base, float3 blend) {
+  float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
+
+  return base + addition;
+}
+
+float3 hdrScreenBlend(float3 base, float3 blend, float scale = 0.f) {
+  base = srgbDecode(base);
+  blend = srgbDecode(blend);
+
+  base = max(0.f, base);
+  blend = max(0.f, blend);
+
+  // if (shader_injection.bloom != 2.f)
+  blend *= shader_injection.bloom_strength;
+  // blend *= 2.f;
+
+  float3 bloom_texture = blend;
+
+  float mid_gray_bloomed = (0.18 + renodx::color::y::from::BT709(bloom_texture)) / 0.18;
+
+  float scene_luminance = renodx::color::y::from::BT709(base) * mid_gray_bloomed;
+  float bloom_blend = saturate(smoothstep(0.f, 0.18f, scene_luminance));
+
+  float3 bloom_scaled = lerp(float3(0.f, 0.f, 0.f), bloom_texture, bloom_blend);  // = bloom_blend
+  bloom_texture = lerp(bloom_texture, bloom_scaled, 0.5f);
+
+  blend = bloom_texture;
+
+  blend = addBloom(base, blend);
+
+  blend = srgbEncode(blend);
+
+  return blend;
+}
+
+float3 UpgradeToneMap(
+    float3 color_untonemapped,
+    float3 color_tonemapped,
+    float3 color_tonemapped_graded,
+    float post_process_strength = 1.f,
+    float auto_correction = 0.f) {
+  float ratio = 1.f;
+
+
+  float y_untonemapped = renodx::color::y::from::BT709(color_untonemapped);
+  float y_tonemapped = renodx::color::y::from::BT709(color_tonemapped);
+  float y_tonemapped_graded = renodx::color::y::from::BT709(color_tonemapped_graded);
+
+  if (y_untonemapped < y_tonemapped) {
+    // If substracting (user contrast or paperwhite) scale down instead
+    // Should only apply on mismatched HDR
+    ratio = renodx::math::SafeDivision(y_untonemapped, y_tonemapped, 1.f);
+  } else {
+    float y_delta = y_untonemapped - y_tonemapped;
+    y_delta = max(0, y_delta);  // Cleans up NaN
+    const float y_new = y_tonemapped_graded + y_delta;
+
+    const bool y_valid = (y_tonemapped_graded > 0);  // Cleans up NaN and ignore black
+    ratio = y_valid ? (y_new / y_tonemapped_graded) : 0;
+    // ratio = 1.f;
+    // ratio = renodx::math::SafeDivision(y_untonemapped, y_tonemapped_graded, 1.f);
+  }
+  float auto_correct_ratio = lerp(1.f, ratio, saturate(y_untonemapped));
+  ratio = lerp(ratio, auto_correct_ratio, auto_correction);
+
+  float3 color_scaled = color_tonemapped_graded * ratio;
+
+  // return color_tonemapped_graded;
+  // return color_scaled;
+  // Match hue
+  color_scaled = renodx::color::correct::HueICtCp(color_scaled, color_tonemapped_graded);
+  return lerp(color_untonemapped, color_scaled, post_process_strength);
+}
+
+
 // 3Dmigoto declarations
 #define cmp -
 
@@ -48,23 +124,20 @@ void main(
   float3 Dark  = 2.0 * C * B;
   float3 Light = 1.0 - 2.0 * (1.0 - C) * (1.0 - saturate(B));
   float3 oldLight = Light;
-  
-  if (shader_injection.bloom == 1.f)  {
-    Light = Dark;
-  }
+
   // per-channel mask: 1 when C <= 0.5, else 0
   float3 M = step(C, 0.5f);
 
   // overlay result (per channel)
   float3 Overlay = lerp(Light, Dark, M);
+  float3 sdr = Overlay;
+  if (shader_injection.bloom == 1.f) {
+    Overlay = hdrScreenBlend(C, B);
+  }
 
   [branch]
   if (shader_injection.bloom == 1.f)  {
     
-    float3 sdr = lerp(oldLight, Dark, M);
-    float3 sat = saturate(sdr);
-    sdr = sat;
-
     float3 hdr = Overlay;
 
     sdr = lerp(C, sdr, alpha);
@@ -74,8 +147,9 @@ void main(
     hdr = srgbDecode(hdr);
     // sat = srgbDecode(sat);
 
+    sdr = max(0.f, sdr);
     hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
-    hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);
+    hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);
 
     o0.rgb = srgbEncode(hdr);
 

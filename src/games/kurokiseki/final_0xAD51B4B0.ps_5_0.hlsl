@@ -45,7 +45,7 @@ void main(
 
       float3 color = o0.rgb;
 
-      // color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
+      color = GamutCompress(color);
       
       [branch]
       if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
@@ -62,8 +62,6 @@ void main(
         config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
       }
       o0.rgb = color;
-      
-      o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
 
       o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / 80.f;
 

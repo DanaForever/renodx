@@ -192,12 +192,15 @@ float3 ApplyExponentialRollOff(float3 color, bool pq = false) {
     float3 color_lum = ExponentialRollOffByLum(color * paperWhite, peakWhite, highlightsShoulderStart, false) / paperWhite;
 
     color = color * paperWhite;
-    float3 signs = sign(color);
-    color = abs(color);
+    // float3 signs = sign(color);
+    // color = abs(color);
+    color = max(color, 0.f);
     color = renodx::tonemap::ExponentialRollOff(color, highlightsShoulderStart, peakWhite) / paperWhite;
-    color = signs * color;
+    // color = signs * color;
 
-    // float y = renodx::color::y::from::BT709(color);
+    // float frostbitePeak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+    // float3 color_chrom = renodx::tonemap::frostbite::BT709(color, frostbitePeak, 1.f, 0.0f, 0.0f);
+
     color = renodx::color::correct::Chrominance(color_lum, color, 1.f, 0.f, RENODX_TONE_MAP_HUE_PROCESSOR);
     // color = color_lum;
   }
@@ -233,14 +236,14 @@ float3 GamutCompress(float3 color, float grayscale) {
 }
 
 float3 GamutCompress(float3 color) {
-  if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
+  if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE == 2.f) {
     color = renodx::color::ap1::from::BT709(color);
     float y = renodx::color::y::from::AP1(color);
     color = GamutCompress(color, y);
     color = renodx::color::bt709::from::AP1(color);
     return color;
   }
-  else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
+  else if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE == 1.f) {
     color = renodx::color::bt2020::from::BT709(color);
     float y = renodx::color::y::from::BT2020(color);
     color = GamutCompress(color, y);
@@ -295,7 +298,7 @@ float3 LMS_ToneMap(float3 bt709) {
 
   float3 new_xyz = mul(renodx::math::Invert3x3(XYZ_TO_LMS_D65_MAT), new_lms);
   float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);
-  input_color = GamutCompress(input_color);
+  // input_color = GamutCompress(input_color);
   return input_color;
   
 }
@@ -352,6 +355,45 @@ float3 ReinhardPiecewiseExtended(float3 x, float white_max, float x_max = 1.f, f
   return x;
 }
 
+// Mass Effect Displaymapper
+// Linear color in -> Linear color out
+// Params in PQ -- Use the helper function to call the displaymapper (MassEffectDisplayMap())
+// NormalizedLinearValue = linear color
+// SoftShoulderStart2084 = shoulder start in nits (PQ values) -- everything under this is ignored
+// MaxBrightnessOfDisplay2084 = peak nits
+// MaxBrightnessOfScene2084 = Y of Linear Color (Encoded in PQ) -- Basically whiteclip
+
+float3 MapHDRSceneToDisplayCapabilities(float3 NormalizedLinearValue, float SoftShoulderStart2084, float MaxBrightnessOfDisplay2084, float MaxBrightnessOfScene2084) {
+  float3 bt2020_color = renodx::color::bt2020::from::BT709(NormalizedLinearValue);
+  float3 ST2084 = renodx::color::pq::EncodeSafe(bt2020_color);
+
+  // Use a simple Bezier curve to create a soft shoulder
+  const float P0 = SoftShoulderStart2084;           // First point is: soft shoulder start nits
+  const float P1 = MaxBrightnessOfDisplay2084;      // Middle point is: TV max nits
+  const float P2 = MaxBrightnessOfDisplay2084;      // Last point is also TV max nits, since values higher than TV max nits are essentially clipped to TV max brightness
+  const float SceneMax = MaxBrightnessOfScene2084;  // To determine range, use max brightness of HDR scene
+
+  float3 T = saturate((ST2084 - P0) / (SceneMax - P0));  // Amount to lerp wrt current value
+  float3 B0 = (P0 * (1 - T)) + (P1 * T);                 // Lerp between p0 and p1
+  float3 B1 = (P1 * (1 - T)) + (P2 * T);                 // Lerp between p1 and p2
+  float3 MappedValue = (B0 * (1 - T)) + (B1 * T);        // Final lerp for Bezier
+
+  MappedValue = min(MappedValue, ST2084);  // If HDR scene max luminance is too close to shoulders, then it could end up producing a higher value than the ST.2084 curve,
+  // which will saturate colors, i.e. the opposite of what HDR display mapping should do, therefore always take minimum of the two
+
+  // Return a linear color
+  return renodx::color::bt709::from::BT2020(renodx::color::pq::DecodeSafe((ST2084 > SoftShoulderStart2084) ? MappedValue : ST2084));
+}
+
+float3 MassEffectDisplayMap(float3 linear_color, float shoulder_start, float peak_nits, float scene_peak) {
+  // Helper function for Mass Effect's display mapper to encode params to PQ
+
+  shoulder_start = renodx::color::pq::EncodeSafe(float3(shoulder_start, shoulder_start, shoulder_start)).x;
+  peak_nits = renodx::color::pq::EncodeSafe(float3(peak_nits, peak_nits, peak_nits)).x;
+  scene_peak = renodx::color::pq::EncodeSafe(float3(scene_peak, scene_peak, scene_peak)).x;
+
+  return MapHDRSceneToDisplayCapabilities(linear_color, shoulder_start, peak_nits, scene_peak);
+}
 
 
 
@@ -412,7 +454,7 @@ float3 ToneMap(float3 color) {
     return color;
   }
 
-  else if (shader_injection.tone_map_type >= 4.f) {
+  else if (shader_injection.tone_map_type == 4.f) {
   
     color = UserColorGrading(
         color,
@@ -430,6 +472,39 @@ float3 ToneMap(float3 color) {
     // bool pq = (RENODX_TONE_MAP_WORKING_COLOR_SPACE > 0.f);
     bool pq = false;
     color = ApplyExponentialRollOff(color, pq);
+
+    color = renodx::color::grade::UserColorGrading(
+        color,
+        1.f,                         // exposure
+        1.f,                         // highlights
+        1.f,                         // shadows
+        1.f,                         // contrast
+        RENODX_TONE_MAP_SATURATION,  // saturation
+        0.f,                         // dechroma, we don't need it
+        0.f,                         // Hue Correction Strength
+        color);                      // Hue Correction Type
+
+    return color;
+  } else if (shader_injection.tone_map_type >= 5.f) {
+    color = UserColorGrading(
+        color,
+        RENODX_TONE_MAP_EXPOSURE,    // exposure
+        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
+        RENODX_TONE_MAP_SHADOWS,     // shadows
+        1.f,                         // contrast
+        1.f,                         // saturation, we'll do this post-tonemap
+        0.f);                        // dechroma, post tonemapping
+                                     // hue correction, Post tonemapping
+
+    float3 lms_output = LMS_ToneMap(color);
+    color = lms_output;
+
+    // bool pq = (RENODX_TONE_MAP_WORKING_COLOR_SPACE > 0.f);
+    bool pq = false;
+    float shoulder_start = 1.f;
+    float peak_nits = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+    float scene_nits = 4000.f / 203.f;
+    color = MassEffectDisplayMap(color, shoulder_start, peak_nits, scene_nits);
 
     color = renodx::color::grade::UserColorGrading(
         color,
@@ -599,6 +674,64 @@ float4 compress(float4 color) {
   color.rgb = clamp(color.rgb, -999999999, 1.f);
 
   color.w = saturate(color.w);
+
+  return color;
+}
+
+float UpgradeToneMapRatio(float color_hdr, float color_sdr) {
+  if (color_hdr < color_sdr) {
+    // If substracting (user contrast or paperwhite) scale down instead
+    // Should only apply on mismatched HDR
+    return 1.f;
+  } else {
+    float ap1_delta = color_hdr - color_sdr;
+    ap1_delta = max(0, ap1_delta);  // Cleans up NaN
+    const float ap1_new = color_sdr + ap1_delta;
+
+    const bool ap1_valid = (color_sdr > 0.f && color_hdr > 0.f);  // Cleans up NaN and ignore black
+    return ap1_valid ? (ap1_new / color_sdr) : 1.f;
+  }
+}
+
+float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_scale = 4.f) {
+  float3 originalColor = color;
+  float3 bloomColor_perceptual = renodx::color::ictcp::from::BT709(bloomColor);
+  float3 color_perceptual = renodx::color::ictcp::from::BT709(color);
+
+  // compute Luminance
+  float bloomL = bloomColor_perceptual.x;
+  float L = color_perceptual.x;
+
+  float bloom_chrominance = (length(bloomColor_perceptual.yz));  // eg: 0.80
+  float chrominance = (length(color_perceptual.yz));             // eg: 0.20
+
+  // float hue = atan2(color_perceptual.z, color_perceptual.y);
+  // float bloomHue = atan2(bloomColor_perceptual.z, bloomColor_perceptual.y);
+
+  // Absolute difference, modulo 2π for wrapping
+  // float hueDiff = abs(hue - bloomHue);
+  // if (hueDiff > M_PI)
+  //   hueDiff = 2.0 * M_PI - hueDiff;
+
+  float new_chroma_len = max(chrominance, bloom_chrominance);
+
+  float scale = UpgradeToneMapRatio(bloomL, L);
+  float chrominance_scale = UpgradeToneMapRatio(bloom_chrominance, chrominance);
+
+  // scale y and z by chrominance scale causes artifact (exhibited in the bloomColor)
+  chrominance_scale = 1.f;
+  // max_scale = 2.f;
+  scale = clamp(scale, 1.0f, max_scale);
+
+  // scale = max_scale_icp(color_perceptual, scale);
+  color_perceptual = float3(color_perceptual.x * scale, color_perceptual.y * chrominance_scale, color_perceptual.z * chrominance_scale);
+
+  // for some reason
+  // float finalScale = find_scale_for_matching_luminance(originalColor, color_perceptual.x, max_scale);
+  // color = originalColor * finalScale;
+  color = renodx::color::bt709::from::ICtCp(color_perceptual);
+
+  color = renodx::color::correct::Hue(color, originalColor);
 
   return color;
 }
