@@ -61,6 +61,8 @@ void main(
         color = renodx::color::bt709::from::ARIBTRB9(color);
         config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
       }
+
+      // color = renodx::color::bt709::clamp::BT2020(color);
       o0.rgb = color;
 
       o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / 80.f;

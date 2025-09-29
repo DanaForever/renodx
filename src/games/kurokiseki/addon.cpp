@@ -76,6 +76,18 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xFA1A3F24), // atmosphere
     UpgradeRTVReplaceShader(0x2D620443), // menublu
 
+    // Kuro 2
+    
+    UpgradeRTVReplaceShader(0xD21C3838), // bloom blend
+    UpgradeRTVReplaceShader(0x7FD880F5), // godray
+    UpgradeRTVReplaceShader(0x1336F6F8), // blur
+    UpgradeRTVReplaceShader(0x2A89E417), // blur
+    UpgradeRTVReplaceShader(0x96FF2893), // depth2
+    UpgradeRTVReplaceShader(0xA69F0EDC), // intensity
+    UpgradeRTVReplaceShader(0x61EF61EA), // ao
+    UpgradeRTVReplaceShader(0xB24294F0), // atmosphere 2
+
+
     // UpgradeRTVShader(0x1336F6F8),
     // UpgradeRTVShader(0xEF0CAEEA),
     // UpgradeRTVShader(0x7BC8A1E8),
@@ -149,7 +161,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "fxBloomCorrection",
         .binding = &shader_injection.bloom_hue_correction,
-        .default_value = 50.f,
+        .default_value = 100.f,
         .label = "Bloom Color Correction",
         .section = "Game Settings",
         .tooltip = "Correcting the colors after rewriting the Bloom.",
@@ -164,12 +176,12 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapType",
         .binding = &shader_injection.tone_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 4.f,
+        .default_value = 5.f,
         .can_reset = true,
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff", "Mass Effect"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff", "Bezier"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -182,7 +194,6 @@ renodx::utils::settings::Settings settings = {
         .labels = {"None", "Von-Kries", "Bradford", "Fairchild"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .is_visible = []() { return current_settings_mode >= 2; },
-        // .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",
@@ -315,34 +326,8 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Luminance scales colors consistently while per-channel saturates and blows out sooner",
         .labels = {"Luminance", "Per Channel"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type >= 3.f; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type >= 3.f && shader_injection.tone_map_type <= 4.f; },
     },
-    // new renodx::utils::settings::Setting{
-    //     .key = "ToneMapWorkingColorSpace",
-    //     .binding = &shader_injection.tone_map_working_color_space,
-    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-    //     .default_value = 0.f,
-    //     .label = "Working Color Space",
-    //     .section = "RenoDRT Configuration",
-    //     .labels = {"BT709", "BT2020", "AP1"},
-    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-    //     .is_visible = []() { return current_settings_mode >= 2; },
-    //     // .is_visible = []() { return false; },
-    // },
-    
-    // new renodx::utils::settings::Setting{
-    //     .key = "ToneMapWhiteClip",
-    //     .binding = &shader_injection.tone_map_white_clip,
-    //     .default_value = 100.f,
-    //     .label = "White Clip",
-    //     .section = "RenoDRT Configuration",
-    //     .tooltip = "White clip values.",
-    //     .min = 0.f,
-    //     .max = 100.f,
-    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-    //     .parse = [](float value) { return value * 1.f; },
-    //     .is_visible = []() { return current_settings_mode >= 1 && shader_injection.tone_map_type == 3.f; },
-    // },
     
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrectionMethod",

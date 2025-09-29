@@ -180,26 +180,15 @@ float3 ApplyExponentialRollOff(float3 color, bool pq = false) {
   if (RENODX_TONE_MAP_PER_CHANNEL == 1.f) {
     // float3 color_lum = ExponentialRollOffByLum(color * paperWhite, peakWhite, highlightsShoulderStart, false) / paperWhite;
 
-    color = color * paperWhite;
-    float3 signs = sign(color);
-    color = abs(color);
+    color = color * paperWhite;  
     color = renodx::tonemap::ExponentialRollOff(color, highlightsShoulderStart, peakWhite) / paperWhite;
-    color = signs * color;
 
-    // float y = renodx::color::y::from::BT709(color);
-    // color = renodx::color::correct::ChrominanceICtCp(color, color_lum, 0.5f);
   } else {
     float3 color_lum = ExponentialRollOffByLum(color * paperWhite, peakWhite, highlightsShoulderStart, false) / paperWhite;
 
     color = color * paperWhite;
-    // float3 signs = sign(color);
-    // color = abs(color);
     color = max(color, 0.f);
     color = renodx::tonemap::ExponentialRollOff(color, highlightsShoulderStart, peakWhite) / paperWhite;
-    // color = signs * color;
-
-    // float frostbitePeak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-    // float3 color_chrom = renodx::tonemap::frostbite::BT709(color, frostbitePeak, 1.f, 0.0f, 0.0f);
 
     color = renodx::color::correct::Chrominance(color_lum, color, 1.f, 0.f, RENODX_TONE_MAP_HUE_PROCESSOR);
     // color = color_lum;
@@ -208,18 +197,6 @@ float3 ApplyExponentialRollOff(float3 color, bool pq = false) {
   return color;
 }
 
-// float3 GamutCompress(float3 color) {
-//   color = renodx::color::bt2020::from::BT709(color);
-//   float grayscale = renodx::color::y::from::BT2020(color);
-//   // Desaturate (move towards grayscale) until no channel is below 0
-//   float max_negative_channel = min(color.r, min(color.g, color.b));
-//   if (max_negative_channel < 0.f) {
-//     float desat_amount = renodx::math::DivideSafe(-max_negative_channel, (grayscale - max_negative_channel), 1.f);
-//     color = lerp(grayscale, color, 1.f - desat_amount);
-//   }
-//   color = renodx::color::bt709::from::BT2020(color);
-//   return color;
-// }
 
 float3 GamutCompress(float3 color, float grayscale) {
   // Desaturate (move towards grayscale) until no channel is below 0
@@ -236,6 +213,7 @@ float3 GamutCompress(float3 color, float grayscale) {
 }
 
 float3 GamutCompress(float3 color) {
+  
   if (RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE == 2.f) {
     color = renodx::color::ap1::from::BT709(color);
     float y = renodx::color::y::from::AP1(color);
@@ -501,7 +479,7 @@ float3 ToneMap(float3 color) {
 
     // bool pq = (RENODX_TONE_MAP_WORKING_COLOR_SPACE > 0.f);
     bool pq = false;
-    float shoulder_start = 1.f;
+    float shoulder_start = 0.33333f;  // borrow from DICE
     float peak_nits = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
     float scene_nits = 4000.f / 203.f;
     color = MassEffectDisplayMap(color, shoulder_start, peak_nits, scene_nits);
@@ -678,60 +656,77 @@ float4 compress(float4 color) {
   return color;
 }
 
-float UpgradeToneMapRatio(float color_hdr, float color_sdr) {
-  if (color_hdr < color_sdr) {
-    // If substracting (user contrast or paperwhite) scale down instead
-    // Should only apply on mismatched HDR
-    return 1.f;
-  } else {
-    float ap1_delta = color_hdr - color_sdr;
-    ap1_delta = max(0, ap1_delta);  // Cleans up NaN
-    const float ap1_new = color_sdr + ap1_delta;
+float3 addBloom(float3 base, float3 blend) {
+  float3 addition = renodx::math::SafeDivision(blend, (1.f + base), 0.f);
 
-    const bool ap1_valid = (color_sdr > 0.f && color_hdr > 0.f);  // Cleans up NaN and ignore black
-    return ap1_valid ? (ap1_new / color_sdr) : 1.f;
-  }
+  return base + addition;
 }
 
-float3 scaleByPerceptualLuminance(float3 color, float3 bloomColor, float max_scale = 4.f) {
-  float3 originalColor = color;
-  float3 bloomColor_perceptual = renodx::color::ictcp::from::BT709(bloomColor);
-  float3 color_perceptual = renodx::color::ictcp::from::BT709(color);
+float3 hdrScreenBlend(float3 base, float3 blend, bool encoding= true) {
+  if (encoding) {
+    base = srgbDecode(base);
+    blend = srgbDecode(blend);
+  }
 
-  // compute Luminance
-  float bloomL = bloomColor_perceptual.x;
-  float L = color_perceptual.x;
+  base = max(0.f, base);
+  blend = max(0.f, blend);
 
-  float bloom_chrominance = (length(bloomColor_perceptual.yz));  // eg: 0.80
-  float chrominance = (length(color_perceptual.yz));             // eg: 0.20
+  blend *= shader_injection.bloom_strength;
 
-  // float hue = atan2(color_perceptual.z, color_perceptual.y);
-  // float bloomHue = atan2(bloomColor_perceptual.z, bloomColor_perceptual.y);
+  float3 bloom_texture = blend;
 
-  // Absolute difference, modulo 2π for wrapping
-  // float hueDiff = abs(hue - bloomHue);
-  // if (hueDiff > M_PI)
-  //   hueDiff = 2.0 * M_PI - hueDiff;
+  float mid_gray_bloomed = (0.18 + renodx::color::y::from::BT709(bloom_texture)) / 0.18;
 
-  float new_chroma_len = max(chrominance, bloom_chrominance);
+  float scene_luminance = renodx::color::y::from::BT709(base) * mid_gray_bloomed;
+  float bloom_blend = saturate(smoothstep(0.f, 0.18f, scene_luminance));
 
-  float scale = UpgradeToneMapRatio(bloomL, L);
-  float chrominance_scale = UpgradeToneMapRatio(bloom_chrominance, chrominance);
+  float3 bloom_scaled = lerp(float3(0.f, 0.f, 0.f), bloom_texture, bloom_blend);  // = bloom_blend
+  bloom_texture = lerp(bloom_texture, bloom_scaled, 0.5f);
 
-  // scale y and z by chrominance scale causes artifact (exhibited in the bloomColor)
-  chrominance_scale = 1.f;
-  // max_scale = 2.f;
-  scale = clamp(scale, 1.0f, max_scale);
+  blend = bloom_texture;
 
-  // scale = max_scale_icp(color_perceptual, scale);
-  color_perceptual = float3(color_perceptual.x * scale, color_perceptual.y * chrominance_scale, color_perceptual.z * chrominance_scale);
+  blend = addBloom(base, blend);
 
-  // for some reason
-  // float finalScale = find_scale_for_matching_luminance(originalColor, color_perceptual.x, max_scale);
-  // color = originalColor * finalScale;
-  color = renodx::color::bt709::from::ICtCp(color_perceptual);
+  if (encoding)
+    blend = srgbEncode(blend);
 
-  color = renodx::color::correct::Hue(color, originalColor);
+  return blend;
+}
 
-  return color;
+float3 UpgradeToneMap(
+    float3 color_untonemapped,
+    float3 color_tonemapped,
+    float3 color_tonemapped_graded,
+    float post_process_strength = 1.f,
+    float auto_correction = 0.f) {
+  float ratio = 1.f;
+
+  float y_untonemapped = renodx::color::y::from::BT709(color_untonemapped);
+  float y_tonemapped = renodx::color::y::from::BT709(color_tonemapped);
+  float y_tonemapped_graded = renodx::color::y::from::BT709(color_tonemapped_graded);
+
+  if (y_untonemapped < y_tonemapped) {
+    // If substracting (user contrast or paperwhite) scale down instead
+    // Should only apply on mismatched HDR
+    ratio = renodx::math::SafeDivision(y_untonemapped, y_tonemapped, 1.f);
+  } else {
+    float y_delta = y_untonemapped - y_tonemapped;
+    y_delta = max(0, y_delta);  // Cleans up NaN
+    const float y_new = y_tonemapped_graded + y_delta;
+
+    const bool y_valid = (y_tonemapped_graded > 0);  // Cleans up NaN and ignore black
+    ratio = y_valid ? (y_new / y_tonemapped_graded) : 0;
+    // ratio = 1.f;
+    // ratio = renodx::math::SafeDivision(y_untonemapped, y_tonemapped_graded, 1.f);
+  }
+  float auto_correct_ratio = lerp(1.f, ratio, saturate(y_untonemapped));
+  ratio = lerp(ratio, auto_correct_ratio, auto_correction);
+
+  float3 color_scaled = color_tonemapped_graded * ratio;
+
+  // return color_tonemapped_graded;
+  // return color_scaled;
+  // Match hue
+  color_scaled = renodx::color::correct::HueICtCp(color_scaled, color_tonemapped_graded);
+  return lerp(color_untonemapped, color_scaled, post_process_strength);
 }
