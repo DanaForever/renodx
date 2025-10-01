@@ -110,13 +110,18 @@ void main(
   r0.z = r0.x / r0.y;
   r0.xy = v1.zw;
   r0.xyzw = volumeScatter.SampleLevel(samLinear_s, r0.xyz, 0).xyzw;
-  r0.rgb = srgbDecode(r0.rgb);
   r1.xyzw = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyzw;
-  r1.rgb = srgbDecode(r1.rgb);
+  if (shader_injection.bloom_space == 1) {
+    r0.rgb = srgbDecode(r0.rgb);
+    r1.rgb = srgbDecode(r1.rgb);
+  }
   r0.xyz = r1.xyz * r0.www + r0.xyz;
   r0.xyz = r0.xyz + -r1.xyz;
   o0.xyz = scatterIntensity_g * r0.xyz + r1.xyz;
-  o0.rgb = srgbEncode(o0.rgb);
+
+  if (shader_injection.bloom_space == 1) {
+    o0.rgb = srgbEncode(o0.rgb);
+  }
   o0.w = r1.w;
   return;
 }

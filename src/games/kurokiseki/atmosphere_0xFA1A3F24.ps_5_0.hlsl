@@ -28,7 +28,7 @@ void main(
   float3 color = r1.rgb;
   float3 atomosphere = r0.rgb;
 
-  if (shader_injection.bloom_space == 1) {
+  if (shader_injection.bloom_space == 100) {
     color = srgbDecode(color);
     atomosphere = srgbDecode(atomosphere);
 

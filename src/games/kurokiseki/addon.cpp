@@ -120,6 +120,8 @@ renodx::utils::settings::Settings settings = {
         .section = "Game Settings",
         .tooltip = "Falcom by default generates Bloom samples in sRGB.",
         .labels = {"Falcom (sRGB)", "Linear"},
+        .parse = [](float value) { return 0.f; },
+        .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
         .key = "bloom",
@@ -130,7 +132,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Bloom Blending",
         .section = "Game Settings",
         .tooltip = "Bloom blending method.",
-        .labels = {"Falcom (SDR)", "HDR"},
+        .labels = {"Falcom (SDR)", "HDR", "Adaptive HDR"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
 
@@ -155,7 +157,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Controls Bloom Strength",
         .max = 500.f,
         .parse = [](float value) { return value * 0.01f; },
-        // .is_visible = []() { return false; },
+        .is_visible = []() { return shader_injection.bloom == 2.f; },
     },
 
     new renodx::utils::settings::Setting{
@@ -181,7 +183,8 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff", "Bezier"},
+        // .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff", "Bezier"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{

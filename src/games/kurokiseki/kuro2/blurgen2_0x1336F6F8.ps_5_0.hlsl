@@ -71,9 +71,9 @@ void main(
 
       float w = offsetsAndWeights[i].z;
       float4 c = colorTexture.SampleLevel(samLinear_s, uv, 0);
-      if (shader_injection.bloom_space == 1) {
-        c.rgb = srgbDecode(c.rgb);
-      }
+      // if (shader_injection.bloom_space == 1) {
+      //   c.rgb = srgbDecode(c.rgb);
+      // }
       c = saturate(c);
 
       acc += c * w;
@@ -83,9 +83,9 @@ void main(
     // If weights are pre-normalized, accW≈1 and this is a no-op; otherwise it keeps brightness consistent.
     float4 outRGB = (wsum > 0.0) ? (acc / wsum) : 0.0;
 
-    if (shader_injection.bloom_space == 1) {
-      outRGB.rgb = srgbEncode(outRGB.rgb);
-    }
+    // if (shader_injection.bloom_space == 1) {
+    //   outRGB.rgb = srgbEncode(outRGB.rgb);
+    // }
     o0 = saturate(outRGB);
   }
   return;

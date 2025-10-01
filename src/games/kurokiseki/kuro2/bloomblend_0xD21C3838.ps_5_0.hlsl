@@ -112,7 +112,9 @@ void main(
 
     sdr = srgbDecode(sdr);
 
-    hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);
+    // hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, 1.f);
+
+    // hdr = renodx::color::correct::Luminance(hdr, sdr);
     hdr = srgbEncode(hdr);
 
     o0.rgb = hdr;

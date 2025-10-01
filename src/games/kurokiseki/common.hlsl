@@ -190,7 +190,7 @@ float3 ApplyExponentialRollOff(float3 color, bool pq = false) {
     color = max(color, 0.f);
     color = renodx::tonemap::ExponentialRollOff(color, highlightsShoulderStart, peakWhite) / paperWhite;
 
-    color = renodx::color::correct::Chrominance(color_lum, color, 1.f, 0.f, RENODX_TONE_MAP_HUE_PROCESSOR);
+    color = renodx::color::correct::Chrominance(color_lum, color, RENODX_TONE_MAP_HUE_CORRECTION, 0.f, RENODX_TONE_MAP_HUE_PROCESSOR);
     // color = color_lum;
   }
 
@@ -232,6 +232,10 @@ float3 GamutCompress(float3 color) {
   }
 }
 
+// --- Saturation curve for cone response ---
+float NakaRushton(float x, float sigma) {
+  return x / (x + sigma);
+}
 
 
 float3 LMS_ToneMap(float3 bt709) {
@@ -265,8 +269,11 @@ float3 LMS_ToneMap(float3 bt709) {
   lms = sign(lms) * pow(abs(lms), RENODX_TONE_MAP_CONTRAST);
   lms *= midgray_lms;
 
-  const float human_vision_peak = 4000 / 203.f;
+  const float human_vision_peak = (4000.f / 203.f, 3000.f / 203.f, 1500.f/ 203.f);
   float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(human_vision_peak));
+
+  // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
+  float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
 
   // Naka Rushton per cone
   float3 new_lms = float3(
@@ -274,9 +281,14 @@ float3 LMS_ToneMap(float3 bt709) {
       sign(lms.y) * renodx::tonemap::ReinhardScalableExtended(abs(lms.y), 100.f, peak_lms.y, 0.f, abs(midgray_lms.y), abs(midgray_lms.y)),
       sign(lms.z) * renodx::tonemap::ReinhardScalableExtended(abs(lms.z), 100.f, peak_lms.z, 0.f, abs(midgray_lms.z), abs(midgray_lms.z)));
 
+
+  // float3 new_lms;
+  // new_lms.x = NakaRushton(abs(lms.x), sigma.x) * sign(lms.x);
+  // new_lms.y = NakaRushton(abs(lms.y), sigma.y) * sign(lms.y);
+  // new_lms.z = NakaRushton(abs(lms.z), sigma.z) * sign(lms.z);
+
   float3 new_xyz = mul(renodx::math::Invert3x3(XYZ_TO_LMS_D65_MAT), new_lms);
-  float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);
-  // input_color = GamutCompress(input_color);
+  float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);  
   return input_color;
   
 }
@@ -309,16 +321,13 @@ float3 ReinhardPiecewiseExtended(float3 x, float white_max, float x_max = 1.f, f
     // x = renodx::color::correct::ChrominanceICtCp(x, lum);
 
   } else {
-    float3 perch = x;
-    float3 signs = sign(perch);
-    perch = abs(perch);
+    float3 perch = max(x, 0.f);
     const float x_min = 0.f;
     float exposure = renodx::tonemap::ComputeReinhardExtendableScale(white_max, x_max, x_min, shoulder, shoulder);
     float3 extended = renodx::tonemap::ReinhardExtended(perch * exposure, white_max * exposure, x_max);
     extended = min(extended, x_max);
 
-    perch = lerp(x, extended, step(shoulder, perch));
-    perch *= signs;
+    perch = lerp(perch, extended, step(shoulder, perch));
 
     float y = renodx::color::y::from::BT709(x);
 
@@ -327,7 +336,7 @@ float3 ReinhardPiecewiseExtended(float3 x, float white_max, float x_max = 1.f, f
     x = x * (y > 0 ? (new_y / y) : 0);
     
     // Luminance seems over-saturated, so chrominance correction seems to get the middle ground between perch and luminance.
-    // x = renodx::color::correct::ChrominanceICtCp(x, perch, 0.5f);
+    x = renodx::color::correct::ChrominanceICtCp(x, perch, 0.5f);
   }
 
   return x;
@@ -343,6 +352,7 @@ float3 ReinhardPiecewiseExtended(float3 x, float white_max, float x_max = 1.f, f
 
 float3 MapHDRSceneToDisplayCapabilities(float3 NormalizedLinearValue, float SoftShoulderStart2084, float MaxBrightnessOfDisplay2084, float MaxBrightnessOfScene2084) {
   float3 bt2020_color = renodx::color::bt2020::from::BT709(NormalizedLinearValue);
+  // float3 bt2020_color = NormalizedLinearValue;
   float3 ST2084 = renodx::color::pq::EncodeSafe(bt2020_color);
 
   // Use a simple Bezier curve to create a soft shoulder
@@ -361,6 +371,7 @@ float3 MapHDRSceneToDisplayCapabilities(float3 NormalizedLinearValue, float Soft
 
   // Return a linear color
   return renodx::color::bt709::from::BT2020(renodx::color::pq::DecodeSafe((ST2084 > SoftShoulderStart2084) ? MappedValue : ST2084));
+  // return renodx::color::pq::DecodeSafe((ST2084 > SoftShoulderStart2084) ? MappedValue : ST2084);
 }
 
 float3 MassEffectDisplayMap(float3 linear_color, float shoulder_start, float peak_nits, float scene_peak) {
@@ -479,7 +490,7 @@ float3 ToneMap(float3 color) {
 
     // bool pq = (RENODX_TONE_MAP_WORKING_COLOR_SPACE > 0.f);
     bool pq = false;
-    float shoulder_start = 0.33333f;  // borrow from DICE
+    float shoulder_start = 0.33333330f;  // borrow from DICE
     float peak_nits = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
     float scene_nits = 4000.f / 203.f;
     color = MassEffectDisplayMap(color, shoulder_start, peak_nits, scene_nits);

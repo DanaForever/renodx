@@ -33,35 +33,45 @@ void main(
   float4 fDest;
 
   r0.xyz = godrayTexture.SampleLevel(samLinear_s, v1.xy, 0).xyz;
-  r0.xyz = godrayColor_g.xyz * r0.xyz;
   r1.xyzw = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyzw;
 
   if (shader_injection.bloom == 0.f) {
-    
+  // if (true) {
+    r0.rgb = saturate(r0.rgb);
+    // r1.rgb = saturate(r1.rgb);
+    r0.xyz = godrayColor_g.xyz * r0.xyz;
     r2.xyz = float3(1,1,1) + -r1.xyz;
     r2.xyz = max(float3(0,0,0), r2.xyz);
     o0.xyz = r0.xyz * r2.xyz + r1.xyz;
   } else {
-    r2.xyz = float3(1, 1, 1) + -r1.xyz;
+    float3 blend = r0.rgb * godrayColor_g.xyz;
+    r0.xyz = godrayColor_g.xyz * saturate(r0.xyz);
+    r2.xyz = float3(1, 1, 1) + -(r1.xyz);
     r2.xyz = max(float3(0, 0, 0), r2.xyz);
     float3 sdr = r0.xyz * r2.xyz + r1.xyz;
-    float3 blend = r0.rgb;
+    
     float3 color = r1.rgb;
+    // blend = saturate(blend);
 
     blend = srgbDecode(blend);
     color = srgbDecode(color);
 
-    float3 blendBloom = addBloom(color, blend);
+    // float3 blendBloom = addBloom(color, blend);
+    float3 blendBloom = hdrScreenBlend(color, blend, false);
 
     sdr = srgbDecode(sdr);
     float3 hdr = blendBloom;
 
-    hdr = renodx::color::correct::Luminance(hdr, sdr);
+    // hdr = renodx::color::correct::Luminance(hdr, sdr);
     hdr = renodx::color::correct::Hue(hdr, sdr);
+    // hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), saturate(sdr), 1.f);
+    // hdr = renodx::color::correct::Luminance(hdr, sdr);
+    hdr = renodx::color::correct::Chrominance(hdr, sdr);
 
     hdr = srgbEncode(hdr);
 
     o0.rgb = hdr;
+    // o0.rgb = sdr;
   }
   o0.w = r1.w;
   return;

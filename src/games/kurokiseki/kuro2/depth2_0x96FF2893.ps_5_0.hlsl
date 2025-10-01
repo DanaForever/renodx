@@ -91,6 +91,7 @@ void main(
   float4 fDest;
 
   r0.x = depthTexture.SampleLevel(samLinear_s, v1.xy, 0).x;
+  r0.x = saturate(r0.x);
   r0.y = 1;
   r0.z = dot(projInv_g._m22_m32, r0.xy);
   r0.x = dot(projInv_g._m23_m33, r0.xy);
@@ -116,5 +117,7 @@ void main(
   r0.xyz = r0.yzw * r0.xxx;
   r0.w = cmp(isFlip_g < 0);
   o0.xyz = r0.www ? float3(0,0,0) : r0.xyz;
+  // this is necessary
+  o0.rgb = saturate(o0.rgb);
   return;
 }

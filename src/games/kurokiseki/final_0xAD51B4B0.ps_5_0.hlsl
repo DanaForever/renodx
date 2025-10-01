@@ -41,10 +41,10 @@ void main(
           o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
       } else if (config.gamma_correction == 3.f) {
           o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.3f);
-      } 
+      }
 
       float3 color = o0.rgb;
-
+      
       color = GamutCompress(color);
       
       [branch]

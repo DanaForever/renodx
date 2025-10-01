@@ -60,11 +60,13 @@ void main(
   float3 Overlay = lerp(Light, Dark, M);
   float3 sdr = Overlay;
   if (shader_injection.bloom == 1.f) {
+    Overlay = Dark; 
+  } else if (shader_injection.bloom == 2.f) {
     Overlay = hdrScreenBlend(C, B, true);
   }
 
   [branch]
-  if (shader_injection.bloom == 1.f)  {
+  if (shader_injection.bloom >= 1.f)  {
     
     float3 hdr = Overlay;
 
@@ -73,11 +75,9 @@ void main(
 
     sdr = srgbDecode(sdr);
     hdr = srgbDecode(hdr);
-    // sat = srgbDecode(sat);
 
-    sdr = max(0.f, sdr);
     hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
-    hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);
+    hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), saturate(sdr), shader_injection.bloom_hue_correction);
 
     o0.rgb = srgbEncode(hdr);
 
