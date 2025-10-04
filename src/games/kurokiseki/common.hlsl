@@ -336,7 +336,7 @@ float3 ReinhardPiecewiseExtended(float3 x, float white_max, float x_max = 1.f, f
     x = x * (y > 0 ? (new_y / y) : 0);
     
     // Luminance seems over-saturated, so chrominance correction seems to get the middle ground between perch and luminance.
-    x = renodx::color::correct::ChrominanceICtCp(x, perch, 0.5f);
+    x = renodx::color::correct::ChrominanceICtCp(x, perch, 1.f);
   }
 
   return x;
@@ -604,15 +604,14 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
 float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
 
-  // return ch;
   const float y_in = renodx::color::y::from::BT709(incorrect_color);
   const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
 
   float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
 
   // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  // float3 result = renodx::color::correct::ChrominanceICtCp(lum, ch);
-  float3 result = renodx::color::correct::Chrominance(lum, ch);
+  float3 result = renodx::color::correct::ChrominanceICtCp(lum, ch);
+  // float3 result = renodx::color::correct::Chrominance(lum, ch);
 
   return result;
 }
@@ -639,6 +638,8 @@ float3 srgbEncode(float3 color) {
 float calculateLuminanceSRGB(float3 color) {
 
   // return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+  // return renodx::color::y::from::NTCSC1953(renodx::color::srgb::DecodeSafe(color));
+  // return renodx::color::y::from::NTSC1953((color));
   return renodx::color::y::from::BT709((color));
 
 }

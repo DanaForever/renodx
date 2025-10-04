@@ -163,7 +163,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "fxBloomCorrection",
         .binding = &shader_injection.bloom_hue_correction,
-        .default_value = 100.f,
+        .default_value = 75.f,
         .label = "Bloom Color Correction",
         .section = "Game Settings",
         .tooltip = "Correcting the colors after rewriting the Bloom.",

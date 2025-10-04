@@ -112,12 +112,13 @@ void main(
 
     sdr = srgbDecode(sdr);
 
-    // hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, 1.f);
-
-    // hdr = renodx::color::correct::Luminance(hdr, sdr);
-    hdr = srgbEncode(hdr);
+    // hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
+    hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);
 
     o0.rgb = hdr;
+    // o0.rgb = sdr;
+
+    o0.rgb = srgbEncode(o0.rgb);
   }
 
   // }

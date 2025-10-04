@@ -30,7 +30,8 @@ void main(
     r1.xyz = colorTexture.SampleLevel(samLinear_s, r0.zw, 0).xyz;
     r1.xyz = max(float3(0,0,0), r1.xyz);
     // r0.z = dot(r1.xyz, float3(0.212599993,0.715200007,0.0722000003));
-    r0.z = calculateLuminanceSRGB(r1.rgb);
+    r0.z = renodx::color::y::from::BT709(r1.rgb);
+    // r0.z = calculateLuminanceSRGB(r1.rgb);
     r0.z = 9.99999975e-005 + r0.z;
     r0.z = log2(r0.z);
     r0.x = r0.z * 0.693147182 + r0.x;

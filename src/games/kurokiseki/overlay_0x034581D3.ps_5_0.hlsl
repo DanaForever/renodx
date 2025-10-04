@@ -66,7 +66,7 @@ void main(
   }
 
   [branch]
-  if (shader_injection.bloom >= 1.f)  {
+  if (shader_injection.bloom >= 1.f && RENODX_TONE_MAP_TYPE > 0)  {
     
     float3 hdr = Overlay;
 
@@ -77,7 +77,8 @@ void main(
     hdr = srgbDecode(hdr);
 
     hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
-    hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), saturate(sdr), shader_injection.bloom_hue_correction);
+    hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sdr, shader_injection.bloom_hue_correction);
+    // hdr = renodx::color::correct::Chrominance(hdr, sdr);
 
     o0.rgb = srgbEncode(hdr);
 

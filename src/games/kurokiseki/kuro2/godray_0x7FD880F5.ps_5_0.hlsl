@@ -36,7 +36,6 @@ void main(
   r1.xyzw = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyzw;
 
   if (shader_injection.bloom == 0.f) {
-  // if (true) {
     r0.rgb = saturate(r0.rgb);
     // r1.rgb = saturate(r1.rgb);
     r0.xyz = godrayColor_g.xyz * r0.xyz;
@@ -56,22 +55,17 @@ void main(
     blend = srgbDecode(blend);
     color = srgbDecode(color);
 
-    // float3 blendBloom = addBloom(color, blend);
     float3 blendBloom = hdrScreenBlend(color, blend, false);
 
     sdr = srgbDecode(sdr);
     float3 hdr = blendBloom;
 
-    // hdr = renodx::color::correct::Luminance(hdr, sdr);
-    hdr = renodx::color::correct::Hue(hdr, sdr);
-    // hdr = UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), saturate(sdr), 1.f);
-    // hdr = renodx::color::correct::Luminance(hdr, sdr);
+    // restores the colors 
     hdr = renodx::color::correct::Chrominance(hdr, sdr);
 
     hdr = srgbEncode(hdr);
 
     o0.rgb = hdr;
-    // o0.rgb = sdr;
   }
   o0.w = r1.w;
   return;
