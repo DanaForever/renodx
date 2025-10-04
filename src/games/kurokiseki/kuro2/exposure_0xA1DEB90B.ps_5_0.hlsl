@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Mon Sep 29 00:42:31 2025
-
+#include "../common.hlsl"
 cbuffer cb_local : register(b2)
 {
   float exposureBias_g : packoffset(c0);
@@ -46,8 +46,18 @@ void main(
   r1.x = exposureBias_g / r1.x;
   r1.x = min(exposureMax_g, r1.x);
   r1.x = max(exposureMin_g, r1.x);
-  r1.xyz = r0.xyz * r1.xxx + -r0.xyz;
-  o0.xyz = intensity_g * r1.xyz + r0.xyz;
+
+  // r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+
+  // r1.xyz = r0.xyz * r1.xxx + -r0.xyz;
+  // o0.xyz = intensity_g * r1.xyz + r0.xyz;
+
+  float3 exposure = r1.x * r0.rgb;
+  float3 org = renodx::color::srgb::DecodeSafe(r0.rgb);
+  exposure = renodx::color::srgb::DecodeSafe(exposure);
+  o0.rgb = lerp(org, exposure, intensity_g);
+
+  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   o0.w = r0.w;
   return;
 }

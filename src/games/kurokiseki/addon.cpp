@@ -81,11 +81,12 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xD21C3838), // bloom blend
     UpgradeRTVReplaceShader(0x7FD880F5), // godray
     UpgradeRTVReplaceShader(0x1336F6F8), // blur
-    UpgradeRTVReplaceShader(0x2A89E417), // blur
+    UpgradeRTVReplaceShader(0x2A89E417), // luma
     UpgradeRTVReplaceShader(0x96FF2893), // depth2
     UpgradeRTVReplaceShader(0xA69F0EDC), // intensity
     UpgradeRTVReplaceShader(0x61EF61EA), // ao
     UpgradeRTVReplaceShader(0xB24294F0), // atmosphere 2
+    UpgradeRTVReplaceShader(0xA1DEB90B), // exposure
 
 
     // UpgradeRTVShader(0x1336F6F8),

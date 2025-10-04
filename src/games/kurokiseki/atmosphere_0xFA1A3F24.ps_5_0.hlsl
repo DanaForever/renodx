@@ -21,30 +21,30 @@ void main(
 
   r0.xyz = atomosphereTexture.SampleLevel(samLinear_s, v1.xy, 0).xyz;
   r1.xyzw = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyzw;
-  // r2.xyz = saturate(float3(1,1,1) + -r1.xyz);
-  // o0.xyz = r0.xyz * r2.xyz + r1.xyz;
 
-  // o0.rgb = r1.rgb + r0.rgb;
+  r2.rgb = 1 - r1.rgb;
+  r2.rgb = max(0.f, r2.rgb);
+  float3 sdr = r0.xyz * r2.xyz + r1.xyz;
+  
   float3 color = r1.rgb;
   float3 atomosphere = r0.rgb;
 
-  if (shader_injection.bloom_space == 100) {
-    color = srgbDecode(color);
-    atomosphere = srgbDecode(atomosphere);
-
-    float3 addition = renodx::math::SafeDivision(atomosphere, (1 + color), 0.f);
-
-    color += addition;
-
-    o0.rgb = color;
-    o0.rgb = srgbEncode(o0.rgb);
-  } else {
-    // r2.xyz = saturate(float3(1, 1, 1) + -r1.xyz);
-    r2.rgb = 1 - r1.rgb;
-    r2.rgb = max(0.f, r2.rgb);
-    o0.xyz = r0.xyz * r2.xyz + r1.xyz;
+  if (RENODX_TONE_MAP_TYPE == 0.f || shader_injection.bloom == 0.f) {
+    o0.rgb = sdr;
+    o0.w = r1.w;
+    return;
   }
 
+  color = srgbDecode(color);
+  atomosphere = srgbDecode(atomosphere);
+
+  // color = hdrScreenBlend(color, atomosphere);
+  color = addBloom(color, atomosphere);
+  sdr = srgbDecode(sdr);
+
+  // saturation correction
+  o0.rgb = renodx::color::correct::Chrominance(color, sdr);
+  o0.rgb = srgbEncode(o0.rgb);
   o0.w = r1.w;
   return;
 }

@@ -190,7 +190,7 @@ float3 ApplyExponentialRollOff(float3 color, bool pq = false) {
     color = max(color, 0.f);
     color = renodx::tonemap::ExponentialRollOff(color, highlightsShoulderStart, peakWhite) / paperWhite;
 
-    color = renodx::color::correct::Chrominance(color_lum, color, RENODX_TONE_MAP_HUE_CORRECTION, 0.f, RENODX_TONE_MAP_HUE_PROCESSOR);
+    color = renodx::color::correct::ChrominanceICtCp(color_lum, color);
     // color = color_lum;
   }
 
@@ -637,10 +637,10 @@ float3 srgbEncode(float3 color) {
 
 float calculateLuminanceSRGB(float3 color) {
 
-  // return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
+  return renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(color));
   // return renodx::color::y::from::NTCSC1953(renodx::color::srgb::DecodeSafe(color));
   // return renodx::color::y::from::NTSC1953((color));
-  return renodx::color::y::from::BT709((color));
+  // return renodx::color::y::from::BT709((color));
 
 }
 
