@@ -232,67 +232,6 @@ float3 GamutCompress(float3 color) {
   }
 }
 
-// --- Saturation curve for cone response ---
-float NakaRushton(float x, float sigma) {
-  return x / (x + sigma);
-}
-
-
-float3 LMS_ToneMap(float3 bt709) {
-
-  float3x3 XYZ_TO_LMS_D65_MAT;
-
-  if (shader_injection.lms_matrix == 0.f) {
-    return bt709;
-  }
-
-  switch (int(shader_injection.lms_matrix)) {
-      case 1: 
-        XYZ_TO_LMS_D65_MAT = CAT_VON_KRIES;
-        break;
-      case 2:
-        XYZ_TO_LMS_D65_MAT = CAT_BRADFORD;
-        break;
-      case 3:
-        XYZ_TO_LMS_D65_MAT = CAT_FAIRCHILD;
-        break;
-      default:
-        XYZ_TO_LMS_D65_MAT = CAT_FAIRCHILD;
-        break;
-  }
-
-  float3 lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(bt709));
-  float3 midgray_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(0.18f));
-
-  // midgray match
-  lms = renodx::math::DivideSafe(lms, midgray_lms, 1.f);
-  lms = sign(lms) * pow(abs(lms), RENODX_TONE_MAP_CONTRAST);
-  lms *= midgray_lms;
-
-  const float human_vision_peak = (4000.f / 203.f, 3000.f / 203.f, 1500.f/ 203.f);
-  float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(human_vision_peak));
-
-  // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
-  float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
-
-  // Naka Rushton per cone
-  float3 new_lms = float3(
-      sign(lms.x) * renodx::tonemap::ReinhardScalableExtended(abs(lms.x), 100.f, peak_lms.x, 0.f, abs(midgray_lms.x), abs(midgray_lms.x)),
-      sign(lms.y) * renodx::tonemap::ReinhardScalableExtended(abs(lms.y), 100.f, peak_lms.y, 0.f, abs(midgray_lms.y), abs(midgray_lms.y)),
-      sign(lms.z) * renodx::tonemap::ReinhardScalableExtended(abs(lms.z), 100.f, peak_lms.z, 0.f, abs(midgray_lms.z), abs(midgray_lms.z)));
-
-
-  // float3 new_lms;
-  // new_lms.x = NakaRushton(abs(lms.x), sigma.x) * sign(lms.x);
-  // new_lms.y = NakaRushton(abs(lms.y), sigma.y) * sign(lms.y);
-  // new_lms.z = NakaRushton(abs(lms.z), sigma.z) * sign(lms.z);
-
-  float3 new_xyz = mul(renodx::math::Invert3x3(XYZ_TO_LMS_D65_MAT), new_lms);
-  float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);  
-  return input_color;
-  
-}
-
 float ReinhardPiecewiseExtended(float x, float white_max, float x_max = 1.f, float shoulder = 0.18f) {
   const float x_min = 0.f;
   float exposure = renodx::tonemap::ComputeReinhardExtendableScale(white_max, x_max, x_min, shoulder, shoulder);
@@ -334,13 +273,82 @@ float3 ReinhardPiecewiseExtended(float3 x, float white_max, float x_max = 1.f, f
     float new_y = ReinhardPiecewiseExtended(y, 100.f, x_max);
 
     x = x * (y > 0 ? (new_y / y) : 0);
-    
+
     // Luminance seems over-saturated, so chrominance correction seems to get the middle ground between perch and luminance.
     x = renodx::color::correct::ChrominanceICtCp(x, perch, 1.f);
   }
 
   return x;
 }
+
+// --- Saturation curve for cone response ---
+float NakaRushton(float x, float sigma) {
+  return x / (x + sigma);
+}
+
+
+float3 LMS_ToneMap(float3 bt709) {
+
+  float3x3 XYZ_TO_LMS_D65_MAT;
+
+  if (shader_injection.lms_matrix == 0.f) {
+    return bt709;
+  }
+
+  switch (int(shader_injection.lms_matrix)) {
+      case 1: 
+        XYZ_TO_LMS_D65_MAT = CAT_VON_KRIES;
+        break;
+      case 2:
+        XYZ_TO_LMS_D65_MAT = CAT_BRADFORD;
+        break;
+      case 3:
+        XYZ_TO_LMS_D65_MAT = CAT_FAIRCHILD;
+        break;
+      default:
+        XYZ_TO_LMS_D65_MAT = CAT_FAIRCHILD;
+        break;
+  }
+
+  float3 lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(bt709));
+  float3 midgray_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(0.18f));
+
+  // midgray match
+  lms = renodx::math::DivideSafe(lms, midgray_lms, 1.f);
+  lms = sign(lms) * pow(abs(lms), RENODX_TONE_MAP_CONTRAST);
+  lms *= midgray_lms;
+
+  const float human_vision_peak = (4000.f / 203.f);
+  // const float3 human_vision_peak = (4000.f / 203.f, 3000.f / 203.f, 1500.f/ 203.f);
+  float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
+
+  // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
+  float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
+
+  // Naka Rushton per cone
+  // float3 new_lms = float3(
+  //     sign(lms.x) * renodx::tonemap::ReinhardScalableExtended(abs(lms.x), 100.f, peak_lms.x, 0.f, abs(midgray_lms.x), abs(midgray_lms.x)),
+  //     sign(lms.y) * renodx::tonemap::ReinhardScalableExtended(abs(lms.y), 100.f, peak_lms.y, 0.f, abs(midgray_lms.y), abs(midgray_lms.y)),
+  //     sign(lms.z) * renodx::tonemap::ReinhardScalableExtended(abs(lms.z), 100.f, peak_lms.z, 0.f, abs(midgray_lms.z), abs(midgray_lms.z)));
+
+  float3 new_lms = float3(
+      sign(lms.x) * ReinhardPiecewiseExtended(abs(lms.x), 100.f, peak_lms.x, abs(midgray_lms.x)),
+      sign(lms.y) * ReinhardPiecewiseExtended(abs(lms.y), 100.f, peak_lms.y,  abs(midgray_lms.y)),
+      sign(lms.z) * ReinhardPiecewiseExtended(abs(lms.z), 100.f, peak_lms.z,  abs(midgray_lms.z)));
+
+
+  // float3 new_lms;
+  // new_lms.x = NakaRushton(abs(lms.x), sigma.x) * sign(lms.x);
+  // new_lms.y = NakaRushton(abs(lms.y), sigma.y) * sign(lms.y);
+  // new_lms.z = NakaRushton(abs(lms.z), sigma.z) * sign(lms.z);
+
+  float3 new_xyz = mul(renodx::math::Invert3x3(XYZ_TO_LMS_D65_MAT), new_lms);
+  float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);  
+  return input_color;
+  
+}
+
+
 
 // Mass Effect Displaymapper
 // Linear color in -> Linear color out
