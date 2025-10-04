@@ -234,11 +234,13 @@ float3 GamutCompress(float3 color) {
 
 float ReinhardPiecewiseExtended(float x, float white_max, float x_max = 1.f, float shoulder = 0.18f) {
   const float x_min = 0.f;
+  // float exposure = renodx::tonemap::ComputeReinhardExtendableScale(white_max, x_max, x_min, shoulder, shoulder);
+  // float extended = renodx::tonemap::ReinhardExtended(x * exposure, white_max * exposure, x_max);
   float exposure = renodx::tonemap::ComputeReinhardExtendableScale(white_max, x_max, x_min, shoulder, shoulder);
   float extended = renodx::tonemap::ReinhardExtended(x * exposure, white_max * exposure, x_max);
   extended = min(extended, x_max);
 
-  return lerp(x, extended, step(shoulder, x));
+  return (x >= shoulder) ? extended : x;
 }
 
 float3 ReinhardPiecewiseExtended(float3 x, float white_max, float x_max = 1.f, float shoulder = 0.18f, bool per_channel = true) {
@@ -321,29 +323,19 @@ float3 LMS_ToneMap(float3 bt709) {
   const float human_vision_peak = (4000.f / 203.f);
   // const float3 human_vision_peak = (4000.f / 203.f, 3000.f / 203.f, 1500.f/ 203.f);
   float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
+  // float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(human_vision_peak));
 
   // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
   float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
 
   // Naka Rushton per cone
-  // float3 new_lms = float3(
-  //     sign(lms.x) * renodx::tonemap::ReinhardScalableExtended(abs(lms.x), 100.f, peak_lms.x, 0.f, abs(midgray_lms.x), abs(midgray_lms.x)),
-  //     sign(lms.y) * renodx::tonemap::ReinhardScalableExtended(abs(lms.y), 100.f, peak_lms.y, 0.f, abs(midgray_lms.y), abs(midgray_lms.y)),
-  //     sign(lms.z) * renodx::tonemap::ReinhardScalableExtended(abs(lms.z), 100.f, peak_lms.z, 0.f, abs(midgray_lms.z), abs(midgray_lms.z)));
-
   float3 new_lms = float3(
       sign(lms.x) * ReinhardPiecewiseExtended(abs(lms.x), 100.f, peak_lms.x, abs(midgray_lms.x)),
       sign(lms.y) * ReinhardPiecewiseExtended(abs(lms.y), 100.f, peak_lms.y,  abs(midgray_lms.y)),
       sign(lms.z) * ReinhardPiecewiseExtended(abs(lms.z), 100.f, peak_lms.z,  abs(midgray_lms.z)));
 
-
-  // float3 new_lms;
-  // new_lms.x = NakaRushton(abs(lms.x), sigma.x) * sign(lms.x);
-  // new_lms.y = NakaRushton(abs(lms.y), sigma.y) * sign(lms.y);
-  // new_lms.z = NakaRushton(abs(lms.z), sigma.z) * sign(lms.z);
-
   float3 new_xyz = mul(renodx::math::Invert3x3(XYZ_TO_LMS_D65_MAT), new_lms);
-  float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);  
+  float3 input_color = renodx::color::bt709::from::XYZ(new_xyz);
   return input_color;
   
 }
