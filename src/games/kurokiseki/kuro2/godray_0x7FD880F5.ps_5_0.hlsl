@@ -60,8 +60,8 @@ void main(
     sdr = srgbDecode(sdr);
     float3 hdr = blendBloom;
 
-    // restores the colors 
-    hdr = renodx::color::correct::Chrominance(hdr, sdr);
+    // restores the colors
+    hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
 
     hdr = srgbEncode(hdr);
 
