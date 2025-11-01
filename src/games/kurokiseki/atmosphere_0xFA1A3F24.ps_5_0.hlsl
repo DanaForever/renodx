@@ -29,22 +29,22 @@ void main(
   float3 color = r1.rgb;
   float3 atomosphere = r0.rgb;
 
-  if (RENODX_TONE_MAP_TYPE == 0.f || shader_injection.bloom == 0.f) {
+  if (- shader_injection.bloom == 0.f) {
     o0.rgb = sdr;
     o0.w = r1.w;
     return;
   }
 
-  color = srgbDecode(color);
-  atomosphere = srgbDecode(atomosphere);
+  color = renodx::color::srgb::DecodeSafe(color);
+  atomosphere = renodx::color::srgb::DecodeSafe(atomosphere);
 
   // color = hdrScreenBlend(color, atomosphere);
   color = addBloom(color, atomosphere);
-  sdr = srgbDecode(sdr);
+  sdr = renodx::color::srgb::DecodeSafe(sdr);
 
   // saturation correction
   o0.rgb = renodx::color::correct::Chrominance(color, sdr);
-  o0.rgb = srgbEncode(o0.rgb);
+  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   o0.w = r1.w;
   return;
 }

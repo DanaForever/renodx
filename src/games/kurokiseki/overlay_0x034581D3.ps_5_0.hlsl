@@ -66,20 +66,21 @@ void main(
   }
 
   [branch]
-  if (shader_injection.bloom >= 1.f && RENODX_TONE_MAP_TYPE > 0)  {
+  if (shader_injection.bloom >= 1.f)  {
+  // if (false) {
     
     float3 hdr = Overlay;
 
     sdr = lerp(C, sdr, alpha);
     hdr = lerp(C, hdr, alpha);
 
-    sdr = srgbDecode(sdr);
-    hdr = srgbDecode(hdr);
+    sdr = renodx::color::srgb::DecodeSafe(sdr);
+    hdr = renodx::color::srgb::DecodeSafe(hdr);
 
     hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
     hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
 
-    o0.rgb = srgbEncode(hdr);
+    o0.rgb = renodx::color::srgb::EncodeSafe(hdr);
 
   } else {
     // final: add delta scaled by alpha

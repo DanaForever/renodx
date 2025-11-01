@@ -86,7 +86,8 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xA69F0EDC), // intensity
     UpgradeRTVReplaceShader(0x61EF61EA), // ao
     UpgradeRTVReplaceShader(0xB24294F0), // atmosphere 2
-    UpgradeRTVReplaceShader(0xA1DEB90B), // exposure
+    UpgradeRTVReplaceShader(0xA1DEB90B), // exposure 
+    UpgradeRTVReplaceShader(0x16371E61), // neon
 
 
     // UpgradeRTVShader(0x1336F6F8),
@@ -122,7 +123,8 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Falcom by default generates Bloom samples in sRGB.",
         .labels = {"Falcom (sRGB)", "Linear"},
         .parse = [](float value) { return 0.f; },
-        .is_visible = []() { return current_settings_mode >= 1; },
+        // .is_visible = []() { return current_settings_mode >= 1; },
+        .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "bloom",
@@ -356,8 +358,8 @@ renodx::utils::settings::Settings settings = {
         .binding = &shader_injection.tone_map_hue_correction,
         .default_value = 100.f,
         .label = "Highlight Blowout",
-        .section = "Hue Correction",
-        .tooltip = "Hue retention strength.",
+        .section = "Tonemapping Config",
+        .tooltip = "Transferring chrominance from per-channel tonemapping to blowout highlight realistically.",
         .min = 0.f,
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type >= 3; },
@@ -417,6 +419,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Color Grading",
         .max = 2.f,
         .format = "%.2f",
+        .is_visible = []() { return shader_injection.tone_map_type  >= 1.f; },
     },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeHighlights",
@@ -426,6 +429,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Color Grading",
         .max = 100.f,
         .parse = [](float value) { return value * 0.02f; },
+        .is_visible = []() { return shader_injection.tone_map_type  >= 1.f; },
         
     },
     new renodx::utils::settings::Setting{
@@ -436,7 +440,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Color Grading",
         .max = 100.f,
         .parse = [](float value) { return value * 0.02f; },
-        .is_visible = []() { return current_settings_mode >= 1; },
+        .is_visible = []() { return shader_injection.tone_map_type  >= 1.f; },
     },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeContrast",
@@ -447,7 +451,7 @@ renodx::utils::settings::Settings settings = {
         .max = 100.f,
         
         .parse = [](float value) { return value * 0.02f; },
-        .is_visible = []() { return current_settings_mode >= 1; },
+        .is_visible = []() { return shader_injection.tone_map_type  >= 1.f; },
     },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeSaturation",
@@ -457,6 +461,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Color Grading",
         .max = 100.f,
         .parse = [](float value) { return value * 0.02f; },
+        .is_visible = []() { return shader_injection.tone_map_type  >= 1.f; },
     },
     // new renodx::utils::settings::Setting{
     //     .key = "ColorGradeHighlightSaturation",
@@ -470,17 +475,17 @@ renodx::utils::settings::Settings settings = {
     //     .parse = [](float value) { return value * 0.02f; },
     //     .is_visible = []() { return current_settings_mode >= 1 && shader_injection.tone_map_type  >= 3.f; },
     // },
-    // new renodx::utils::settings::Setting{
-    //     .key = "ColorGradeBlowout",
-    //     .binding = &shader_injection.tone_map_blowout,
-    //     .default_value = 0.f,
-    //     .label = "Blowout",
-    //     .section = "Color Grading",
-    //     .tooltip = "Controls highlight desaturation due to overexposure.",
-    //     .max = 100.f,
-    //     .parse = [](float value) { return value * 0.01f; },
-    //     .is_visible = []() { return current_settings_mode >= 1 && shader_injection.tone_map_type  >= 3.f; },
-    // },
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeBlowout",
+        .binding = &shader_injection.tone_map_blowout,
+        .default_value = 0.f,
+        .label = "Blowout",
+        .section = "Color Grading",
+        .tooltip = "Controls highlight desaturation due to overexposure.",
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return shader_injection.tone_map_type  >= 1.f; },
+    },
     // new renodx::utils::settings::Setting{
     //     .key = "ColorGradeFlare",
     //     .binding = &shader_injection.tone_map_flare,

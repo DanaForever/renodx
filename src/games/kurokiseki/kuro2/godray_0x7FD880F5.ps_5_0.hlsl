@@ -52,18 +52,18 @@ void main(
     float3 color = r1.rgb;
     // blend = saturate(blend);
 
-    blend = srgbDecode(blend);
-    color = srgbDecode(color);
+    blend = renodx::color::srgb::DecodeSafe(blend);
+    color = renodx::color::srgb::DecodeSafe(color);
 
     float3 blendBloom = hdrScreenBlend(color, blend, false);
 
-    sdr = srgbDecode(sdr);
-    float3 hdr = blendBloom;
+    sdr = renodx::color::srgb::DecodeSafe(sdr);
+    float3 hdr = (blendBloom);
 
     // restores the colors
     hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
 
-    hdr = srgbEncode(hdr);
+    hdr = renodx::color::srgb::EncodeSafe(hdr);
 
     o0.rgb = hdr;
   }

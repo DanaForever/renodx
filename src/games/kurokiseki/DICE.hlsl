@@ -221,10 +221,9 @@ float3 UserColorGrading(
   color *= exposure;
 
   float y = renodx::color::y::from::BT709(abs(color));
-
   const float y_contrasted = renodx::color::grade::Contrast(y, contrast);
-  float y_highlighted = renodx::color::grade::Highlights(y, highlights);
-  float y_shadowed = renodx::color::grade::Shadows(y, shadows);
+  float y_highlighted = renodx::color::grade::Highlights(y_contrasted, highlights);
+  float y_shadowed = renodx::color::grade::Shadows(y_highlighted, shadows);
   const float y_final = y_shadowed;
 
   color = renodx::color::correct::Luminance(color, y, y_final);
@@ -279,7 +278,7 @@ float3 DICEToneMap(float3 color) {
       1.f,                         // shadows
       1.f,                         // contrast
       RENODX_TONE_MAP_SATURATION,  // saturation
-      0.f,                         // dechroma, we don't need it
+      RENODX_TONE_MAP_BLOWOUT,                         // dechroma, we don't need it
       0.f,                         // Hue Correction Strength
       color);                      // Hue Correction Type
 
@@ -309,7 +308,7 @@ float3 FrostbiteToneMap(float3 color) {
       1.f,                         // shadows
       1.f,                         // contrast
       RENODX_TONE_MAP_SATURATION,  // saturation
-      0.f,                         // dechroma, we don't need it
+      RENODX_TONE_MAP_BLOWOUT,                         // dechroma, we don't need it
       0.f,                         // Hue Correction Strength
       color);                      // Hue Correction Type
 

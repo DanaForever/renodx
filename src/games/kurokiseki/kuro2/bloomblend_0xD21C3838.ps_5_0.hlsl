@@ -102,22 +102,30 @@ void main(
   if (shader_injection.bloom == 0.f) {
     o0.rgb = sdr;
   } else {
-    float3 hdr = srgbDecode(gameScene.rgb);
+    float3 hdr = (gameScene.rgb);
 
-    hdr = hdrScreenBlend(hdr, srgbDecode(blur1), false);
-    hdr = hdrScreenBlend(hdr, srgbDecode(blur2), false);
-    hdr = hdrScreenBlend(hdr, srgbDecode(blur3), false);
-    hdr = hdrScreenBlend(hdr, srgbDecode(blur4), false);
-    hdr = hdrScreenBlend(hdr, srgbDecode(blur5), false);
+    hdr = hdrScreenBlend(hdr, (blur1), false);
+    hdr = hdrScreenBlend(hdr, (blur2), false);
+    hdr = hdrScreenBlend(hdr, (blur3), false);
+    hdr = hdrScreenBlend(hdr, (blur4), false);
+    hdr = hdrScreenBlend(hdr, (blur5), false);
 
-    sdr = srgbDecode(sdr);
+    // hdr = hdr + blur1;
+    // hdr = hdr + blur2;
+    // hdr = hdr + blur3;
+    // hdr = hdr + blur4;
+    // hdr = hdr + blur5;
 
-    hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
+    sdr = renodx::color::srgb::DecodeSafe(sdr);
+
+    hdr = renodx::color::srgb::DecodeSafe(hdr);
+
+    // hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
 
     o0.rgb = hdr;
     // o0.rgb = sdr;
 
-    o0.rgb = srgbEncode(o0.rgb);
+    o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   }
 
   // }

@@ -45,7 +45,7 @@ void main(
 
       float3 color = o0.rgb;
       
-      color = GamutCompress(color);
+      // color = GamutCompress(color);
       
       [branch]
       if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
