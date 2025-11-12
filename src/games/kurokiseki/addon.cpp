@@ -135,7 +135,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Bloom Blending",
         .section = "Game Settings",
         .tooltip = "Bloom blending method.",
-        .labels = {"Falcom (SDR)", "HDR", "Adaptive HDR"},
+        .labels = {"Falcom (SDR)", "HDR"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
 
@@ -160,7 +160,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Controls Bloom Strength",
         .max = 500.f,
         .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return shader_injection.bloom == 2.f; },
+        .is_visible = []() { return shader_injection.bloom >= 1.f; },
     },
 
     new renodx::utils::settings::Setting{
@@ -181,13 +181,13 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapType",
         .binding = &shader_injection.tone_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 4.f,
+        .default_value = 3.f,
         .can_reset = true,
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff", "Bezier"},
-        .labels = {"Vanilla", "Frostbite", "DICE", "Hermit"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "Hermite"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     // new renodx::utils::settings::Setting{
@@ -356,7 +356,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
         .binding = &shader_injection.tone_map_hue_correction,
-        .default_value = 100.f,
+        .default_value = 50.f,
         .label = "Highlight Blowout",
         .section = "Tonemapping Config",
         .tooltip = "Transferring chrominance from per-channel tonemapping to blowout highlight realistically.",

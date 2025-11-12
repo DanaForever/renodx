@@ -525,19 +525,18 @@ float3 ToneMap(float3 color) {
   
   }
   else if (shader_injection.tone_map_type == 3.f) {
-
     color = UserColorGrading(
         color,
         RENODX_TONE_MAP_EXPOSURE,    // exposure
         RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
         RENODX_TONE_MAP_SHADOWS,     // shadows
-        1.f,                         // contrast
+        RENODX_TONE_MAP_CONTRAST,                         // contrast
         1.f,                         // saturation, we'll do this post-tonemap
         0.f);                        // dechroma, post tonemapping
                                      // hue correction, Post tonemapping
 
-    color = LMS_ToneMap_Stockman(color, RENODX_TONE_MAP_SATURATION,
-                                 RENODX_TONE_MAP_CONTRAST);
+    color = LMS_ToneMap_Stockman(color, 1.f,
+                                 1.f);
 
     // color = renodx::draw::ToneMapPass(color, config);
     float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
@@ -554,7 +553,7 @@ float3 ToneMap(float3 color) {
         1.f,                         // highlights
         1.f,                         // shadows
         1.f,                         // contrast
-        1.f,  // saturation
+        RENODX_TONE_MAP_SATURATION,  // saturation
         RENODX_TONE_MAP_BLOWOUT,     // dechroma, we don't need it
         0.f,                         // Hue Correction Strength
         color);                      // Hue Correction Type
