@@ -692,29 +692,29 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
   // color = correctHue(color, sdr_color);
   // color = renodx::color::bt709::clamp::BT2020(color);
 
-  // if (RENODX_TONE_MAP_TYPE != 0.f) {
+  if (RENODX_TONE_MAP_TYPE != 0.f) {
 
-  //   [branch]
-  //   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-  //     color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-  //   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-  //     color = renodx::color::correct::GammaSafe(color, false, 2.4f);
-  //   } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-  //     color = renodx::color::correct::GammaSafe(color, false, 2.3f);
-  //   } 
+    [branch]
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+      color = renodx::color::correct::GammaSafe(color, false, 2.3f);
+    } 
     
-  //   // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
-  //   color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
+    // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
+    color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
 
-  //   [branch]
-  //   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-  //     color = renodx::color::correct::GammaSafe(color, true, 2.2f);
-  //   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-  //     color = renodx::color::correct::GammaSafe(color, true, 2.4f);
-  //   } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-  //     color = renodx::color::correct::GammaSafe(color, true, 2.3f);
-  //   }
-  // }
+    [branch]
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      color = renodx::color::correct::GammaSafe(color, true, 2.4f);
+    } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+      color = renodx::color::correct::GammaSafe(color, true, 2.3f);
+    }
+  }
 
   color = renodx::color::srgb::EncodeSafe(color);
   return color;
