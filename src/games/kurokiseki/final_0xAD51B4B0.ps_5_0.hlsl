@@ -29,7 +29,11 @@ void main(
 
     if (RENODX_TONE_MAP_TYPE > 0) {
 
+      // r0.rgb = processAndToneMap(r0.rgb, true);
+
       r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+
+      r0.rgb = ToneMap(r0.rgb);
 
       o0 = r0;
 
@@ -65,7 +69,7 @@ void main(
       // color = renodx::color::bt709::clamp::BT2020(color);
       o0.rgb = color;
 
-      o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / 80.f;
+      o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
 
       o0.w = 1;
     }

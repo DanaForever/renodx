@@ -91,7 +91,7 @@ void main(
 
   o0.w = r2.w;
 
-  o0.rgb = processAndToneMap(o0.rgb, true);
+  
 
   return;
 }
