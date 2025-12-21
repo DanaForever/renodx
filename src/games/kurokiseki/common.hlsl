@@ -539,12 +539,16 @@ float3 ToneMap(float3 color) {
                                  1.f);
 
     // color = renodx::draw::ToneMapPass(color, config);
+    // color = renodx::draw::ToneMapPass(color);
     float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+
+    color = renodx::color::bt709::clamp::BT2020(color);
 
     float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
     float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
 
-    color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
+    if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f)
+      color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
     // color = lum_color;
 
     color = renodx::color::grade::UserColorGrading(

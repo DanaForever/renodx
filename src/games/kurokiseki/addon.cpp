@@ -88,7 +88,15 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xB24294F0), // atmosphere 2
     UpgradeRTVReplaceShader(0xA1DEB90B), // exposure 
     UpgradeRTVReplaceShader(0x16371E61), // neon
+    UpgradeRTVReplaceShader(0xB38A8D5E), // proxy
 
+    CustomSwapchainShader(0xA39E174C), // Kai final
+    UpgradeRTVReplaceShader(0xD606E924), // neon
+    UpgradeRTVReplaceShader(0x25A9822B), // neon
+    UpgradeRTVReplaceShader(0x3C7947BE), // neon
+    UpgradeRTVReplaceShader(0xC79A113F), // depth3
+    UpgradeRTVReplaceShader(0xCDB2A000), // godray
+    UpgradeRTVReplaceShader(0x0F02FFD8) // godraygen
 
     // UpgradeRTVShader(0x1336F6F8),
     // UpgradeRTVShader(0xEF0CAEEA),
@@ -585,7 +593,16 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .use_resource_view_cloning = true,
           .use_resource_view_hot_swap = true,          
         //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-      });
+        });
+
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r11g11b10_float,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+          .ignore_size = true,
+        //   .use_resource_view_cloning = true,
+          .use_resource_view_hot_swap = true,          
+        //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        });
 
 
         // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({

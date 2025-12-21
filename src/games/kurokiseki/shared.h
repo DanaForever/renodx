@@ -144,7 +144,6 @@ cbuffer shader_injection : register(b13) {
 
 #define RENODX_RENO_DRT_TONE_MAP_METHOD               renodx::tonemap::renodrt::config::tone_map_method::HERMITE_SPLINE
 #define RENODX_RENO_DRT_NEUTRAL_SDR_TONE_MAP_METHOD   renodx::tonemap::renodrt::config::tone_map_method::HERMITE_SPLINE
-#define RENODX_RENO_DRT_NEUTRAL_SDR_TONE_MAP_METHOD   renodx::tonemap::renodrt::config::tone_map_method::HERMITE_SPLINE
 #define RENODX_RENO_DRT_NEUTRAL_SDR_CLAMP_PEAK        -1.f
 #define RENODX_RENO_DRT_NEUTRAL_SDR_CLAMP_COLOR_SPACE -1.f
 #define RENODX_RENO_DRT_NEUTRAL_SDR_WHITE_CLIP        20.f
