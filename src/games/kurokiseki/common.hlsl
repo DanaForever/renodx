@@ -538,8 +538,6 @@ float3 ToneMap(float3 color) {
     color = LMS_ToneMap_Stockman(color, 1.f,
                                  1.f);
 
-    // color = renodx::draw::ToneMapPass(color, config);
-    // color = renodx::draw::ToneMapPass(color);
     float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
     color = renodx::color::bt709::clamp::BT2020(color);
@@ -549,7 +547,8 @@ float3 ToneMap(float3 color) {
 
     if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f)
       color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
-    // color = lum_color;
+    else
+      color = lum_color;
 
     color = renodx::color::grade::UserColorGrading(
         color,
