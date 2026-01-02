@@ -29,7 +29,8 @@ void main(
   // r0.xyz = exp2(r0.xyz);
   // r0.rgb = renodx::math::SafePow(r0.rgb, 2.3f);
 
-  if (RENODX_TONE_MAP_TYPE > 0) {
+  // if (RENODX_TONE_MAP_TYPE > 0) {
+  if (true) {
 
     r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 

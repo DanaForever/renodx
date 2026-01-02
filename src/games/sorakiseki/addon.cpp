@@ -21,6 +21,7 @@ namespace {
 
 renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xE20E1A41), // final
+    CustomShaderEntry(0x14DAB5E7), // final
     CustomShaderEntry(0xC9FA40B7), // tonemap
     CustomShaderEntry(0xCDE6FA28), // bloomTAA
     CustomShaderEntry(0xD6CF040B), // bloom blend
@@ -110,12 +111,12 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapType",
         .binding = &shader_injection.tone_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 4.f,
+        .default_value = 3.f,
         .can_reset = true,
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "Hermite Spline"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -127,8 +128,8 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .labels = {"None", "Von-Kries", "Bradford", "Fairchild"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 2; },
-        // .is_visible = []() { return false; },
+        // .is_visible = []() { return current_settings_mode >= 2; },
+        .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",
@@ -194,7 +195,8 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .labels = {"BT709", "BT2020", "AP1"},
         .is_enabled = []() { return shader_injection.tone_map_type >= 1.f; },
-        .is_visible = []() { return current_settings_mode >= 1; },
+        // .is_visible = []() { return current_settings_mode >= 1; },
+        .is_visible = []() { return false; },
     },
     // new renodx::utils::settings::Setting{
     //     .key = "InverseToneMapExtraHDRSaturation",
@@ -260,32 +262,6 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .parse = [](float value) { return value * 0.01f; },
         .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 2.f ; },
-    },
-    
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapScaling",
-        .binding = &shader_injection.tone_map_per_channel,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .label = "Scaling",
-        .section = "RenoDRT Configuration",
-        .tooltip = "Luminance scales colors consistently while per-channel saturates and blows out sooner",
-        .labels = {"Luminance", "Per Channel"},
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type >= 3.f; },
-    },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapWhiteClip",
-        .binding = &shader_injection.tone_map_white_clip,
-        .default_value = 100.f,
-        .label = "White Clip",
-        .section = "RenoDRT Configuration",
-        .tooltip = "White clip values.",
-        .min = 0.f,
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
-        .parse = [](float value) { return value * 1.f; },
-        .is_visible = []() { return current_settings_mode >= 1 && shader_injection.tone_map_type == 3.f; },
     },
     
     
