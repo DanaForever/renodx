@@ -325,8 +325,8 @@ float3 LMS_ToneMap(float3 bt709) {
         break;
   }
 
-  float3 lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(bt709));
-  float3 midgray_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(0.18f));
+  float3 lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::xyz::from::BT709(bt709));
+  float3 midgray_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::xyz::from::BT709(0.18f));
 
   // midgray match
   lms = renodx::math::DivideSafe(lms, midgray_lms, 1.f);
@@ -335,8 +335,8 @@ float3 LMS_ToneMap(float3 bt709) {
 
   const float human_vision_peak = (4000.f / 203.f);
   // const float3 human_vision_peak = (4000.f / 203.f, 3000.f / 203.f, 1500.f/ 203.f);
-  float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
-  // float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::XYZ::from::BT709(human_vision_peak));
+  float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::xyz::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
+  // float3 peak_lms = mul(XYZ_TO_LMS_D65_MAT, renodx::color::xyz::from::BT709(human_vision_peak));
 
   // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
   float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
@@ -354,7 +354,7 @@ float3 LMS_ToneMap(float3 bt709) {
 }
 
 float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
-  float3 XYZ = renodx::color::XYZ::from::BT709(color);
+  float3 XYZ = renodx::color::xyz::from::BT709(color);
   float original_y = XYZ.y;
 
   // Not used
@@ -374,7 +374,7 @@ float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
       0.68990272f, +0.34832189f, 0.00000000f,
       0.00000000f, +0.00000000f, 1.93485343f);
 
-  // float3x3 XYZ_TO_LMS_EE = renodx::color::XYZ_TO_HUNT_POINTER_ESTEVEZ_LMS_MAT;
+  // float3x3 XYZ_TO_LMS_EE = renodx::color::xyz_TO_HUNT_POINTER_ESTEVEZ_LMS_MAT;
 
   // Normalize each row of the matrix by its LMS_D65 component
   float3x3 XYZ_TO_LMS = NormalizeXYZToLMS_D65(renodx::math::Invert3x3(LMS_TO_XYZf));
@@ -384,14 +384,14 @@ float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
   const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
   const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
 
-  float3 LMS_WHITE = mul(XYZ_TO_LMS, renodx::color::XYZ::from::BT709(1.f));
-  float3 LMS_GRAY = mul(XYZ_TO_LMS, renodx::color::XYZ::from::BT709(MID_GRAY_LINEAR));
+  float3 LMS_WHITE = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(1.f));
+  float3 LMS_GRAY = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(MID_GRAY_LINEAR));
   float3 LMS = mul(XYZ_TO_LMS, XYZ);
 
   float LMS_sum = LMS.x + LMS.y + LMS.z;
   float3 lms_sensitivies = LMS / (LMS_sum);
 
-  float3 peak_xyz = renodx::color::XYZ::from::BT709(1.f);
+  float3 peak_xyz = renodx::color::xyz::from::BT709(1.f);
   float3 peak_lms = mul(XYZ_TO_LMS, peak_xyz);
   float3 peak_lms_sum = peak_lms.x + peak_lms.y + peak_lms.z;
   float3 peak_lms_sensitivities = peak_lms / (peak_lms_sum);
@@ -427,7 +427,7 @@ float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
   float3 lms = lms_vibrancy;
 
   const float human_vision_peak = (4000.f / 203.f);
-  float3 peak_human_lms = mul(XYZ_TO_LMS, renodx::color::XYZ::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
+  float3 peak_human_lms = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
   float3 midgray_lms = LMS_GRAY;
   // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
   float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
