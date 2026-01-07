@@ -11,62 +11,65 @@
 
 #include <deps/imgui/imgui.h>
 
-#include <embed/0x24182048.h>   // Color Grading - main menu & prologue
-#include <embed/0x73E7A34D.h>   // Color Grading - main menu & prologue - sharpening low
-#include <embed/0xD7BC63A1.h>   // Color Grading - level 1: Inkwater Marsh
+#include <embed/shaders.h>
 
-// additional color grading shaders done in batch
-#include <embed/0x063548F6.h>
-#include <embed/0x0BE6093C.h>
-#include <embed/0x0E0EE842.h>
-#include <embed/0x1A46FADC.h>
-#include <embed/0x1E8FDB7D.h>
-#include <embed/0x211F3245.h>
-#include <embed/0x28B10677.h>
-#include <embed/0x2CEC407A.h>
-#include <embed/0x34F7E01C.h>
-#include <embed/0x350163E1.h>
-#include <embed/0x37E6CB72.h>
-#include <embed/0x3F118009.h>
-#include <embed/0x3FDCF7AA.h>
-#include <embed/0x48CDE62E.h>
-#include <embed/0x4A3D4181.h>
-#include <embed/0x596B9BD3.h>
-#include <embed/0x5B0965E4.h>
-#include <embed/0x5CDE4A30.h>
-#include <embed/0x613B5403.h>
-#include <embed/0x62C79AA3.h>
-#include <embed/0x649A0B90.h>
-#include <embed/0x7C14BB2C.h>
-#include <embed/0x841FAF0A.h>
-#include <embed/0x84C7D93E.h>
-#include <embed/0x8A303253.h>
-#include <embed/0x8B1DE268.h>
-#include <embed/0x8D6097D1.h>
-#include <embed/0x8D6C34A5.h>
-#include <embed/0x8EC5798A.h>
-#include <embed/0x9AC0DEEF.h>
-#include <embed/0x9B5CC768.h>
-#include <embed/0x9DA86DCE.h>
-#include <embed/0xA6488EB2.h>
-#include <embed/0xABD8D6B7.h>
-#include <embed/0xB24C1A54.h>
-#include <embed/0xB270CA5B.h>
-#include <embed/0xC4128983.h>
-#include <embed/0xD9B57ECB.h>
-#include <embed/0xDB90C883.h>
-#include <embed/0xDE975B11.h>
-#include <embed/0xE3F6E54F.h>
-#include <embed/0xF017475F.h>
-#include <embed/0xF3917C63.h>
-#include <embed/0xF7933F3F.h>
-#include <embed/0xFCF0717A.h>
+// #include <embed/0x24182048.h>   // Color Grading - main menu & prologue
+// #include <embed/0x73E7A34D.h>   // Color Grading - main menu & prologue - sharpening low
+// #include <embed/0xD7BC63A1.h>   // Color Grading - level 1: Inkwater Marsh
 
-#include <embed/0x9D323EA3.h>   // Inverse tonemap, garbage default hdr implementation
-#include <embed/0xF9C2BDE1.h>   // DICE, final bt2020 conversion, paper white, and pq encode
+// // additional color grading shaders done in batch
+// #include <embed/0x063548F6.h>
+// #include <embed/0x0BE6093C.h>
+// #include <embed/0x0E0EE842.h>
+// #include <embed/0x1A46FADC.h>
+// #include <embed/0x1E8FDB7D.h>
+// #include <embed/0x211F3245.h>
+// #include <embed/0x28B10677.h>
+// #include <embed/0x2CEC407A.h>
+// #include <embed/0x34F7E01C.h>
+// #include <embed/0x350163E1.h>
+// #include <embed/0x37E6CB72.h>
+// #include <embed/0x3F118009.h>
+// #include <embed/0x3FDCF7AA.h>
+// #include <embed/0x48CDE62E.h>
+// #include <embed/0x4A3D4181.h>
+// #include <embed/0x596B9BD3.h>
+// #include <embed/0x5B0965E4.h>
+// #include <embed/0x5CDE4A30.h>
+// #include <embed/0x613B5403.h>
+// #include <embed/0x62C79AA3.h>
+// #include <embed/0x649A0B90.h>
+// #include <embed/0x7C14BB2C.h>
+// #include <embed/0x841FAF0A.h>
+// #include <embed/0x84C7D93E.h>
+// #include <embed/0x8A303253.h>
+// #include <embed/0x8B1DE268.h>
+// #include <embed/0x8D6097D1.h>
+// #include <embed/0x8D6C34A5.h>
+// #include <embed/0x8EC5798A.h>
+// #include <embed/0x9AC0DEEF.h>
+// #include <embed/0x9B5CC768.h>
+// #include <embed/0x9DA86DCE.h>
+// #include <embed/0xA6488EB2.h>
+// #include <embed/0xABD8D6B7.h>
+// #include <embed/0xB24C1A54.h>
+// #include <embed/0xB270CA5B.h>
+// #include <embed/0xC4128983.h>
+// #include <embed/0xD9B57ECB.h>
+// #include <embed/0xDB90C883.h>
+// #include <embed/0xDE975B11.h>
+// #include <embed/0xE3F6E54F.h>
+// #include <embed/0xF017475F.h>
+// #include <embed/0xF3917C63.h>
+// #include <embed/0xF7933F3F.h>
+// #include <embed/0xFCF0717A.h>
+
+// #include <embed/0x9D323EA3.h>   // Inverse tonemap, garbage default hdr implementation
+// #include <embed/0xF9C2BDE1.h>   // DICE, final bt2020 conversion, paper white, and pq encode
 
 #include <include/reshade.hpp>
 #include "../../mods/shader.hpp"
+#include "../../mods/swapchain.hpp"
 #include "../../utils/settings.hpp"
 #include "./shared.h"
 
@@ -135,12 +138,12 @@ renodx::utils::settings::Settings settings = {
         .key = "toneMapType",
         .binding = &shader_injection.toneMapType,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 2.f,
+        .default_value = 3.f,
         .can_reset = false,
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla (Fake HDR)", "SDR Unclamped", "DICE (Real HDR)"},
+        .labels = {"Vanilla (Fake HDR)", "SDR Unclamped", "DICE", "Hermite Spline"},
     },
     new renodx::utils::settings::Setting{
         .key = "toneMapPeakNits",
@@ -209,6 +212,8 @@ void OnPresetOff() {
   renodx::utils::settings::UpdateSetting("colorGradeStrength", 100.f);
 }
 
+bool initialized = false;
+
 }  // namespace
 
 extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX";
@@ -217,10 +222,50 @@ extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   switch (fdw_reason) {
     case DLL_PROCESS_ATTACH:
-      renodx::mods::shader::force_pipeline_cloning = true;
-      renodx::mods::shader::expected_constant_buffer_index = 11;
+      // renodx::mods::shader::force_pipeline_cloning = true;
+      // renodx::mods::shader::expected_constant_buffer_index = 11;
 
       if (!reshade::register_addon(h_module)) return FALSE;
+
+      if (!initialized) {
+        renodx::mods::shader::force_pipeline_cloning = true;
+        renodx::mods::shader::expected_constant_buffer_space = 50;
+        renodx::mods::shader::expected_constant_buffer_index = 11;
+        renodx::mods::shader::allow_multiple_push_constants = true;
+
+        renodx::mods::swapchain::expected_constant_buffer_index = 11;
+        renodx::mods::swapchain::expected_constant_buffer_space = 50;
+        renodx::mods::swapchain::use_resource_cloning = true;
+
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::r11g11b10_float,
+              .new_format = reshade::api::format::r16g16b16a16_float,
+              .ignore_size = true
+        });
+
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::r8g8b8a8_unorm,
+              .new_format = reshade::api::format::r16g16b16a16_float,
+              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        });
+
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::r8g8b8a8_typeless,
+              .new_format = reshade::api::format::r16g16b16a16_float,
+              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        });
+
+        bool is_hdr10 = true;
+        renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        renodx::mods::swapchain::use_resize_buffer = false;
+        shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
+        shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
+
+        initialized = true;
+
+        // shader_injection.swap_chain_encoding = 0.f;
+
+      }
 
       break;
     case DLL_PROCESS_DETACH:
@@ -229,7 +274,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   }
 
   renodx::utils::settings::Use(fdw_reason, &settings, &OnPresetOff);
-
+  renodx::mods::swapchain::Use(fdw_reason, &shader_injection);
   renodx::mods::shader::Use(fdw_reason, custom_shaders, &shader_injection);
 
   return TRUE;

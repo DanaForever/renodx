@@ -1,4 +1,4 @@
-#include "./shared.h"
+#include "./common.hlsl"
 
 cbuffer GFD_PSCONST_CORRECT : register(b12) {
   float3 colorBalance : packoffset(c0);  // 0,0,0
@@ -59,86 +59,120 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
   r0.xyz = max(r2.xyz, r0.xyz);  // Only apply if lighter than input
 
   float3 untonemapped = r0.xyz;
-  if (injectedData.toneMapType == 0.f) {
-    // r1.w = 1;
-    // r0.w = max(r0.x, r0.y);
-    // r0.w = max(r0.w, r0.z);
-    r0.w = max(r0.x, max(r0.y, r0.z));  // max channel
-    float maxChannel = r0.w;
 
-    // r2.x = -r0.w;
-    // r2.x = 1 + r2.x;
-    r2.x = 1 - r0.w;  // 1-maxchannel
+  // // r1.w = 1;
+  // // r0.w = max(r0.x, r0.y);
+  // // r0.w = max(r0.w, r0.z);
+  r0.w = max(r0.x, max(r0.y, r0.z));  // max channel
+  // float maxChannel = r0.w;
 
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - r0.xyz;  //
+  // // r2.x = -r0.w;
+  // // r2.x = 1 + r2.x;
+  r2.x = 1 - r0.w;  // 1-maxchannel
 
-    // r2.yzw = -r2.xxx;
-    // r0.xyz = r2.yzw + r0.xyz;
-    r0.xyz = r0.xyz - r2.x;  // remove maxchannel
-    r0.xyz = r0.xyz / r0.www;
+  // // r0.xyz = -r0.xyz;
+  // // r0.xyz = float3(1, 1, 1) + r0.xyz;
+  // r0.xyz = 1 - r0.xyz;  //
 
-    float3 vanillaToneMapped = ((1 - untonemapped) - (1 - maxChannel)) / maxChannel;
+  // // r2.yzw = -r2.xxx;
+  // // r0.xyz = r2.yzw + r0.xyz;
+  // r0.xyz = r0.xyz - r2.x;  // remove maxchannel
+  // r0.xyz = r0.xyz / r0.www;
 
-    r0.xyz = colorBalance.xyz + r0.xyz;  // Add to tonemapped
-    // r0.xyz = r0.xyz * r0.www; // scale up by max channel
-    // r0.xyz = r0.xyz + r2.xxx; // add (1 )
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - (r0.xyz * r0.w + r2.x);
+  // float3 vanillaToneMapped = ((1 - untonemapped) - (1 - maxChannel)) / maxChannel;
+  r0.rgb = SDRTonemap(untonemapped);
+  // r0.rgb = untonemapped;
 
-    // r0.xyz = r0.xyz / colorBlend.x;
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - (r0.xyz / colorBlend.x);
+  r0.xyz = colorBalance.xyz + r0.xyz;  // Add to tonemapped
+  // // r0.xyz = r0.xyz * r0.www; // scale up by max channel
+  // // r0.xyz = r0.xyz + r2.xxx; // add (1 )
+  // // r0.xyz = -r0.xyz;
+  // // r0.xyz = float3(1, 1, 1) + r0.xyz;
+  r0.xyz = 1 - (r0.xyz * r0.w + r2.x);
 
-    // r0.xyz = r0.xyz / colorBlend.y;
-    // r0.xyz = -r0.xyz;
-    // r1.xyz = float3(1, 1, 1) + r0.xyz;
-    r1.xyz = 1 - (r0.xyz / colorBlend.y);
+  // // r0.xyz = r0.xyz / colorBlend.x;
+  // // r0.xyz = -r0.xyz;
+  // // r0.xyz = float3(1, 1, 1) + r0.xyz;
+  r0.xyz = 1 - (r0.xyz / colorBlend.x);
 
-    // r1.xyz = r1.xyz;
-    r1.xyz = lerp(untonemapped, r1.xyz, injectedData.colorGradeLUTStrength);
+  // // r0.xyz = r0.xyz / colorBlend.y;
+  // // r0.xyz = -r0.xyz;
+  // // r1.xyz = float3(1, 1, 1) + r0.xyz;
+  r1.xyz = 1 - (r0.xyz / colorBlend.y);
 
-    // Fix Vanilla NaNs
-    if (maxChannel == 0) {
-      r1.xyz = 0;
-    }
-    r0.xyz = r1.xyz;
-  } else {
-    r0.xyz = max(0, untonemapped.xyz);
-  }
+  // // r1.xyz = r1.xyz;
+  r1.xyz = lerp(untonemapped, r1.xyz, injectedData.colorGradeLUTStrength);
 
-  renodx::tonemap::Config config = renodx::tonemap::config::Create();
-  config.type = injectedData.toneMapType;
-  config.peak_nits = injectedData.toneMapPeakNits;
-  config.game_nits = injectedData.toneMapGameNits;
-  config.gamma_correction = injectedData.toneMapGammaCorrection - 1;
-  config.exposure = injectedData.colorGradeExposure;
-  config.highlights = injectedData.colorGradeHighlights;
-  config.shadows = injectedData.colorGradeShadows;
-  config.contrast = injectedData.colorGradeContrast;
-  config.saturation = injectedData.colorGradeSaturation;
-  config.reno_drt_dechroma = 0;
+  r0.xyz = r1.xyz;
 
-  o0.rgb = sign(r0.xyz) * pow(abs(r0.xyz), 2.2f);
+  
+  o0.rgb = r0.rgb;
+  o0.w = 1.f;
 
-  o0.rgb = renodx::tonemap::config::Apply(o0.rgb, config);
+  // o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.2f);
 
-  if (injectedData.colorGradeColorSpace == COLOR_SPACE__BT709) {
-    o0.rgb = renodx::color::bt709::clamp::BT709(o0.rgb);
-  } else if (injectedData.colorGradeColorSpace == COLOR_SPACE__BT2020) {
-    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-  } else if (injectedData.colorGradeColorSpace == COLOR_SPACE__AP1) {
-    o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
-  }
+  // float3 color = o0.rgb;
+  // // o0.rgb = ToneMap(o0.rgb);
 
-  o0.rgb *= injectedData.toneMapGameNits / injectedData.toneMapUINits;
+  // color = renodx::color::bt709::clamp::BT2020(color);
+  // color = LMS_ToneMap_Stockman(color, 1.f,
+  //                              1.f);
+  // // color = GamutCompress(color);
+  // color = renodx::color::bt709::clamp::BT2020(color);
+  // // color = renodx::draw::ToneMapPass(color, config);
+  // float peak = injectedData.toneMapPeakNits / injectedData.toneMapGameNits;
 
-  o0.rgb = sign(o0.rgb) * pow(abs(o0.rgb), 1.f / 2.2f);
+  // float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
+  // // float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
 
-  o0.a = 1.f;
+  // // color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
+  // color = lum_color;
+
+  // if (injectedData.toneMapGammaCorrection) {
+  //   color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+  // }
+
+  // color *= injectedData.toneMapGameNits / injectedData.toneMapUINits;
+
+  // if (injectedData.toneMapGammaCorrection) {
+  //   color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+  // }
+
+  // o0.rgb = color;
+  // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  // o0.rgb = renodx::color::gamma::EncodeSafe(o0.rgb, 2.2f);
+
+  // o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+  
+  // renodx::tonemap::Config config = renodx::tonemap::config::Create();
+  // config.type = injectedData.toneMapType;
+  // config.peak_nits = injectedData.toneMapPeakNits;
+  // config.game_nits = injectedData.toneMapGameNits;
+  // config.gamma_correction = injectedData.toneMapGammaCorrection - 1;
+  // config.exposure = injectedData.colorGradeExposure;
+  // config.highlights = injectedData.colorGradeHighlights;
+  // config.shadows = injectedData.colorGradeShadows;
+  // config.contrast = injectedData.colorGradeContrast;
+  // config.saturation = injectedData.colorGradeSaturation;
+  // config.reno_drt_dechroma = 0;
+
+  // o0.rgb = sign(r0.xyz) * pow(abs(r0.xyz), 2.2f);
+
+  // o0.rgb = renodx::tonemap::config::Apply(o0.rgb, config);
+
+  // if (injectedData.colorGradeColorSpace == COLOR_SPACE__BT709) {
+  //   o0.rgb = renodx::color::bt709::clamp::BT709(o0.rgb);
+  // } else if (injectedData.colorGradeColorSpace == COLOR_SPACE__BT2020) {
+  //   o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  // } else if (injectedData.colorGradeColorSpace == COLOR_SPACE__AP1) {
+  //   o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
+  // }
+
+  // o0.rgb *= injectedData.toneMapGameNits / injectedData.toneMapUINits;
+
+  // o0.rgb = sign(o0.rgb) * pow(abs(o0.rgb), 1.f / 2.2f);
+
+  // o0.a = 1.f;
 
   return;
 }

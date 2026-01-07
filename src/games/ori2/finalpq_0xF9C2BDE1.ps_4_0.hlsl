@@ -1,5 +1,6 @@
 #include "./DICE.hlsl"
 #include "./hueHelper.hlsl"
+#include "./common.hlsl"
 #include "./shared.h"
 
 // ---- Created with 3Dmigoto v1.3.16 on Thu Aug 15 21:16:03 2024
@@ -74,12 +75,10 @@ void main(
   r0.xyzw = _MainTex.Sample(_Sampler0_s, v1.xy).xyzw;
   o0.w = r0.w;
 
-  // 
-  
+  r0.xyz = sign(r0.xyz) * pow(abs(r0.xyz), 2.2f);  // linearize
 
   if (injectedData.toneMapType == 0) {
-
-    r0.xyz = sign(r0.xyz) * pow(abs(r0.xyz), 2.2f);  // linearize
+ 
     // bt2020 conversion + gamut expansion
     r0.w = max(r0.x, r0.y);
     r0.w = max(r0.w, r0.z);
@@ -110,11 +109,13 @@ void main(
     r0.xyz = r1.xyz / r0.xyz;
     r0.xyz = pow(r0.xyz, 78.84375f);
   } else {
-    r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+    // r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+    // r0.rgb = renodx::color::bt709::clamp::BT709(r0.rgb);
 
-    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2);
+    // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2);
+    // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2);
 
-    if (injectedData.toneMapType >= 2.f) {
+    if (injectedData.toneMapType == 2.f) {
       r0.xyz = Hue(r0.xyz, injectedData.toneMapHueCorrection);
       // Declare DICE parameters
       DICESettings config = DefaultDICESettings();
@@ -127,7 +128,23 @@ void main(
       r0.xyz = DICETonemap(r0.xyz * dicePaperWhite, dicePeakWhite, config) / dicePaperWhite;
       // r0.rgb = renodx::draw::ToneMapPass(r0.rgb);
       // float frostbitePeak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-      // r0.rgb = renodx::tonemap::frostbite::BT709(r0.rgb, frostbitePeak); 
+      // r0.rgb = renodx::tonemap::frostbite::BT709(r0.rgb, frostbitePeak);
+    }
+
+    else if (injectedData.toneMapType == 3.f) {
+      if (injectedData.toneMapHueCorrection > 0.f) 
+        r0.xyz = Hue(r0.xyz, injectedData.toneMapHueCorrection);
+
+      float3 color = r0.rgb;
+
+      float peak = injectedData.toneMapPeakNits / injectedData.toneMapGameNits;
+
+      color = LMS_ToneMap_Stockman(color, 1.f, 1.f);
+      color = renodx::color::bt709::clamp::BT2020(color);
+                                   
+      float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
+
+      r0.rgb = lum_color;
     }
 
     
@@ -135,6 +152,37 @@ void main(
     r0 = ori_bt2020(r0);
 
     r0.xyz = renodx::color::pq::EncodeSafe(r0.xyz, injectedData.toneMapGameNits);
+
+    // r0.xyz = sign(r0.xyz) * pow(abs(r0.xyz), 2.2f);  // linearize
+    // bt2020 conversion + gamut expansion
+    // r0.w = max(r0.x, r0.y);
+    // r0.w = max(r0.w, r0.z);
+    // r0.w = -2 + r0.w;
+    // r0.w = saturate(0.125 * r0.w);
+    // r1.x = dot(float3(0.710796118, 0.247670293, 0.0415336005), r0.xyz);
+    // r1.y = dot(float3(0.0434204005, 0.943510771, 0.0130687999), r0.xyz);
+    // r1.z = dot(float3(-0.00108149997, 0.0272474997, 0.973834097), r0.xyz);
+    // r1.xyz = r1.xyz * r0.www;
+    // r0.w = 1 + -r0.w;
+    // r2.x = dot(float3(0.627403975, 0.329281986, 0.0433136001), r0.xyz);
+    // r2.y = dot(float3(0.0457456, 0.941776991, 0.0124771995), r0.xyz);
+    // r2.z = dot(float3(-0.00121054996, 0.0176040996, 0.983606994), r0.xyz);
+    // r1.xyz = r0.www * r2.xyz + r1.xyz;
+    // r1.xyz = _ColorGamutExpansion * r1.xyz;
+    // r0.w = 1 + -_ColorGamutExpansion;
+    // r2.x = dot(float3(0.627403975, 0.329281986, 0.0433136001), r0.xyz);
+    // r2.y = dot(float3(0.0690969974, 0.919539988, 0.0113612004), r0.xyz);
+    // r2.z = dot(float3(0.0163915996, 0.088013202, 0.895595014), r0.xyz);
+    // r0.xyz = r0.www * r2.xyz + r1.xyz;
+
+    // paper white + pq encoding
+    // r0.w = 9.99999975e-005 * _NitsForPaperWhite;
+    // r0.xyz = r0.xyz * r0.www;
+    // r0.xyz = pow(abs(r0.xyz), 0.1593017578125f);
+    // r1.xyz = r0.xyz * float3(18.8515625, 18.8515625, 18.8515625) + float3(0.8359375, 0.8359375, 0.8359375);
+    // r0.xyz = r0.xyz * float3(18.6875, 18.6875, 18.6875) + float3(1, 1, 1);
+    // r0.xyz = r1.xyz / r0.xyz;
+    // r0.xyz = pow(r0.xyz, 78.84375f);
   }
   o0.xyz = r0.xyz;
   return;

@@ -140,7 +140,7 @@ void main(
   o0.xyzw = cb0[12].yyyy * r0.xyzw + r2.xyzw; // vignette + render
   if (injectedData.toneMapType >= 2.f) {
     // preserve SDR color grading
-    o0.xyz = renodx::tonemap::UpgradeToneMap(hdrColor, sdrColor, o0.xyz, injectedData.colorGradeStrength);
+    o0.xyz = UpgradeToneMap(hdrColor, sdrColor, o0.xyz, injectedData.colorGradeStrength);
   }
   return;
 }

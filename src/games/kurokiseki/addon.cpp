@@ -616,11 +616,11 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         //   .usage_include = reshade::api::resource_usage::render_target,
         // });
         
-        // bool is_hdr10 = false;
-        // renodx::mods::swapchain::SetUseHDR10(is_hdr10);
-        // renodx::mods::swapchain::use_resize_buffer = false;
-        // shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
-        // shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
+        bool is_hdr10 = false;
+        renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        renodx::mods::swapchain::use_resize_buffer = false;
+        shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
+        shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
         
 
         // for (const auto& [key, format] : UPGRADE_TARGETS) {
@@ -671,7 +671,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   }
 
   renodx::utils::settings::Use(fdw_reason, &settings, &OnPresetOff);
-//   renodx::mods::swapchain::Use(fdw_reason, &shader_injection);
+  renodx::mods::swapchain::Use(fdw_reason, &shader_injection);
   renodx::mods::shader::Use(fdw_reason, custom_shaders, &shader_injection);
 
   return TRUE;

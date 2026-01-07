@@ -35,6 +35,9 @@ struct ShaderInjectData {
 #define COLOR_SPACE__BT2020 2.f
 #define COLOR_SPACE__AP1    3.f
 
+#define RENODX_SWAP_CHAIN_ENCODING             4.f
+#define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE 1.f
+
 #ifndef __cplusplus
 cbuffer cb7 : register(b7) {
   ShaderInjectData injectedData : packoffset(c0);
