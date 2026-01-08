@@ -687,13 +687,8 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
   if (decoding) {
     color = renodx::color::srgb::DecodeSafe(color);
   }
-
-  // float3 sdr_color = SDRTonemap(color);
-  // color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
   
   color = ToneMap(color);
-  // color = correctHue(color, sdr_color);
-  // color = renodx::color::bt709::clamp::BT2020(color);
 
   if (RENODX_TONE_MAP_TYPE != 0.f) {
 
