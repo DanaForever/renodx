@@ -32,6 +32,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xEA80BE9C), // ao
     CustomShaderEntry(0xAD69DC2B), // sky
     CustomShaderEntry(0x2026566A), // smoke
+    CustomShaderEntry(0xFA37EA04), // taa
     
 
     //  Kuro
