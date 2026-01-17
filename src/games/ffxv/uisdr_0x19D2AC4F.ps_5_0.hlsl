@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri May 30 13:34:02 2025
-#include "shared.h"
+
 SamplerState g_samp0_s : register(s0);
 Texture2D<float4> g_samp0Texture : register(t0);
 
@@ -23,7 +23,5 @@ void main(
   r0.x = v1.w * r0.x;
   o0.w = r0.x * 1.33333337 + v2.w;
   o0.xyz = v2.xyz + v1.xyz;
-
-  o0.xyz = renodx::color::srgb::DecodeSafe(o0.xyz);
   return;
 }

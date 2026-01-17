@@ -1,4 +1,4 @@
-#include "./common.hlsl"
+#include "./shared.h"
 
 cbuffer GFD_PSCONST_GAMMA : register(b13) {
   float4 clearColor : packoffset(c0);
@@ -288,36 +288,12 @@ void main(
   // o0.xyzw = r1.xyzw;
   o0.rgb = inputColor.rgb;
   o0.a = saturate(inputColor.a);
-  // float3 signs = sign(o0.rgb);
-  // o0.rgb = abs(o0.rgb);
-  // o0.rgb = (injectedData.toneMapGammaCorrection
-  //               ? pow(o0.rgb, 2.2f)
-  //               : renodx::color::srgb::Decode(o0.rgb));
-  // o0.rgb *= signs;
-
-  o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-
-  float3 color = o0.rgb;
-
-  color = expandGamut(color, injectedData.fxBloom);
-  // color = renodx::color::bt709::clamp::BT2020(color);
-  color = LMS_ToneMap_Stockman(color, 1.f,
-                               1.f);
-  // color = GamutCompress(color);
-  color = renodx::color::bt709::clamp::BT2020(color);
-  // color = renodx::draw::ToneMapPass(color, config);
-  float peak = injectedData.toneMapPeakNits / injectedData.toneMapGameNits;
-
-  float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
-  o0.rgb = lum_color;
-  // o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.2f);
-  o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-
-  if (injectedData.toneMapGammaCorrection)
-    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
-
-  o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
-  o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, injectedData.toneMapGameNits);
-
+  float3 signs = sign(o0.rgb);
+  o0.rgb = abs(o0.rgb);
+  o0.rgb = (injectedData.toneMapGammaCorrection
+                ? pow(o0.rgb, 2.2f)
+                : renodx::color::srgb::Decode(o0.rgb));
+  o0.rgb *= signs;
+  o0.rgb *= injectedData.toneMapUINits / 80.f;
   return;
 }

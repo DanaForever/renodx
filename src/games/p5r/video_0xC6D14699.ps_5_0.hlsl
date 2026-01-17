@@ -32,17 +32,17 @@ void main(float4 v0 : SV_POSITION0, float4 v1 : COLOR0, float2 v2 : TEXCOORD0, o
   o0.xyzw = v1.xyzw * r1.xyzw;
   o0 = max(0, o0);
 
-  // o0.rgb = pow(o0.rgb, 2.2f);
-  // if (injectedData.toneMapType >= 1.f) {
-  //   float scaling = injectedData.toneMapPeakNits / injectedData.toneMapGameNits;
-  //   float videoPeak = 203.f * scaling;
-  //   o0.rgb = renodx::tonemap::inverse::bt2446a::BT709(o0.rgb, 100.f / scaling, videoPeak);
-  //   o0.rgb /= videoPeak;  // Normalize to 1.0
-  //   o0.rgb *= injectedData.toneMapPeakNits / injectedData.toneMapUINits;
-  // } else {
-  //   o0.rgb *= injectedData.toneMapGameNits / injectedData.toneMapUINits;
-  // }
-  // o0.rgb = sign(o0.rgb) * pow(abs(o0.rgb), 1.f / 2.2f);
+  o0.rgb = pow(o0.rgb, 2.2f);
+  if (injectedData.toneMapType >= 1.f) {
+    float scaling = injectedData.toneMapPeakNits / injectedData.toneMapGameNits;
+    float videoPeak = 203.f * scaling;
+    o0.rgb = renodx::tonemap::inverse::bt2446a::BT709(o0.rgb, 100.f / scaling, videoPeak);
+    o0.rgb /= videoPeak;  // Normalize to 1.0
+    o0.rgb *= injectedData.toneMapPeakNits / injectedData.toneMapUINits;
+  } else {
+    o0.rgb *= injectedData.toneMapGameNits / injectedData.toneMapUINits;
+  }
+  o0.rgb = sign(o0.rgb) * pow(abs(o0.rgb), 1.f / 2.2f);
 
   return;
 }

@@ -46,6 +46,7 @@ void main(
     r2.xyz = float3(1, 1, 1) + -r1.xyz;
     r2.xyz = max(float3(0, 0, 0), r2.xyz);
     o0.xyz = r0.xyz * r2.xyz + r1.xyz;
+    o0.w = r1.w;
     return;
   } else {
     float3 blend = r0.rgb * godrayColor_g.xyz;
@@ -71,5 +72,6 @@ void main(
     hdr = renodx::color::srgb::EncodeSafe(hdr);
 
     o0.rgb = hdr;
+    o0.w = r1.w;
   }  
 }

@@ -453,8 +453,17 @@ float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
 
   bool use_dkl_luminance = true;
 
+  // if (use_dkl_luminance) {
+  //   vibrant_dkl.x = DKL_gray.x * renodx::math::SignPow(vibrant_dkl.x / DKL_gray.x, contrast);
+  // }
+
   if (use_dkl_luminance) {
-    vibrant_dkl.x = DKL_gray.x * renodx::math::SignPow(vibrant_dkl.x / DKL_gray.x, contrast);
+    float r = vibrant_dkl.x / DKL_gray.x;
+    float s = sign(r);
+
+    float p = pow(abs(r), contrast) * s;
+
+    vibrant_dkl.x = DKL_gray.x * p;
   }
 
   lms_vibrancy = LMSFromDKL(vibrant_dkl);

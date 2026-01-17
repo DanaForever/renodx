@@ -82,10 +82,9 @@ void main(
     o0.xyz = r0.xyz;
   }
 
-  o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-
   if (RENODX_TONE_MAP_TYPE > 0.f) {
-    
+    o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+
     float videoPeak = min(RENODX_PEAK_WHITE_NITS, 400.f);
 
     float peak = videoPeak / (RENODX_DIFFUSE_WHITE_NITS / 203.f);

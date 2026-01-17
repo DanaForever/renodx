@@ -65,7 +65,7 @@ void main(
   float avgLnY = sumLnY * (1.0 / 16.0);
 
   o0.rgb = avgLnY.xxx;
-
+  o0.w = 1;
 
   return;
 }

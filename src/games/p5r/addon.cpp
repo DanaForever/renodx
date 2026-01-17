@@ -11,27 +11,27 @@
 
 #include <deps/imgui/imgui.h>
 #include <include/reshade.hpp>
-#include <embed/shaders.h>
-// #include <embed/0xB6E26AC7.h>
-// #include <embed/0xDE5120BF.h>
 
-// #include <embed/0x0D85D1F6.h>
-// #include <embed/0xC6D14699.h>
+#include <embed/0xB6E26AC7.h>
+#include <embed/0xDE5120BF.h>
 
-// #include <embed/0x060C3E22.h>
-// #include <embed/0x23A501DC.h>
-// #include <embed/0x2944B564.h>
-// #include <embed/0x3C2773E3.h>
-// #include <embed/0x4016ED43.h>
-// #include <embed/0x5C4DD977.h>
-// #include <embed/0x7C0751EF.h>
-// #include <embed/0x960502CC.h>
-// #include <embed/0xAB823647.h>
-// #include <embed/0xCC71BBE3.h>
-// #include <embed/0xCF70BF33.h>
-// #include <embed/0xD434C03A.h>
-// #include <embed/0xE126DD24.h>
-// #include <embed/0xEBBDB212.h>
+#include <embed/0x0D85D1F6.h>
+#include <embed/0xC6D14699.h>
+
+#include <embed/0x060C3E22.h>
+#include <embed/0x23A501DC.h>
+#include <embed/0x2944B564.h>
+#include <embed/0x3C2773E3.h>
+#include <embed/0x4016ED43.h>
+#include <embed/0x5C4DD977.h>
+#include <embed/0x7C0751EF.h>
+#include <embed/0x960502CC.h>
+#include <embed/0xAB823647.h>
+#include <embed/0xCC71BBE3.h>
+#include <embed/0xCF70BF33.h>
+#include <embed/0xD434C03A.h>
+#include <embed/0xE126DD24.h>
+#include <embed/0xEBBDB212.h>
 
 #include "../../mods/shader.hpp"
 #include "../../mods/swapchain.hpp"
@@ -45,9 +45,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xDE5120BF),
 
     CustomShaderEntry(0x0D85D1F6),
-    CustomShaderEntry(0x2FC8F3F8),
     CustomShaderEntry(0xC6D14699),
-    CustomShaderEntry(0x7324754A),
 
     CustomShaderEntry(0x060C3E22),
     CustomShaderEntry(0x23A501DC),
@@ -63,9 +61,6 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xD434C03A),
     CustomShaderEntry(0xE126DD24),
     CustomShaderEntry(0xEBBDB212),
-
-    CustomShaderEntry(0x6240DCC9),
-    CustomShaderEntry(0xBB722F0A),
 };
 
 ShaderInjectData shader_injection;
@@ -104,17 +99,17 @@ renodx::utils::settings::Settings settings = {
         .min = 48.f,
         .max = 500.f,
     },
-    // new renodx::utils::settings::Setting{
-    //     .key = "toneMapUINits",
-    //     .binding = &shader_injection.toneMapUINits,
-    //     .default_value = 203.f,
-    //     .can_reset = false,
-    //     .label = "UI Brightness",
-    //     .section = "Tone Mapping",
-    //     .tooltip = "Sets the brightness of UI and HUD elements in nits",
-    //     .min = 48.f,
-    //     .max = 500.f,
-    // },
+    new renodx::utils::settings::Setting{
+        .key = "toneMapUINits",
+        .binding = &shader_injection.toneMapUINits,
+        .default_value = 203.f,
+        .can_reset = false,
+        .label = "UI Brightness",
+        .section = "Tone Mapping",
+        .tooltip = "Sets the brightness of UI and HUD elements in nits",
+        .min = 48.f,
+        .max = 500.f,
+    },
     new renodx::utils::settings::Setting{
         .key = "toneMapGammaCorrection",
         .binding = &shader_injection.toneMapGammaCorrection,
@@ -485,10 +480,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       reshade::register_event<reshade::addon_event::init_pipeline>(OnInitPipeline);
       reshade::register_event<reshade::addon_event::bind_pipeline>(OnBindPipeline);
       reshade::register_event<reshade::addon_event::destroy_pipeline>(OnDestroyPipeline);
-
-      // bool is_hdr10 = false;
-      renodx::mods::swapchain::SetUseHDR10(true);
-      renodx::mods::swapchain::use_resize_buffer = false;
 
       break;
     case DLL_PROCESS_DETACH:

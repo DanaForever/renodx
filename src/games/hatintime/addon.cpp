@@ -20,7 +20,7 @@
 namespace {
 
 renodx::mods::shader::CustomShaders custom_shaders = {
-    // __ALL_CUSTOM_SHADERS,
+    __ALL_CUSTOM_SHADERS,
 };
 
 ShaderInjectData shader_injection;
