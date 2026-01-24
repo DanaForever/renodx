@@ -79,8 +79,7 @@ void main(
       // r1.y = -r0.z * 0.0083999997 + r0.x;
       r1.rgb = SE_Saturation(r0.rgb);
 
-      // o0.xyz = pqScale * r1.xyz;
-      o0.xyz = (203.f / 80.f) * r1.xyz;
+      o0.xyz = pqScale * r1.xyz;
 
       return;
     }
@@ -108,23 +107,22 @@ void main(
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 color = r0.rgb;
 
-  if (FFXV_HDR_GRADING) {
-    // color = renodx::math::SignPow(color, gamma);
-    color = SE_Saturation(color);
-  }
-
   [branch]
   if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-    // color = GammaCorrectHuePreserving(color, 2.2f);
+    // color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    color = GammaCorrectHuePreserving(color, 2.2f);
 
   } else if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
     // color = renodx::color::correct::GammaSafe(color, false, 2.4f);
-    color = GammaCorrectHuePreserving(color, 2.2f);
+    color = GammaCorrectHuePreserving(color, 2.4f);
+  }
+
+  if (FFXV_HDR_GRADING) {
+    color = SE_Saturation(color);
   }
 
   color *= config.swap_chain_scaling_nits;

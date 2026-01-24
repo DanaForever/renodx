@@ -240,11 +240,12 @@ void main(
   float3 output;
 
   r0.xyzw = g_tTex.SampleLevel(g_sSampler_s, v1.xy, 0).xyzw;
-
+  // r0.rgb = LMS_ToneMap_Stockman(r0.rgb, 1.f, 1.f);
   float3 untonemapped = r0.xyz;
   float3 original = r0.xyz;
   r0.xyz = displayMap(untonemapped);
 
+  
   r0.rgb = toneMapLogContrast(r0.rgb);
   float midgray = renodx::color::y::from::BT709(toneMapLogContrast(0.18f));
 
@@ -283,21 +284,29 @@ void main(
     // untonemapped *= (0.18f / midgray);
 
     if (shader_injection.tone_map_mode == 0.f) {
-      hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, r0.rgb);
-
+      if (shader_injection.tone_map_type == 4.f) {
+        hdr_ungraded = ToneMapLMS(untonemapped, r0.rgb);
+      }
+      else {
+        hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, r0.rgb);
+      }  
       hdr_graded = colorGrade(hdr_ungraded);
     } else {
       float3 sdr_graded = colorGrade(r0.rgb);
 
-      hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, sdr_graded);
-
+      if (shader_injection.tone_map_type == 4.f) {
+        hdr_ungraded = ToneMapLMS(untonemapped, r0.rgb);
+      }
+      else {
+        hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, sdr_graded);
+    }
       hdr_graded = hdr_ungraded;
     }
 
-    sdr_graded = max(0.f, sdr_graded);
-    hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded, 
-                                             RENODX_TONE_MAP_HUE_CORRECTION, 
-                                             RENODX_TONE_MAP_HUE_PROCESSOR);
+    // sdr_graded = max(0.f, sdr_graded);
+    // hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded, 
+    //                                          RENODX_TONE_MAP_HUE_CORRECTION, 
+    //                                          RENODX_TONE_MAP_HUE_PROCESSOR);
 
     output = hdr_graded;
     o0.rgb = PostToneMapProcess(output);

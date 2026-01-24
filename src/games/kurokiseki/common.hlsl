@@ -330,8 +330,6 @@ float3 ToneMap(float3 color) {
     else
       color = lum_color;
 
-    
-
     color = UserColorGrading(
         color,
         1.f,                         // exposure
@@ -343,7 +341,7 @@ float3 ToneMap(float3 color) {
       );                     
 
     return color;
-  } else if (shader_injection.tone_map_type >= 5.f) {
+  } else if (shader_injection.tone_map_type == 4.f) {
     color = UserColorGrading(
         color,
         RENODX_TONE_MAP_EXPOSURE,    // exposure
@@ -371,7 +369,7 @@ float3 ToneMap(float3 color) {
         1.f,                         // shadows
         1.f,                         // contrast
         RENODX_TONE_MAP_SATURATION,  // saturation
-        0.f,                         // dechroma, we don't need it
+        RENODX_TONE_MAP_BLOWOUT,                         // dechroma, we don't need it
         0.f,                         // Hue Correction Strength
         color);                      // Hue Correction Type
 

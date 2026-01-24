@@ -178,7 +178,7 @@ renodx::utils::settings::Settings settings = {
         .default_value = 75.f,
         .label = "Bloom Color Correction",
         .section = "Game Settings",
-        .tooltip = "Correcting the colors after rewriting the Bloom.",
+        .tooltip = "Correcting the colors after rewriting Bloom to avoid red faces.",
         .min = 0.f,
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
@@ -196,7 +196,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff", "Bezier"},
-        .labels = {"Vanilla", "Frostbite", "DICE", "Hermite"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "Hermite", "Mass Effect"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     // new renodx::utils::settings::Setting{

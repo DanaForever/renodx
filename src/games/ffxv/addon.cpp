@@ -77,7 +77,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"Vanilla", "SDR", "ACES", "RenoDRT w/ ColorGrading", "RenoDRT"},
-        .labels = {"Vanilla", "SDR", "ACES", "RenoDRT"},
+        .labels = {"Vanilla", "SDR", "ACES", "RenoDRT", "LMS Stockman"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -156,29 +156,29 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Emulates a display EOTF.",
         .labels = {"Off", "2.2", "BT.1886"},
     },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapScaling",
-        .binding = &shader_injection.tone_map_per_channel,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .label = "Scaling",
-        .section = "Tone Mapping",
-        .tooltip = "Luminance scales colors consistently while per-channel saturates and blows out sooner",
-        .labels = {"Luminance", "Per Channel"},
-        .is_enabled = []() { return shader_injection.tone_map_type >= 2; },
-        .is_visible = []() { return current_settings_mode >= 1; },
-    },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapWorkingColorSpace",
-        .binding = &shader_injection.tone_map_working_color_space,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .label = "Working Color Space",
-        .section = "Tone Mapping",
-        .labels = {"BT709", "BT2020", "AP1"},
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .is_visible = []() { return current_settings_mode >= 1; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapScaling",
+    //     .binding = &shader_injection.tone_map_per_channel,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 0.f,
+    //     .label = "Scaling",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Luminance scales colors consistently while per-channel saturates and blows out sooner",
+    //     .labels = {"Luminance", "Per Channel"},
+    //     .is_enabled = []() { return shader_injection.tone_map_type >= 2; },
+    //     .is_visible = []() { return current_settings_mode >= 1; },
+    // },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapWorkingColorSpace",
+    //     .binding = &shader_injection.tone_map_working_color_space,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 0.f,
+    //     .label = "Working Color Space",
+    //     .section = "Tone Mapping",
+    //     .labels = {"BT709", "BT2020", "AP1"},
+    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+    //     .is_visible = []() { return current_settings_mode >= 1; },
+    // },
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueProcessor",
         .binding = &shader_injection.tone_map_hue_processor,
@@ -195,7 +195,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
         .binding = &shader_injection.tone_map_hue_correction,
-        .default_value = 100.f,
+        .default_value = 0.f,
         .label = "Hue Correction",
         .section = "Tone Mapping",
         .tooltip = "Hue retention strength.",
@@ -258,38 +258,38 @@ renodx::utils::settings::Settings settings = {
     //     .parse = [](float value) { return value - 1.f; },
     //     .is_visible = []() { return current_settings_mode >= 2; },
     // },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapUpradeType",
-        .binding = &shader_injection.custom_tonemap_upgrade_type,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
-        .can_reset = true,
-        .label = "Grading Application",
-        .section = "Highlight Saturation Restoration",
-        .tooltip = "How the graded image gets upgraded",
-        .labels = {"Luminance", "Per Channel+"},
-        .is_visible = []() { return current_settings_mode >= 1; },
-    },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapUpradeStrength",
-        .binding = &shader_injection.custom_tonemap_upgrade_strength,
-        .default_value = 50.f,
-        .label = "Saturation Strength",
-        .section = "Highlight Saturation Restoration",
-        .is_enabled = []() { return shader_injection.custom_tonemap_upgrade_type == 1.f; },
-        .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return current_settings_mode >= 2; },
-    },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapUpradeHueCorr",
-        .binding = &shader_injection.custom_tonemap_upgrade_huecorr,
-        .default_value = 100.f,
-        .label = "Hue Correction",
-        .section = "Highlight Saturation Restoration",
-        .is_enabled = []() { return shader_injection.custom_tonemap_upgrade_type == 1.f; },
-        .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return current_settings_mode >= 2; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapUpradeType",
+    //     .binding = &shader_injection.custom_tonemap_upgrade_type,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 1.f,
+    //     .can_reset = true,
+    //     .label = "Grading Application",
+    //     .section = "Highlight Saturation Restoration",
+    //     .tooltip = "How the graded image gets upgraded",
+    //     .labels = {"Luminance", "Per Channel+"},
+    //     .is_visible = []() { return current_settings_mode >= 1; },
+    // },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapUpradeStrength",
+    //     .binding = &shader_injection.custom_tonemap_upgrade_strength,
+    //     .default_value = 50.f,
+    //     .label = "Saturation Strength",
+    //     .section = "Highlight Saturation Restoration",
+    //     .is_enabled = []() { return shader_injection.custom_tonemap_upgrade_type == 1.f; },
+    //     .parse = [](float value) { return value * 0.01f; },
+    //     .is_visible = []() { return current_settings_mode >= 2; },
+    // },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapUpradeHueCorr",
+    //     .binding = &shader_injection.custom_tonemap_upgrade_huecorr,
+    //     .default_value = 100.f,
+    //     .label = "Hue Correction",
+    //     .section = "Highlight Saturation Restoration",
+    //     .is_enabled = []() { return shader_injection.custom_tonemap_upgrade_type == 1.f; },
+    //     .parse = [](float value) { return value * 0.01f; },
+    //     .is_visible = []() { return current_settings_mode >= 2; },
+    // },
     new renodx::utils::settings::Setting{
         .key = "DisplayMapType",
         .binding = &shader_injection.custom_display_map_type,
@@ -299,7 +299,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Display Map Type",
         .section = "Highlight Saturation Restoration",
         .tooltip = "Sets the display mapper used",
-        .labels = {"None", "DICE", "Frostbite", "RenoDRT NeutralSDR", "ToneMapMaxCLL"},
+        .labels = {"Off", "On"},
         .is_visible = []() { return settings[0]->GetValue() >= 1; },
     },
 
@@ -573,18 +573,18 @@ renodx::utils::settings::Settings settings = {
     //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
     //     .is_visible = []() { return current_settings_mode >= 2; },
     // },
-    new renodx::utils::settings::Setting{
-        .key = "SwapChainClampColorSpace",
-        .binding = &shader_injection.swap_chain_clamp_color_space,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 2.f,
-        .label = "Clamp Color Space",
-        .section = "Display Output",
-        .labels = {"None", "BT709", "BT2020", "AP1"},
-        .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        .parse = [](float value) { return value - 1.f; },
-        .is_visible = []() { return current_settings_mode >= 2; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "SwapChainClampColorSpace",
+    //     .binding = &shader_injection.swap_chain_clamp_color_space,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 2.f,
+    //     .label = "Clamp Color Space",
+    //     .section = "Display Output",
+    //     .labels = {"None", "BT709", "BT2020", "AP1"},
+    //     .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
+    //     .parse = [](float value) { return value - 1.f; },
+    //     .is_visible = []() { return current_settings_mode >= 2; },
+    // },
 };
 
 void OnPresetOff() {
@@ -662,12 +662,11 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
         });
 
-        // // bool is_hdr10 = (shader_injection.hdr_format == 0.f);
-        // bool is_hdr10 = false;
-        // shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
-        // shader_injection.swap_chain_encoding_color_space = (is_hdr10 ? 1.f : 0.f);
-        // renodx::mods::swapchain::SetUseHDR10(is_hdr10);
-        // renodx::mods::swapchain::use_resize_buffer = false;
+        bool is_hdr10 = false;
+        shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
+        shader_injection.swap_chain_encoding_color_space = (is_hdr10 ? 1.f : 0.f);
+        renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        renodx::mods::swapchain::use_resize_buffer = false;
 
         initialized = true;
       }
