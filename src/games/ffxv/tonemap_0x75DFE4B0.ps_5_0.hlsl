@@ -67,16 +67,8 @@ Texture2D<float4> g_tTex : register(t0);
 
 float3 toneMapLogContrast(float3 color)  {
   float4 r0, r1;
-  r0.rgb = color;
+  r1.rgb = color;
 
-  r1.x = dot(r0.xyz, float3(0.542472005, 0.439283997, 0.0182429999));
-  r1.y = dot(r0.xyz, float3(0.0426700003, 0.941115022, 0.0162140001));
-  r1.z = dot(r0.xyz, float3(0.0173160005, 0.0949679986, 0.887715995));
-  r0.xyz = float3(WhiteX, WhiteY, WhiteZ) * r1.xyz;
-
-  r1.x = dot(r0.xyz, float3(0.720840991, 0.267010987, 0.0121480003));
-  r1.y = dot(r0.xyz, float3(0.0496839993, 0.943306983, 0.00700900005));
-  r1.z = dot(r0.xyz, float3(0.00642100023, 0.0243079998, 0.969271004));
   r0.xyz = r1.xyz * float3(39.8107185, 39.8107185, 39.8107185) + ZeroSlopeByTenPowDispositionPlusOne;
 
   // ln(color) * constant
@@ -92,7 +84,6 @@ float3 toneMapLogContrast(float3 color)  {
   r0.xyz = r0.xyz * float3(0.693147182, 0.693147182, 0.693147182) + -Param_n49;
   // r0.xyz = max(float3(0, 0, 0), r0.xyz);
   r0.xyz = EnabledToneCurve ? r0.xyz : r1.xyz;
-
   return r0.rgb;
 }
 
@@ -100,7 +91,6 @@ float3 colorGrade(float3 color) {
   float4 r0, r1, r2, r3, r4, r5;
   float4 signs;
   r0.rgb = color;
-
 
   r1.x = dot(r0.xyz, float3(1.41498101, -0.400139987, -0.0148409996));
   r1.y = dot(r0.xyz, float3(-0.0744709969, 1.081357, -0.00688599981));
@@ -243,10 +233,31 @@ void main(
   // r0.rgb = LMS_ToneMap_Stockman(r0.rgb, 1.f, 1.f);
   r0.rgb = renodx::color::bt709::clamp::BT2020(r0.rgb);
   float3 untonemapped = r0.xyz;
-  float3 original = r0.xyz;
-  r0.xyz = displayMap(untonemapped);
+
+  // o0.rgb = renodx::color::srgb::EncodeSafe(untonemapped);
+  // o0.w = 1.f;
+  // return; 
+
+  // float3 original = r0.xyz;
+  // r0.xyz = displayMap(untonemapped);
+  // r0.rgb = toneMapLogContrast(r0.rgb);
+
+  r1.x = dot(r0.xyz, float3(0.542472005, 0.439283997, 0.0182429999));
+  r1.y = dot(r0.xyz, float3(0.0426700003, 0.941115022, 0.0162140001));
+  r1.z = dot(r0.xyz, float3(0.0173160005, 0.0949679986, 0.887715995));
+  r0.xyz = float3(WhiteX, WhiteY, WhiteZ) * r1.xyz;
+
+  r1.x = dot(r0.xyz, float3(0.720840991, 0.267010987, 0.0121480003));
+  r1.y = dot(r0.xyz, float3(0.0496839993, 0.943306983, 0.00700900005));
+  r1.z = dot(r0.xyz, float3(0.00642100023, 0.0243079998, 0.969271004));
+
+  untonemapped = r1.rgb;
+
+  r0.rgb = displayMap(untonemapped);
   r0.rgb = toneMapLogContrast(r0.rgb);
-  float midgray = renodx::color::y::from::BT709(toneMapLogContrast(0.18f));
+  // r0.rgb = r1.rgb;
+
+  // float midgray = renodx::color::y::from::BT709(toneMapLogContrast(0.18f));
 
   // 0 =  Vanilla (fake HDR)
   // 1 =  SDR
@@ -290,6 +301,8 @@ void main(
         hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, r0.rgb);
       }  
       hdr_graded = colorGrade(hdr_ungraded);
+
+      // hdr_graded = r0.rgb;
     } else {
       float3 sdr_graded = colorGrade(r0.rgb);
 
