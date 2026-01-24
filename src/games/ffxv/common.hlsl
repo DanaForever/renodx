@@ -576,8 +576,8 @@ float3 UserColorGrading(
 float3 ToneMapLMS(float3 untonemapped, float3 graded_sdr) {
   float3 color;
 
-  // float3 sdr = ToneMapForGrading(untonemapped, 1.0f);
-  float3 sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
+  float3 sdr = ToneMapForGrading(untonemapped, 1.0f);
+  // float3 sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
 
   color = renodx::tonemap::UpgradeToneMap(untonemapped, sdr, graded_sdr);
   // color = untonemapped;
@@ -622,48 +622,40 @@ float3 ToneMapLMS(float3 untonemapped, float3 graded_sdr) {
 
 float3 RestoreHighlightSaturation(float3 untonemapped) {
   float l;
-  // if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
-  //   untonemapped = renodx::color::bt2020::from::BT709(untonemapped);
-  //   l = renodx::color::y::from::BT2020(untonemapped);
-  // } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
-  //   untonemapped = renodx::color::ap1::from::BT709(untonemapped);
-  //   l = renodx::color::y::from::AP1(untonemapped);
-  // }
-  l = renodx::color::y::from::BT709(untonemapped);
+  if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
+    untonemapped = renodx::color::bt2020::from::BT709(untonemapped);
+    l = renodx::color::y::from::BT2020(untonemapped);
+  } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
+    untonemapped = renodx::color::ap1::from::BT709(untonemapped);
+    l = renodx::color::y::from::AP1(untonemapped);
+  } else {
+    l = renodx::color::y::from::BT709(untonemapped);
+  };
+  
 
   float3 displaymappedColor = untonemapped;
 
-  // if (CUSTOM_DISPLAY_MAP_TYPE == 1.f) {
-  //   displaymappedColor = renodx::tonemap::dice::BT709(untonemapped, 1.f, 0.f);
-  // }
-  //   else if (CUSTOM_DISPLAY_MAP_TYPE == 2.f) {
-  //   displaymappedColor = renodx::tonemap::frostbite::BT709(untonemapped, 1.f, 0.f, 1.f);
-  // }
-  //   else if (CUSTOM_DISPLAY_MAP_TYPE == 3.f) {
-  //   untonemapped = min(100.f, untonemapped);
-  //   displaymappedColor = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
-  // }
-  //   else if (CUSTOM_DISPLAY_MAP_TYPE == 4.f) {
-  //   displaymappedColor = ToneMapMaxCLL(untonemapped);
-  // }
+  if (CUSTOM_DISPLAY_MAP_TYPE == 1.f) {
+    displaymappedColor = renodx::tonemap::dice::BT709(untonemapped, 1.f, 0.f);
+  }
+    else if (CUSTOM_DISPLAY_MAP_TYPE == 2.f) {
+    displaymappedColor = renodx::tonemap::frostbite::BT709(untonemapped, 1.f, 0.f, 1.f);
+  }
+    else if (CUSTOM_DISPLAY_MAP_TYPE == 3.f) {
+    untonemapped = min(100.f, untonemapped);
+    displaymappedColor = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
+  }
+    else if (CUSTOM_DISPLAY_MAP_TYPE == 4.f) {
+    displaymappedColor = ToneMapMaxCLL(untonemapped);
+  }
 
-  untonemapped = LMS_ToneMap_Stockman(untonemapped, 1.f, 1.f);
-  // displaymappedColor = renodx::tonemap::dice::BT709(untonemapped, 1.f, 0.f);
-  displaymappedColor = renodx::color::bt709::clamp::BT2020(untonemapped);
-
-  float peak = 1.0f;
-  // displaymappedColor = renodx::tonemap::HermiteSplineLuminanceRolloff(displaymappedColor, peak);
-  
-  displaymappedColor = ToneMapForGrading(untonemapped, 1.0f);
-
-  // displaymappedColor = renodx::tonemap::dice::BT709(untonemapped, 1.f, 0.f);
   float3 output = lerp(untonemapped, displaymappedColor, saturate(l));
 
-  // if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
-  //   output = renodx::color::bt709::from::BT2020(output);
-  // } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
-  //   output = renodx::color::bt709::from::AP1(output);
-  // }
+  if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
+    output = renodx::color::bt709::from::BT2020(output);
+  } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
+    output = renodx::color::bt709::from::AP1(output);
+  }
 
   return output;
 }
@@ -672,9 +664,10 @@ float3 displayMap(float3 untonemapped) {
   if (RENODX_TONE_MAP_TYPE <= 1.f)
     return untonemapped;
 
-  if (shader_injection.custom_display_map_type == 1) {
-    untonemapped = RestoreHighlightSaturation(untonemapped);
-  }
+  // all options are bad ;)
+  // if (shader_injection.custom_display_map_type >= 1) {
+  //   untonemapped = RestoreHighlightSaturation(untonemapped);
+  // }
 
   return untonemapped;
 }

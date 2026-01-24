@@ -99,5 +99,8 @@ void main(
     // Inverse AutoHDR?
   }
 
+  // I think I forgot this 
+  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+
   return;
 }

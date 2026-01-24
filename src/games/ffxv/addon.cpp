@@ -296,11 +296,12 @@ renodx::utils::settings::Settings settings = {
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
         .default_value = 1.f,
         .can_reset = true,
-        .label = "Display Map Type",
-        .section = "Highlight Saturation Restoration",
+        .label = "Highlight Saturation Restoration",
+        .section = "Tone Mapping",
         .tooltip = "Sets the display mapper used",
-        .labels = {"Off", "On"},
-        .is_visible = []() { return settings[0]->GetValue() >= 1; },
+        .labels = {"None", "DICE", "Frostbite", "RenoDRT NeutralSDR", "ToneMapMaxCLL"},
+        // .is_visible = []() { return settings[0]->GetValue() >= 1; },
+        .is_visible = []() { return false; },
     },
 
     new renodx::utils::settings::Setting{

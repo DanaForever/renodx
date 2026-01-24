@@ -241,11 +241,10 @@ void main(
 
   r0.xyzw = g_tTex.SampleLevel(g_sSampler_s, v1.xy, 0).xyzw;
   // r0.rgb = LMS_ToneMap_Stockman(r0.rgb, 1.f, 1.f);
+  r0.rgb = renodx::color::bt709::clamp::BT2020(r0.rgb);
   float3 untonemapped = r0.xyz;
   float3 original = r0.xyz;
   r0.xyz = displayMap(untonemapped);
-
-  
   r0.rgb = toneMapLogContrast(r0.rgb);
   float midgray = renodx::color::y::from::BT709(toneMapLogContrast(0.18f));
 
