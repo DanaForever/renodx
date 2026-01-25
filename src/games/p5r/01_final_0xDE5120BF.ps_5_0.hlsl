@@ -1,4 +1,4 @@
-#include "./shared.h"
+#include "./common.hlsl"
 
 cbuffer GFD_PSCONST_GAMMA : register(b13) {
   float4 clearColor : packoffset(c0);
@@ -288,12 +288,27 @@ void main(
   // o0.xyzw = r1.xyzw;
   o0.rgb = inputColor.rgb;
   o0.a = saturate(inputColor.a);
-  float3 signs = sign(o0.rgb);
-  o0.rgb = abs(o0.rgb);
-  o0.rgb = (injectedData.toneMapGammaCorrection
-                ? pow(o0.rgb, 2.2f)
-                : renodx::color::srgb::Decode(o0.rgb));
-  o0.rgb *= signs;
-  o0.rgb *= injectedData.toneMapUINits / 80.f;
+  o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+  
+  if (injectedData.colorGradeColorSpace == 1.f)
+    o0.rgb = renodx::color::bt709::clamp::BT709(o0.rgb);
+  else if (injectedData.colorGradeColorSpace == 2.f)
+    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  else 
+    o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
+  o0.rgb = ToneMap(o0.rgb, injectedData.toneMapPeakNits, injectedData.toneMapGameNits);
+
+  if (injectedData.toneMapGammaCorrection) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
+  }
+
+  o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  // float3 signs = sign(o0.rgb);
+  // o0.rgb = abs(o0.rgb);
+  // o0.rgb = (injectedData.toneMapGammaCorrection
+  //               ? pow(o0.rgb, 2.2f)
+  //               : renodx::color::srgb::Decode(o0.rgb));
+  // o0.rgb *= signs;
+  o0.rgb *= injectedData.toneMapGameNits / 80.f;
   return;
 }

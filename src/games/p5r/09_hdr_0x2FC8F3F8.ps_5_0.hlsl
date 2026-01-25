@@ -67,40 +67,9 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
   r0.xyz = r1.xyz;
 
   o0.rgb = r0.rgb;
+
+  o0.rgb = UserColorGradeSRGB(o0.rgb);
   o0.w = 1.f;
-
-  // o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.2f);
-
-  // float3 color = o0.rgb;
-  // // o0.rgb = ToneMap(o0.rgb);
-
-  // color = renodx::color::bt709::clamp::BT2020(color);
-  // color = LMS_ToneMap_Stockman(color, 1.f,
-  //                              1.f);
-  // // color = GamutCompress(color);
-  // color = renodx::color::bt709::clamp::BT2020(color);
-  // // color = renodx::draw::ToneMapPass(color, config);
-  // float peak = injectedData.toneMapPeakNits / injectedData.toneMapGameNits;
-
-  // float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
-  // float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
-// 
-  // color = renodx::color::correct::Chrominance(lum_color, perch_color, 0.5f);
-  // color = lum_color;
-
-  // if (injectedData.toneMapGammaCorrection) {
-  //   color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-  // }
-
-  // color *= injectedData.toneMapGameNits / injectedData.toneMapUINits;
-
-  // if (injectedData.toneMapGammaCorrection) {
-  //   color = renodx::color::correct::GammaSafe(color, true, 2.2f);
-  // }
-
-  // o0.rgb = color;
-  // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
-  // o0.rgb = renodx::color::gamma::EncodeSafe(o0.rgb, 2.2f);
 
   return;
 }

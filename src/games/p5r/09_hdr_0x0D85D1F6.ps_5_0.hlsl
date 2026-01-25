@@ -1,4 +1,4 @@
-#include "./shared.h"
+#include "./common.hlsl"
 
 cbuffer GFD_PSCONST_CORRECT : register(b12) {
   float3 colorBalance : packoffset(c0);  // 0,0,0
@@ -59,86 +59,57 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
   r0.xyz = max(r2.xyz, r0.xyz);  // Only apply if lighter than input
 
   float3 untonemapped = r0.xyz;
-  if (injectedData.toneMapType == 0.f) {
-    // r1.w = 1;
-    // r0.w = max(r0.x, r0.y);
-    // r0.w = max(r0.w, r0.z);
-    r0.w = max(r0.x, max(r0.y, r0.z));  // max channel
-    float maxChannel = r0.w;
+  // r1.w = 1;
+  // r0.w = max(r0.x, r0.y);
+  // r0.w = max(r0.w, r0.z);
+  r0.w = max(r0.x, max(r0.y, r0.z));  // max channel
+  float maxChannel = r0.w;
 
-    // r2.x = -r0.w;
-    // r2.x = 1 + r2.x;
-    r2.x = 1 - r0.w;  // 1-maxchannel
+  // r2.x = -r0.w;
+  // r2.x = 1 + r2.x;
+  r2.x = 1 - r0.w;  // 1-maxchannel
 
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - r0.xyz;  //
+  // r0.xyz = -r0.xyz;
+  // r0.xyz = float3(1, 1, 1) + r0.xyz;
+  r0.xyz = 1 - r0.xyz;  //
 
-    // r2.yzw = -r2.xxx;
-    // r0.xyz = r2.yzw + r0.xyz;
-    r0.xyz = r0.xyz - r2.x;  // remove maxchannel
-    r0.xyz = r0.xyz / r0.www;
+  // r2.yzw = -r2.xxx;
+  // r0.xyz = r2.yzw + r0.xyz;
+  r0.xyz = r0.xyz - r2.x;  // remove maxchannel
+  r0.xyz = r0.xyz / r0.www;
 
-    float3 vanillaToneMapped = ((1 - untonemapped) - (1 - maxChannel)) / maxChannel;
+  float3 vanillaToneMapped = ((1 - untonemapped) - (1 - maxChannel)) / maxChannel;
 
-    r0.xyz = colorBalance.xyz + r0.xyz;  // Add to tonemapped
-    // r0.xyz = r0.xyz * r0.www; // scale up by max channel
-    // r0.xyz = r0.xyz + r2.xxx; // add (1 )
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - (r0.xyz * r0.w + r2.x);
+  r0.xyz = colorBalance.xyz + r0.xyz;  // Add to tonemapped
+  // r0.xyz = r0.xyz * r0.www; // scale up by max channel
+  // r0.xyz = r0.xyz + r2.xxx; // add (1 )
+  // r0.xyz = -r0.xyz;
+  // r0.xyz = float3(1, 1, 1) + r0.xyz;
+  r0.xyz = 1 - (r0.xyz * r0.w + r2.x);
 
-    // r0.xyz = r0.xyz / colorBlend.x;
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - (r0.xyz / colorBlend.x);
+  // r0.xyz = r0.xyz / colorBlend.x;
+  // r0.xyz = -r0.xyz;
+  // r0.xyz = float3(1, 1, 1) + r0.xyz;
+  r0.xyz = 1 - (r0.xyz / colorBlend.x);
 
-    // r0.xyz = r0.xyz / colorBlend.y;
-    // r0.xyz = -r0.xyz;
-    // r1.xyz = float3(1, 1, 1) + r0.xyz;
-    r1.xyz = 1 - (r0.xyz / colorBlend.y);
+  // r0.xyz = r0.xyz / colorBlend.y;
+  // r0.xyz = -r0.xyz;
+  // r1.xyz = float3(1, 1, 1) + r0.xyz;
+  r1.xyz = 1 - (r0.xyz / colorBlend.y);
 
-    // r1.xyz = r1.xyz;
-    r1.xyz = lerp(untonemapped, r1.xyz, injectedData.colorGradeLUTStrength);
+  // r1.xyz = r1.xyz;
+  r1.xyz = lerp(untonemapped, r1.xyz, injectedData.colorGradeLUTStrength);
 
-    // Fix Vanilla NaNs
-    if (maxChannel == 0) {
-      r1.xyz = 0;
-    }
-    r0.xyz = r1.xyz;
-  } else {
-    r0.xyz = max(0, untonemapped.xyz);
+  // Fix Vanilla NaNs
+  if (maxChannel == 0) {
+    r1.xyz = 0;
   }
+  r0.xyz = r1.xyz;
 
-  renodx::tonemap::Config config = renodx::tonemap::config::Create();
-  config.type = injectedData.toneMapType;
-  config.peak_nits = injectedData.toneMapPeakNits;
-  config.game_nits = injectedData.toneMapGameNits;
-  config.gamma_correction = injectedData.toneMapGammaCorrection - 1;
-  config.exposure = injectedData.colorGradeExposure;
-  config.highlights = injectedData.colorGradeHighlights;
-  config.shadows = injectedData.colorGradeShadows;
-  config.contrast = injectedData.colorGradeContrast;
-  config.saturation = injectedData.colorGradeSaturation;
-  config.reno_drt_dechroma = 0;
-
-  o0.rgb = sign(r0.xyz) * pow(abs(r0.xyz), 2.2f);
-
-  o0.rgb = renodx::tonemap::config::Apply(o0.rgb, config);
-
-  if (injectedData.colorGradeColorSpace == COLOR_SPACE__BT709) {
-    o0.rgb = renodx::color::bt709::clamp::BT709(o0.rgb);
-  } else if (injectedData.colorGradeColorSpace == COLOR_SPACE__BT2020) {
-    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-  } else if (injectedData.colorGradeColorSpace == COLOR_SPACE__AP1) {
-    o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
-  }
-
-  o0.rgb *= injectedData.toneMapGameNits / injectedData.toneMapUINits;
-
-  o0.rgb = sign(o0.rgb) * pow(abs(o0.rgb), 1.f / 2.2f);
-
+  o0.rgb = r0.rgb;
   o0.a = 1.f;
+
+  o0.rgb = UserColorGradeSRGB(o0.rgb);
 
   return;
 }

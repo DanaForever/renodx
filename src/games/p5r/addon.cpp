@@ -32,6 +32,7 @@
 #include <embed/0xD434C03A.h>
 #include <embed/0xE126DD24.h>
 #include <embed/0xEBBDB212.h>
+#include <embed/0x2FC8F3F8.h>
 
 #include "../../mods/shader.hpp"
 #include "../../mods/swapchain.hpp"
@@ -45,6 +46,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xDE5120BF),
 
     CustomShaderEntry(0x0D85D1F6),
+    CustomShaderEntry(0x2FC8F3F8),
     CustomShaderEntry(0xC6D14699),
 
     CustomShaderEntry(0x060C3E22),
@@ -66,17 +68,17 @@ renodx::mods::shader::CustomShaders custom_shaders = {
 ShaderInjectData shader_injection;
 
 renodx::utils::settings::Settings settings = {
-    new renodx::utils::settings::Setting{
-        .key = "toneMapType",
-        .binding = &shader_injection.toneMapType,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 3.f,
-        .can_reset = false,
-        .label = "Tone Mapper",
-        .section = "Tone Mapping",
-        .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "None", "ACES", "RenoDRT"},
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "toneMapType",
+    //     .binding = &shader_injection.toneMapType,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 3.f,
+    //     .can_reset = false,
+    //     .label = "Tone Mapper",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Sets the tone mapper type",
+    //     .labels = {"Vanilla", "None", "ACES", "RenoDRT"},
+    // },
     new renodx::utils::settings::Setting{
         .key = "toneMapPeakNits",
         .binding = &shader_injection.toneMapPeakNits,
@@ -99,17 +101,17 @@ renodx::utils::settings::Settings settings = {
         .min = 48.f,
         .max = 500.f,
     },
-    new renodx::utils::settings::Setting{
-        .key = "toneMapUINits",
-        .binding = &shader_injection.toneMapUINits,
-        .default_value = 203.f,
-        .can_reset = false,
-        .label = "UI Brightness",
-        .section = "Tone Mapping",
-        .tooltip = "Sets the brightness of UI and HUD elements in nits",
-        .min = 48.f,
-        .max = 500.f,
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "toneMapUINits",
+    //     .binding = &shader_injection.toneMapUINits,
+    //     .default_value = 203.f,
+    //     .can_reset = false,
+    //     .label = "UI Brightness",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Sets the brightness of UI and HUD elements in nits",
+    //     .min = 48.f,
+    //     .max = 500.f,
+    // },
     new renodx::utils::settings::Setting{
         .key = "toneMapGammaCorrection",
         .binding = &shader_injection.toneMapGammaCorrection,
@@ -192,16 +194,16 @@ renodx::utils::settings::Settings settings = {
         .label = "Color Space",
         .section = "Color Grading",
         .tooltip = "Selects color space gamut when clamping",
-        .labels = {"None", "BT709", "BT2020", "AP1"},
+        .labels = {"AP1", "BT709", "BT2020"},
     },
     new renodx::utils::settings::Setting{
         .key = "fxBloom",
         .binding = &shader_injection.fxBloom,
-        .default_value = 50.f,
+        .default_value = 100.f,
         .label = "Bloom",
         .section = "Effects",
-        .max = 100.f,
-        .parse = [](float value) { return value * 0.02f; },
+        .max = 200.f,
+        .parse = [](float value) { return value * 0.01f; },
     },
 };
 

@@ -263,8 +263,17 @@ float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
 
   bool use_dkl_luminance = true;
 
+  // if (use_dkl_luminance) {
+  //   vibrant_dkl.x = DKL_gray.x * renodx::math::SignPow(vibrant_dkl.x / DKL_gray.x, contrast);
+  // }
+
   if (use_dkl_luminance) {
-    vibrant_dkl.x = DKL_gray.x * renodx::math::SignPow(vibrant_dkl.x / DKL_gray.x, contrast);
+    float r = vibrant_dkl.x / DKL_gray.x;
+    float s = sign(r);
+
+    float p = pow(abs(r), contrast) * s;
+
+    vibrant_dkl.x = DKL_gray.x * p;
   }
 
   lms_vibrancy = LMSFromDKL(vibrant_dkl);
@@ -380,52 +389,53 @@ float3 UserColorGrading(
   return color;
 }
 
+float3 UserColorGradeSRGB(float3 color) {
+  color = renodx::color::srgb::DecodeSafe(color);
+
+  color = color = UserColorGrading(
+      color,
+      injectedData.colorGradeExposure,    // exposure
+      injectedData.colorGradeHighlights,  // highlights
+      injectedData.colorGradeShadows,     // shadows
+      injectedData.colorGradeContrast,    // contrast
+      1.f,                                // saturation, we'll do this post-tonemap
+      0.f);                               // dechroma, post tonemapping
+                                          // hue correction, Post tonemapping
+
+  color = renodx::color::srgb::EncodeSafe(color);
+
+  return color;
+}
 
 
-float3 ToneMap(float3 color) {
+float3 ToneMap(float3 color, float peak, float paperwhite) {
   
   float3 originalColor = color;
 
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
-    return color;
-  } else {
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        RENODX_TONE_MAP_CONTRAST,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
+  color = LMS_ToneMap_Stockman(color, 1.f,
+                               1.f);
 
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
 
-    // color = renodx::draw::ToneMapPass(color, config);
-    float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+  // color = renodx::draw::ToneMapPass(color, config);
+  float rpeak = peak / paperwhite;
 
-    float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
-    // float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
+  float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, rpeak);
+  // float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
 
-    // color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
-    color = lum_color;
+  // color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
+  color = lum_color;
 
-    color = renodx::color::grade::UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        RENODX_TONE_MAP_BLOWOUT,     // dechroma, we don't need it
-        0.f,                         // Hue Correction Strength
-        color);                      // Hue Correction Type
+  color = renodx::color::grade::UserColorGrading(
+      color,
+      1.f,                         // exposure
+      1.f,                         // highlights
+      1.f,                         // shadows
+      1.f,                         // contrast
+      injectedData.colorGradeSaturation,  // saturation
+      0.f,     // dechroma, we don't need it
+      0.f,                         // Hue Correction Strength
+      color);                      // Hue Correction Type
 
-    return color;
-  }
-
-  // default: no tonemapping
   return color;
 }
 
