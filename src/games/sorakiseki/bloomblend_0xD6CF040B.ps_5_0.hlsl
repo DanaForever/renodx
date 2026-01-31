@@ -171,14 +171,15 @@ void main(
 
     hdr = hdrScreenBlend(hdr, blur5, scale);
 
-    float3 sat = saturate(renodx::color::srgb::DecodeSafe(sdr.rgb));
+    float3 sdr_color = renodx::color::srgb::DecodeSafe(sdr.rgb);
+    // float3 sat = saturate(renodx::color::srgb::DecodeSafe(sdr.rgb));
 
     // hue and chrominance correction if desaturation is desired
     // hdr = renodx::color::correct::ChrominanceICtCp(hdr, sat, shader_injection.bloom_hue_correction);
     // hdr = renodx::color::correct::Hue(hdr, sat, shader_injection.bloom_hue_correction, RENODX_TONE_MAP_HUE_PROCESSOR);
     hdr = expandGamut(hdr, shader_injection.inverse_tonemap_extra_hdr_saturation);
-    hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sat, shader_injection.bloom_hue_correction);
-    
+    // hdr = renodx::tonemap::UpgradeToneMap(hdr, renodx::tonemap::renodrt::NeutralSDR(hdr), sat, shader_injection.bloom_hue_correction);
+    hdr = HueAndChrominanceOKLab(hdr, sdr_color, sdr_color, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
 
     o0.rgb = hdr.rgb;
 
