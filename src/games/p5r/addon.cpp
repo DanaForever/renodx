@@ -472,6 +472,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .resource_tag = 1.f,
       });
 
+      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r11g11b10_float,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+          .ignore_size = true
+      });
+
+
       shader_injection.clampState = CLAMP_STATE__NONE;
 
       if (!reshade::register_addon(h_module)) return FALSE;

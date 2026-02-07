@@ -563,29 +563,15 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
     case DLL_PROCESS_ATTACH:
       if (!reshade::register_addon(h_module)) return FALSE;
       
-
-      // renodx::mods::shader::on_init_pipeline_layout = [](reshade::api::device* device, auto, auto) {
-      //   return device->get_api() == reshade::api::device_api::d3d12;  // So overlays dont kill the game
-      // };
-
-      // renodx::mods::swapchain::SetUseHDR10(true);
-      // renodx::mods::shader::expected_constant_buffer_space = 50;
-      // renodx::mods::shader::expected_constant_buffer_index = 13;
+      renodx::mods::shader::force_pipeline_cloning = true;
+      renodx::mods::swapchain::force_borderless = false;
+      renodx::mods::swapchain::prevent_full_screen = false;
       renodx::mods::shader::allow_multiple_push_constants = true;
-
-      // renodx::mods::swapchain::expected_constant_buffer_space = 50;
-      // renodx::mods::swapchain::expected_constant_buffer_index = 13;
-
-      renodx::mods::shader::force_pipeline_cloning = true;   // So the mod works with the toolkit
-      renodx::mods::shader::use_pipeline_layout_cloning = true;   // So the mod works with the toolkit
-      renodx::mods::swapchain::force_borderless = false;     // needed for stability
-      renodx::mods::swapchain::prevent_full_screen = false;  // needed for stability
-
       renodx::mods::swapchain::use_resource_cloning = true;
-    //   renodx::mods::swapchain::swap_chain_proxy_vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
-    //   renodx::mods::swapchain::swap_chain_proxy_pixel_shader = __swap_chain_proxy_pixel_shader_dx11;
-      renodx::mods::swapchain::swapchain_proxy_compatibility_mode = false;  // true crashes the game when an FMV plays
-      renodx::mods::swapchain::swapchain_proxy_revert_state = true;
+    //   renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
+    //   renodx::mods::swapchain::swapchain_proxy_revert_state = true;
+    //   renodx::mods::swapchain::swap_chain_proxy_vertex_shader = __swap_chain_proxy_vertex_shader;
+    //   renodx::mods::swapchain::swap_chain_proxy_pixel_shader = __swap_chain_proxy_pixel_shader;
       
 
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
@@ -606,20 +592,21 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       
     
       // special condition?
-      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::b8g8r8x8_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,
-          .use_resource_view_cloning = use_resource_view_cloning,
-      });
+    //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+    //       .old_format = reshade::api::format::b8g8r8x8_unorm,
+    //       .new_format = reshade::api::format::r16g16b16a16_float,
+    //     //   .ignore_size = true,
+    //       .use_resource_view_cloning = use_resource_view_cloning,
+    //       .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+    //   });
 
       /// r16_unorm
-      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r16_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,
-          .use_resource_view_cloning = use_resource_view_cloning,
-      });
+    //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+    //       .old_format = reshade::api::format::r16_unorm,
+    //       .new_format = reshade::api::format::r16g16b16a16_float,
+    //       .ignore_size = true,
+    //       .use_resource_view_cloning = use_resource_view_cloning,
+    //   });
       
       break;
       

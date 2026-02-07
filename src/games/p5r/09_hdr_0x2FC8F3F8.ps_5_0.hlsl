@@ -50,16 +50,24 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
   // r0.xyz = -r0.xyz;
   // r0.xyz = float3(1, 1, 1) + r0.xyz;
   r0.xyz = 1 - (r0.xyz * r0.w + r2.x);
+  untonemapped = r0.rgb;
 
-  // r0.xyz = r0.xyz / colorBlend.x;
-  // r0.xyz = -r0.xyz;
-  // r0.xyz = float3(1, 1, 1) + r0.xyz;
-  r0.xyz = 1 - (r0.xyz / colorBlend.x);
+  // // r0.xyz = r0.xyz / colorBlend.x;
+  // // r0.xyz = -r0.xyz;
+  // // r0.xyz = float3(1, 1, 1) + r0.xyz;
+  // r0.xyz = 1 - (r0.xyz / colorBlend.x);
 
-  // r0.xyz = r0.xyz / colorBlend.y;
-  // r0.xyz = -r0.xyz;
-  // r1.xyz = float3(1, 1, 1) + r0.xyz;
-  r1.xyz = 1 - (r0.xyz / colorBlend.y);
+  // // r0.xyz = r0.xyz / colorBlend.y;
+  // // r0.xyz = -r0.xyz;
+  // // r1.xyz = float3(1, 1, 1) + r0.xyz;
+  // r1.xyz = 1 - (r0.xyz / colorBlend.y);
+
+  float3 x = r0.xyz;  // gamma
+
+  float3 y = 1.0 - (x / colorBlend.x);
+  y = 1.0 - (y / colorBlend.y);
+
+  r1.rgb = restoreBlackLevelSRGB(x, y);
 
   // r1.xyz = r1.xyz;
   r1.xyz = lerp(untonemapped, r1.xyz, injectedData.colorGradeLUTStrength);

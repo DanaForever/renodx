@@ -468,3 +468,22 @@ float3 SDRTonemap(float3 untonemapped) {
       return output;
   }
 }
+
+float3 restoreBlackLevelSRGB(float3 x, float3 y) {
+
+  x = renodx::color::srgb::DecodeSafe(x);
+  y = renodx::color::srgb::DecodeSafe(y);
+  // doesn't make sense but whatever, this is srgb
+  float l = renodx::color::y::from::BT709(y);
+
+  float shadowStart = 0.00077;
+  float shadowEnd = 0.015;
+
+  float w = smoothstep(shadowStart, shadowEnd, l);  // tune
+
+  float3 output = lerp(x, y, w);
+
+  output = renodx::color::srgb::EncodeSafe(output);
+
+  return output;
+}

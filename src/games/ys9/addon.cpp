@@ -88,12 +88,12 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapType",
         .binding = &shader_injection.tone_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
+        .default_value = 3.f,
         .can_reset = false,
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"Vanilla", "Frostbite", "DICE", "RenoDRT"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "Hermite"},
         .parse = [](float value) { return value ; },
         .is_visible = []() { return current_settings_mode >= 1; },
     },
@@ -127,7 +127,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Sets the brightness of UI and HUD elements in nits",
         .min = 48.f,
         .max = 500.f,
-        .is_visible = []() { return false; },
+        // .is_visible = []() { return false; },
     },
     
     new renodx::utils::settings::Setting{
@@ -490,17 +490,15 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
       if (!initialized) {
         
-        renodx::mods::shader::expected_constant_buffer_space = 50;
-        renodx::mods::shader::expected_constant_buffer_index = 13;
-        renodx::mods::shader::allow_multiple_push_constants = true;
-
-        renodx::mods::swapchain::expected_constant_buffer_index = 13;
-        renodx::mods::swapchain::expected_constant_buffer_space = 50;
-        renodx::mods::swapchain::use_resource_cloning = true;
         renodx::mods::shader::force_pipeline_cloning = true;
+        renodx::mods::swapchain::force_borderless = false;
+        renodx::mods::swapchain::prevent_full_screen = false;
         renodx::mods::shader::allow_multiple_push_constants = true;
-        renodx::mods::shader::push_injections_on_present = true;
-        renodx::mods::shader::use_pipeline_layout_cloning = true;
+        renodx::mods::swapchain::use_resource_cloning = true;
+        renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
+        renodx::mods::swapchain::swapchain_proxy_revert_state = true;
+        renodx::mods::swapchain::swap_chain_proxy_vertex_shader = __swap_chain_proxy_vertex_shader;
+        renodx::mods::swapchain::swap_chain_proxy_pixel_shader = __swap_chain_proxy_pixel_shader;
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8b8a8_unorm,

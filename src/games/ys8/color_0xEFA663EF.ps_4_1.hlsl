@@ -129,20 +129,20 @@ void main(
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
     float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(hdr);
-    sdr = saturate(sdr);
+    // sdr = saturate(sdr);
 
-    hdr = renodx::tonemap::UpgradeToneMap(hdr, neutral_sdr, sdr);
+    // hdr = renodx::tonemap::UpgradeToneMap(hdr, neutral_sdr, sdr);
+    hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, 0.5f, 0.5f);
 
     o0.rgb = hdr;
-    o0.rgb = expandColorGamut(o0.rgb);
-    o0.rgb = ToneMap(o0.rgb);
-    o0.rgb = correctHue(o0.rgb, o0.rgb);
-    
+    o0.rgb = expandGamut(o0.rgb, shader_injection.inverse_tonemap_extra_hdr_saturation);
+    // o0.rgb = ToneMap(o0.rgb);
+       
     o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
   } else {
     o0.rgb = sdr;
     o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-    o0.rgb = saturate(o0.rgb);
+    // o0.rgb = saturate(o0.rgb);
   }
 
   // o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
@@ -156,9 +156,16 @@ void main(
 
   color *= shader_injection.diffuse_white_nits / shader_injection.graphics_white_nits;
 
-  if (shader_injection.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
-    color = renodx::color::bt709::from::BT709D93(color);
-  } 
+  [branch]
+  if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+  } else if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.4f);
+  }
+
+  // if (shader_injection.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+  //   color = renodx::color::bt709::from::BT709D93(color);
+  // } 
 
   color = renodx::color::srgb::EncodeSafe(color);
   o0.rgb = color;

@@ -27,6 +27,7 @@ void main(
   // r0.xyz = log2(r0.xyz);
   // r0.xyz = gamma * r0.xyz;
   // o0.xyz = exp2(r0.xyz);
+  // ignore gamma 
   r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
   // Swapchain Pass

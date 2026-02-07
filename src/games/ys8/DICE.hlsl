@@ -20,7 +20,7 @@ static const float PQ_constant_C3 = 18.6875f;
 // 1 Remove negative numbers
 // 2 Remove numbers beyond 0-1
 // 3 Mirror negative numbers
-float3 Linear_to_PQ(float3 LinearColor, int clampType = 0) {
+float3 Linear_to_PQ(float3 LinearColor, int clampType = 3) {
   float3 LinearColorSign = sign(LinearColor);
   if (clampType == 1) {
     LinearColor = max(LinearColor, 0.f);
@@ -39,7 +39,7 @@ float3 Linear_to_PQ(float3 LinearColor, int clampType = 0) {
   return pq;
 }
 
-float3 PQ_to_Linear(float3 ST2084Color, int clampType = 0) {
+float3 PQ_to_Linear(float3 ST2084Color, int clampType = 3) {
   float3 ST2084ColorSign = sign(ST2084Color);
   if (clampType == 1) {
     ST2084Color = max(ST2084Color, 0.f);
@@ -198,70 +198,4 @@ float3 ApplyDICE(
   return Color;
 }
 
-float3 DICEToneMap(float3 color) {
-  float3 untonemapped = color;
 
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      RENODX_TONE_MAP_EXPOSURE,    // exposure
-      RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-      RENODX_TONE_MAP_SHADOWS,     // shadows
-      RENODX_TONE_MAP_CONTRAST,    // contrast
-      1.f,                         // saturation, we'll do this post-tonemap
-      0.f,                         // dechroma, post tonemapping
-      0.f);                        // hue correction, Post tonemapping
-
-  DICESettings DICEconfig = DefaultDICESettings();
-  DICEconfig.Type = (int)shader_injection.dice_tone_map_type;
-  DICEconfig.ShoulderStart = shader_injection.dice_shoulder_start;  // Start shoulder
-  DICEconfig.DesaturationAmount = shader_injection.dice_desaturation;
-  DICEconfig.DarkeningAmount = shader_injection.dice_darkening;
-
-  float dicePaperWhite = RENODX_DIFFUSE_WHITE_NITS / 80.f;
-  float dicePeakWhite = RENODX_PEAK_WHITE_NITS / 80.f;
-
-  color = ApplyDICE(color * dicePaperWhite, dicePeakWhite, DICEconfig) / dicePaperWhite;
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      1.f,                         // exposure
-      1.f,                         // highlights
-      1.f,                         // shadows
-      1.f,                         // contrast
-      RENODX_TONE_MAP_SATURATION,  // saturation
-      0.f,                         // dechroma, we don't need it
-      0.f,                         // Hue Correction Strength
-      color);                      // Hue Correction Type
-
-  return color;
-}
-
-float3 FrostbiteToneMap(float3 color) {
-  float3 untonemapped = color;
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      RENODX_TONE_MAP_EXPOSURE,    // exposure
-      RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-      RENODX_TONE_MAP_SHADOWS,     // shadows
-      RENODX_TONE_MAP_CONTRAST,    // contrast
-      1.f,                         // saturation, we'll do this post-tonemap
-      0.f,                         // dechroma, post tonemapping
-      0.f);                        // hue correction, Post tonemapping
-
-  float frostbitePeak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-  color = renodx::tonemap::frostbite::BT709(color, frostbitePeak);
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      1.f,                         // exposure
-      1.f,                         // highlights
-      1.f,                         // shadows
-      1.f,                         // contrast
-      RENODX_TONE_MAP_SATURATION,  // saturation
-      0.f,                         // dechroma, we don't need it
-      0.f,                         // Hue Correction Strength
-      color);                      // Hue Correction Type
-
-  return color;
-}
