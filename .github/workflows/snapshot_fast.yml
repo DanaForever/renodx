@@ -71,6 +71,9 @@ jobs:
       
       - name: Build (x64) for Dragon Quest XI
         run: cmake --build --preset clang-x64-release --target dq11 --verbose
+      
+      - name: Build (x64) for Persona 5 Royal
+        run: cmake --build --preset clang-x64-release --target p5r --verbose
     
     #   - name: Build (x64) for Eiyuden
     #     run: cmake --build --preset clang-x64-release --target eiyudenchronicles --verbose
