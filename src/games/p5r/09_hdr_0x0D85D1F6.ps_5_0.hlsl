@@ -108,10 +108,7 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   // t = t * scale + bias;
   float3 t_aff = t * scale + bias;
 
-  if (injectedData.toneMapBlackCorrection == 1.f) {
-    // t = restoreBlackLevelSRGB(ungraded, t_aff, cutoff);
-    t = lerp(t, t_aff, w);
-  } else if (injectedData.toneMapBlackCorrection == 2.f) {
+  if (injectedData.toneMapBlackCorrection > 0.f) {
     t = lerp(t, t_aff, w);
   } else {
     t = t_aff;
@@ -136,8 +133,6 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
 
   outRGB = lerp(ungraded, outRGB, injectedData.colorGradeLUTStrength);
   
-  // outRGB = restoreBlackLevelSRGB
-  // outRGB = untonemapped;
   outRGB = renodx::color::srgb::EncodeSafe(outRGB);
   
   o0 = float4(outRGB, 1.0);

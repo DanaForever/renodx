@@ -131,7 +131,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Black Correction",
         .section = "Tone Mapping",
         .tooltip = "Only grades the high luminance pixels for highlight, to prevent black crush after grading.",
-        .labels = {"None", "SRGB", "Linear"},
+        .labels = {"None", "SRGB"},
     },
     new renodx::utils::settings::Setting{
         .key = "colorGradeExposure",
