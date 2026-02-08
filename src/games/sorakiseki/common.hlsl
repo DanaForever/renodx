@@ -685,12 +685,7 @@ float3 ToneMap(float3 color) {
 
     float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
 
-    if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f) {
-      float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
-      color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
-    }
-    else
-      color = lum_color;
+    color = lum_color;
 
     color = UserColorGrading(
         color,
@@ -706,34 +701,36 @@ float3 ToneMap(float3 color) {
   }
 
   else if (shader_injection.tone_map_type >= 4.f) {
-  
     color = UserColorGrading(
         color,
         RENODX_TONE_MAP_EXPOSURE,    // exposure
         RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
         RENODX_TONE_MAP_SHADOWS,     // shadows
-        1.f,    // contrast
+        RENODX_TONE_MAP_CONTRAST,    // contrast
         1.f,                         // saturation, we'll do this post-tonemap
         0.f);                        // dechroma, post tonemapping
                                      // hue correction, Post tonemapping
 
-    float3 lms_output = LMS_ToneMap(color);
-    color = lms_output;
+    color = LMS_ToneMap_Stockman(color, 1.f,
+                                 1.f);
 
-    // bool pq = (RENODX_TONE_MAP_WORKING_COLOR_SPACE > 0.f);
-    bool pq = false;
-    color = ApplyExponentialRollOff(color, pq);
+    float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
-    color = renodx::color::grade::UserColorGrading(
+    color = renodx::color::bt709::clamp::BT2020(color);
+
+    float3 lum_color = renodx::tonemap::neutwo::MaxChannel(color, peak);
+
+    color = lum_color;
+
+    color = UserColorGrading(
         color,
         1.f,                         // exposure
         1.f,                         // highlights
         1.f,                         // shadows
         1.f,                         // contrast
         RENODX_TONE_MAP_SATURATION,  // saturation
-        0.f,                         // dechroma, we don't need it
-        0.f,                         // Hue Correction Strength
-        color);                      // Hue Correction Type
+        RENODX_TONE_MAP_BLOWOUT      // dechroma, we don't need it
+    );
 
     return color;
   }

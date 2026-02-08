@@ -298,8 +298,10 @@ void main(
     o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
   o0.rgb = ToneMap(o0.rgb, injectedData.toneMapPeakNits, injectedData.toneMapGameNits);
 
-  if (injectedData.toneMapGammaCorrection) {
+  if (injectedData.toneMapGammaCorrection == 1.f) {
     o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
+  } else if (injectedData.toneMapGammaCorrection == 2.f) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
   }
 
   o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);

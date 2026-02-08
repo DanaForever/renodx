@@ -314,6 +314,7 @@ void main(
     }
       hdr_graded = hdr_ungraded;
     }
+    
 
     // sdr_graded = max(0.f, sdr_graded);
     // hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded, 

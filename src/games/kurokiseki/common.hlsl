@@ -147,7 +147,7 @@ float3 HueAndChrominanceOKLab(
   return renodx::color::bt709::clamp::AP1(result);
 }
 
-float3 UserColorGrading(
+float3 UserColorGrading(  
     float3 bt709,
     float exposure,
     float highlights,
@@ -370,6 +370,35 @@ float3 ToneMap(float3 color) {
         1.f,                         // contrast
         RENODX_TONE_MAP_SATURATION,  // saturation
         RENODX_TONE_MAP_BLOWOUT,                         // dechroma, we don't need it
+        0.f,                         // Hue Correction Strength
+        color);                      // Hue Correction Type
+
+    return color;
+  } else if (shader_injection.tone_map_type == 5.f) {
+    color = UserColorGrading(
+        color,
+        RENODX_TONE_MAP_EXPOSURE,    // exposure
+        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
+        RENODX_TONE_MAP_SHADOWS,     // shadows
+        RENODX_TONE_MAP_CONTRAST,    // contrast
+        1.f,                         // saturation, we'll do this post-tonemap
+        0.f);                        // dechroma, post tonemapping
+                                     // hue correction, Post tonemapping
+
+    color = LMS_ToneMap_Stockman(color, 1.f,
+                                 1.f);
+
+    float peak_nits = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+    color = renodx::tonemap::neutwo::MaxChannel(color, peak_nits);
+
+    color = renodx::color::grade::UserColorGrading(
+        color,
+        1.f,                         // exposure
+        1.f,                         // highlights
+        1.f,                         // shadows
+        1.f,                         // contrast
+        RENODX_TONE_MAP_SATURATION,  // saturation
+        RENODX_TONE_MAP_BLOWOUT,     // dechroma, we don't need it
         0.f,                         // Hue Correction Strength
         color);                      // Hue Correction Type
 

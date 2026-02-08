@@ -398,7 +398,7 @@ float3 UserColorGradeSRGB(float3 color) {
       injectedData.colorGradeHighlights,  // highlights
       injectedData.colorGradeShadows,     // shadows
       injectedData.colorGradeContrast,    // contrast
-      1.f,                                // saturation, we'll do this post-tonemap
+      injectedData.colorGradeSaturation,  // saturation,                           
       0.f);                               // dechroma, post tonemapping
                                           // hue correction, Post tonemapping
 
@@ -424,17 +424,6 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
 
   // color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
   color = lum_color;
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      1.f,                         // exposure
-      1.f,                         // highlights
-      1.f,                         // shadows
-      1.f,                         // contrast
-      injectedData.colorGradeSaturation,  // saturation
-      0.f,     // dechroma, we don't need it
-      0.f,                         // Hue Correction Strength
-      color);                      // Hue Correction Type
 
   return color;
 }
@@ -469,21 +458,57 @@ float3 SDRTonemap(float3 untonemapped) {
   }
 }
 
-float3 restoreBlackLevelSRGB(float3 x, float3 y) {
+float3 restoreBlackLevelSRGB(float3 x, float3 y, float cutoff_srgb) {
 
   x = renodx::color::srgb::DecodeSafe(x);
   y = renodx::color::srgb::DecodeSafe(y);
-  // doesn't make sense but whatever, this is srgb
-  float l = renodx::color::y::from::BT709(y);
+  y = renodx::color::bt709::clamp::BT2020(y);
 
-  float shadowStart = 0.00077;
-  float shadowEnd = 0.015;
+  float l = renodx::color::y::from::BT709(x);
 
-  float w = smoothstep(shadowStart, shadowEnd, l);  // tune
+  // Convert cutoff from sRGB -> linear
+  float cutoff_lin = renodx::color::y::from::BT709(
+      renodx::color::srgb::DecodeSafe(float3(cutoff_srgb, cutoff_srgb, cutoff_srgb))
+    );
+
+  // Protection band around cutoff.
+  // margin controls how quickly grading turns on above cutoff.
+  // Start here; tune:
+  float margin_lin = 0.1 * cutoff_lin;
+
+  // w=0 near/below cutoff -> use x (restore shadows)
+  // w=1 well above cutoff -> use y (full grade)
+  float w = smoothstep(cutoff_lin, cutoff_lin + margin_lin, l);
 
   float3 output = lerp(x, y, w);
 
+  // output = renodx::color::correct::HueOKLab(output, y);
+  // output = renodx::color::correct::ChrominanceICtCp(output, y);
+
   output = renodx::color::srgb::EncodeSafe(output);
+
+  return output;
+}
+
+float3 restoreBlackLevel(float3 x, float3 y, float cutoff_srgb) {
+
+  float l = renodx::color::y::from::BT709(x);
+
+  // Convert cutoff from sRGB -> linear
+  float cutoff_lin = renodx::color::y::from::BT709(
+      renodx::color::srgb::DecodeSafe(float3(cutoff_srgb, cutoff_srgb, cutoff_srgb))
+    );
+
+  // Protection band around cutoff.
+  // margin controls how quickly grading turns on above cutoff.
+  // Start here; tune:
+  float margin_lin = 0.1 * cutoff_lin;
+
+  // w=0 near/below cutoff -> use x (restore shadows)
+  // w=1 well above cutoff -> use y (full grade)
+  float w = smoothstep(cutoff_lin, cutoff_lin + margin_lin, l);
+
+  float3 output = lerp(x, y, w);
 
   return output;
 }

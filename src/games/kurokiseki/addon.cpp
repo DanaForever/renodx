@@ -196,7 +196,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"Vanilla", "Frostbite", "DICE", "Reinhard", "ExponentialRollOff", "Bezier"},
-        .labels = {"Vanilla", "Frostbite", "DICE", "Hermite", "Mass Effect"},
+        .labels = {"Vanilla", "Frostbite", "DICE", "Hermite", "Mass Effect", "Neutwo"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     // new renodx::utils::settings::Setting{

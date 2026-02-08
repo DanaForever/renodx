@@ -156,6 +156,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Emulates a display EOTF.",
         .labels = {"Off", "2.2", "BT.1886"},
     },
+
     // new renodx::utils::settings::Setting{
     //     .key = "ToneMapScaling",
     //     .binding = &shader_injection.tone_map_per_channel,
