@@ -573,15 +573,10 @@ float3 UserColorGrading(
   return color;
 }
 
-float3 ToneMapLMS(float3 untonemapped, float3 graded_sdr) {
+float3 ToneMapLMS(float3 untonemapped) {
   float3 color;
-
-  float3 sdr = ToneMapForGrading(untonemapped, 1.0f);
-  // float3 sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
-
   color = untonemapped;
-  color = renodx::tonemap::UpgradeToneMap(untonemapped, sdr, graded_sdr);
-  // color = untonemapped;
+  
   color = UserColorGrading(
       color,
       RENODX_TONE_MAP_EXPOSURE,    // exposure
@@ -601,11 +596,6 @@ float3 ToneMapLMS(float3 untonemapped, float3 graded_sdr) {
 
   float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
 
-  // if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f) {
-  //   float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
-  //   color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
-  // }
-  //   else
   color = lum_color;
 
   color = UserColorGrading(
@@ -740,4 +730,24 @@ float3 CastleDechroma_CVVDPStyle_NakaRushton(
   float3 testout = mul(XYZ_TO_BT709, mul(LMS_TO_XYZ_2006, lms_stim_nr)) / diffuse_white;
   float luminance_out = renodx::color::y::from::BT709(testout);
   return testout * luminance_in / luminance_out;
+}
+
+float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw::Config config) {
+  // float3 neutral_sdr = renodx::tonemap::neutwo::MaxChannel(untonemapped);
+  float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
+
+  float3 untonemapped_graded = renodx::draw::ComputeUntonemappedGraded(
+      untonemapped,
+      graded_sdr_color,
+      neutral_sdr,
+      config);
+
+  untonemapped_graded = LMS_ToneMap_Stockman(untonemapped_graded, 1.0f, 1.0f);
+  // untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
+
+  return renodx::draw::ToneMapPass(untonemapped_graded, config);
+}
+
+float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color) {
+  return ToneMapPassLMS(untonemapped, graded_sdr_color, renodx::draw::BuildConfig());
 }

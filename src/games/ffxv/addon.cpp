@@ -77,7 +77,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"Vanilla", "SDR", "ACES", "RenoDRT w/ ColorGrading", "RenoDRT"},
-        .labels = {"Vanilla", "SDR", "ACES", "RenoDRT", "LMS Stockman"},
+        .labels = {"Vanilla", "SDR", "ACES", "RenoDRT"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{

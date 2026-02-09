@@ -84,6 +84,7 @@ float3 toneMapLogContrast(float3 color)  {
   r0.xyz = r0.xyz * float3(0.693147182, 0.693147182, 0.693147182) + -Param_n49;
   // r0.xyz = max(float3(0, 0, 0), r0.xyz);
   r0.xyz = EnabledToneCurve ? r0.xyz : r1.xyz;
+  // r0.xyz = r1.xyz;
   return r0.rgb;
 }
 
@@ -253,11 +254,18 @@ void main(
 
   untonemapped = r1.rgb;
 
+  // if (shader_injection.tone_map_type == 4.f) {
+  //   float3 hdr_ungraded = untonemapped;
+  //   float3 hdr_graded = colorGrade(hdr_ungraded);
+
+  //   o0.rgb = ToneMapLMS(hdr_graded);
+  //   o0.rgb = PostToneMapProcess(o0.rgb);
+  //   o0.w = r0.w;
+  //   return;
+  // }
+
   r0.rgb = displayMap(untonemapped);
   r0.rgb = toneMapLogContrast(r0.rgb);
-  // r0.rgb = r1.rgb;
-
-  // float midgray = renodx::color::y::from::BT709(toneMapLogContrast(0.18f));
 
   // 0 =  Vanilla (fake HDR)
   // 1 =  SDR
@@ -291,35 +299,23 @@ void main(
 
     float3 hdr_ungraded, hdr_graded;
 
-    // untonemapped *= (0.18f / midgray);
-
     if (shader_injection.tone_map_mode == 0.f) {
-      if (shader_injection.tone_map_type == 4.f) {
-        hdr_ungraded = ToneMapLMS(untonemapped, r0.rgb);
-      }
-      else {
-        hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, r0.rgb);
-      }  
+      hdr_ungraded = ToneMapPassLMS(untonemapped, r0.rgb);
       hdr_graded = colorGrade(hdr_ungraded);
 
       // hdr_graded = r0.rgb;
     } else {
       float3 sdr_graded = colorGrade(r0.rgb);
 
-      if (shader_injection.tone_map_type == 4.f) {
-        hdr_ungraded = ToneMapLMS(untonemapped, r0.rgb);
-      }
-      else {
-        hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, sdr_graded);
-    }
+      hdr_ungraded = ToneMapPassLMS(untonemapped, sdr_graded);
+    
       hdr_graded = hdr_ungraded;
     }
     
-
     // sdr_graded = max(0.f, sdr_graded);
-    // hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded, 
-    //                                          RENODX_TONE_MAP_HUE_CORRECTION, 
-    //                                          RENODX_TONE_MAP_HUE_PROCESSOR);
+    hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded, 
+                                             RENODX_TONE_MAP_HUE_CORRECTION, 
+                                             RENODX_TONE_MAP_HUE_PROCESSOR);
 
     output = hdr_graded;
     o0.rgb = PostToneMapProcess(output);
