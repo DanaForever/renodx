@@ -225,29 +225,21 @@ void main(
     float3 hdr_ungraded, hdr_graded;
 
     if (shader_injection.tone_map_mode == 0.f) {
-      if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
-        hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, r0.rgb);
-      } else {
-        hdr_ungraded = CustomUpgradeToneMapPerChannel(untonemapped, r0.rgb);
-        hdr_ungraded = renodx::draw::ToneMapPass(hdr_ungraded);
-      }
-
+      hdr_ungraded = ToneMapPassLMS(untonemapped, r0.rgb);
       hdr_graded = colorGrade(hdr_ungraded);
+
+      // hdr_graded = r0.rgb;
     } else {
       float3 sdr_graded = colorGrade(r0.rgb);
 
-      if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
-        hdr_ungraded = renodx::draw::ToneMapPass(untonemapped, sdr_graded);
-      } else {
-        hdr_ungraded = CustomUpgradeToneMapPerChannel(untonemapped, sdr_graded);
-        hdr_ungraded = renodx::draw::ToneMapPass(hdr_ungraded);
-      }
-
+      hdr_ungraded = ToneMapPassLMS(untonemapped, sdr_graded);
+    
       hdr_graded = hdr_ungraded;
     }
-
-    hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded,
-                                             RENODX_TONE_MAP_HUE_CORRECTION,
+    
+    // sdr_graded = max(0.f, sdr_graded);
+    hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded, 
+                                             RENODX_TONE_MAP_HUE_CORRECTION, 
                                              RENODX_TONE_MAP_HUE_PROCESSOR);
 
     output = hdr_graded;

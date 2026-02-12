@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jun 19 13:11:25 2025
-#include "shared.h"
+#include "common.hlsl"
 cbuffer BinkCB_PS : register(b0)
 {
   float4 g_crc : packoffset(c0);
@@ -57,27 +57,33 @@ void main(
     r1.x = r1.y * 0.0114000002 + r1.x;
     r1.z = r2.y + r2.z;
     r1.y = r1.y * 0.895600021 + r1.z;
-    r1.z = cmp(0.00313080009 >= r0.w);
-    r1.w = 12.9200001 * r0.w;
-    r0.w = log2(r0.w);
-    r0.w = 0.416666657 * r0.w;
-    r0.w = exp2(r0.w);
-    r0.w = r0.w * 1.05499995 + -0.0549999997;
-    o0.x = r1.z ? r1.w : r0.w;
-    r0.w = cmp(0.00313080009 >= r1.x);
-    r1.z = 12.9200001 * r1.x;
-    r1.x = log2(r1.x);
-    r1.x = 0.416666657 * r1.x;
-    r1.x = exp2(r1.x);
-    r1.x = r1.x * 1.05499995 + -0.0549999997;
-    o0.y = r0.w ? r1.z : r1.x;
-    r0.w = cmp(0.00313080009 >= r1.y);
-    r1.x = 12.9200001 * r1.y;
-    r1.y = log2(r1.y);
-    r1.y = 0.416666657 * r1.y;
-    r1.y = exp2(r1.y);
-    r1.y = r1.y * 1.05499995 + -0.0549999997;
-    o0.z = r0.w ? r1.x : r1.y;
+
+    float3 r4 = r1.rgb;
+    r4.x = r0.w;
+    r4.y = r1.x;
+    r4.z = r1.y;
+    o0.rgb = renodx::color::srgb::EncodeSafe(r4);
+    // r1.z = cmp(0.00313080009 >= r0.w);
+    // r1.w = 12.9200001 * r0.w;
+    // r0.w = log2(r0.w);
+    // r0.w = 0.416666657 * r0.w;
+    // r0.w = exp2(r0.w);
+    // r0.w = r0.w * 1.05499995 + -0.0549999997;
+    // o0.x = r1.z ? r1.w : r0.w;
+    // r0.w = cmp(0.00313080009 >= r1.x);
+    // r1.z = 12.9200001 * r1.x;
+    // r1.x = log2(r1.x);
+    // r1.x = 0.416666657 * r1.x;
+    // r1.x = exp2(r1.x);
+    // r1.x = r1.x * 1.05499995 + -0.0549999997;
+    // o0.y = r0.w ? r1.z : r1.x;
+    // r0.w = cmp(0.00313080009 >= r1.y);
+    // r1.x = 12.9200001 * r1.y;
+    // r1.y = log2(r1.y);
+    // r1.y = 0.416666657 * r1.y;
+    // r1.y = exp2(r1.y);
+    // r1.y = r1.y * 1.05499995 + -0.0549999997;
+    // o0.z = r0.w ? r1.x : r1.y;
   } else {
     o0.xyz = r0.xyz;
   }
@@ -99,8 +105,9 @@ void main(
     // Inverse AutoHDR?
   }
 
-  // I think I forgot this 
-  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  // I think I forgot this
+  // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  o0.rgb = PostToneMapProcess(o0.rgb);
 
   return;
 }

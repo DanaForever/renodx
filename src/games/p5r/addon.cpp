@@ -476,7 +476,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .old_format = reshade::api::format::r8g8b8a8_typeless,
           .new_format = reshade::api::format::r16g16b16a16_typeless,
           .aspect_ratio = 16.f / 9.f,
-          .resource_tag = 1.f,
+          .resource_tag = 1.f,  
       });
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8b8a8_typeless,
@@ -484,11 +484,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .resource_tag = 1.f,
       });
 
-      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r11g11b10_float,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true
-      });
+
+      // this might break the motion vectors
+      // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+      //     .old_format = reshade::api::format::r11g11b10_float,
+      //     .new_format = reshade::api::format::r16g16b16a16_float,
+      //     .ignore_size = true
+      // });
 
 
       shader_injection.clampState = CLAMP_STATE__NONE;
