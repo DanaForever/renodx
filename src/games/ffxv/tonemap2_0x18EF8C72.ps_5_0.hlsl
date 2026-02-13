@@ -210,14 +210,17 @@ void main(
 
   }
   else // sdr mode
-  if (RENODX_TONE_MAP_TYPE == 1.f) {
-    r0.rgb = colorGrade(r0.rgb);
+    if (RENODX_TONE_MAP_TYPE == 1.f) {
+      r0.rgb = colorGrade(r0.rgb);
 
-    // clamping and srgb gamma encoding
-    r0.xyz = max(float3(0, 0, 0), r0.xyz);
+      // clamping and srgb gamma encoding
+      r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-    r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
-    o0.xyz = Gamma ? r1.xyz : r0.xyz;
+      // r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+      r1.rgb = PostToneMapProcess(r0.rgb);
+      o0.xyz = Gamma ? r1.xyz : r0.xyz;
+      // o0.rgb = r1.rgb;
+      o0.w = r0.w;
   }
   else {
     float3 sdr_graded = colorGrade(r0.rgb);

@@ -289,7 +289,8 @@ void main(
     // clamping and srgb gamma encoding
     r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-    r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+    // r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+    r1.rgb = PostToneMapProcess(r0.rgb);
     o0.xyz = Gamma ? r1.xyz : r0.xyz;
     o0.w = r0.w;
     return;

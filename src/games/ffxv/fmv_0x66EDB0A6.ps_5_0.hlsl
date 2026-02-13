@@ -88,26 +88,28 @@ void main(
     o0.xyz = r0.xyz;
   }
 
-  o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+  
 
   if (RENODX_TONE_MAP_TYPE > 0.f) {
-    
-    float videoPeak = min(RENODX_PEAK_WHITE_NITS, 400.f);
+    float videoPeak = RENODX_FMV_PEAK_WHITE_NITS;
+    // float videoPeak = RENODX_PEAK_WHITE_NITS;
 
     float peak = videoPeak / (RENODX_DIFFUSE_WHITE_NITS / 203.f);
         
-    // o0.rgb = renodx::color::gamma::Decode(o0.rgb, 2.4f);  // 2.4 for BT2446a
+    o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.4f);  // 2.4 for BT2446a
     o0.rgb = renodx::tonemap::inverse::bt2446a::BT709(o0.rgb, 100.f, videoPeak);
     o0.rgb /= videoPeak;                                                          // Normalize to 1.0f = peak;
-    o0.rgb *= min(RENODX_PEAK_WHITE_NITS, 400.f) /
+    o0.rgb *= videoPeak /
                   RENODX_DIFFUSE_WHITE_NITS;     // 1.f = game nits
 
     // Inverse AutoHDR?
+  } else {
+    o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
   }
 
   // I think I forgot this
   // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
-  o0.rgb = PostToneMapProcess(o0.rgb);
+  o0.rgb = PostToneMapProcessFMV(o0.rgb);
 
   return;
 }

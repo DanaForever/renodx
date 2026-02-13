@@ -124,6 +124,17 @@ renodx::utils::settings::Settings settings = {
         .min = 48.f,
         .max = 500.f,
     },
+        new renodx::utils::settings::Setting{
+        .key = "FMVPeakNits",
+        .binding = &shader_injection.fmv_peak_white_nits,
+        .default_value = 600.f,
+        .can_reset = false,
+        .label = "FMV Peak Brightness",
+        .section = "Tone Mapping",
+        .tooltip = "Sets the value of peak white in nits for rendered FMVs",
+        .min = 48.f,
+        .max = 1000.f,
+    },
     // new renodx::utils::settings::Setting{
     //     .key = "PeakBrightnessClamp",
     //     .binding = &shader_injection.peak_clamp,
