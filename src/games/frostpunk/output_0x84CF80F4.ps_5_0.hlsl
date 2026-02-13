@@ -56,7 +56,8 @@ void main(
       r1.x = 1;
     }
     r1.yzw = PerDrawCall.AverageLuminanceHalfTexelSize.www + r0.xyz;
-    r1.yzw = ColorLUTTexture.Sample(ColorLUTTextureSampler_s, r1.yzw).xyz;
+    // r1.yzw = ColorLUTTexture.Sample(ColorLUTTextureSampler_s, r1.yzw).xyz;
+    r1.yzw = renodx::lut::SampleTetrahedral(ColorLUTTexture, r1.yzw);
     // r1.yzw = r1.yzw + -r0.xyz;
     // r0.xyz = r1.xxx * r1.yzw + r0.xyz;
     r0.xyz = lerp(r0.xyz, r1.yzw, r1.xxx);
@@ -71,7 +72,7 @@ void main(
   }
   r1.yzw = PerDrawCall.BrightnessContrastSaturationColorLUTEnable.xxx * r0.xyz;
   // r1.y = dot(r1.yzw, float3(0.212599993,0.715200007,0.0722000003));
-  r1.y = renodx::color::y::from::NTSC1953(r1.yzw);
+  r1.y = renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(r1.yzw));
   r2.xyz = r0.xyz * PerDrawCall.BrightnessContrastSaturationColorLUTEnable.xxx + -r1.yyy;
   r1.yzw = PerDrawCall.BrightnessContrastSaturationColorLUTEnable.zzz * r2.xyz + r1.yyy;
   r1.yzw = -PerDrawCall.AverageLuminanceHalfTexelSize.xyz + r1.yzw;

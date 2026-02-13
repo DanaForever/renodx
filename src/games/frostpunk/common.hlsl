@@ -231,51 +231,11 @@ float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 float3 RestoreHighlightSaturation(float3 untonemapped) {
-  float l;
-  if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
-    untonemapped = renodx::color::bt2020::from::BT709(untonemapped);
-    l = renodx::color::y::from::BT2020(untonemapped);
-  } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
-    untonemapped = renodx::color::ap1::from::BT709(untonemapped);
-    l = renodx::color::y::from::AP1(untonemapped);
-  }
-
-  float3 displaymappedColor = untonemapped;
-  
-  if (CUSTOM_DISPLAY_MAP_TYPE == 1.f) {
-    displaymappedColor = renodx::tonemap::dice::BT709(untonemapped, 1.f, 0.f);
-  }
-    else if (CUSTOM_DISPLAY_MAP_TYPE == 2.f) {
-    displaymappedColor = renodx::tonemap::frostbite::BT709(untonemapped, 1.f, 0.f, 1.f);
-  }
-    else if (CUSTOM_DISPLAY_MAP_TYPE == 3.f) {
-    untonemapped = min(100.f, untonemapped);
-    displaymappedColor = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
-  }
-    else if (CUSTOM_DISPLAY_MAP_TYPE == 4.f) {
-    displaymappedColor = ToneMapMaxCLL(untonemapped);
-  }
-
-  float3 output = lerp(untonemapped, displaymappedColor, saturate(l));
-
-  if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
-    output = renodx::color::bt709::from::BT2020(output);
-  } else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
-    output = renodx::color::bt709::from::AP1(output);
-  }
-
-  return output;
+  return untonemapped;
 }
 
 float3 displayMap(float3 untonemapped) {
-  if (RENODX_TONE_MAP_TYPE <= 1.f)
-    return untonemapped;
-
-  if (CUSTOM_DISPLAY_MAP_TYPE == 0.f) {
-    return untonemapped;
-  } else {
-    return RestoreHighlightSaturation(untonemapped);
-  }
+  return untonemapped;
 }
 
 #define PI    3.141592653589793238462643383279502884197
@@ -326,49 +286,4 @@ float UpgradeToneMapRatio(float color_hdr, float color_sdr, float post_process_c
     const bool valid = (post_process_color > 0);  // Cleans up NaN and ignore black
     return valid ? (new_value / post_process_color) : 0;
   }
-}
-
-float3 UpgradeToneMapPerChannel(float3 color_hdr, float3 color_sdr, float3 post_process_color, float post_process_strength) {
-  // float ratio = 1.f;
-
-  float3 bt2020_hdr = max(0, renodx::color::bt2020::from::BT709(color_hdr));
-  float3 bt2020_sdr = max(0, renodx::color::bt2020::from::BT709(color_sdr));
-  float3 bt2020_post_process = max(0, renodx::color::bt2020::from::BT709(post_process_color));
-
-  float3 ratio = float3(
-      UpgradeToneMapRatio(bt2020_hdr.r, bt2020_sdr.r, bt2020_post_process.r),
-      UpgradeToneMapRatio(bt2020_hdr.g, bt2020_sdr.g, bt2020_post_process.g),
-      UpgradeToneMapRatio(bt2020_hdr.b, bt2020_sdr.b, bt2020_post_process.b));
-
-  float3 color_scaled = max(0, bt2020_post_process * ratio);
-  color_scaled = renodx::color::bt709::from::BT2020(color_scaled);
-  float peak_correction = saturate(1.f - renodx::color::y::from::BT2020(bt2020_post_process));
-  color_scaled = renodx::color::correct::Hue(color_scaled, post_process_color, peak_correction);
-  return lerp(color_hdr, color_scaled, post_process_strength);
-}
-
-float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
-  float hueCorrection = 1.f - CUSTOM_TONEMAP_UPGRADE_HUECORR;
-  float satStrength = 1.f - CUSTOM_TONEMAP_UPGRADE_STRENGTH;
-
-  float3 upgradedPerCh = UpgradeToneMapPerChannel(
-      untonemapped,
-      renodx::tonemap::renodrt::NeutralSDR(untonemapped),
-      graded,
-      1.f);
-
-  float3 upgradedPerCh_okLCH = renodx::color::oklch::from::BT709(upgradedPerCh);
-  float3 graded_okLCH = renodx::color::oklch::from::BT709(graded);
-
-  // heavy hue correction with graded hue
-  upgradedPerCh_okLCH = CorrectHuePolar(upgradedPerCh_okLCH, graded_okLCH, saturate(pow(graded_okLCH.y, hueCorrection)));
-
-  // desaturate highlights based on graded chrominance
-  upgradedPerCh_okLCH.y = lerp(graded_okLCH.y, upgradedPerCh_okLCH.y, saturate(pow(graded_okLCH.y, satStrength)));
-
-  upgradedPerCh = renodx::color::bt709::from::OkLCh(upgradedPerCh_okLCH);
-
-  upgradedPerCh = max(-10000000000000000000000000000000000000.f, upgradedPerCh);  // bandaid for NaNs
-
-  return upgradedPerCh;
 }

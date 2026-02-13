@@ -146,12 +146,7 @@ void main(
 
   if (RENODX_TONE_MAP_TYPE >= 3.f || RENODX_TONE_MAP_TYPE == 1.f) {
     // o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
-    if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
-      o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
-    } else {
-      o0.xyz = CustomUpgradeToneMapPerChannel(untonemapped, o0.xyz);
-      o0.xyz = renodx::draw::ToneMapPass(o0.xyz);
-    }                                      
+    o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);                                      
   } else {
   }
 

@@ -338,8 +338,8 @@ float3 UpgradeToneMapPerChannel(float3 color_hdr, float3 color_sdr, float3 post_
 }
 
 float3 CustomUpgradeToneMapPerChannel(float3 untonemapped, float3 graded) {
-  float hueCorrection = 1.f - CUSTOM_TONEMAP_UPGRADE_HUECORR;
-  float satStrength = 1.f - CUSTOM_TONEMAP_UPGRADE_STRENGTH;
+  float hueCorrection = 1.f - 0.5f;
+  float satStrength = 1.f - 0.5f;
 
   float3 upgradedPerCh = UpgradeToneMapPerChannel(
       untonemapped,
@@ -752,15 +752,12 @@ float3 CastleDechroma_CVVDPStyle_NakaRushton(
   return testout * luminance_in / luminance_out;
 }
 
+
 float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw::Config config) {
   // float3 neutral_sdr = renodx::tonemap::neutwo::MaxChannel(untonemapped);
   float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
 
-  float3 untonemapped_graded = renodx::draw::ComputeUntonemappedGraded(
-      untonemapped,
-      graded_sdr_color,
-      neutral_sdr,
-      config);
+  float3 untonemapped_graded = renodx::draw::UpgradeToneMapByLuminance(untonemapped, neutral_sdr, graded_sdr_color, 1.f);
 
   untonemapped_graded = LMS_ToneMap_Stockman(untonemapped_graded, 1.0f, 1.0f);
   // untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
