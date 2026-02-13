@@ -158,7 +158,7 @@ float3 PostToneMapProcess(float3 output) {
   }
 
   output = renodx::color::srgb::EncodeSafe(output);
-  output = renodx::draw::RenderIntermediatePass(output);
+  // output = renodx::draw::RenderIntermediatePass(output);
 
   return output;
 
