@@ -1,149 +1,6 @@
 
 #include "./shared.h"
 
-static const float M1 = 2610.f / 16384.f;           // 0.1593017578125f;
-static const float M2 = 128.f * (2523.f / 4096.f);  // 78.84375f;
-static const float C1 = 3424.f / 4096.f;            // 0.8359375f;
-static const float C2 = 32.f * (2413.f / 4096.f);   // 18.8515625f;
-static const float C3 = 32.f * (2392.f / 4096.f);   // 18.6875f;
-
-float PQEncode(float color, float scaling = 10000.f) {
-  color *= (scaling / 10000.f);
-  float3 y_m1 = pow(color, M1);
-  return pow((C1 + C2 * y_m1) / (1.f + C3 * y_m1), M2);
-}
-
-/// Applies Exponential Roll-Off tonemapping using the maximum channel.
-/// Used to fit the color into a 0–output_max range for SDR LUT compatibility.
-float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_max = 1.f) {
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
-    return color;
-  }
-  color = min(color, 100.f);
-  float peak = max(color.r, max(color.g, color.b));
-  peak = min(peak, 100.f);
-  float log_peak = log2(peak);
-
-  // Apply exponential shoulder in log space
-  float log_mapped = renodx::tonemap::ExponentialRollOff(log_peak, log2(rolloff_start), log2(output_max));
-  float scale = exp2(log_mapped - log_peak);  // How much to compress all channels
-
-  return min(output_max, color * scale);
-}
-
-
-float3 PostToneMapScale(float3 color) {
-  if (shader_injection.gamma_correction == 2.f) {
-    color = renodx::color::srgb::EncodeSafe(color);
-    color = renodx::color::gamma::DecodeSafe(color, 2.4f);
-    color *= shader_injection.diffuse_white_nits / shader_injection.graphics_white_nits;
-    color = renodx::color::gamma::EncodeSafe(color, 2.4f);
-  } else if (shader_injection.gamma_correction == 1.f) {
-    color = renodx::color::srgb::EncodeSafe(color);
-    color = renodx::color::gamma::DecodeSafe(color, 2.2f);
-    color *= shader_injection.diffuse_white_nits / shader_injection.graphics_white_nits;
-    color = renodx::color::gamma::EncodeSafe(color, 2.2f);
-  } else {
-    color *= shader_injection.diffuse_white_nits / shader_injection.graphics_white_nits;
-    color = renodx::color::srgb::EncodeSafe(color);
-  }
-  return color;
-}
-
-float3 ToneMapPass(float3 untonemapped, 
-  float3 graded_sdr, 
-  float3 neutral_sdr,
-  float3 mid_gray=0.18f,
-  bool regrade=false) {
-  renodx::draw::Config draw_config = renodx::draw::BuildConfig();
-  draw_config.reno_drt_tone_map_method = renodx::tonemap::renodrt::config::tone_map_method::REINHARD;
-  // draw_config.tone_map_pass_autocorrection = 0.5;
-  
-  draw_config.color_grade_strength = 1;
-
-  float3 color = renodx::tonemap::UpgradeToneMap(
-      untonemapped,
-      neutral_sdr,
-      // renodx::tonemap::renodrt::NeutralSDR(untonemapped),
-      graded_sdr,
-      draw_config.color_grade_strength,
-      draw_config.tone_map_pass_autocorrection);
-
-  renodx::tonemap::Config tone_map_config = renodx::tonemap::config::Create();
-  tone_map_config.peak_nits = draw_config.peak_white_nits;
-  tone_map_config.game_nits = draw_config.diffuse_white_nits;
-  tone_map_config.type = min(draw_config.tone_map_type, 3.f);
-  tone_map_config.gamma_correction = draw_config.gamma_correction;
-  tone_map_config.exposure = draw_config.tone_map_exposure;
-  tone_map_config.highlights = draw_config.tone_map_highlights;
-  tone_map_config.shadows = draw_config.tone_map_shadows;
-  tone_map_config.contrast = draw_config.tone_map_contrast;
-  tone_map_config.saturation = draw_config.tone_map_saturation;
-
-  tone_map_config.mid_gray_value = mid_gray;
-  tone_map_config.mid_gray_nits = tone_map_config.mid_gray_value * 100.f;
-
-  tone_map_config.reno_drt_highlights = 1.0f;
-  tone_map_config.reno_drt_shadows = 1.0f;
-  tone_map_config.reno_drt_contrast = 1.0f;
-  tone_map_config.reno_drt_saturation = 1.0f;
-  tone_map_config.reno_drt_blowout = -1.f * (draw_config.tone_map_highlight_saturation - 1.f);
-  tone_map_config.reno_drt_dechroma = draw_config.tone_map_blowout;
-  tone_map_config.reno_drt_flare = 0.10f * pow(draw_config.tone_map_flare, 10.f);
-  tone_map_config.reno_drt_working_color_space = (uint)draw_config.tone_map_working_color_space;
-  tone_map_config.reno_drt_per_channel = draw_config.tone_map_per_channel == 1.f;
-  tone_map_config.reno_drt_hue_correction_method = (uint)draw_config.tone_map_hue_processor;
-  tone_map_config.reno_drt_clamp_color_space = draw_config.tone_map_clamp_color_space;
-  tone_map_config.reno_drt_clamp_peak = draw_config.tone_map_clamp_peak;
-  tone_map_config.reno_drt_tone_map_method = (uint)draw_config.reno_drt_tone_map_method;
-  tone_map_config.reno_drt_white_clip = draw_config.reno_drt_white_clip;
-
-  tone_map_config.hue_correction_strength = draw_config.tone_map_hue_correction;
-  draw_config.tone_map_hue_shift = 0.f;
-
-  if (draw_config.tone_map_hue_shift != 0.f) {
-    tone_map_config.hue_correction_type = renodx::tonemap::config::hue_correction_type::CUSTOM;
-
-    float3 hue_shifted_color;
-    if (draw_config.tone_map_hue_shift_method == renodx::draw::HUE_SHIFT_METHOD_CLIP) {
-      hue_shifted_color = saturate(color);
-    } else if (draw_config.tone_map_hue_shift_method == renodx::draw::HUE_SHIFT_METHOD_SDR_MODIFIED) {
-      renodx::tonemap::renodrt::Config renodrt_config = renodx::tonemap::renodrt::config::Create();
-      renodrt_config.nits_peak = 100.f;
-      renodrt_config.mid_gray_value = 0.18f;
-      renodrt_config.mid_gray_nits = 18.f;
-      renodrt_config.exposure = 1.f;
-      renodrt_config.highlights = 1.f;
-      renodrt_config.shadows = 1.f;
-      renodrt_config.contrast = 1.0f;
-      renodrt_config.saturation = draw_config.tone_map_hue_shift_modifier;
-      renodrt_config.dechroma = 0.f;
-      renodrt_config.flare = 0.f;
-      renodrt_config.per_channel = false;
-      renodrt_config.tone_map_method = 1u;
-      renodrt_config.white_clip = 1.f;
-      renodrt_config.hue_correction_strength = 0.f;
-      renodrt_config.working_color_space = 0u;
-      renodrt_config.clamp_color_space = 0u;
-      hue_shifted_color = renodx::tonemap::renodrt::BT709(color, renodrt_config);
-    } else if (draw_config.tone_map_hue_shift_method == renodx::draw::HUE_SHIFT_METHOD_AP1_ROLL_OFF) {
-      float3 incorrect_hue_ap1 = renodx::color::ap1::from::BT709(color * tone_map_config.mid_gray_value / 0.18f);
-      hue_shifted_color = renodx::color::bt709::from::AP1(renodx::tonemap::ExponentialRollOff(incorrect_hue_ap1, tone_map_config.mid_gray_value, 2.f));
-    } else if (draw_config.tone_map_hue_shift_method == renodx::draw::HUE_SHIFT_METHOD_ACES_FITTED_BT709) {
-      hue_shifted_color = renodx::tonemap::ACESFittedBT709(color);
-    } else if (draw_config.tone_map_hue_shift_method == renodx::draw::HUE_SHIFT_METHOD_ACES_FITTED_AP1) {
-      hue_shifted_color = renodx::tonemap::ACESFittedAP1(color);
-    }
-    tone_map_config.hue_correction_color = lerp(
-        color,
-        hue_shifted_color,
-        draw_config.tone_map_hue_shift);
-  }
-
-  float3 tonemapped = renodx::tonemap::config::Apply(color, tone_map_config);
-
-  return tonemapped;
-}
 
 ///////////////////////////////////////////////////////////////////////////
 ////////// CUSTOM TONEMAPPASS//////////////////////////////////////////////
@@ -190,7 +47,7 @@ static const float3 AP1_RGB2Y = float3(
     0.0536895174   // AP1_2_XYZ_MAT[2][1]
 );
 
-float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
+float3 hdrExtraSaturation(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
 {
   // const float3x3 sRGB_2_AP1 = mul(XYZ_2_AP1_MAT, mul(D65_2_D60_CAT, sRGB_2_XYZ_MAT));
   // const float3x3 AP1_2_sRGB = mul(XYZ_2_sRGB_MAT, mul(D60_2_D65_CAT, AP1_2_XYZ_MAT));
@@ -226,6 +83,28 @@ float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
   // vHDRColor = mul(AP1_2_sRGB, ColorAP1);
   vHDRColor = renodx::color::bt709::from::AP1(ColorAP1);
   return vHDRColor;
+}
+
+float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
+  if (RENODX_TONE_MAP_TYPE == 0.f) {
+    return color;
+  }
+
+  if (fExpandGamut > 0.f) {
+    // Do this with a paper white of 203 nits, so it's balanced (the formula seems to be made for that),
+    // and gives consistent results independently of the user paper white
+    static const float sRGB_max_nits = 80.f;
+    static const float ReferenceWhiteNits_BT2408 = 203.f;
+    const float recommendedBrightnessScale = ReferenceWhiteNits_BT2408 / sRGB_max_nits;
+
+    float3 vHDRColor = color * recommendedBrightnessScale;
+
+    vHDRColor = hdrExtraSaturation(vHDRColor, fExpandGamut);
+
+    color = vHDRColor / recommendedBrightnessScale;
+  }
+
+  return color;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,4 +165,165 @@ float UpgradeToneMapRatio(float color_hdr, float color_sdr, float post_process_c
     const bool valid = (post_process_color > 0);  // Cleans up NaN and ignore black
     return valid ? (new_value / post_process_color) : 0;
   }
+}
+
+float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
+  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
+
+  const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
+
+  float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
+
+  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
+
+  return result;
+}
+
+float3 CustomRenderIntermediatePass(float3 color) {
+  // return RenderIntermediatePass(color, BuildConfig());
+
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+
+  [branch]
+  if (config.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    // color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    color = GammaCorrectHuePreserving(color, 2.2f);
+  } else if (config.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    // color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    color = GammaCorrectHuePreserving(color, 2.4f);
+  }
+
+  color *= config.intermediate_scaling;
+
+  [branch]
+  if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+  } else if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.4f);
+  }
+
+  color = renodx::color::convert::ColorSpaces(
+      color,
+      renodx::color::convert::COLOR_SPACE_BT709,
+      config.intermediate_color_space);
+
+  color = renodx::draw::EncodeColor(color, config.intermediate_encoding);
+
+  return color;
+
+}
+
+
+
+
+float4 CustomSwapChainPass(float4 input_color) {
+  // return float4(SwapChainPass(color.rgb, 0, BuildConfig()).rgb, 1.f);
+
+  float3 color = input_color.rgb;
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+  float2 position = 0;
+
+  color = renodx::draw::DecodeColor(color, config.swap_chain_decoding);
+
+  if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    color = GammaCorrectHuePreserving(color, 2.2f);
+  } else if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    color = GammaCorrectHuePreserving(color, 2.4f);
+  }
+
+  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
+
+  [branch]
+  if (config.swap_chain_output_preset == renodx::draw::SWAP_CHAIN_OUTPUT_PRESET_SDR) {
+    config.swap_chain_clamp_color_space = renodx::color::convert::COLOR_SPACE_NONE;
+    config.swap_chain_compress_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    config.swap_chain_encoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    config.swap_chain_encoding = renodx::draw::ENCODING_SRGB;
+    config.swap_chain_scaling_nits = 1.f;
+    config.swap_chain_clamp_nits = 1.f;
+  } else if (config.swap_chain_output_preset == renodx::draw::SWAP_CHAIN_OUTPUT_PRESET_HDR10) {
+    config.swap_chain_clamp_color_space = renodx::color::convert::COLOR_SPACE_NONE;
+    config.swap_chain_compress_color_space = renodx::color::convert::COLOR_SPACE_BT2020;
+    config.swap_chain_encoding_color_space = renodx::color::convert::COLOR_SPACE_BT2020;
+    config.swap_chain_encoding = renodx::draw::ENCODING_PQ;
+  } else if (config.swap_chain_output_preset == renodx::draw::SWAP_CHAIN_OUTPUT_PRESET_SCRGB) {
+    config.swap_chain_clamp_color_space = renodx::color::convert::COLOR_SPACE_NONE;
+    config.swap_chain_compress_color_space = renodx::color::convert::COLOR_SPACE_BT2020;
+    config.swap_chain_encoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    config.swap_chain_encoding = renodx::draw::ENCODING_SCRGB;
+  }
+
+  [branch]
+  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT709D93(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT601NTSCU(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::ARIBTRB9(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  }
+
+  [branch]
+  if (config.swap_chain_clamp_color_space != renodx::color::convert::COLOR_SPACE_NONE) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_clamp_color_space);
+    color = max(0, color);
+    if (config.swap_chain_clamp_color_space != config.swap_chain_encoding_color_space) {
+      color = renodx::color::convert::ColorSpaces(color, config.swap_chain_clamp_color_space, config.swap_chain_encoding_color_space);
+    }
+  } else {
+    [branch]
+    if (config.swap_chain_compress_color_space != renodx::color::convert::COLOR_SPACE_NONE) {
+      color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_compress_color_space);
+      float grayscale = renodx::color::convert::Luminance(color, config.swap_chain_compress_color_space);
+      const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+      const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+      const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+      float encode_gamma = MID_GRAY_GAMMA;
+      float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+      float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+      float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+      color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
+
+      if (config.swap_chain_compress_color_space != config.swap_chain_encoding_color_space) {
+        color = renodx::color::convert::ColorSpaces(color, config.swap_chain_compress_color_space, config.swap_chain_encoding_color_space);
+      }
+    } else {
+      color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_encoding_color_space);
+    }
+  }
+
+  color *= config.swap_chain_scaling_nits;
+  float max_channel = max(max(max(color.r, color.g), color.b), config.swap_chain_clamp_nits);
+  color *= config.swap_chain_clamp_nits / max_channel;  // Clamp UI or Videos
+
+  color = renodx::draw::EncodeColor(color, config.swap_chain_encoding);
+
+  if (config.swap_chain_output_dither_bits > 0.f && config.swap_chain_output_dither_amplitude != 0.f) {
+    float maxValue = exp2(config.swap_chain_output_dither_bits) - 1.0;
+    float dither_strength = exp2(config.swap_chain_output_dither_amplitude) - 1.0;
+    // ie: 12bit amplitude for 10bit quantization
+
+    float random_number = renodx::random::Generate(position + config.swap_chain_output_dither_seed);
+
+    float3 noise = (random_number - 0.5) * (1.f / maxValue);
+
+    float3 dithered = color.rgb * maxValue + noise * dither_strength;
+
+    float3 rounded = round(max(0, dithered)) / maxValue;
+
+    color = rounded;
+  }
+
+  return float4(color, 1.0f);
 }

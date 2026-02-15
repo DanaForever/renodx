@@ -244,6 +244,18 @@ renodx::utils::settings::Settings settings = {
         // .is_visible = []() { return current_settings_mode >= 1; },
         .is_visible = []() { return false; },
     },
+    new renodx::utils::settings::Setting{
+        .key = "InverseToneMapExtraHDRSaturation",
+        .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Gamut Expansion",
+        .section = "Tone Mapping",
+        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
+        .min = 0.f,
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.01f; },
+    },
     // new renodx::utils::settings::Setting{
     //     .key = "ToneMapClampColorSpace",
     //     .binding = &shader_injection.tone_map_clamp_color_space,
@@ -637,7 +649,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::shader::expected_constant_buffer_space = 50;
         renodx::mods::shader::expected_constant_buffer_index = 13;
         renodx::mods::shader::allow_multiple_push_constants = true;
-        
+
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8b8a8_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,

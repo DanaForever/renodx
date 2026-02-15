@@ -117,6 +117,6 @@ void main(
     o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
   }
   
-  o0.xyz = renodx::draw::RenderIntermediatePass(o0.xyz);
+  o0.xyz = CustomRenderIntermediatePass(o0.xyz);
   return;
 }

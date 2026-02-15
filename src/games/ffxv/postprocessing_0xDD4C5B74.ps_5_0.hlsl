@@ -172,6 +172,9 @@ void main(
     color = SE_Saturation(color);
   }
 
+  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
+  // color *= 2;
+
   color *= config.swap_chain_scaling_nits;
 
   [branch]

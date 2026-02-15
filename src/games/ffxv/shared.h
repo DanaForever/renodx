@@ -89,6 +89,8 @@ struct ShaderInjectData {
   float custom_tonemap_upgrade_huecorr;
   float custom_tonemap_upgrade_strength;
 
+  float inverse_tonemap_extra_hdr_saturation;
+
   // float color_grade_hue_shift;
 };
 

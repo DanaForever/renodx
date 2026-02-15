@@ -208,7 +208,7 @@ static const float3 AP1_RGB2Y = float3(
     0.0536895174   // AP1_2_XYZ_MAT[2][1]
 );
 
-float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
+float3 hdrExtraSaturation(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
 {
   // const float3x3 sRGB_2_AP1 = mul(XYZ_2_AP1_MAT, mul(D65_2_D60_CAT, sRGB_2_XYZ_MAT));
   // const float3x3 AP1_2_sRGB = mul(XYZ_2_sRGB_MAT, mul(D60_2_D65_CAT, AP1_2_XYZ_MAT));
@@ -244,6 +244,27 @@ float3 expandGamut(float3 vHDRColor, float fExpandGamut /*= 1.0f*/)
   // vHDRColor = mul(AP1_2_sRGB, ColorAP1);
   vHDRColor = renodx::color::bt709::from::AP1(ColorAP1);
   return vHDRColor;
+}
+
+float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
+
+  if (fExpandGamut > 0.f) {
+    // Do this with a paper white of 203 nits, so it's balanced (the formula seems to be made for that),
+    // and gives consistent results independently of the user paper white
+    static const float sRGB_max_nits = 80.f;
+    static const float ReferenceWhiteNits_BT2408 = 203.f;
+    const float recommendedBrightnessScale = ReferenceWhiteNits_BT2408 / sRGB_max_nits;
+
+    float3 vHDRColor = color * recommendedBrightnessScale;
+
+    vHDRColor = hdrExtraSaturation(vHDRColor, fExpandGamut);
+
+    color = vHDRColor / recommendedBrightnessScale;
+
+
+  }
+
+  return color;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
