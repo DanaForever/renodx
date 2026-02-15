@@ -34,6 +34,7 @@ float4 main(float4 vpos: SV_POSITION, float2 uv: TEXCOORD0)
   float4 o0 = r0;
 
   float3 color = o0.rgb;
+  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
 
   [branch]
   if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
@@ -49,9 +50,23 @@ float4 main(float4 vpos: SV_POSITION, float2 uv: TEXCOORD0)
     color = renodx::color::bt709::from::ARIBTRB9(color);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
   }
-  o0.rgb = color;
+  
 
-  o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
+  // Gamut Compression
+  color = renodx::color::bt2020::from::BT709(color);
+  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+  float encode_gamma = MID_GRAY_GAMMA;
+  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
+  color = max(0.f, color);
+  color = renodx::color::bt709::from::BT2020(color);
+
+  o0.rgb = color;
 
   o0.rgb *= shader_injection.graphics_white_nits / 80.f;
 

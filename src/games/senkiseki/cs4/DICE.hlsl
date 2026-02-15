@@ -235,33 +235,3 @@ float3 DICEToneMap(float3 color) {
 
   return color;
 }
-
-float3 FrostbiteToneMap(float3 color) {
-  float3 untonemapped = color;
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      RENODX_TONE_MAP_EXPOSURE,    // exposure
-      RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-      RENODX_TONE_MAP_SHADOWS,     // shadows
-      RENODX_TONE_MAP_CONTRAST,    // contrast
-      1.f,                         // saturation, we'll do this post-tonemap
-      0.f,                         // dechroma, post tonemapping
-      0.f);                        // hue correction, Post tonemapping
-
-  float frostbitePeak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-  color = renodx::tonemap::frostbite::BT709(color, frostbitePeak);
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      1.f,                         // exposure
-      1.f,                         // highlights
-      1.f,                         // shadows
-      1.f,                         // contrast
-      RENODX_TONE_MAP_SATURATION,  // saturation
-      0.f,                         // dechroma, we don't need it
-      0.f,                         // Hue Correction Strength
-      color);                      // Hue Correction Type
-
-  return color;
-}

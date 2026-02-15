@@ -1,5 +1,5 @@
-#ifndef SRC_TEMPLATE_SHARED_H_
-#define SRC_TEMPLATE_SHARED_H_
+#ifndef SRC_SENKISEKI_SHARED_H_
+#define SRC_SENKISEKI_SHARED_H_
 
 // #define RENODX_PEAK_WHITE_NITS                 1000.f
 // #define RENODX_DIFFUSE_WHITE_NITS              renodx::color::bt2408::REFERENCE_WHITE
@@ -73,14 +73,14 @@ struct ShaderInjectData {
   float swap_chain_encoding;
   float swap_chain_encoding_color_space;
 
-  float inverse_tonemap_white_level;
-  float inverse_tonemap_color_conservation;
-  float inverse_tonemap_highlight_saturation;
+  // float inverse_tonemap_white_level;
+  // float inverse_tonemap_color_conservation;
+  // float inverse_tonemap_highlight_saturation;
   float inverse_tonemap_extra_hdr_saturation;
 
-  float color_grade_per_channel_hue_correction;
-  float color_grade_per_channel_chrominance_correction;
-  float color_grade_per_channel_blowout_restoration;
+  // float color_grade_per_channel_hue_correction;
+  // float color_grade_per_channel_chrominance_correction;
+  // float color_grade_per_channel_blowout_restoration;
 
   float bloom;
   float bloom_approx_method;
@@ -111,13 +111,9 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_GRAPHICS_WHITE_NITS           shader_injection.graphics_white_nits
 #define RENODX_GAMMA_CORRECTION              shader_injection.gamma_correction
 #define RENODX_TONE_MAP_PER_CHANNEL          shader_injection.tone_map_per_channel
-#define RENODX_TONE_MAP_WORKING_COLOR_SPACE  shader_injection.tone_map_working_color_space
-#define RENODX_TONE_MAP_HUE_PROCESSOR        shader_injection.tone_map_hue_processor
-#define RENODX_TONE_MAP_HUE_CORRECTION       shader_injection.tone_map_hue_correction
-#define RENODX_TONE_MAP_HUE_SHIFT            shader_injection.tone_map_hue_shift
-#define RENODX_TONE_MAP_HUE_CORRECTION_METHOD     shader_injection.tone_map_hue_correction_method
+#define RENODX_TONE_MAP_WORKING_COLOR_SPACE  2.f // shader_injection.tone_map_working_color_space
 // #define RENODX_RENO_DRT_WHITE_CLIP           shader_injection.tone_map_white_clip
-#define RENODX_TONE_MAP_CLAMP_COLOR_SPACE    shader_injection.tone_map_clamp_color_space
+#define RENODX_TONE_MAP_CLAMP_COLOR_SPACE    2.f // shader_injection.tone_map_clamp_color_space
 #define RENODX_TONE_MAP_CLAMP_PEAK           2.f // shader_injection.tone_map_clamp_peak
 #define RENODX_TONE_MAP_EXPOSURE             shader_injection.tone_map_exposure
 #define RENODX_TONE_MAP_HIGHLIGHTS           shader_injection.tone_map_highlights
@@ -130,22 +126,15 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_COLOR_GRADE_STRENGTH          shader_injection.color_grade_strength
 #define RENODX_INTERMEDIATE_ENCODING         1.f // shader_injection.intermediate_encoding
 #define RENODX_SWAP_CHAIN_DECODING           1.f // shader_injection.swap_chain_decoding
-#define RENODX_SWAP_CHAIN_GAMMA_CORRECTION   shader_injection.swap_chain_gamma_correction
+#define RENODX_SWAP_CHAIN_GAMMA_CORRECTION   shader_injection.gamma_correction
 // #define RENODX_SWAP_CHAIN_DECODING_COLOR_SPACE shader_injection.swap_chain_decoding_color_space
 #define RENODX_SWAP_CHAIN_CUSTOM_COLOR_SPACE shader_injection.swap_chain_custom_color_space
 #define RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE    shader_injection.swap_chain_clamp_color_space
 #define RENODX_SWAP_CHAIN_ENCODING             shader_injection.swap_chain_encoding
 #define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE shader_injection.swap_chain_encoding_color_space
-#define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::REINHARD
+#define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::HERMITE_SPLINE
 
-#define INVERSE_TONEMAP_WHITE_LEVEL shader_injection.inverse_tonemap_white_level
-#define INVERSE_TONEMAP_COLOR_CONSERVATION shader_injection.inverse_tonemap_color_conservation
-#define INVERSE_TONEMAP_HIGHLIGHT_SATURATION shader_injection.inverse_tonemap_highlight_saturation
 #define INVERSE_TONEMAP_EXTRA_HDR_SATURATION shader_injection.inverse_tonemap_extra_hdr_saturation
-
-#define RENODX_PER_CHANNEL_BLOWOUT_RESTORATION  shader_injection.color_grade_per_channel_blowout_restoration
-#define RENODX_PER_CHANNEL_HUE_CORRECTION  shader_injection.color_grade_per_channel_hue_correction
-#define RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION  shader_injection.color_grade_per_channel_chrominance_correction
 
 #define BROKEN_BLOOM                           shader_injection.bloom
 #define BLOOM_APPROX_METHOD                           shader_injection.bloom_approx_method

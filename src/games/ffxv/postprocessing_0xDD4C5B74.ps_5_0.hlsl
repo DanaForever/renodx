@@ -175,7 +175,7 @@ void main(
   color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
   // color *= 2;
 
-  color *= config.swap_chain_scaling_nits;
+  
 
   [branch]
   if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
@@ -192,28 +192,25 @@ void main(
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
   }
 
+  // Gamut Compression
+  color = renodx::color::bt2020::from::BT709(color);
+  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+  float encode_gamma = MID_GRAY_GAMMA;
+  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
+
+  color = max(0.f, color);
+  color = renodx::color::bt709::from::BT2020(color);
+
+  color *= config.swap_chain_scaling_nits;
   color = min(color, config.swap_chain_clamp_nits);  // Clamp UI or Videos
 
-  [branch]
-  if (config.swap_chain_clamp_color_space == renodx::color::convert::COLOR_SPACE_UNKNOWN) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_encoding_color_space);
-  } else {
-    [branch]
-    if (config.swap_chain_clamp_color_space == config.swap_chain_encoding_color_space) {
-      color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_encoding_color_space);
-      color = max(0, color);
-    } else {
-      if (config.swap_chain_clamp_color_space != config.swap_chain_decoding_color_space) {
-        color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, config.swap_chain_clamp_color_space);
-      }
-      color = max(0, color);
-      color = renodx::color::convert::ColorSpaces(color, config.swap_chain_clamp_color_space, config.swap_chain_encoding_color_space);
-
-    }
-  }
-
   // scrgb output
-  color = renodx::color::bt709::clamp::BT2020(color);
   color = color / 80.f;
   o0.rgb = color;
 

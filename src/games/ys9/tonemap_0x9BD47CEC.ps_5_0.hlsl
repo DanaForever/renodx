@@ -143,11 +143,8 @@ void main(
 
     // hdr = renodx::tonemap::UpgradeToneMap(hdr, neutral_sdr, sdr, shader_injection.color_grade_strength);
     o0.rgb = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.color_grade_strength, shader_injection.color_grade_strength);
-    o0.rgb = expandGamut(o0.rgb, shader_injection.inverse_tonemap_extra_hdr_saturation);
 
     o0.rgb = ToneMap(o0.rgb);
-    o0.rgb = correctHue(o0.rgb, sdr);
-    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
   } else {
     o0.xyz = sdr;
     o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);

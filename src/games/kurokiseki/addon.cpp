@@ -243,18 +243,7 @@ renodx::utils::settings::Settings settings = {
         .max = 500.f,
         .is_visible = []() { return false; },
     },
-    new renodx::utils::settings::Setting{
-        .key = "InverseToneMapExtraHDRSaturation",
-        .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
-        .default_value = 0.f,
-        .can_reset = false,
-        .label = "Gamut Expansion",
-        .section = "Tone Mapping",
-        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
-        .min = 0.f,
-        .max = 100.f,
-        .parse = [](float value) { return value * 0.01f; },
-    },
+    
     
     new renodx::utils::settings::Setting{
         .key = "GammaCorrection",
@@ -421,6 +410,18 @@ renodx::utils::settings::Settings settings = {
 
     
     /////////////////////////////////////////////////////////////
+    new renodx::utils::settings::Setting{
+        .key = "InverseToneMapExtraHDRSaturation",
+        .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Gamut Expansion",
+        .section = "Color Grading",
+        .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
+        .min = 0.f,
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.01f; },
+    },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeExposure",
         .binding = &shader_injection.tone_map_exposure,

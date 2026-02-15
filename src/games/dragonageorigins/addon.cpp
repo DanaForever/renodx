@@ -2,7 +2,7 @@
  * Copyright (C) 2024 Ersh
  * SPDX-License-Identifier: MIT
  */
-
+#include <algorithm>
 #include <include/reshade_api_device.hpp>
 #define ImTextureID ImU64
 
@@ -657,7 +657,7 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
 
     constexpr uint8_t bloomLevels = 7;
 
-    uint8_t mipCount = min(bloomLevels, MAX_BLOOM_LEVELS);
+    uint8_t mipCount = std::min(bloomLevels, MAX_BLOOM_LEVELS);
     for (uint8_t i = 0; i < MAX_BLOOM_LEVELS; ++i) {
       mipWidth *= 0.5f;
       mipHeight *= 0.5f;
