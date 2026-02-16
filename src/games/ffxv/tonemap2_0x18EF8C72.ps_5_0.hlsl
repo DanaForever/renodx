@@ -302,11 +302,16 @@ void main(
       hdr_graded = hdr_ungraded;
     }
     
-    // sdr_graded = max(0.f, sdr_graded);
-    hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded, 
-                                             RENODX_TONE_MAP_HUE_CORRECTION, 
-                                             RENODX_TONE_MAP_HUE_PROCESSOR);
+    sdr_graded = max(0.f, sdr_graded);
 
+    if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f) {
+      if (RENODX_TONE_MAP_HUE_PROCESSOR < 3.f)
+        hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded,
+                                                RENODX_TONE_MAP_HUE_CORRECTION,
+                                                RENODX_TONE_MAP_HUE_PROCESSOR);
+      else
+        hdr_graded = CorrectHueAndPurity(hdr_graded, sdr_graded, RENODX_TONE_MAP_HUE_CORRECTION);
+    }
     float3 output = hdr_graded;
     o0.rgb = PostToneMapProcess(output);
 

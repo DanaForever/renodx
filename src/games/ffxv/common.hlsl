@@ -1,6 +1,6 @@
 
 #include "./shared.h"
-// #include "./macleod_boynton.hlsl"
+#include "./macleod_boynton.hlsli"
 
 
 /// Applies Exponential Roll-Off tonemapping using the maximum channel.
@@ -1000,54 +1000,14 @@ APPLYFFXVEXTENDED_GENERATOR(float)
 APPLYFFXVEXTENDED_GENERATOR(float3)
 #undef APPLYFFXVEXTENDED_GENERATOR
 
-float3 CorrectHueAndPurityMB(
+float3 CorrectHueAndPurity(
     float3 target_color_bt709,
     float3 reference_color_bt709,
-    float curve_gamma = 1.f,
+    float strength = 1.f,
     float2 mb_white_override = float2(-1.f, -1.f),
     float t_min = 1e-6f) {
-  float3 target_color_bt2020 = renodx::color::bt2020::from::BT709(target_color_bt709);
-  float3 reference_color_bt2020 = renodx::color::bt2020::from::BT709(reference_color_bt709);
 
-  float reference_purity01 =
-      renodx_custom::color::macleod_boynton::ApplyBT2020(reference_color_bt2020, 1.f, 1.f,
-                                                         mb_white_override, t_min)
-          .purityCur01;
-
-  float3 target_lms = mul(renodx_custom::color::macleod_boynton::XYZ_TO_LMS_2006,
-                          mul(renodx::color::BT2020_TO_XYZ_MAT, target_color_bt2020));
-  float target_t = target_lms.x + target_lms.y;
-  if (target_t <= t_min) {
-    return target_color_bt709;
-  }
-
-  float3 reference_lms = mul(renodx_custom::color::macleod_boynton::XYZ_TO_LMS_2006,
-                             mul(renodx::color::BT2020_TO_XYZ_MAT, reference_color_bt2020));
-
-  float2 white = (mb_white_override.x >= 0.f && mb_white_override.y >= 0.f)
-                     ? mb_white_override
-                     : renodx_custom::color::macleod_boynton::MB_White_D65();
-
-  float2 target_direction = renodx_custom::color::macleod_boynton::MB_From_LMS(target_lms) - white;
-  float2 reference_direction = renodx_custom::color::macleod_boynton::MB_From_LMS(reference_lms) - white;
-  float reference_len_sq = dot(reference_direction, reference_direction);
-
-  // If donor hue is undefined (near white), fallback to purity-only transfer.
-  if (reference_len_sq < renodx_custom::color::macleod_boynton::MB_NEAR_WHITE_EPSILON) {
-    return renodx::color::bt709::from::BT2020(
-        renodx_custom::color::macleod_boynton::ApplyBT2020(
-            target_color_bt2020, reference_purity01, curve_gamma, mb_white_override, t_min)
-            .rgbOut);
-  }
-
-  float2 mb_seed = white + reference_direction * rsqrt(reference_len_sq) * length(target_direction);
-
-  float3 lms_seed = renodx_custom::color::macleod_boynton::LMS_From_MB_T(mb_seed, target_t);
-  float3 xyz_seed = mul(renodx_custom::color::macleod_boynton::LMS_TO_XYZ_2006, lms_seed);
-  float3 seed_bt2020 = mul(renodx::color::XYZ_TO_BT2020_MAT, xyz_seed);
-
-  return renodx::color::bt709::from::BT2020(
-      renodx_custom::color::macleod_boynton::ApplyBT2020(
-          seed_bt2020, reference_purity01, curve_gamma, mb_white_override, t_min)
-          .rgbOut);
-}
+  float hue_t_ramp_start = 0.5f;
+  float hue_t_ramp_end = 1.f;
+  return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
+};
