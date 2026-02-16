@@ -89,7 +89,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Mapper Position",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper mode",
-        .labels = {"Before Grading", "After Grading"},
+        .labels = {"Extended HDR - Before Grading", "Extended HDR - After Grading", "Upgraded SDR - Before Grading", "Upgraded SDR - After Grading"},
         .is_visible = []() { return current_settings_mode >= 2; },
     },
     

@@ -164,6 +164,7 @@ float3 PostToneMapProcess(float3 output) {
 
 }
 
+
 float3 PostToneMapProcessFMV(float3 output) {
   if (RENODX_TONE_MAP_TYPE > 1.f) {
     [branch]
@@ -614,43 +615,7 @@ float3 UserColorGrading(
   return color;
 }
 
-float3 ToneMapLMS(float3 untonemapped) {
-  float3 color;
-  color = untonemapped;
-  
-  color = UserColorGrading(
-      color,
-      RENODX_TONE_MAP_EXPOSURE,    // exposure
-      RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-      RENODX_TONE_MAP_SHADOWS,     // shadows
-      RENODX_TONE_MAP_CONTRAST,    // contrast
-      1.f,                         // saturation, we'll do this post-tonemap
-      0.f);                        // dechroma, post tonemapping
-                                   // hue correction, Post tonemapping
 
-  color = LMS_ToneMap_Stockman(color, 1.f,
-                               1.f);
-
-  float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-
-  color = renodx::color::bt709::clamp::BT2020(color);
-
-  float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
-
-  color = lum_color;
-
-  color = UserColorGrading(
-      color,
-      1.f,                         // exposure
-      1.f,                         // highlights
-      1.f,                         // shadows
-      1.f,                         // contrast
-      RENODX_TONE_MAP_SATURATION,  // saturation
-      RENODX_TONE_MAP_BLOWOUT      // dechroma, we don't need it
-  );
-
-  return color;
-}
 
 float3 RestoreHighlightSaturation(float3 untonemapped) {
   float l;
@@ -773,14 +738,102 @@ float3 CastleDechroma_CVVDPStyle_NakaRushton(
   return testout * luminance_in / luminance_out;
 }
 
+float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
+  float3 XYZ = renodx::color::xyz::from::BT709(color);
+  float original_y = XYZ.y;
+
+  // Not used
+  float3x3 XYZ_TO_XYZf = float3x3(
+      0.2498f, 0.7865f, 0.0363f,
+      0.4429f, 1.3324f, 0.1105f,
+      0.0000f, 0.0000f, 1.0000f);
+
+  float3x3 XYZ_TO_XYZf10 = float3x3(
+      +0.2080f, 0.8280f, -0.0361f,
+      -0.5119f, 1.4009f, 0.1109f,
+      +0.0000f, 0.0000f, 1.0000f);
+
+  // Stockman & Sharpe 2 degree
+  float3x3 LMS_TO_XYZf = float3x3(
+      1.94735469f, -1.41445123f, 0.36476327f,
+      0.68990272f, +0.34832189f, 0.00000000f,
+      0.00000000f, +0.00000000f, 1.93485343f);
+
+  // float3x3 XYZ_TO_LMS_EE = renodx::color::xyz_TO_HUNT_POINTER_ESTEVEZ_LMS_MAT;
+
+  // Normalize each row of the matrix by its LMS_D65 component
+  float3x3 XYZ_TO_LMS = NormalizeXYZToLMS_D65(renodx::math::Invert3x3(LMS_TO_XYZf));
+  float3x3 LMS_TO_XYZ = renodx::math::Invert3x3(XYZ_TO_LMS);
+
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+
+  float3 LMS_WHITE = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(1.f));
+  float3 LMS_GRAY = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(MID_GRAY_LINEAR));
+  float3 LMS = mul(XYZ_TO_LMS, XYZ);
+
+  float LMS_sum = LMS.x + LMS.y + LMS.z;
+  float3 lms_sensitivies = LMS / (LMS_sum);
+
+  float3 peak_xyz = renodx::color::xyz::from::BT709(1.f);
+  float3 peak_lms = mul(XYZ_TO_LMS, peak_xyz);
+  float3 peak_lms_sum = peak_lms.x + peak_lms.y + peak_lms.z;
+  float3 peak_lms_sensitivities = peak_lms / (peak_lms_sum);
+
+  lms_sensitivies = lms_sensitivies / ((lms_sensitivies) / (peak_lms_sensitivities) + 1.f);
+
+  float3x3 LMS_TO_IPT = renodx::color::PLMS_TO_IPT_MAT;
+
+  float optical_gamma = MID_GRAY_GAMMA;
+
+  float3 lms_vibrancy = renodx::math::SignPow(LMS, 1.f / optical_gamma);
+  float3 ipt = mul(LMS_TO_IPT, lms_vibrancy);
+  ipt.yz *= vibrancy;
+  lms_vibrancy = mul(renodx::math::Invert3x3(LMS_TO_IPT), ipt);
+  lms_vibrancy = renodx::math::SignPow(lms_vibrancy, optical_gamma);
+
+  float3 LMS_rel = LMS;
+  float3 DKL_original = DKLFromLMS(LMS);
+  float3 DKL_gray = DKLFromLMS(LMS_GRAY);
+
+  float3 vibrant_dkl = DKL_original * float3(1.f, vibrancy, vibrancy);
+
+  float3 lms_contrast = LMS_GRAY * renodx::math::SignPow(LMS / LMS_GRAY, contrast);
+
+  bool use_dkl_luminance = true;
+
+  // if (use_dkl_luminance) {
+  //   vibrant_dkl.x = DKL_gray.x * renodx::math::SignPow(vibrant_dkl.x / DKL_gray.x, contrast);
+  // }
+
+  if (use_dkl_luminance) {
+    float r = vibrant_dkl.x / DKL_gray.x;
+    float s = sign(r);
+
+    float p = pow(abs(r), contrast) * s;
+
+    vibrant_dkl.x = DKL_gray.x * p;
+  }
+
+  lms_vibrancy = LMSFromDKL(vibrant_dkl);
+
+  float3 lms = lms_vibrancy;
+  XYZ = mul(LMS_TO_XYZ, lms);
+
+  color = renodx::color::bt709::from::XYZ(XYZ);
+
+  return color;
+}
 
 float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw::Config config) {
-  // float3 neutral_sdr = renodx::tonemap::neutwo::MaxChannel(untonemapped);
   float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
 
   float3 untonemapped_graded = renodx::draw::UpgradeToneMapByLuminance(untonemapped, neutral_sdr, graded_sdr_color, 1.f);
 
   untonemapped_graded = LMS_ToneMap_Stockman(untonemapped_graded, 1.0f, 1.0f);
+
+  // this dechromas too much
   // untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
 
   return renodx::draw::ToneMapPass(untonemapped_graded, config);
@@ -789,3 +842,162 @@ float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw
 float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color) {
   return ToneMapPassLMS(untonemapped, graded_sdr_color, renodx::draw::BuildConfig());
 }
+
+float3 ToneMapLMS(float3 untonemapped) {
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+  float3 untonemapped_graded = untonemapped;
+
+  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, 1.0f, 1.0f);
+
+  // naka rushton
+  untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
+
+  return renodx::draw::ToneMapPass(untonemapped_graded, config);
+}
+
+/// Rational curve used in case 4 of Nioh LUT builder.
+#define FFXV_GENERATOR(T)                                                                           \
+  T ApplyFFXVCurve(T x, float a, float b, float inv, float p, float Tmul, float n46, float n49) {   \
+    T tmp = a * x + b;                                                                              \
+    tmp = log2(tmp);                                                                                \
+    tmp = inv * tmp;                                                                                \
+    tmp = tmp * 0.693147182; /* ln2 */                                                              \
+    tmp = pow(tmp, p);                                                                              \
+    tmp = Tmul * tmp + 1;                                                                           \
+    tmp = log2(tmp);                                                                                \
+    tmp = n46 * tmp;                                                                                \
+    tmp = tmp * 0.693147182; /* ln2 */                                                              \
+    tmp = tmp - n49;                                                                                \
+    return tmp;                                                                                     \
+  }                                                                                                 \
+  T ApplyFFXVCurveLn(T x, float a, float b, float inv, float p, float Tmul, float n46, float n49) { \
+    T u = inv * log(a * x + b); /* natural log */                                                   \
+    u = pow(u, p);                                                                                  \
+    T y = n46 * log(1 + Tmul * u) - n49;                                                            \
+    return y;                                                                               \
+  } \
+
+FFXV_GENERATOR(float)
+FFXV_GENERATOR(float3)
+#undef FFXV_GENERATOR
+
+float Derivative_FFXVCurveLn(
+    float x,
+    float a,
+    float b,
+    float inv,
+    float p,
+    float Tmul,
+    float n46)
+{
+  float axb = a * x + b;
+  float g = log(axb);  // ln(a*x + b)
+  float u = inv * g;   // inner log domain
+
+  float up = pow(u, p);            // u^p
+  float dup = p * pow(u, p - 1.0)  // derivative of u^p
+              * inv * a / axb;
+
+  return n46 * (Tmul * dup) / (1.0 + Tmul * up);
+}
+
+float FFXV_ypp(
+    float x, float a, float b, float inv, float p, float Tmul, float n46)
+{
+  float axb = max(a * x + b, 1e-6);
+  float g = log(axb);
+  // If g can go <= 0 in your domain, clamp it to avoid pow issues:
+  float gSafe = max(g, 1e-6);
+
+  float u = inv * gSafe;
+
+  float up = pow(u, p);  // u^p
+
+  // (u^p)' = p*u^(p-1) * inv*a/(ax+b)
+  float up_p = p * pow(u, p - 1.0) * (inv * a / axb);
+
+  // (u^p)'' = p*inv*a^2/(ax+b)^2 * u^(p-2) * ((p-1) - g)
+  float up_pp = p * inv * (a * a) / (axb * axb) * pow(u, p - 2.0) * ((p - 1.0) - gSafe);
+
+  float denom = 1.0 + Tmul * up;
+
+  return n46 * ((Tmul * up_pp) / denom - (Tmul * Tmul * up_p * up_p) / (denom * denom));
+}
+
+float FindInflection_FFXV(
+    float xmin, float xmax,
+    int scanSteps, int bisectIters,
+    float a, float b, float inv, float p, float Tmul, float n46)
+{
+  float logMin = log(xmin + 1e-6);
+  float logMax = log(xmax);
+
+  float xPrev = exp(logMin);
+  float fPrev = FFXV_ypp(xPrev, a, b, inv, p, Tmul, n46);
+
+  float xl = xPrev, fl = fPrev;
+  float xr = xPrev, fr = fPrev;
+  bool found = false;
+
+  // 1) scan for sign change
+  [loop]
+  for (int i = 1; i <= scanSteps; i++)
+    {
+    float x = exp(lerp(logMin, logMax, (float)i / (float)scanSteps));
+    float f = FFXV_ypp(x, a, b, inv, p, Tmul, n46);
+
+    if ((fPrev <= 0 && f >= 0) || (fPrev >= 0 && f <= 0))
+        {
+      xl = xPrev; fl = fPrev;
+      xr = x; fr = f;
+      found = true;
+      break;
+    }
+
+    xPrev = x;
+    fPrev = f;
+  }
+
+  if (!found) return -1.0;  // no inflection in the range
+
+  // 2) bisection (midpoint in log space)
+  [loop]
+  for (int it = 0; it < bisectIters; it++)
+    {
+    float xm = sqrt(xl * xr);
+    float fm = FFXV_ypp(xm, a, b, inv, p, Tmul, n46);
+
+    if ((fl <= 0 && fm >= 0) || (fl >= 0 && fm <= 0))
+        {
+      xr = xm; fr = fm;
+    }
+        else
+        {
+      xl = xm; fl = fm;
+    }
+  }
+
+  return sqrt(xl * xr);
+}
+
+#define APPLYFFXVEXTENDED_GENERATOR(T)                                                                 \
+  T ApplyFFXVExtended(                                                                                 \
+      T x, T base, float a, float b, float inv, float p, float Tmul, float n46, float n49, float inflection) { \
+    float pivot_x = inflection;                                                                        \
+                                                                                                       \
+    float pivot_y = ApplyFFXVCurveLn(pivot_x, a, b, inv, p, Tmul, n46, n49);              \
+                                                                         \
+    float slope = Derivative_FFXVCurveLn(pivot_x, a, b, inv, p, Tmul, n46);                \
+                                                                         \
+    /* Line passing through (pivot_x, pivot_y) with matching slope */    \
+    T offset = pivot_y - slope * pivot_x;                                \
+    T extended = slope * x + offset;                                     \
+                                                                         \
+    return lerp(base, extended, step(pivot_x, x));                       \
+  }
+
+APPLYFFXVEXTENDED_GENERATOR(float)
+APPLYFFXVEXTENDED_GENERATOR(float3)
+#undef APPLYFFXVEXTENDED_GENERATOR
+
+

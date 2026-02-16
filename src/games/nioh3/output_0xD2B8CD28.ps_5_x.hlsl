@@ -226,7 +226,9 @@ void main(
   r0.xyz = saturate(r0.xyz * float3(0.0734997839, 0.0734997839, 0.0734997839) + float3(0.386036009, 0.386036009, 0.386036009));
   r1.xyz = g_tHdrLut.SampleLevel(sampleLinear_s, r0.xyz, 0).xyz;
 #else
-  r1.rgb = SampleHDRLUT(untonemapped, sampleLinear_s, g_tHdrLut);
+  r0.xyz = r3.xyz * float3(1.00006652, 1.00006652, 1.00006652) + float3(-0.00391646381, -0.00391646381, -0.00391646381);
+  r0.xyz = r0.www ? r0.xyz : r3.xyz;
+  r1.rgb = SampleHDRLUT(r0.rgb, sampleLinear_s, g_tHdrLut);
 #endif
   if (g_vDramaticHdrLutInfo0[0].w != 0) {
     r0.w = g_tSceneDepth.SampleLevel(samplePoint_s, r2.xz, 0).x;
@@ -418,3 +420,4 @@ void main(
   o0 = ProcessColor(o0);
   return;
 }
+////...............6666
