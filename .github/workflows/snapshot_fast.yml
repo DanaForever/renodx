@@ -70,7 +70,7 @@ jobs:
         run: cmake --build --preset clang-x64-release --target ys9 --verbose
       
       - name: Build (x64) for Dragon Quest XI
-        run: cmake --build --preset clang-x64-release --target dq11 --verbose
+        run: cmake --build --preset clang-x64-release --target dragonquest --verbose
       
       - name: Build (x64) for Persona 5 Royal
         run: cmake --build --preset clang-x64-release --target p5r --verbose
