@@ -124,7 +124,7 @@ void main(
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 color = r4.rgb;
 
-  color = ToneMapLMS(color, 203.f, 1200.f, 1.0f, 1.0f);
+  color = ToneMapLMS(color, 203.f, 1200.f, 1.0f, 1.0f); 
 
   color = GammaCorrectHuePreserving(color, 2.4f);
 

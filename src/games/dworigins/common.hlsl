@@ -84,6 +84,8 @@ float3 CastleDechroma_CVVDPStyle_NakaRushton(
   return testout * renodx::math::DivideSafe(luminance_in, luminance_out);
 }
 
+
+
 float3 Unclamp(float3 original_gamma, float3 black_gamma, float3 mid_gray_gamma, float3 neutral_gamma) {
   const float3 added_gamma = black_gamma;
 
@@ -214,7 +216,7 @@ float3 LMSFromDKL(float3 dkl) {
   return lms;
 }
 
-float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
+float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
   float3 XYZ = renodx::color::xyz::from::BT709(color);
   float original_y = XYZ.y;
 
@@ -295,20 +297,7 @@ float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
   lms_vibrancy = LMSFromDKL(vibrant_dkl);
 
   float3 lms = lms_vibrancy;
-
-  const float human_vision_peak = (4000.f / 203.f);
-  float3 peak_human_lms = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
-  float3 midgray_lms = LMS_GRAY;
-  // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
-  float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
-
-  // Naka Rushton per cone
-  float3 new_lms = float3(
-      sign(lms.x) * ReinhardExtended(abs(lms.x), 100.f, peak_human_lms.x, abs(midgray_lms.x)),
-      sign(lms.y) * ReinhardExtended(abs(lms.y), 100.f, peak_human_lms.y, abs(midgray_lms.y)),
-      sign(lms.z) * ReinhardExtended(abs(lms.z), 100.f, peak_human_lms.z, abs(midgray_lms.z)));
-
-  XYZ = mul(LMS_TO_XYZ, new_lms);
+  XYZ = mul(LMS_TO_XYZ, lms);
 
   color = renodx::color::bt709::from::XYZ(XYZ);
 
@@ -321,12 +310,11 @@ float3 ToneMapLMS(float3 untonemapped, float paperWhite, float peakWhite,
 float vibrancy = 1.0f, float contrast = 1.0f) {
   float3 color;
   color = untonemapped;
-
-  color = LMS_ToneMap_Stockman(color, vibrancy, contrast);
   
   float peak = peakWhite / paperWhite;
 
   // color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
+  // color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
   color = renodx::tonemap::neutwo::MaxChannel(color, peak);
   
 
@@ -455,9 +443,6 @@ float3 SampleScaledLUT(Texture3D<float4> lut, renodx::lut::Config lut_config, fl
   float3 linear_input_color = color;
 
   color = renodx::lut::Sample(lut, lut_config, linear_input_color);
-  // if (!RENODX_TONE_MAP_TYPE) {
-  //   return color;
-  // }
 
   float3 lutOutputLinear = color;
 
@@ -535,9 +520,7 @@ float3 SampleSDRLUT(float3 lut_input_color, SamplerState sampleLinear_s, Texture
   lut_config.type_output = renodx::lut::config::type::LINEAR;
   lut_config.recolor = 0.f;
 
-  if (RENODX_TONE_MAP_TYPE) {
-    color = renodx::tonemap::neutwo::BT709(color);
-  }
+  color = renodx::tonemap::neutwo::BT709(color);
 
   color = SampleScaledLUT(g_tLdrLut, lut_config, color);
   return color;

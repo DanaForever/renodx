@@ -284,6 +284,7 @@ void main(uint3 vThreadID : SV_DispatchThreadID)
       float3 extended = ApplyNiohExtended(x, base, A, B, C, D, E);
 
       extended = renodx::color::bt709::from::AP1(extended);
+      extended = LMS_Vibrancy(extended, 1.0, 1.1f);
       extended = CastleDechroma_CVVDPStyle_NakaRushton(extended, 50.f);
       extended = renodx::color::ap1::from::BT709(extended);
       // r3.xyz = r1.xyz * 30.9882221 + 1.19912136;

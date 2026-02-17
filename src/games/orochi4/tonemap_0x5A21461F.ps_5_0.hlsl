@@ -1,7 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri May 23 15:41:51 2025
 #include "./common.hlsl"
-#include "./DICE.hlsl"
-#include "./shared.h"
+#include "uncharted2extended.hlsli"
 
 cbuffer _Globals : register(b0)
 {
@@ -238,7 +237,7 @@ void main(
   r0.xyz = vSaturationScale.xyz * r0.xyz + r1.xxx;
 
   float3 untonemapped = convertToBT709(r0.xyz);
-  r0.xyz = displayMap(untonemapped); 
+  // r0.xyz = displayMap(untonemapped); 
 
   r1.xyz = fParamA * r0.xyz + fParamCB;
   r1.xyz = r0.xyz * r1.xyz + fParamDE;
@@ -248,59 +247,27 @@ void main(
   r0.xyz = -fParamEperF + r0.xyz;
   r0.xyz = fWhiteTone * r0.xyz;
 
-  float3 sdr = r0.xyz;
+  float precompute_white = fWhiteTone;
 
-  if (shader_injection.tone_map_type == 0.f) {
-    o0.xyz = renodx::math::SafePow(r0.xyz, fGamma);
-  } else if (shader_injection.tone_map_type == 2.f) {
-    // tonemap (0.18) to find mid gray
-    r0.xyz = float3(0.18f, 0.18f, 0.18f);
-    r1.xyz = fParamA * r0.xyz + fParamCB;
-    r1.xyz = r0.xyz * r1.xyz + fParamDE;
-    r2.xyz = fParamA * r0.xyz + fParamB;
-    r0.xyz = r0.xyz * r2.xyz + fParamDF;
-    r0.xyz = r1.xyz / r0.xyz;
-    r0.xyz = -fParamEperF + r0.xyz;
-    r0.xyz = fWhiteTone * r0.xyz;
-
-    float mid_gray = renodx::color::y::from::BT709(r0.xyz);
-    untonemapped *= mid_gray / 0.18f;
-
-    float3 hdr = DICEToneMap(untonemapped);
-    o0.rgb = renodx::color::correct::Hue(hdr, sdr, RENODX_TONE_MAP_HUE_CORRECTION, RENODX_TONE_MAP_HUE_PROCESSOR);
-    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-
+  if (RENODX_TONE_MAP_TYPE == 0.f) {
+    o0.rgb = r0.rgb;
   } else {
-    // tonemap (0.18) to find mid gray
-    r0.xyz = float3(0.18f, 0.18f, 0.18f);
-    r1.xyz = fParamA * r0.xyz + fParamCB;
-    r1.xyz = r0.xyz * r1.xyz + fParamDE;
-    r2.xyz = fParamA * r0.xyz + fParamB;
-    r0.xyz = r0.xyz * r2.xyz + fParamDF;
-    r0.xyz = r1.xyz / r0.xyz;
-    r0.xyz = -fParamEperF + r0.xyz;
-    r0.xyz = fWhiteTone * r0.xyz;
 
-    float mid_gray = renodx::color::y::from::BT709(r0.xyz);
-    untonemapped *= mid_gray / 0.18f;
-    float3 hdr;
+    const float A = 0.22, B = 0.30, C = 0.10, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
+    // const float A = cb0[4].w, B = cb0[5].z, C = cb0[5].x / cb0[5].z, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
 
-    if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
-      hdr = renodx::draw::ToneMapPass(untonemapped, sdr);
-    } else {
-      hdr = CustomUpgradeToneMapPerChannel(untonemapped, sdr);
-      hdr = renodx::draw::ToneMapPass(hdr);
-    }
+    float coeffs[6] = { A, B, C, D, E, F };
+    // float white_precompute = 1.f / renodx::tonemap::ApplyCurve(W, A, B, C, D, E, F);
+    Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfig(coeffs, precompute_white);
 
-    o0.rgb = hdr;
-    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+    float3 base = r0.xyz;
+    float3 extended = Uncharted2::ApplyExtended(untonemapped, base, uc2_config);
+
+    o0.rgb = extended;
+
+    o0.rgb = ToneMapLMS(o0.rgb);
   }
-
-  // o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
-
-  o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-
-  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  o0.rgb = PostToneMapProcess(o0.rgb);
 
   return;
 }

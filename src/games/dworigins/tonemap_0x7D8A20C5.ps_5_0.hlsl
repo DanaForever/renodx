@@ -212,6 +212,9 @@ void main(
     r3.xyz = r3.xyz * r0.yyy;
   }
   float3 untonemapped = r3.rgb;
+  r0.xyz = r3.xyz * float3(1.00006652, 1.00006652, 1.00006652) + float3(-0.00391646381, -0.00391646381, -0.00391646381);
+  r0.xyz = r0.www ? r0.xyz : r3.xyz;
+  untonemapped = r0.rgb;
 #if 0
   r0.xyz = r3.xyz * float3(1.00006652, 1.00006652, 1.00006652) + float3(-0.00391646381, -0.00391646381, -0.00391646381);
   r0.xyz = r0.www ? r0.xyz : r3.xyz;

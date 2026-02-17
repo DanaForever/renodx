@@ -227,8 +227,8 @@ void main(
   
   r0.xyz = r3.xyz * float3(1.00006652, 1.00006652, 1.00006652) + float3(-0.00391646381, -0.00391646381, -0.00391646381);
   r0.xyz = r0.www ? r0.xyz : r3.xyz;
+  float3 light = r0.www;
   float3 untonemapped = r0.rgb;
-  // r3.rgb;
 
 #if 0
   r0.xyz = r3.xyz * float3(1.00006652, 1.00006652, 1.00006652) + float3(-0.00391646381, -0.00391646381, -0.00391646381);
@@ -411,6 +411,7 @@ void main(
   // r0.yzw = g_vGammaCorrection.xxx * r0.yzw;
   // r0.yzw = exp2(r0.yzw);
   // r0.xyz = r0.xxx ? r0.yzw : r1.xyz;
+  r0.rgb = r1.rgb;
   o0.xyz = g_vRadialBlurCenter.zzz * r0.xyz;
 
   o0.w = 1;

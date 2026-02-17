@@ -44,14 +44,15 @@ struct ShaderInjectData {
   float color_grade_strength;
   float tone_map_type;
   float tone_map_mode;
-  float tone_map_exposure;
-  float tone_map_highlights;
-  float tone_map_shadows;
-  float tone_map_contrast;
-  float tone_map_saturation;
-  float tone_map_highlight_saturation;
-  float tone_map_blowout;
-  float tone_map_flare;
+  // float tone_map_exposure;
+  // float tone_map_highlights;
+  // float tone_map_shadows;
+  float tone_map_lms_contrast;
+  float tone_map_lms_vibrancy;
+  // float tone_map_saturation;
+  // float tone_map_highlight_saturation;
+  // float tone_map_blowout;
+  // float tone_map_flare;
   float tone_map_hue_correction;
   // float post_tone_map_hue_correction;
   float tone_map_hue_shift;
@@ -117,14 +118,14 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_TONE_MAP_HUE_SHIFT            shader_injection.tone_map_hue_shift
 #define RENODX_TONE_MAP_CLAMP_COLOR_SPACE    2.f // shader_injection.tone_map_clamp_color_space
 #define RENODX_TONE_MAP_CLAMP_PEAK           2.f // shader_injection.tone_map_clamp_peak
-#define RENODX_TONE_MAP_EXPOSURE             shader_injection.tone_map_exposure
-#define RENODX_TONE_MAP_HIGHLIGHTS           shader_injection.tone_map_highlights
-#define RENODX_TONE_MAP_SHADOWS              shader_injection.tone_map_shadows
-#define RENODX_TONE_MAP_CONTRAST             shader_injection.tone_map_contrast
-#define RENODX_TONE_MAP_SATURATION           shader_injection.tone_map_saturation
-#define RENODX_TONE_MAP_HIGHLIGHT_SATURATION shader_injection.tone_map_highlight_saturation
-#define RENODX_TONE_MAP_BLOWOUT              shader_injection.tone_map_blowout
-#define RENODX_TONE_MAP_FLARE                shader_injection.tone_map_flare
+// #define RENODX_TONE_MAP_EXPOSURE             shader_injection.tone_map_exposure
+// #define RENODX_TONE_MAP_HIGHLIGHTS           shader_injection.tone_map_highlights
+// #define RENODX_TONE_MAP_SHADOWS              shader_injection.tone_map_shadows
+// #define RENODX_TONE_MAP_CONTRAST             shader_injection.tone_map_contrast
+// #define RENODX_TONE_MAP_SATURATION           shader_injection.tone_map_saturation
+// #define RENODX_TONE_MAP_HIGHLIGHT_SATURATION shader_injection.tone_map_highlight_saturation
+// #define RENODX_TONE_MAP_BLOWOUT              shader_injection.tone_map_blowout
+// #define RENODX_TONE_MAP_FLARE                shader_injection.tone_map_flare
 #define RENODX_COLOR_GRADE_STRENGTH          shader_injection.color_grade_strength
 #define RENODX_INTERMEDIATE_ENCODING         1.f // shader_injection.intermediate_encoding
 #define RENODX_SWAP_CHAIN_DECODING           1.f // shader_injection.swap_chain_decoding

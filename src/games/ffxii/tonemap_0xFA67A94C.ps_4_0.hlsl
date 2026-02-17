@@ -79,20 +79,13 @@ void main(
   r1.xyz = r2.xyz * r0.xyz + r1.xyz;
   r1.xyz = (cb0[154].yyy * r1.xyz);
   r2.xyzw = t0.Sample(s0_s, v0.xy, int2(0, 0)).xyzw;  // sample the untonemapped
-  // r2.xyz = renodx::color::srgb::DecodeSafe(r2.xyz);
 
   r0.xyz = r2.xyz * r0.xyz;
 
   r0.w = dot(r2.xyzw, cb0[155].xyzw);
   o0.w = (cb0[154].w + r0.w);
 
-  // SetUntonemappedSRGB(r0.rgb);
-
   float3 untonemapped = renodx::color::srgb::DecodeSafe(r0.rgb);
-  // r0.rgb = RestoreHighlightSaturation(untonemapped);
-  if (CUSTOM_DISPLAY_MAP_TYPE > 0.f) {
-    r0.rgb = renodx::color::srgb::EncodeSafe(RestoreHighlightSaturation(untonemapped));
-  }
 
   // r0.xyz = cb0[154].xxx * r0.xyz;
 

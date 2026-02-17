@@ -831,7 +831,7 @@ float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw
 
   float3 untonemapped_graded = renodx::draw::UpgradeToneMapByLuminance(untonemapped, neutral_sdr, graded_sdr_color, 1.f);
 
-  untonemapped_graded = LMS_ToneMap_Stockman(untonemapped_graded, 1.0f, 1.0f);
+  untonemapped_graded = LMS_ToneMap_Stockman(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
 
   // this dechromas too much
   // untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
@@ -847,7 +847,7 @@ float3 ToneMapLMS(float3 untonemapped) {
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 untonemapped_graded = untonemapped;
 
-  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, 1.0f, 1.0f);
+  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
 
   // naka rushton
   untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
@@ -855,7 +855,7 @@ float3 ToneMapLMS(float3 untonemapped) {
   return renodx::draw::ToneMapPass(untonemapped_graded, config);
 }
 
-/// Rational curve used in case 4 of Nioh LUT builder.
+/// Log contrast curve used in case 4 of Nioh LUT builder.
 #define FFXV_GENERATOR(T)                                                                           \
   T ApplyFFXVCurve(T x, float a, float b, float inv, float p, float Tmul, float n46, float n49) {   \
     T tmp = a * x + b;                                                                              \
