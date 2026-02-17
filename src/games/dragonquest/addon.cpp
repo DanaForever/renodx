@@ -1292,26 +1292,26 @@ void AddAdvancedSettings() {
   auto filename = process_path.filename().string();
   auto default_settings = GAME_DEFAULT_SETTINGS.find(filename);
 
-  {
-    std::stringstream s;
-    if (default_settings == GAME_DEFAULT_SETTINGS.end()) {
-      auto product_name = renodx::utils::platform::GetProductName(process_path);
+  // {
+  //   std::stringstream s;
+  //   if (default_settings == GAME_DEFAULT_SETTINGS.end()) {
+  //     auto product_name = renodx::utils::platform::GetProductName(process_path);
 
-      default_settings = GAME_DEFAULT_SETTINGS.find(product_name);
+  //     default_settings = GAME_DEFAULT_SETTINGS.find(product_name);
 
-      if (default_settings == GAME_DEFAULT_SETTINGS.end()) {
-        s << "No default settings for ";
-      } else {
-        s << "Marked default values for ";
-      }
-      s << filename;
-      s << " (" << product_name << ")";
-    } else {
-      s << "Marked default values for ";
-      s << filename;
-    }
-    reshade::log::message(reshade::log::level::info, s.str().c_str());
-  }
+  //     if (default_settings == GAME_DEFAULT_SETTINGS.end()) {
+  //       s << "No default settings for ";
+  //     } else {
+  //       s << "Marked default values for ";
+  //     }
+  //     s << filename;
+  //     s << " (" << product_name << ")";
+  //   } else {
+  //     s << "Marked default values for ";
+  //     s << filename;
+  //   }
+  //   reshade::log::message(reshade::log::level::info, s.str().c_str());
+  // }
 
   auto add_setting = [&](auto* setting) {
     if (default_settings != GAME_DEFAULT_SETTINGS.end()) {
@@ -1456,76 +1456,76 @@ void AddAdvancedSettings() {
   //   renodx::mods::swapchain::SetUseHDR10(scrgb_setting->GetValue() == 0);
   // }
 
-//   {
-//     auto* force_borderless_setting = new renodx::utils::settings::Setting{
-//         .key = "ForceBorderless",
-//         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-//         .default_value = 1.f,
-//         .label = "Force Borderless",
-//         .section = "Resource Upgrades",
-//         .tooltip = "Forces fullscreen to be borderless for proper HDR",
-//         .labels = {
-//             "Disabled",
-//             "Enabled",
-//         },
-//         .is_global = true,
-//         .is_visible = []() { return settings[0]->GetValue() >= 2; },
-//     };
-//     add_setting(force_borderless_setting);
+  // {
+  //   auto* force_borderless_setting = new renodx::utils::settings::Setting{
+  //       .key = "ForceBorderless",
+  //       .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+  //       .default_value = 1.f,
+  //       .label = "Force Borderless",
+  //       .section = "Resource Upgrades",
+  //       .tooltip = "Forces fullscreen to be borderless for proper HDR",
+  //       .labels = {
+  //           "Disabled",
+  //           "Enabled",
+  //       },
+  //       .is_global = true,
+  //       .is_visible = []() { return settings[0]->GetValue() >= 2; },
+  //   };
+  //   add_setting(force_borderless_setting);
 
-//     if (force_borderless_setting->GetValue() == 0) {
-//       renodx::mods::swapchain::force_borderless = false;
-//     }
-//   }
+  //   if (force_borderless_setting->GetValue() == 0) {
+  //     renodx::mods::swapchain::force_borderless = false;
+  //   }
+  // }
 
-//   {
-//     auto* setting = new renodx::utils::settings::Setting{
-//         .key = "PreventFullscreen",
-//         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-//         .default_value = 1.f,
-//         .label = "Prevent Fullscreen",
-//         .section = "Resource Upgrades",
-//         .tooltip = "Prevent exclusive fullscreen for proper HDR",
-//         .labels = {
-//             "Disabled",
-//             "Enabled",
-//         },
-//         .on_change_value = [](float previous, float current) { renodx::mods::swapchain::prevent_full_screen = (current == 1.f); },
-//         .is_global = true,
-//         .is_visible = []() { return settings[0]->GetValue() >= 2; },
-//     };
-//     add_setting(setting);
+  // {
+  //   auto* setting = new renodx::utils::settings::Setting{
+  //       .key = "PreventFullscreen",
+  //       .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+  //       .default_value = 1.f,
+  //       .label = "Prevent Fullscreen",
+  //       .section = "Resource Upgrades",
+  //       .tooltip = "Prevent exclusive fullscreen for proper HDR",
+  //       .labels = {
+  //           "Disabled",
+  //           "Enabled",
+  //       },
+  //       .on_change_value = [](float previous, float current) { renodx::mods::swapchain::prevent_full_screen = (current == 1.f); },
+  //       .is_global = true,
+  //       .is_visible = []() { return settings[0]->GetValue() >= 2; },
+  //   };
+  //   add_setting(setting);
 
-//     renodx::mods::swapchain::prevent_full_screen = (setting->GetValue() == 1.f);
-//   }
+  //   renodx::mods::swapchain::prevent_full_screen = (setting->GetValue() == 1.f);
+  // }
 
-//   {
-//     auto* lut_dump_setting = new renodx::utils::settings::Setting{
-//         .key = "DumpLUTShaders",
-//         .binding = &g_dump_shaders,
-//         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-//         .default_value = 0.f,
-//         .label = "Dump LUT Shaders",
-//         .section = "Resource Upgrades",
-//         .tooltip = "Traces and dumps LUT shaders.",
-//         .labels = {
-//             "Off",
-//             "On",
-//         },
-//         .is_global = true,
-//         .is_visible = []() { return settings[0]->GetValue() >= 2; },
-//     };
-//     add_setting(lut_dump_setting);
+  {
+    auto* lut_dump_setting = new renodx::utils::settings::Setting{
+        .key = "DumpLUTShaders",
+        .binding = &g_dump_shaders,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .label = "Dump LUT Shaders",
+        .section = "Resource Upgrades",
+        .tooltip = "Traces and dumps LUT shaders.",
+        .labels = {
+            "Off",
+            "On",
+        },
+        .is_global = true,
+        .is_visible = []() { return settings[0]->GetValue() >= 2; },
+    };
+    add_setting(lut_dump_setting);
 
-//     g_dump_shaders = lut_dump_setting->GetValue();
-//   }
+    g_dump_shaders = lut_dump_setting->GetValue();
+  }
 
-//   settings.push_back({new renodx::utils::settings::Setting{
-//       .value_type = renodx::utils::settings::SettingValueType::TEXT,
-//       .label = "The application must be restarted for upgrades to take effect.",
-//       .section = "Resource Upgrades",
-//       .is_visible = []() { return settings[0]->GetValue() >= 2; },
-//   }});
+  settings.push_back({new renodx::utils::settings::Setting{
+      .value_type = renodx::utils::settings::SettingValueType::TEXT,
+      .label = "The application must be restarted for upgrades to take effect.",
+      .section = "Resource Upgrades",
+      .is_visible = []() { return settings[0]->GetValue() >= 2; },
+  }});
 }
 
 bool initialized = false;
@@ -1547,7 +1547,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       };
 
       if (!initialized) {
-        // AddAdvancedSettings();
+        AddAdvancedSettings();
 
         // for (auto* new_setting : info_settings) {
         //   settings.push_back(new_setting);

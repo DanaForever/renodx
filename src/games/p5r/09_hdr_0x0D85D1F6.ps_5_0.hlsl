@@ -96,22 +96,43 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   // t = 1.0 - (t / colorBlend.x);
   // t = 1.0 - (t / colorBlend.y);
 
+  float3 t_lin = renodx::color::srgb::DecodeSafe(t);
+  float Y = renodx::color::y::from::BT709(t_lin);
+
   float bias = 1.0 - 1.0 / colorBlend.y;
   float scale = 1.0 / (colorBlend.x * colorBlend.y);
   float cutoff = colorBlend.x * (1 - colorBlend.y);
 
-  float m = min(t.r, min(t.g, t.b));
-  // Parameter-free gate: 0 at/below cutoff, tends to 1 as m grows
-  float w = 1.0 - cutoff / (m + 1e-6);
-  w = saturate(w);
 
-  // t = t * scale + bias;
-  float3 t_aff = t * scale + bias;
+  // compute the danger threshold in *linear*
+  float t0_srgb = -bias / scale;  // where srgb affine crosses 0
+  float t0_lin = renodx::color::srgb::DecodeSafe(float3(t0_srgb, t0_srgb, t0_srgb)).r;
+
+  float m = min(t_lin.r, min(t_lin.g, t_lin.b));
+  float eps = 1e-6;
+  // k grows only when we're in the danger zone (m < t0)
+  // multiplicative “make-safe” factor based on linear luma
+  float k = max(1.0, t0_lin / (m + 1e-6));
+
+  // apply safety lift in linear, then convert back to srgb for the game’s affine
+  float3 t_safe_srgb = renodx::color::srgb::EncodeSafe(t_lin * k);
+
+  // game affine (still in srgb, preserving its look)
+  float3 t_aff = t_safe_srgb * scale + bias;
+
+  // undo the lift back in linear so HDR energy is preserved
+  float3 out_lin = renodx::color::srgb::DecodeSafe(t_aff) / k;
+  
+  float3 t_aff_fixed = renodx::color::srgb::EncodeSafe(out_lin);
 
   if (injectedData.toneMapBlackCorrection > 0.f) {
-    t = lerp(t, t_aff, w);
+    //   t = lerp(t, t_aff, w);
+    t = t_aff_fixed;
+    // optional: blend only when needed (k>1)
+    // float w = saturate((k - 1.0) / (k));  // 0 when k=1, ->1 as k grows
+    // t = lerp(t_aff, t_aff_fixed, 1.0);  // usually just use fixed version
   } else {
-    t = t_aff;
+    t = t * scale + bias;
   }
 
   float3 ungraded_linear = renodx::color::srgb::DecodeSafe(ungraded);
@@ -137,7 +158,7 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   
   o0 = float4(outRGB, 1.0);
 
-  o0.rgb = UserColorGradeSRGB(o0.rgb);
+  // o0.rgb = UserColorGradeSRGB(o0.rgb);
 
   return;
 }
