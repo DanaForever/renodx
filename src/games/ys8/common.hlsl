@@ -1,6 +1,5 @@
 #include "./shared.h"
-// #include "lms_matrix.hlsl"
-#include "DICE.hlsl"
+#include "./macleod_boynton.hlsli"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -126,607 +125,6 @@ float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
 
     return color;
 
-}
-
-/// Applies Exponential Roll-Off tonemapping using the maximum channel.
-/// Used to fit the color into a 0–output_max range for SDR LUT compatibility.
-float3 ToneMapMaxCLL(float3 color, float rolloff_start = 0.375f, float output_max = 1.f) {
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
-    return color;
-  }
-  color = min(color, 100.f);
-  float peak = max(color.r, max(color.g, color.b));
-  peak = min(peak, 100.f);
-  float log_peak = log2(peak);
-
-  // Apply exponential shoulder in log space
-  float log_mapped = renodx::tonemap::ExponentialRollOff(log_peak, log2(rolloff_start), log2(output_max));
-  float scale = exp2(log_mapped - log_peak);  // How much to compress all channels
-
-  return min(output_max, color * scale);
-}
-
-
-float3 ExponentialRollOffByLum(float3 color, float output_luminance_max, float highlights_shoulder_start = 0.f, bool pq = false) {
-  const float y = renodx::color::y::from::BT709(color);
-
-  [branch]
-  if (y > 0.0f) {
-    if (pq) {
-      highlights_shoulder_start = 0.33 * output_luminance_max;
-      float compressed_luminance = exp2(renodx::tonemap::ExponentialRollOff(log2(y), log2(highlights_shoulder_start), log2(output_luminance_max)));
-      color *= compressed_luminance / y;
-    }
-    else {
-      const float compressed_luminance = renodx::tonemap::ExponentialRollOff(y, highlights_shoulder_start, output_luminance_max);
-      color *= compressed_luminance / y;
-    }
-  }
-
-  return color;
-}
-
-
-float3 ApplyExponentialRollOff(float3 color, bool pq = false) {
-  const float paperWhite = RENODX_DIFFUSE_WHITE_NITS / renodx::color::srgb::REFERENCE_WHITE;
-
-  const float peakWhite = RENODX_PEAK_WHITE_NITS / renodx::color::srgb::REFERENCE_WHITE;
-
-  // const float highlightsShoulderStart = paperWhite;
-  float highlightsShoulderStart = 1.0f;
-
-  [branch]
-  if (RENODX_TONE_MAP_PER_CHANNEL == 1.f) {
-    // float3 color_lum = ExponentialRollOffByLum(color * paperWhite, peakWhite, highlightsShoulderStart, false) / paperWhite;
-
-    color = color * paperWhite;
-    float3 signs = sign(color);
-    color = abs(color);
-    color = renodx::tonemap::ExponentialRollOff(color, highlightsShoulderStart, peakWhite) / paperWhite;
-    color = signs * color;
-
-    // float y = renodx::color::y::from::BT709(color);
-    // color = renodx::color::correct::ChrominanceICtCp(color, color_lum, 0.5f);
-  } else {
-    float3 color_lum = ExponentialRollOffByLum(color * paperWhite, peakWhite, highlightsShoulderStart, false) / paperWhite;
-
-    color = color * paperWhite;
-    float3 signs = sign(color);
-    color = abs(color);
-    color = renodx::tonemap::ExponentialRollOff(color, highlightsShoulderStart, peakWhite) / paperWhite;
-    color = signs * color;
-
-    // float y = renodx::color::y::from::BT709(color);
-    color = renodx::color::correct::Chrominance(color_lum, color, 1.f, 0.f, RENODX_TONE_MAP_HUE_PROCESSOR);
-    // color = color_lum;
-  }
-
-  return color;
-}
-
-// float3 GamutCompress(float3 color) {
-//   color = renodx::color::bt2020::from::BT709(color);
-//   float grayscale = renodx::color::y::from::BT2020(color);
-//   // Desaturate (move towards grayscale) until no channel is below 0
-//   float max_negative_channel = min(color.r, min(color.g, color.b));
-//   if (max_negative_channel < 0.f) {
-//     float desat_amount = renodx::math::DivideSafe(-max_negative_channel, (grayscale - max_negative_channel), 1.f);
-//     color = lerp(grayscale, color, 1.f - desat_amount);
-//   }
-//   color = renodx::color::bt709::from::BT2020(color);
-//   return color;
-// }
-
-float3 GamutCompress(float3 color, float grayscale) {
-  // Desaturate (move towards grayscale) until no channel is below 0
-  float lowest_negative_channel = min(0.f, min(color.r, min(color.g, color.b)));
-  float distance = grayscale - lowest_negative_channel;
-
-  float ratio = renodx::math::DivideSafe(-lowest_negative_channel, distance, 0.f);
-
-  // if grayscale is 0, ratio is 0 via DivideSafe, so no change
-  // if minchannel is 0, ratio is 0, so no change
-  color = lerp(grayscale, color, 1.f - ratio);
-
-  return color;
-}
-
-float3 GamutCompress(float3 color) {
-  if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 2.f) {
-    color = renodx::color::ap1::from::BT709(color);
-    float y = renodx::color::y::from::AP1(color);
-    color = GamutCompress(color, y);
-    color = renodx::color::bt709::from::AP1(color);
-    return color;
-  }
-  else if (RENODX_TONE_MAP_WORKING_COLOR_SPACE == 1.f) {
-    color = renodx::color::bt2020::from::BT709(color);
-    float y = renodx::color::y::from::BT2020(color);
-    color = GamutCompress(color, y);
-    color = renodx::color::bt709::from::BT2020(color);
-    return color;
-  } else {
-    return GamutCompress(color, renodx::color::y::from::BT709(color));
-  }
-}
-
-
-float ReinhardExtended(float x, float white_max, float x_max = 1.f, float shoulder = 0.18f) {
-  const float x_min = 0.f;
-  // float exposure = renodx::tonemap::ComputeReinhardExtendableScale(white_max, x_max, x_min, shoulder, shoulder);
-  // float extended = renodx::tonemap::ReinhardExtended(x * exposure, white_max * exposure, x_max);
-  float exposure = renodx::tonemap::ComputeReinhardExtendableScale(white_max, x_max, x_min, shoulder, shoulder);
-  float extended = renodx::tonemap::ReinhardExtended(x * exposure, white_max * exposure, x_max);
-  extended = min(extended, x_max);
-
-  return extended;
-}
-
-float3x3 NormalizeXYZToLMS_D65(float3x3 M) {
-  static const float3 XYZ_D65 = float3(0.95047f, 1.00000f, 1.08883f);
-
-  float3 LMS_D65 = mul(M, XYZ_D65);
-  return float3x3(
-      M[0] / LMS_D65.x,
-      M[1] / LMS_D65.y,
-      M[2] / LMS_D65.z);
-}
-
-float3 DKLFromLMS(float3 lms) {
-  float3 dkl;
-  dkl.x = lms.x + lms.y;                                                 // Luminance (L + M)
-  dkl.y = renodx::math::DivideSafe(lms.x - lms.y, dkl.x, 0.f);           // L–M normalized by luminance
-  dkl.z = renodx::math::DivideSafe(lms.z - 0.5f * dkl.x, dkl.x, lms.z);  // S–(L+M) normalized
-  return dkl;
-}
-
-float3 LMSFromDKL(float3 dkl) {
-  float3 lms;
-  lms.x = 0.5f * dkl.x * (1.0f + dkl.y);         // L = ½ × luminance × (1 + L–M)
-  lms.y = 0.5f * dkl.x * (1.0f - dkl.y);         // M = ½ × luminance × (1 - L–M)
-  lms.z = 0.5f * dkl.x * (1.0f + 2.0f * dkl.z);  // S = ½ × luminance × (1 + 2×S–(L+M))
-  return lms;
-}
-
-float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
-  float3 XYZ = renodx::color::xyz::from::BT709(color);
-  float original_y = XYZ.y;
-
-  // Not used
-  float3x3 XYZ_TO_XYZf = float3x3(
-      0.2498f, 0.7865f, 0.0363f,
-      0.4429f, 1.3324f, 0.1105f,
-      0.0000f, 0.0000f, 1.0000f);
-
-  float3x3 XYZ_TO_XYZf10 = float3x3(
-      +0.2080f, 0.8280f, -0.0361f,
-      -0.5119f, 1.4009f, 0.1109f,
-      +0.0000f, 0.0000f, 1.0000f);
-
-  // Stockman & Sharpe 2 degree
-  float3x3 LMS_TO_XYZf = float3x3(
-      1.94735469f, -1.41445123f, 0.36476327f,
-      0.68990272f, +0.34832189f, 0.00000000f,
-      0.00000000f, +0.00000000f, 1.93485343f);
-
-  // float3x3 XYZ_TO_LMS_EE = renodx::color::xyz_TO_HUNT_POINTER_ESTEVEZ_LMS_MAT;
-
-  // Normalize each row of the matrix by its LMS_D65 component
-  float3x3 XYZ_TO_LMS = NormalizeXYZToLMS_D65(renodx::math::Invert3x3(LMS_TO_XYZf));
-  float3x3 LMS_TO_XYZ = renodx::math::Invert3x3(XYZ_TO_LMS);
-
-  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
-  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
-  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
-
-  float3 LMS_WHITE = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(1.f));
-  float3 LMS_GRAY = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(MID_GRAY_LINEAR));
-  float3 LMS = mul(XYZ_TO_LMS, XYZ);
-
-  float LMS_sum = LMS.x + LMS.y + LMS.z;
-  float3 lms_sensitivies = LMS / (LMS_sum);
-
-  float3 peak_xyz = renodx::color::xyz::from::BT709(1.f);
-  float3 peak_lms = mul(XYZ_TO_LMS, peak_xyz);
-  float3 peak_lms_sum = peak_lms.x + peak_lms.y + peak_lms.z;
-  float3 peak_lms_sensitivities = peak_lms / (peak_lms_sum);
-
-  lms_sensitivies = lms_sensitivies / ((lms_sensitivies) / (peak_lms_sensitivities) + 1.f);
-
-  float3x3 LMS_TO_IPT = renodx::color::PLMS_TO_IPT_MAT;
-
-  float optical_gamma = MID_GRAY_GAMMA;
-
-  float3 lms_vibrancy = renodx::math::SignPow(LMS, 1.f / optical_gamma);
-  float3 ipt = mul(LMS_TO_IPT, lms_vibrancy);
-  ipt.yz *= vibrancy;
-  lms_vibrancy = mul(renodx::math::Invert3x3(LMS_TO_IPT), ipt);
-  lms_vibrancy = renodx::math::SignPow(lms_vibrancy, optical_gamma);
-
-  float3 LMS_rel = LMS;
-  float3 DKL_original = DKLFromLMS(LMS);
-  float3 DKL_gray = DKLFromLMS(LMS_GRAY);
-
-  float3 vibrant_dkl = DKL_original * float3(1.f, vibrancy, vibrancy);
-
-  float3 lms_contrast = LMS_GRAY * renodx::math::SignPow(LMS / LMS_GRAY, contrast);
-
-  bool use_dkl_luminance = true;
-
-  // if (use_dkl_luminance) {
-  //   vibrant_dkl.x = DKL_gray.x * renodx::math::SignPow(vibrant_dkl.x / DKL_gray.x, contrast);
-  // }
-
-  if (use_dkl_luminance) {
-    float r = vibrant_dkl.x / DKL_gray.x;
-    float s = sign(r);
-
-    float p = pow(abs(r), contrast) * s;
-
-    vibrant_dkl.x = DKL_gray.x * p;
-  }
-
-  lms_vibrancy = LMSFromDKL(vibrant_dkl);
-
-  float3 lms = lms_vibrancy;
-
-  const float human_vision_peak = (4000.f / 203.f);
-  float3 peak_human_lms = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
-  float3 midgray_lms = LMS_GRAY;
-  // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
-  float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
-
-  // Naka Rushton per cone
-  float3 new_lms = float3(
-      sign(lms.x) * ReinhardExtended(abs(lms.x), 100.f, peak_human_lms.x, abs(midgray_lms.x)),
-      sign(lms.y) * ReinhardExtended(abs(lms.y), 100.f, peak_human_lms.y, abs(midgray_lms.y)),
-      sign(lms.z) * ReinhardExtended(abs(lms.z), 100.f, peak_human_lms.z, abs(midgray_lms.z)));
-
-  XYZ = mul(LMS_TO_XYZ, new_lms);
-
-  color = renodx::color::bt709::from::XYZ(XYZ);
-
-  return color;
-}
-
-float3 UserColorGrading(
-    float3 bt709,
-    float exposure,
-    float highlights,
-    float shadows,
-    float contrast,
-    float saturation,
-    float dechroma) {
-  if (exposure == 1.f
-      && saturation == 1.f
-      && dechroma == 0.f
-      && shadows == 1.f
-      && highlights == 1.f
-      && contrast == 1.f) {
-    return bt709;
-  }
-
-  float3 color = bt709;
-
-  color *= exposure;
-
-  float y = renodx::color::y::from::BT709(abs(color));
-  const float y_contrasted = renodx::color::grade::Contrast(y, contrast);
-  float y_highlighted = renodx::color::grade::Highlights(y_contrasted, highlights);
-  float y_shadowed = renodx::color::grade::Shadows(y_highlighted, shadows);
-  const float y_final = y_shadowed;
-
-  color = renodx::color::correct::Luminance(color, y, y_final);
-
-  if (saturation != 1.f || dechroma != 0.f) {
-    float3 perceptual_new = renodx::color::oklab::from::BT709(color);
-
-    if (dechroma != 0.f) {
-      perceptual_new.yz *= lerp(1.f, 0.f, saturate(pow(y / (10000.f / 100.f), (1.f - dechroma))));
-    }
-
-    perceptual_new.yz *= saturation;
-
-    color = renodx::color::bt709::from::OkLab(perceptual_new);
-
-    color = renodx::color::bt709::clamp::AP1(color);
-  }
-
-  return color;
-}
-
-float3 DICEToneMap(float3 color) {
-  float3 untonemapped = color;
-
-  color = UserColorGrading(
-      color,
-      RENODX_TONE_MAP_EXPOSURE,    // exposure
-      RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-      RENODX_TONE_MAP_SHADOWS,     // shadows
-      RENODX_TONE_MAP_CONTRAST,    // contrast
-      1.f,                         // saturation, we'll do this post-tonemap
-      0.f);                        // dechroma, post tonemapping
-                                   // hue correction, Post tonemapping
-
-  DICESettings DICEconfig = DefaultDICESettings();
-  DICEconfig.Type = (int)shader_injection.dice_tone_map_type;
-  DICEconfig.ShoulderStart = shader_injection.dice_shoulder_start;  // Start shoulder
-  DICEconfig.DesaturationAmount = shader_injection.dice_desaturation;
-  DICEconfig.DarkeningAmount = shader_injection.dice_darkening;
-
-  float dicePaperWhite = RENODX_DIFFUSE_WHITE_NITS / 80.f;
-  float dicePeakWhite = RENODX_PEAK_WHITE_NITS / 80.f;
-
-  color = ApplyDICE(color * dicePaperWhite, dicePeakWhite, DICEconfig) / dicePaperWhite;
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      1.f,                         // exposure
-      1.f,                         // highlights
-      1.f,                         // shadows
-      1.f,                         // contrast
-      RENODX_TONE_MAP_SATURATION,  // saturation
-      0.f,                         // dechroma, we don't need it
-      0.f,                         // Hue Correction Strength
-      color);                      // Hue Correction Type
-
-  return color;
-}
-
-float3 FrostbiteToneMap(float3 color) {
-  float3 untonemapped = color;
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      RENODX_TONE_MAP_EXPOSURE,    // exposure
-      RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-      RENODX_TONE_MAP_SHADOWS,     // shadows
-      RENODX_TONE_MAP_CONTRAST,    // contrast
-      1.f,                         // saturation, we'll do this post-tonemap
-      0.f,                         // dechroma, post tonemapping
-      0.f);                        // hue correction, Post tonemapping
-
-  float frostbitePeak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-  color = renodx::tonemap::frostbite::BT709(color, frostbitePeak);
-
-  color = renodx::color::grade::UserColorGrading(
-      color,
-      1.f,                         // exposure
-      1.f,                         // highlights
-      1.f,                         // shadows
-      1.f,                         // contrast
-      RENODX_TONE_MAP_SATURATION,  // saturation
-      0.f,                         // dechroma, we don't need it
-      0.f,                         // Hue Correction Strength
-      color);                      // Hue Correction Type
-
-  return color;
-}
-
-
-
-float3 ToneMap(float3 color) {
-  
-  float3 originalColor = color;
-
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
-    // return saturate(color);
-    return color;
-  } else if (shader_injection.tone_map_type == 1.f) {
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        RENODX_TONE_MAP_CONTRAST,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
-    color = FrostbiteToneMap(color);
-
-    color = UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        RENODX_TONE_MAP_BLOWOUT     // dechroma, we don't need it
-    );
-
-    return color;
-  }
-  else if (shader_injection.tone_map_type == 2.f) {
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        RENODX_TONE_MAP_CONTRAST,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
-    color = DICEToneMap(color);
-
-    color = UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        RENODX_TONE_MAP_BLOWOUT     // dechroma, we don't need it
-    );
-
-    return color;
-  
-  }
-  else if (shader_injection.tone_map_type == 3.f) {
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        RENODX_TONE_MAP_CONTRAST,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
-
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
-
-    float peak = shader_injection.peak_white_nits / shader_injection.diffuse_white_nits;
-
-    color = renodx::color::bt709::clamp::BT2020(color);
-
-    float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
-
-    // if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f) {
-    //   float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
-    //   color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
-    // }
-    // else
-    color = lum_color;
-
-    color = UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        RENODX_TONE_MAP_BLOWOUT     // dechroma, we don't need it
-    );
-
-    return color;
-  }
-
-  else if (shader_injection.tone_map_type >= 4.f) {
-  
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        1.f,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
-
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
-
-    // bool pq = (RENODX_TONE_MAP_WORKING_COLOR_SPACE > 0.f);
-    bool pq = false;
-    color = ApplyExponentialRollOff(color, pq);
-
-    color = renodx::color::grade::UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        0.f,                         // dechroma, we don't need it
-        0.f,                         // Hue Correction Strength
-        color);                      // Hue Correction Type
-
-    return color;
-  }
-
-  // default: no tonemapping
-  return color;
-}
-
-
-float3 SDRTonemap(float3 color) {
-  float tone_map_hue_correction_method = RENODX_TONE_MAP_HUE_CORRECTION_METHOD;
-  float3 sdr_color;
-  color = max(0.f, color);
-
-  if (tone_map_hue_correction_method == 2.f) {
-    sdr_color = renodx::tonemap::dice::BT709(color, 1.f, 0.f);
-  } else if (tone_map_hue_correction_method == 1.f) {
-    sdr_color = renodx::tonemap::renodrt::NeutralSDR(color);
-  } else if (tone_map_hue_correction_method == 0.f) {
-    sdr_color = renodx::tonemap::Reinhard(max(color, 0.f));
-  } else if (tone_map_hue_correction_method == 3.f) {
-    sdr_color = renodx::tonemap::uncharted2::BT709(max(color, 0.f));
-  } else if (tone_map_hue_correction_method == 3.f) {
-    sdr_color = renodx::tonemap::ACESFittedAP1(color);
-  } else if (tone_map_hue_correction_method == 4.f) {
-    sdr_color = saturate(color);
-  }
-
-  return sdr_color;
-}
-
-
-float3 correctHue(float3 color, float3 correctColor) {
-
-  if (RENODX_TONE_MAP_TYPE == 0.f)  {
-      return color;
-    }
-
-  if (RENODX_TONE_MAP_HUE_CORRECTION <= 0.f) {
-    return color;
-  }
-  
-  // float hue_correction_strength = saturate(renodx::color::y::from::BT709(color));
-  // float hue_correction_strength = RENODX_TONE_MAP_HUE_CORRECTION;
-  float hue_correction_strength = RENODX_TONE_MAP_HUE_CORRECTION;
-
-  if (hue_correction_strength > 0.f)
-
-    color = renodx::color::correct::Hue(color, correctColor,
-                                        hue_correction_strength,
-                                        RENODX_TONE_MAP_HUE_PROCESSOR);
-
-
-  return color;
-}
-
-
-float3 processAndToneMap(float3 color, bool decoding = true) {
-
-  if (decoding) {
-    color = renodx::color::srgb::DecodeSafe(color);
-  }
-
-  // float3 sdr_color = SDRTonemap(color);
-  // color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
-  
-  color = ToneMap(color);
-  // color = correctHue(color, sdr_color);
-  color = renodx::color::bt709::clamp::BT2020(color);
-
-  [branch]
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
-  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.3f);
-  } 
-  
-  // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
-  color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-
-  [branch]
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, true, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, true, 2.4f);
-  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-    color = renodx::color::correct::GammaSafe(color, true, 2.3f);
-  }
-
-  color = renodx::color::srgb::EncodeSafe(color);
-  return color;
 }
 
 
@@ -863,4 +261,212 @@ float3 HueAndChrominanceOKLab(
 
   float3 result = renodx::color::bt709::from::OkLab(incorrect_lab);
   return renodx::color::bt709::clamp::AP1(result);
+}
+
+float3 CorrectHueAndPurity(
+    float3 target_color_bt709,
+    float3 reference_color_bt709,
+    float strength = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f) {
+  float hue_t_ramp_start = 0.5f;
+  float hue_t_ramp_end = 1.f;
+  return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
+};
+
+float NR(float x, float sigma, float n) {
+  float ax = abs(x);
+  float xn = pow(max(ax, 0.0f), n);
+  float sn = pow(max(sigma, 1e-6f), n);
+  float r = xn / (xn + sn);
+  return (x < 0.0f) ? -r : r;
+}
+
+float NR_inv(float r, float sigma, float n) {
+  float ar = abs(r);
+  float rc = min(ar, 1.0f - 1e-6f);
+  float denom = max(1.0f - rc, 1e-6f);
+  float x = sigma * pow(rc / denom, 1.0f / n);
+  return (r < 0.0f) ? -x : x;
+}
+
+// CVVDP-style chroma plateau, but with a cone-domain Naka-Rushton stage.
+// The NR semi-saturation is anchored to CastleCSF achromatic sensitivity
+// at the adapting background (heuristic tie between detectability and cone gain).
+float3 CastleDechroma_CVVDPStyle_NakaRushton(
+    float3 rgb_lin,
+    float Lbkg_nits = 100.f,
+    float diffuse_white = 100.f,
+    float nr_n = 1.00f,
+    float nr_response_at_thr = 0.18f) {
+  // --------------------------------------------------------------------------
+  // 1) Convert stimulus + background to LMS and apply cone-domain NR
+  // --------------------------------------------------------------------------
+  float3x3 XYZ_TO_LMS_2006 = float3x3(
+      0.185082982238733f, 0.584081279463687f, -0.0240722415044404f,
+      -0.134433056469973f, 0.405752392775348f, 0.0358252602217631f,
+      0.000789456671966863f, -0.000912281325916184f, 0.0198490812339463f);
+
+  float3x3 XYZ_TO_LMS_PROPOSED_2023 = float3x3(
+      0.185083290265044, 0.584080232530060, -0.0240724126371618,
+      -0.134432464433222, 0.405751419882862, 0.0358251078084051,
+      0.000789395399878065, -0.000912213029667692, 0.0198489810108856);
+
+  XYZ_TO_LMS_2006 = XYZ_TO_LMS_PROPOSED_2023;
+
+  const float3x3 LMS_TO_XYZ_2006 = renodx::math::Invert3x3(XYZ_TO_LMS_2006);
+  const float3x3 BT709_TO_XYZ = renodx::color::BT709_TO_XYZ_MAT;
+  const float3x3 XYZ_TO_BT709 = renodx::color::XYZ_TO_BT709_MAT;
+  float3x3 BT709_TO_LMS = mul(XYZ_TO_LMS_2006, BT709_TO_XYZ);
+
+  float3 stim_nits = rgb_lin * diffuse_white;
+  float3 lms_stim = mul(BT709_TO_LMS, stim_nits);
+
+  float3 lms_bg = mul(BT709_TO_LMS, float3(1, 1, 1) * Lbkg_nits);
+
+  // CastleCSF sensitivity at background (achromatic) -> contrast threshold proxy.
+  const float rho = 1.0f;
+  const float omega = 0.0f;
+  const float ecc = 0.0f;
+  const float vis_field = 0.0f;
+  const float area = 3.14159265358979323846f;
+  float S_ach = renodx::color::castlecsf::Eq27_29_MechSens(rho, omega, ecc, vis_field, area, Lbkg_nits).x;
+  float c_thr = 1.0f / max(S_ach, 1e-6f);
+
+  float r_target = clamp(nr_response_at_thr, 1e-3f, 0.999f);
+  float sigma_scale = pow((1.0f - r_target) / r_target, 1.0f / max(nr_n, 1e-3f));
+  float x_ref = 1.0f + c_thr;
+
+  // Contrast-domain NR: normalize by background LMS so neutral stays neutral.
+  float sigma_rel = max(x_ref * sigma_scale, 1e-6f);
+  float3 lms_rel = lms_stim / max(abs(lms_bg), float3(1e-6f, 1e-6f, 1e-6f));
+
+  float3 lms_rel_nr = float3(
+      NR(lms_rel.x, sigma_rel, nr_n),
+      NR(lms_rel.y, sigma_rel, nr_n),
+      NR(lms_rel.z, sigma_rel, nr_n));
+  float bg_rel_nr = NR(1.0f, sigma_rel, nr_n);
+
+  float3 lms_stim_nr = lms_rel_nr * lms_bg;
+  float3 lms_bg_nr = bg_rel_nr.xxx * lms_bg;
+
+  // Test output
+  float luminance_in = renodx::color::y::from::BT709(rgb_lin);
+  float3 testout = mul(XYZ_TO_BT709, mul(LMS_TO_XYZ_2006, lms_stim_nr)) / diffuse_white;
+  float luminance_out = renodx::color::y::from::BT709(testout);
+  return testout * luminance_in / luminance_out;
+}
+
+float3x3 NormalizeXYZToLMS_D65(float3x3 M) {
+  static const float3 XYZ_D65 = float3(0.95047f, 1.00000f, 1.08883f);
+
+  float3 LMS_D65 = mul(M, XYZ_D65);
+  return float3x3(
+      M[0] / LMS_D65.x,
+      M[1] / LMS_D65.y,
+      M[2] / LMS_D65.z);
+}
+
+float3 DKLFromLMS(float3 lms) {
+  float3 dkl;
+  dkl.x = lms.x + lms.y;                                                 // Luminance (L + M)
+  dkl.y = renodx::math::DivideSafe(lms.x - lms.y, dkl.x, 0.f);           // L–M normalized by luminance
+  dkl.z = renodx::math::DivideSafe(lms.z - 0.5f * dkl.x, dkl.x, lms.z);  // S–(L+M) normalized
+  return dkl;
+}
+
+float3 LMSFromDKL(float3 dkl) {
+  float3 lms;
+  lms.x = 0.5f * dkl.x * (1.0f + dkl.y);         // L = ½ × luminance × (1 + L–M)
+  lms.y = 0.5f * dkl.x * (1.0f - dkl.y);         // M = ½ × luminance × (1 - L–M)
+  lms.z = 0.5f * dkl.x * (1.0f + 2.0f * dkl.z);  // S = ½ × luminance × (1 + 2×S–(L+M))
+  return lms;
+}
+
+float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
+  float3 XYZ = renodx::color::xyz::from::BT709(color);
+  float original_y = XYZ.y;
+
+  // Not used
+  float3x3 XYZ_TO_XYZf = float3x3(
+      0.2498f, 0.7865f, 0.0363f,
+      0.4429f, 1.3324f, 0.1105f,
+      0.0000f, 0.0000f, 1.0000f);
+
+  float3x3 XYZ_TO_XYZf10 = float3x3(
+      +0.2080f, 0.8280f, -0.0361f,
+      -0.5119f, 1.4009f, 0.1109f,
+      +0.0000f, 0.0000f, 1.0000f);
+
+  // Stockman & Sharpe 2 degree
+  float3x3 LMS_TO_XYZf = float3x3(
+      1.94735469f, -1.41445123f, 0.36476327f,
+      0.68990272f, +0.34832189f, 0.00000000f,
+      0.00000000f, +0.00000000f, 1.93485343f);
+
+  // float3x3 XYZ_TO_LMS_EE = renodx::color::xyz_TO_HUNT_POINTER_ESTEVEZ_LMS_MAT;
+
+  // Normalize each row of the matrix by its LMS_D65 component
+  float3x3 XYZ_TO_LMS = NormalizeXYZToLMS_D65(renodx::math::Invert3x3(LMS_TO_XYZf));
+  float3x3 LMS_TO_XYZ = renodx::math::Invert3x3(XYZ_TO_LMS);
+
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+
+  float3 LMS_WHITE = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(1.f));
+  float3 LMS_GRAY = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(MID_GRAY_LINEAR));
+  float3 LMS = mul(XYZ_TO_LMS, XYZ);
+
+  float LMS_sum = LMS.x + LMS.y + LMS.z;
+  float3 lms_sensitivies = LMS / (LMS_sum);
+
+  float3 peak_xyz = renodx::color::xyz::from::BT709(1.f);
+  float3 peak_lms = mul(XYZ_TO_LMS, peak_xyz);
+  float3 peak_lms_sum = peak_lms.x + peak_lms.y + peak_lms.z;
+  float3 peak_lms_sensitivities = peak_lms / (peak_lms_sum);
+
+  lms_sensitivies = lms_sensitivies / ((lms_sensitivies) / (peak_lms_sensitivities) + 1.f);
+
+  float3x3 LMS_TO_IPT = renodx::color::PLMS_TO_IPT_MAT;
+
+  float optical_gamma = MID_GRAY_GAMMA;
+
+  float3 lms_vibrancy = renodx::math::SignPow(LMS, 1.f / optical_gamma);
+  float3 ipt = mul(LMS_TO_IPT, lms_vibrancy);
+  ipt.yz *= vibrancy;
+  lms_vibrancy = mul(renodx::math::Invert3x3(LMS_TO_IPT), ipt);
+  lms_vibrancy = renodx::math::SignPow(lms_vibrancy, optical_gamma);
+
+  float3 LMS_rel = LMS;
+  float3 DKL_original = DKLFromLMS(LMS);
+  float3 DKL_gray = DKLFromLMS(LMS_GRAY);
+
+  float3 vibrant_dkl = DKL_original * float3(1.f, vibrancy, vibrancy);
+
+  float3 lms_contrast = LMS_GRAY * renodx::math::SignPow(LMS / LMS_GRAY, contrast);
+
+  bool use_dkl_luminance = true;
+
+  // if (use_dkl_luminance) {
+  //   vibrant_dkl.x = DKL_gray.x * renodx::math::SignPow(vibrant_dkl.x / DKL_gray.x, contrast);
+  // }
+
+  if (use_dkl_luminance) {
+    float r = vibrant_dkl.x / DKL_gray.x;
+    float s = sign(r);
+
+    float p = pow(abs(r), contrast) * s;
+
+    vibrant_dkl.x = DKL_gray.x * p;
+  }
+
+  lms_vibrancy = LMSFromDKL(vibrant_dkl);
+
+  float3 lms = lms_vibrancy;
+  XYZ = mul(LMS_TO_XYZ, lms);
+
+  color = renodx::color::bt709::from::XYZ(XYZ);
+
+  return color;
 }

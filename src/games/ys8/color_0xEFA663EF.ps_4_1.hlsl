@@ -128,45 +128,64 @@ void main(
     sdr = renodx::color::srgb::DecodeSafe(sdr);
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
-    float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(hdr);
-    // sdr = saturate(sdr);
-
     // hdr = renodx::tonemap::UpgradeToneMap(hdr, neutral_sdr, sdr);
-    hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, 0.5f, 0.5f);
+    // hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, 0.5f, 0.5f);
+    hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.tone_map_hue_correction);
+    hdr = LMS_Vibrancy(hdr, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast);
+    hdr = CastleDechroma_CVVDPStyle_NakaRushton(hdr, 50.f);
 
     o0.rgb = hdr;
     o0.rgb = expandGamut(o0.rgb, shader_injection.inverse_tonemap_extra_hdr_saturation);
-    // o0.rgb = ToneMap(o0.rgb);
-       
-    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+
   } else {
     o0.rgb = sdr;
     o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-    // o0.rgb = saturate(o0.rgb);
   }
 
-  // o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
+    // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
+    // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.3f);
+    // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.3f);
+  }
+
   float3 color = o0.rgb;
+  renodx::draw::Config config = renodx::draw::BuildConfig();
   [branch]
-  if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-  } else if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT709D93(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT601NTSCU(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::ARIBTRB9(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
   }
 
-  color *= shader_injection.diffuse_white_nits / shader_injection.graphics_white_nits;
+  // Gamut Compression
+  color = renodx::color::bt2020::from::BT709(color);
+  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+  float encode_gamma = MID_GRAY_GAMMA;
+  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
 
-  [branch]
-  if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, true, 2.2f);
-  } else if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, true, 2.4f);
-  }
+  color = max(0.f, color);
+  color = renodx::color::bt709::from::BT2020(color);
 
-  // if (shader_injection.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
-  //   color = renodx::color::bt709::from::BT709D93(color);
-  // } 
-
+  // srgb encoding to match the UI decoding (later)
   color = renodx::color::srgb::EncodeSafe(color);
   o0.rgb = color;
   o0.w = 1;

@@ -95,6 +95,9 @@ struct ShaderInjectData {
   float dice_shoulder_start;
   float dice_desaturation;
   float dice_darkening;
+
+  float tone_map_lms_contrast;
+  float tone_map_lms_vibrancy;
 };
 
 #ifndef __cplusplus

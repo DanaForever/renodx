@@ -1,6 +1,7 @@
 
 #include "./shared.h"
 #include "lms_matrix.hlsl"
+#include "macleod_boynton.hlsli"
 
 float3 srgbDecode(float3 color) {
   if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f) {
@@ -196,28 +197,8 @@ float3 UserColorGrading(
 float3 FrostbiteToneMap(float3 color) {
   float3 untonemapped = color;
 
-  color = UserColorGrading(
-      color,
-      RENODX_TONE_MAP_EXPOSURE,    // exposure
-      RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-      RENODX_TONE_MAP_SHADOWS,     // shadows
-      RENODX_TONE_MAP_CONTRAST,    // contrast
-      1.f,                         // saturation, we'll do this post-tonemap
-      0.f                         // dechroma, post tonemapping
-  );
-
   float frostbitePeak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
   color = renodx::tonemap::frostbite::BT709(color, frostbitePeak);
-
-  color = UserColorGrading(
-      color,
-      1.f,                         // exposure
-      1.f,                         // highlights
-      1.f,                         // shadows
-      1.f,                         // contrast
-      RENODX_TONE_MAP_SATURATION,  // saturation
-      RENODX_TONE_MAP_BLOWOUT     // dechroma, we don't need it
-  );
 
   return color;
 }
@@ -264,6 +245,13 @@ float3 MassEffectDisplayMap(float3 linear_color, float shoulder_start, float pea
   return MapHDRSceneToDisplayCapabilities(linear_color, shoulder_start, peak_nits, scene_peak);
 }
 
+float3 LMS_Processing(float3 color) {
+  color = LMS_Vibrancy(color, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+  color = CastleDechroma_CVVDPStyle_NakaRushton(color);
+
+  return color;
+}
+
 float3 ToneMap(float3 color) {
   float3 originalColor = color;
 
@@ -271,52 +259,21 @@ float3 ToneMap(float3 color) {
     return color;
 
   } else if (shader_injection.tone_map_type == 1.f) {
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
+    color = LMS_Processing(color);
+                                 
     color = FrostbiteToneMap(color);
 
     return color;
   } else if (shader_injection.tone_map_type == 2.f) {
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        RENODX_TONE_MAP_CONTRAST,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
-
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
+    color = LMS_Processing(color);
     color = DICEToneMap(color);
 
-    color = UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        RENODX_TONE_MAP_BLOWOUT     // dechroma, we don't need it
-    );
-
+    
     return color;
 
   }
   else if (shader_injection.tone_map_type == 3.f) {
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        RENODX_TONE_MAP_CONTRAST,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
-
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
+    color = LMS_Processing(color);
 
     float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
@@ -325,35 +282,14 @@ float3 ToneMap(float3 color) {
     float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
     // float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
 
-    // if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f)
-    //   color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
-    // else
-      color = lum_color;
+ 
+    color = lum_color;
 
-    color = UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        RENODX_TONE_MAP_BLOWOUT    // dechroma, we don't need it
-      );                     
+             
 
     return color;
   } else if (shader_injection.tone_map_type == 4.f) {
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        RENODX_TONE_MAP_CONTRAST,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
-
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
+    color = LMS_Processing(color);
 
     // bool pq = (RENODX_TONE_MAP_WORKING_COLOR_SPACE > 0.f);
     bool pq = false;
@@ -362,45 +298,12 @@ float3 ToneMap(float3 color) {
     float scene_nits = 4000.f / 203.f;
     color = MassEffectDisplayMap(color, shoulder_start, peak_nits, scene_nits);
 
-    color = renodx::color::grade::UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        RENODX_TONE_MAP_BLOWOUT,                         // dechroma, we don't need it
-        0.f,                         // Hue Correction Strength
-        color);                      // Hue Correction Type
-
     return color;
   } else if (shader_injection.tone_map_type == 5.f) {
-    color = UserColorGrading(
-        color,
-        RENODX_TONE_MAP_EXPOSURE,    // exposure
-        RENODX_TONE_MAP_HIGHLIGHTS,  // highlights
-        RENODX_TONE_MAP_SHADOWS,     // shadows
-        RENODX_TONE_MAP_CONTRAST,    // contrast
-        1.f,                         // saturation, we'll do this post-tonemap
-        0.f);                        // dechroma, post tonemapping
-                                     // hue correction, Post tonemapping
-
-    color = LMS_ToneMap_Stockman(color, 1.f,
-                                 1.f);
+    color = LMS_Processing(color);
 
     float peak_nits = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
     color = renodx::tonemap::neutwo::MaxChannel(color, peak_nits);
-
-    color = renodx::color::grade::UserColorGrading(
-        color,
-        1.f,                         // exposure
-        1.f,                         // highlights
-        1.f,                         // shadows
-        1.f,                         // contrast
-        RENODX_TONE_MAP_SATURATION,  // saturation
-        RENODX_TONE_MAP_BLOWOUT,     // dechroma, we don't need it
-        0.f,                         // Hue Correction Strength
-        color);                      // Hue Correction Type
 
     return color;
   }else {
@@ -511,3 +414,14 @@ float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
 
   return color;
 }
+
+float3 CorrectHueAndPurity(
+    float3 target_color_bt709,
+    float3 reference_color_bt709,
+    float strength = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f) {
+  float hue_t_ramp_start = 0.5f;
+  float hue_t_ramp_end = 1.f;
+  return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
+};

@@ -130,7 +130,7 @@ void main(
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
     // hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
-
+    hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
     o0.rgb = hdr;
     // o0.rgb = sdr;
 

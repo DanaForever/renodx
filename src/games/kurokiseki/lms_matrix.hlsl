@@ -58,8 +58,7 @@ float ReinhardExtended(float x, float white_max, float x_max = 1.f, float should
   return extended;
 }
 
-
-float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
+float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
   float3 XYZ = renodx::color::xyz::from::BT709(color);
   float original_y = XYZ.y;
 
@@ -124,6 +123,10 @@ float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
 
   bool use_dkl_luminance = true;
 
+  // if (use_dkl_luminance) {
+  //   vibrant_dkl.x = DKL_gray.x * renodx::math::SignPow(vibrant_dkl.x / DKL_gray.x, contrast);
+  // }
+
   if (use_dkl_luminance) {
     float r = vibrant_dkl.x / DKL_gray.x;
     float s = sign(r);
@@ -136,22 +139,7 @@ float3 LMS_ToneMap_Stockman(float3 color, float vibrancy, float contrast) {
   lms_vibrancy = LMSFromDKL(vibrant_dkl);
 
   float3 lms = lms_vibrancy;
-  // float3 lms = vibrant_dkl;
-
-  const float human_vision_peak = (4000.f / 203.f);
-  float3 peak_human_lms = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
-  float3 midgray_lms = LMS_GRAY;
-  // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
-  float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
-
-  // Naka Rushton per cone
-  float3 new_lms = float3(
-      sign(lms.x) * ReinhardExtended(abs(lms.x), 100.f, peak_human_lms.x, abs(midgray_lms.x)),
-      sign(lms.y) * ReinhardExtended(abs(lms.y), 100.f, peak_human_lms.y, abs(midgray_lms.y)),
-      sign(lms.z) * ReinhardExtended(abs(lms.z), 100.f, peak_human_lms.z, abs(midgray_lms.z)));
-  // float3 new_lms = lms;
-
-  XYZ = mul(LMS_TO_XYZ, new_lms);
+  XYZ = mul(LMS_TO_XYZ, lms);
 
   color = renodx::color::bt709::from::XYZ(XYZ);
 
@@ -370,4 +358,87 @@ float3 DICEToneMap(float3 color) {
   color = ApplyDICE(color * dicePaperWhite, dicePeakWhite, DICEconfig) / dicePaperWhite;
 
   return color;
+}
+
+float NR(float x, float sigma, float n) {
+  float ax = abs(x);
+  float xn = pow(max(ax, 0.0f), n);
+  float sn = pow(max(sigma, 1e-6f), n);
+  float r = xn / (xn + sn);
+  return (x < 0.0f) ? -r : r;
+}
+
+float NR_inv(float r, float sigma, float n) {
+  float ar = abs(r);
+  float rc = min(ar, 1.0f - 1e-6f);
+  float denom = max(1.0f - rc, 1e-6f);
+  float x = sigma * pow(rc / denom, 1.0f / n);
+  return (r < 0.0f) ? -x : x;
+}
+
+// CVVDP-style chroma plateau, but with a cone-domain Naka-Rushton stage.
+// The NR semi-saturation is anchored to CastleCSF achromatic sensitivity
+// at the adapting background (heuristic tie between detectability and cone gain).
+float3 CastleDechroma_CVVDPStyle_NakaRushton(
+    float3 rgb_lin,
+    float Lbkg_nits = 100.f,
+    float diffuse_white = 100.f,
+    float nr_n = 1.00f,
+    float nr_response_at_thr = 0.18f) {
+  // --------------------------------------------------------------------------
+  // 1) Convert stimulus + background to LMS and apply cone-domain NR
+  // --------------------------------------------------------------------------
+  float3x3 XYZ_TO_LMS_2006 = float3x3(
+      0.185082982238733f, 0.584081279463687f, -0.0240722415044404f,
+      -0.134433056469973f, 0.405752392775348f, 0.0358252602217631f,
+      0.000789456671966863f, -0.000912281325916184f, 0.0198490812339463f);
+
+  float3x3 XYZ_TO_LMS_PROPOSED_2023 = float3x3(
+      0.185083290265044, 0.584080232530060, -0.0240724126371618,
+      -0.134432464433222, 0.405751419882862, 0.0358251078084051,
+      0.000789395399878065, -0.000912213029667692, 0.0198489810108856);
+
+  XYZ_TO_LMS_2006 = XYZ_TO_LMS_PROPOSED_2023;
+
+  const float3x3 LMS_TO_XYZ_2006 = renodx::math::Invert3x3(XYZ_TO_LMS_2006);
+  const float3x3 BT709_TO_XYZ = renodx::color::BT709_TO_XYZ_MAT;
+  const float3x3 XYZ_TO_BT709 = renodx::color::XYZ_TO_BT709_MAT;
+  float3x3 BT709_TO_LMS = mul(XYZ_TO_LMS_2006, BT709_TO_XYZ);
+
+  float3 stim_nits = rgb_lin * diffuse_white;
+  float3 lms_stim = mul(BT709_TO_LMS, stim_nits);
+
+  float3 lms_bg = mul(BT709_TO_LMS, float3(1, 1, 1) * Lbkg_nits);
+
+  // CastleCSF sensitivity at background (achromatic) -> contrast threshold proxy.
+  const float rho = 1.0f;
+  const float omega = 0.0f;
+  const float ecc = 0.0f;
+  const float vis_field = 0.0f;
+  const float area = 3.14159265358979323846f;
+  float S_ach = renodx::color::castlecsf::Eq27_29_MechSens(rho, omega, ecc, vis_field, area, Lbkg_nits).x;
+  float c_thr = 1.0f / max(S_ach, 1e-6f);
+
+  float r_target = clamp(nr_response_at_thr, 1e-3f, 0.999f);
+  float sigma_scale = pow((1.0f - r_target) / r_target, 1.0f / max(nr_n, 1e-3f));
+  float x_ref = 1.0f + c_thr;
+
+  // Contrast-domain NR: normalize by background LMS so neutral stays neutral.
+  float sigma_rel = max(x_ref * sigma_scale, 1e-6f);
+  float3 lms_rel = lms_stim / max(abs(lms_bg), float3(1e-6f, 1e-6f, 1e-6f));
+
+  float3 lms_rel_nr = float3(
+      NR(lms_rel.x, sigma_rel, nr_n),
+      NR(lms_rel.y, sigma_rel, nr_n),
+      NR(lms_rel.z, sigma_rel, nr_n));
+  float bg_rel_nr = NR(1.0f, sigma_rel, nr_n);
+
+  float3 lms_stim_nr = lms_rel_nr * lms_bg;
+  float3 lms_bg_nr = bg_rel_nr.xxx * lms_bg;
+
+  // Test output
+  float luminance_in = renodx::color::y::from::BT709(rgb_lin);
+  float3 testout = mul(XYZ_TO_BT709, mul(LMS_TO_XYZ_2006, lms_stim_nr)) / diffuse_white;
+  float luminance_out = renodx::color::y::from::BT709(testout);
+  return testout * luminance_in / luminance_out;
 }
