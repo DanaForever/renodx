@@ -172,11 +172,6 @@ void main(
     color = SE_Saturation(color);
   }
 
-  // color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
-  // color *= 2;
-
-  
-
   [branch]
   if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);

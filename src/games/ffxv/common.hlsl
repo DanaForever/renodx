@@ -850,9 +850,17 @@ float3 ToneMapLMS(float3 untonemapped) {
   untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
 
   // naka rushton
-  untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
+  untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded);
 
-  return renodx::draw::ToneMapPass(untonemapped_graded, config);
+  float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+
+  float3 bt2020_untonemapped = renodx::color::bt2020::from::BT709(untonemapped_graded);                    // displaymap in bt2020
+  float3 bt2020_tonemapped = renodx::tonemap::neutwo::MaxChannel(bt2020_untonemapped, peak_ratio, 100.f);  // Display map to peak
+  float3 bt709_tonemapped = renodx::color::bt709::from::BT2020(bt2020_tonemapped);
+  // float3 bt2020_displaymapped_color = renodx::tonemap::HermiteSplineLuminanceRolloff(max(0, bt2020_final_color), peak_ratio, 100.f);  // Display map to peak
+  // float3 bt2020_displaymapped_color = renodx::tonemap::neutwo::PerChannel(max(0, bt2020_final_color), peak_ratio, 100.f);  // Display map to peak
+
+  return bt709_tonemapped;
 }
 
 /// Log contrast curve used in case 4 of Nioh LUT builder.

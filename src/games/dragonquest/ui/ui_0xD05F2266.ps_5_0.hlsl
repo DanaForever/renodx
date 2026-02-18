@@ -119,7 +119,6 @@ void main(
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.4f);
   }
-  
   o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / 80.f;
 
   return;

@@ -46,9 +46,6 @@ void main(
   if (RENODX_TONE_MAP_TYPE <= 1.f) {
     r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-    // srgb decoding
-    // r0.xyz = renodx::color::srgb::DecodeSafe(r0.xyz);
-
     // gamma scaling
     if (RENODX_TONE_MAP_TYPE == 0.f) {
       // SDR gamma = 1.0, HDR gamma = 1.3

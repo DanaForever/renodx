@@ -1359,22 +1359,30 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
 
         renodx::mods::swapchain::use_resource_cloning = true;
-        // renodx::mods::swapchain::swap_chain_proxy_shaders = {
-        //     {
-        //         reshade::api::device_api::d3d11,
-        //         {
-        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
-        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
-        //         },
-        //     },
-        //     {
-        //         reshade::api::device_api::d3d12,
-        //         {
-        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
-        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
-        //         },
-        //     },
-        // };
+        auto process_path = renodx::utils::platform::GetCurrentProcessPath();
+        auto filename = process_path.filename().string();
+        auto product_name = renodx::utils::platform::GetProductName(process_path);
+        
+        if (product_name == "DQ7R" || filename == "DQ7R-Win64-Shipping.exe") {
+          renodx::mods::swapchain::swap_chain_proxy_shaders = {
+              {
+                  reshade::api::device_api::d3d11,
+                  {
+                      .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
+                      .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
+                  },
+              },
+              {
+                  reshade::api::device_api::d3d12,
+                  {
+                      .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
+                      .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
+                  },
+              },
+          };
+
+          
+        }
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_typeless,
@@ -1423,8 +1431,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r11g11b10_float,
             .new_format = reshade::api::format::r16g16b16a16_float,
+            .ignore_size = true,
             .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
         });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
