@@ -259,8 +259,8 @@ float4 GenerateOutput(float r, float g, float b, inout float4 SV_Target, uint de
 
   // Intermediate Encoding
   float3 encoded_color;
-  // encoded_color = renodx::color::pq::EncodeSafe(final_color, 100.f);
-  encoded_color = final_color;
+  encoded_color = renodx::color::pq::EncodeSafe(final_color, 1.f);
+  // encoded_color = final_color;
 
   return SV_Target = float4(encoded_color / 1.05f, 0.f);
 }

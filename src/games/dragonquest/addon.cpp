@@ -519,8 +519,8 @@ void OnPresetOff() {
       {"ColorGradeLUTStrength", 100.f},
       {"ColorGradeLUTScaling", 100.f},
       {"ColorGradeLUTGamutRestoration", 1.f},
-      {"FxGrainType", 0.f},
-      {"FxGrainStrength", 50.f},
+      // {"FxGrainType", 0.f},
+      // {"FxGrainStrength", 50.f},
   });
 }
 
@@ -536,78 +536,12 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
   }
 }
 
-// Per game resource upgrades, where we need custom paramaters -- the sliders (output size/ratio/all) don't work
-void AddExpedition33Upgrades() {
-  // Portrait letterboxes screens
-  renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      .old_format = reshade::api::format::r10g10b10a2_unorm,
-      .new_format = reshade::api::format::r16g16b16a16_float,
-      .use_resource_view_cloning = true,
-      .aspect_ratio = 2880.f / 2160.f,
-  });
-
-  renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      .old_format = reshade::api::format::r10g10b10a2_unorm,
-      .new_format = reshade::api::format::r16g16b16a16_float,
-      .use_resource_view_cloning = true,
-      .aspect_ratio = 3840.f / 1608.f,
-  });
-  // DLAA support
-  renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      .old_format = reshade::api::format::r10g10b10a2_unorm,
-      .new_format = reshade::api::format::r16g16b16a16_float,
-      .use_resource_view_cloning = true,
-      .aspect_ratio = 3044.f / 1712.f,
-  });
-}
-
-void AddAvowedUpgrades() {
-  renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      .old_format = reshade::api::format::r10g10b10a2_unorm,
-      .new_format = reshade::api::format::r16g16b16a16_float,
-      .use_resource_view_cloning = true,
-      .aspect_ratio = 4360.f / 2160.f,
-  });
-}
-
-void AddWuchangUpgrades() {
-  renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      .old_format = reshade::api::format::r10g10b10a2_unorm,
-      .new_format = reshade::api::format::r16g16b16a16_float,
-      .use_resource_view_cloning = true,
-      .aspect_ratio = 2560.f / 1024.f,
-  });
-}
-
-void AddSonicRacingCrossWorldsUpgrades() {
-  renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      .old_format = reshade::api::format::r10g10b10a2_unorm,
-      .new_format = reshade::api::format::r16g16b16a16_float,
-      .use_resource_view_cloning = true,
-      .aspect_ratio = 16.f / 9.f,
-  });
-}
 
 void AddGamePatches() {
   auto process_path = renodx::utils::platform::GetCurrentProcessPath();
   auto filename = process_path.filename().string();
   auto product_name = renodx::utils::platform::GetProductName(process_path);
-
-  if (product_name == "Expedition 33") {
-    AddExpedition33Upgrades();
-  } else if (product_name == "Avowed") {
-    AddAvowedUpgrades();
-  } else if (product_name == "Tony Hawks(TM) Pro Skater(TM) 3 + 4") {
-    renodx::mods::swapchain::swapchain_proxy_revert_state = true;
-  } else if (product_name == "Project_Plague") {
-    AddWuchangUpgrades();
-  } else if (product_name == "SonicRacingCrossWorlds") {
-    AddSonicRacingCrossWorldsUpgrades();
-  } else if (filename == "Ace7Game.exe") {
-    renodx::mods::swapchain::swapchain_proxy_revert_state = true;
-  } else {
-    return;
-  }
+                       
   reshade::log::message(reshade::log::level::info, std::format("Applied patches for {} ({}).", filename, product_name).c_str());
 }
 
@@ -620,144 +554,7 @@ const std::unordered_map<
     std::string,                             // Filename or ProductName
     std::unordered_map<std::string, float>>  // {Key, Value}
     GAME_DEFAULT_SETTINGS = {
-        {
-            "Psychonauts2-WinGDK-Shipping.exe",
-            {
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_RATIO},
-                {"Upgrade_R8G8B8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-                {"ForceBorderless", 0.f},
-            },
-        },
-        {
-            "CRISIS CORE -FINAL FANTASY VII- REUNION",
-            {
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "RainCodePlus-Win64-Shipping.exe",
-            {
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_RATIO},
-            },
-        },
-        {
-            "Wuthering Waves",
-            {
-                {"Upgrade_R8G8B8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "Expedition 33",
-            {
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-                {"Upgrade_B8G8R8A8_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "Avowed",
-            {
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "InfinityNikki",
-            {
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-
-        {
-            "Stellar Blade",
-            {
-                {"Upgrade_CopyDestinations", 1.f},
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "Stellar Blade (Demo)",
-            {
-                {"Upgrade_CopyDestinations", 1.f},
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "Lies of P",
-            {
-                {"Set_Path", 0.f},
-            },
-        },
-        {
-            "Like a Dragon: Ishin!",
-            {
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-
-        {
-            "Pal",
-            {
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-
-        {
-            "Project_Plague",
-            {
-                {"Upgrade_CopyDestinations", 1.f},
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "Banishers: Ghosts of New Eden",
-            {
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "Lost Soul Aside",
-            {
-                {"Set_Path", 0.f},
-            },
-        },
-        {
-            "Borderlands3.exe",
-            {
-                {"Upgrade_CopyDestinations", 1.f},
-                {"Upgrade_R8G8B8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_RATIO},
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_RATIO},
-                {"Upgrade_R11G11B10_FLOAT", UPGRADE_TYPE_OUTPUT_RATIO},
-            },
-        },
-        {
-            "SonicRacingCrossWorlds",
-            {
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_RATIO},
-            },
-        },
-        {
-            "EM-Win64-Shipping.exe",
-            {
-                {"Upgrade_R10G10B10A2_UNORM", UPGRADE_TYPE_OUTPUT_SIZE},
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "Ace7Game.exe",
-            {
-                {"Upgrade_B8G8R8A8_TYPELESS", UPGRADE_TYPE_OUTPUT_SIZE},
-            },
-        },
-        {
-            "Hell is Us",
-            {
-                {"Set_Path", 0.f},
-            },
-        },
+        
 
 };
 
