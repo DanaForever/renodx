@@ -15,10 +15,6 @@ Texture2D<float4> colorTexture : register(t0);
 Texture2D<float4> blurTexture : register(t1);
 
 
-
-
-
-
 // 3Dmigoto declarations
 #define cmp -
 
@@ -59,15 +55,14 @@ void main(
   // overlay result (per channel)
   float3 Overlay = lerp(Light, Dark, M);
   float3 sdr = Overlay;
-  if (shader_injection.bloom == 1.f) {
-    Overlay = Dark; 
-  } else if (shader_injection.bloom == 2.f) {
+  if (shader_injection.bloom == 1.f && RENODX_TONE_MAP_TYPE > 0.f) {
+    Overlay = Dark;
+  } else if (shader_injection.bloom == 2.f && RENODX_TONE_MAP_TYPE > 0.f) {
     Overlay = hdrScreenBlend(C, B, true);
   }
 
   [branch]
-  if (shader_injection.bloom >= 1.f)  {
-  // if (false) {
+  if (shader_injection.bloom >= 1.f && RENODX_TONE_MAP_TYPE > 0.f)  {
     
     float3 hdr = Overlay;
 
@@ -77,11 +72,10 @@ void main(
     sdr = renodx::color::srgb::DecodeSafe(sdr);
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
-    // hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
+    // lerp first, and then correct 
     hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
     
     hdr = renodx::color::srgb::EncodeSafe(hdr);
-    // hdr = lerp(C, hdr, alpha);
     o0.rgb = hdr;
 
 

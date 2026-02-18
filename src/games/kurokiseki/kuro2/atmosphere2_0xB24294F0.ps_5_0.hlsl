@@ -28,7 +28,7 @@ void main(
   r2.xyz = max(float3(0, 0, 0), r2.xyz);
   float3 sdr = r0.xyz * r2.xyz + r1.xyz;
 
-  if ( shader_injection.bloom == 0.f) {
+  if ( shader_injection.bloom == 0.f || RENODX_TONE_MAP_TYPE == 0.f) {
     o0.rgb = sdr;
     o0.w = r1.w;
     return;

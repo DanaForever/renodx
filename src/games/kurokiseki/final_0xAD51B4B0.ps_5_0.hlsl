@@ -29,8 +29,6 @@ void main(
 
     if (RENODX_TONE_MAP_TYPE > 0) {
 
-      // r0.rgb = processAndToneMap(r0.rgb, true);
-
       r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
       r0.rgb = ToneMap(r0.rgb);
@@ -65,7 +63,6 @@ void main(
         config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
       }
 
-      // color = renodx::color::bt709::clamp::BT2020(color);
       // Gamut Compression
       color = renodx::color::bt2020::from::BT709(color);
       float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);

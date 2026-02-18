@@ -32,15 +32,17 @@ void main(
   float4 fDest;
 
   r0.xyz = godrayTexture.SampleLevel(samLinear_s, v1.xy, 0).xyz;
-  r0.xyz = godrayColor_g.xyz * r0.xyz;
+  float3 gray = r0.rgb;
+  // r0.xyz = godrayColor_g.xyz * r0.xyz;
   r1.xyzw = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyzw;
+  float3 color = r1.rgb;
   // r2.xyz = float3(1,1,1) + -r1.xyz;
   // r2.xyz = max(float3(0,0,0), r2.xyz);
   // o0.xyz = r0.xyz * r2.xyz + r1.xyz;
   // o0.w = r1.w;
 
-  if (shader_injection.bloom == 0.f) {
-    r0.rgb = saturate(r0.rgb);
+  if (shader_injection.bloom == 0.f || RENODX_TONE_MAP_TYPE == 0.f) {
+    r0.rgb = saturate(gray);
     // r1.rgb = saturate(r1.rgb);
     r0.xyz = godrayColor_g.xyz * r0.xyz;
     r2.xyz = float3(1, 1, 1) + -r1.xyz;
@@ -49,13 +51,13 @@ void main(
     o0.w = r1.w;
     return;
   } else {
-    float3 blend = r0.rgb * godrayColor_g.xyz;
-    r0.xyz = godrayColor_g.xyz * saturate(r0.xyz);
+    float3 blend = gray * godrayColor_g.xyz;
+    r0.xyz = godrayColor_g.xyz * saturate(gray);
     r2.xyz = float3(1, 1, 1) + -(r1.xyz);
     r2.xyz = max(float3(0, 0, 0), r2.xyz);
     float3 sdr = r0.xyz * r2.xyz + r1.xyz;
 
-    float3 color = r1.rgb;
+   
     // blend = saturate(blend);
 
     blend = renodx::color::srgb::DecodeSafe(blend);
@@ -67,7 +69,6 @@ void main(
     float3 hdr = (blendBloom);
 
     // restores the colors
-    // hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
     hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
     hdr = renodx::color::srgb::EncodeSafe(hdr);
 

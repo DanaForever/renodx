@@ -33,17 +33,6 @@ void main(
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = intensity_g * r1.xyz + r0.xyz;
 
-  // o0.xyz = srgbDecode(o0.xyz);
-
-  // // o0.rgb = renodx::tonemap::renodrt::NeutralSDR(o0.rgb);
-  // // o0.rgb = ToneMapMaxCLL(o0.rgb);
-  // float3 sdr = renodx::tonemap::uncharted2::BT709(o0.rgb);
-
-  // // o0.rgb = renodx::color::correct::Luminance(o0.rgb, sdr, 1.f);
-  // // o0.rgb = renodx::tonemap::dice::BT709(o0.rgb, 1.0f);
-  // o0.rgb = sdr;
-  // o0.rgb = srgbEncode(o0.rgb);
-
   o0.w = alpha_g;
   return;
 }

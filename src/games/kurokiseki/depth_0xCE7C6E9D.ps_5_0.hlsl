@@ -96,12 +96,6 @@ void main(
   r0.y = 1 + -r0.y;
   r1.xyzw = colorTexture.SampleLevel(samLinear_s, v1.xy, 0).xyzw;
   r0.z = calculateLuminanceSRGB(r1.rgb);
-  if (shader_injection.bloom_space == 1) {
-    r1.rgb = srgbDecode(r1.rgb);
-  }
-
-  // r0.z = dot(r1.xyz, float3(0.298999995,0.587000012,0.114));
-  // r0.z = renodx::color::y::from::BT709(r1.rgb);
   
   r0.z = -brightnessThreshold_g + r0.z;
   r0.z = max(0, r0.z);
@@ -111,10 +105,6 @@ void main(
   r0.xyz = r0.yzw * r0.xxx;
   r0.w = cmp(isFlip_g < 0);
   o0.xyz = r0.www ? float3(0, 0, 0) : r0.xyz;
-
-  if (shader_injection.bloom_space == 1) {
-    o0.rgb = srgbEncode(o0.rgb);
-  }
 
   o0 = saturate(o0);
   return;

@@ -49,41 +49,26 @@ void main(
 
   r0.xyz = blurTexture1.SampleLevel(samLinear_s, v1.zw, 0).xyz;
   r1.xyzw = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyzw;
-  if (shader_injection.bloom_space == 1) {
-    r1.rgb = srgbDecode(r1.rgb);
-    r0.rgb = srgbDecode(r0.rgb);
-  }
+
   // r0.xyz = r1.xyz + r0.xyz;
   r0.rgb = blend(r1.rgb, r0.rgb);
   o0.w = r1.w;
   r1.xyz = blurTexture2.SampleLevel(samLinear_s, v1.zw, 0).xyz;
-  if (shader_injection.bloom_space == 1) {
-    r1.rgb = srgbDecode(r1.rgb);
-  }
+
   // r0.xyz = r1.xyz + r0.xyz;
   r0.rgb = blend(r0.rgb, r1.rgb);
   r1.xyz = blurTexture3.SampleLevel(samLinear_s, v1.zw, 0).xyz;
-  if (shader_injection.bloom_space == 1) {
-    r1.rgb = srgbDecode(r1.rgb);
-  }
+
   // r0.xyz = r1.xyz + r0.xyz;
   r0.rgb = blend(r0.rgb, r1.rgb);
   r1.xyz = blurTexture4.SampleLevel(samLinear_s, v1.zw, 0).xyz;
-  if (shader_injection.bloom_space == 1) {
-    r1.rgb = srgbDecode(r1.rgb);
-  }
+
   // r0.xyz = r1.xyz + r0.xyz;
   r0.rgb = blend(r0.rgb, r1.rgb);
   r1.xyz = blurTexture5.SampleLevel(samLinear_s, v1.zw, 0).xyz;
-  if (shader_injection.bloom_space == 1) {
-    r1.rgb = srgbDecode(r1.rgb);
-  }
+
   // o0.xyz = r1.xyz + r0.xyz;
   o0.rgb = blend(r0.rgb, r1.rgb);
-
-  if (shader_injection.bloom_space == 1) {
-    o0.rgb = srgbEncode(o0.rgb);
-  }
 
   // o0.rgb /= 6;
   return;

@@ -108,7 +108,7 @@ void main(
 
   float3 sdr = blended;
 
-  if (shader_injection.bloom == 0.f) {
+  if (shader_injection.bloom == 0.f || RENODX_TONE_MAP_TYPE == 0.f) {
     o0.rgb = sdr;
   } else {
     float3 hdr = (gameScene.rgb);
@@ -129,10 +129,8 @@ void main(
 
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
-    // hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
     hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
     o0.rgb = hdr;
-    // o0.rgb = sdr;
 
     o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   }

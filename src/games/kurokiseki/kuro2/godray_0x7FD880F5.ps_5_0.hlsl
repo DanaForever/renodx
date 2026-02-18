@@ -35,7 +35,7 @@ void main(
   r0.xyz = godrayTexture.SampleLevel(samLinear_s, v1.xy, 0).xyz;
   r1.xyzw = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyzw;
 
-  if (shader_injection.bloom == 0.f) {
+  if (shader_injection.bloom == 0.f && RENODX_TONE_MAP_TYPE == 0.f ) {
     r0.rgb = saturate(r0.rgb);
     // r1.rgb = saturate(r1.rgb);
     r0.xyz = godrayColor_g.xyz * r0.xyz;

@@ -22,7 +22,7 @@ void main(
   uint4 bitmask, uiDest;
   float4 fDest;
 
-  if (shader_injection.bloom == 0.f) {
+  if (shader_injection.bloom == 0.f || RENODX_TONE_MAP_TYPE == 0.f) {
     r0.yz = offsetsAndWeights[1].xy + v1.xy;
     r0.x = min(offsetsAndWeights[1].w, r0.y);
     r0.xyzw = colorTexture.SampleLevel(samLinear_s, r0.xz, 0).xyzw;

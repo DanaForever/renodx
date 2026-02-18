@@ -256,18 +256,7 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Off", "2.2", "BT.1886", "Falcom (2.3)"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
-    // new renodx::utils::settings::Setting{
-    //     .key = "InverseToneMapExtraHDRSaturation",
-    //     .binding = &shader_injection.inverse_tonemap_extra_hdr_saturation,
-    //     .default_value = 0.f,
-    //     .can_reset = false,
-    //     .label = "Gamut Expansion",
-    //     .section = "Tone Mapping",
-    //     .tooltip = "Generates HDR colors (BT.2020) from bright saturated SDR (BT.709) ones. Neutral at 0.",
-    //     .min = 0.f,
-    //     .max = 500.f,
-    //     .parse = [](float value) { return value * 0.01f; },
-    // },
+
     
     new renodx::utils::settings::Setting{
         .key = "DICEToneMapType",
@@ -538,61 +527,12 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
         });
 
-
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //   .old_format = reshade::api::format::r8g8b8a8_unorm,
-        //   .new_format = reshade::api::format::r16g16b16a16_float,
-        //   .use_resource_view_cloning = true,
-        //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        //   .dimensions = {.width=2560, .height=1440},
-        //   .use_resource_view_hot_swap = true,
-        //   .usage_include = reshade::api::resource_usage::render_target,
-        // });
         
         bool is_hdr10 = false;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);
         renodx::mods::swapchain::use_resize_buffer = false;
         shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
         shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
-        
-
-        // for (const auto& [key, format] : UPGRADE_TARGETS) {
-        //   auto* setting = new renodx::utils::settings::Setting{
-        //       .key = "Upgrade_" + key,
-        //       .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        //       .default_value = 0.f,
-        //       .label = key,
-        //       .section = "Resource Upgrades",
-        //       .labels = {
-        //           "Off",
-        //           "Output size",
-        //           "Output ratio",
-        //           "Any size",
-        //       },
-        //       .is_global = true,
-        //       .is_visible = []() { return settings[0]->GetValue() >= 2; },
-        //   };
-        //   renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-        //   settings.push_back(setting);
-
-        //   auto value = setting->GetValue();
-        //   if (value > 0) {
-        //     renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //         .old_format = format,
-        //         .new_format = reshade::api::format::r16g16b16a16_float,
-        //         .ignore_size = (value == UPGRADE_TYPE_ANY),
-        //         .use_resource_view_cloning = true,
-        //         .aspect_ratio = static_cast<float>((value == UPGRADE_TYPE_OUTPUT_RATIO)
-        //                                                ? renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
-        //                                                : renodx::mods::swapchain::SwapChainUpgradeTarget::ANY),
-        //         .usage_include = reshade::api::resource_usage::render_target,
-        //     });
-        //     std::stringstream s;
-        //     s << "Applying user resource upgrade for ";
-        //     s << format << ": " << value;
-        //     reshade::log::message(reshade::log::level::info, s.str().c_str());
-        //   }
-        // }
 
         initialized = true;
       }

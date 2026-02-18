@@ -29,7 +29,7 @@ void main(
   float3 color = r1.rgb;
   float3 atomosphere = r0.rgb;
 
-  if (- shader_injection.bloom == 0.f) {
+  if (shader_injection.bloom == 0.f) {
     o0.rgb = sdr;
     o0.w = r1.w;
     return;
