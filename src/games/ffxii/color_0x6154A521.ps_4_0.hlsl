@@ -34,7 +34,7 @@ void main(
   r0.xy = v1.xy * float2(1,-1) + float2(0,1);
   r0.xyzw = apply_MainTex.Sample(ColorBufferSampler_s, r0.xy).xyzw;
 
-  r0.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+  // r0.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
 
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     r0.xyzw = max(float4(0,0,0,0), r0.xyzw);
@@ -56,18 +56,18 @@ void main(
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     r0.xyzw = max(float4(0, 0, 0, 0), r0.xyzw);
     r0.xyzw = min(float4(100, 100, 100, 100), r0.xyzw);
-    r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
+    // r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
   }
   else {
     r0.rgb = renodx::color::bt709::clamp::BT2020(r0.rgb);  // clamp to bt2020 to eliminate invalid colors
-    r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
+    // r0.xyz = renodx::color::gamma::EncodeSafe(r0.xyz, gamma);
   }
 
   o0.w = r0.w;
 
   o0.rgb = r0.rgb;
 
-  o0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+  // o0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
   o0.rgb = renodx::draw::RenderIntermediatePass(o0.rgb);
   
