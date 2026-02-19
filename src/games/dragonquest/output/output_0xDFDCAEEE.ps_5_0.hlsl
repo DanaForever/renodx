@@ -100,6 +100,7 @@ void main(
   r1.xyz = float3(1.04999995, 1.04999995, 1.04999995) * r0.yzw;
 
   r1.rgb = renodx::color::pq::DecodeSafe(r1.rgb, 1.f);
+  // r1.rgb = renodx::color::bt709::from::AP1((r1.rgb));
   // o0.w = (dot(r1.xyz, float3(0.298999995,0.587000012,0.114)));
 
   // luminance
@@ -111,6 +112,7 @@ void main(
   r1.xy = cmp(asint(cb0[34].xx) == int2(5,6));
   r0.w = (int)r1.y | (int)r1.x;
 
+  // r0.rgb = renodx::color::bt709::from::AP1(r0.rgb);
   o0.rgb = DisplayMap(r0.rgb);
 
   //   o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);

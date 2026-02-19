@@ -67,9 +67,12 @@ void main(
   // o0.xyz = exp2(r0.xyz);
   o0.xyz = renodx::math::SafePow(r0.zxy, fGamma);
 
-  o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-  o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  // if (shader_injection.hdr_format == 0.f)
+  //   o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
+  // o0.rgb = renodx::color::bt709::from::BT2020(o0.rgb);
+  // o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+  // o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   
 
   o0.w = 1;

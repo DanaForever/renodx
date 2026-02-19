@@ -139,7 +139,7 @@ void ApplyFilmToneMapWithBlueCorrect(float untonemapped_r, float untonemapped_g,
 
   tonemapped_prebluecorrect_ap1 = ApplyPostToneMapDesaturation(tonemapped_prebluecorrect_ap1);
   tonemapped_prebluecorrect_ap1 = LerpToneMapStrength(tonemapped_prebluecorrect_ap1, untonemapped_ap1_graded, cb_config);
-  // tonemapped_ap1 = ApplyBlueCorrectionPost(tonemapped_prebluecorrect_ap1, cb_config);
+  tonemapped_ap1 = ApplyBlueCorrectionPost(tonemapped_prebluecorrect_ap1, cb_config);
   tonemapped_ap1 = tonemapped_prebluecorrect_ap1;
   tonemapped_ap1 = max(0, tonemapped_ap1);
 

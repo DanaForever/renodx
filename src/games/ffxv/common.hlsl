@@ -114,6 +114,11 @@ float NR_inv(float r, float sigma, float n) {
   return (r < 0.0f) ? -x : x;
 }
 
+float3x3 XYZ_TO_LMS_2006 = float3x3(
+    0.185082982238733f, 0.584081279463687f, -0.0240722415044404f,
+    -0.134433056469973f, 0.405752392775348f, 0.0358252602217631f,
+    0.000789456671966863f, -0.000912281325916184f, 0.0198490812339463f);
+
 // CVVDP-style chroma plateau, but with a cone-domain Naka-Rushton stage.
 // The NR semi-saturation is anchored to CastleCSF achromatic sensitivity
 // at the adapting background (heuristic tie between detectability and cone gain).
@@ -126,10 +131,10 @@ float3 CastleDechroma_CVVDPStyle_NakaRushton(
   // --------------------------------------------------------------------------
   // 1) Convert stimulus + background to LMS and apply cone-domain NR
   // --------------------------------------------------------------------------
-  float3x3 XYZ_TO_LMS_2006 = float3x3(
-      0.185082982238733f, 0.584081279463687f, -0.0240722415044404f,
-      -0.134433056469973f, 0.405752392775348f, 0.0358252602217631f,
-      0.000789456671966863f, -0.000912281325916184f, 0.0198490812339463f);
+  // float3x3 XYZ_TO_LMS_2006 = float3x3(
+  //     0.185082982238733f, 0.584081279463687f, -0.0240722415044404f,
+  //     -0.134433056469973f, 0.405752392775348f, 0.0358252602217631f,
+  //     0.000789456671966863f, -0.000912281325916184f, 0.0198490812339463f);
 
   float3x3 XYZ_TO_LMS_PROPOSED_2023 = float3x3(
       0.185083290265044, 0.584080232530060, -0.0240724126371618,
@@ -460,3 +465,12 @@ float3 CorrectHueAndPurity(
   float hue_t_ramp_end = 1.f;
   return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
 };
+
+float CalculateLuminosity(float3 color) {
+  float3 color_xyz = renodx::color::xyz::from::BT709(color);
+  float3 color_lms = mul(XYZ_TO_LMS_2006, color_xyz);
+  float current_luminosity = 1.55f * color_lms.x + color_lms.y;
+  float luminosity = current_luminosity;
+
+  return luminosity;
+}

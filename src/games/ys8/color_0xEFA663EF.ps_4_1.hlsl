@@ -25,8 +25,16 @@ float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool hdr = tru
   float4 r2, r3, r4;
 
   if (!hdr) {
-    r1.rgb = saturate(r1.rgb);
-    r0.rgb = saturate(r0.rgb);
+    r1.rgb = renodx::color::srgb::DecodeSafe(r1.rgb);
+    r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+
+    r1.rgb = renodx::tonemap::neutwo::MaxChannel(r1.rgb);
+    r0.rgb = renodx::tonemap::neutwo::MaxChannel(r0.rgb);
+    // r1.rgb = renodx::tonemap::uncharted2::BT709(r1.rgb);
+    // r0.rgb = renodx::tonemap::uncharted2::BT709(r0.rgb);
+
+    r1.rgb = renodx::color::srgb::EncodeSafe(r1.rgb);
+    r0.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
   }
 
   r2.xyz = r1.xyz + r0.xyz;
@@ -132,7 +140,7 @@ void main(
     // hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, 0.5f, 0.5f);
     hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.tone_map_hue_correction);
     hdr = LMS_Vibrancy(hdr, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast);
-    hdr = CastleDechroma_CVVDPStyle_NakaRushton(hdr, 50.f);
+    hdr = CastleDechroma_CVVDPStyle_NakaRushton(hdr, 203.f);
 
     o0.rgb = hdr;
     o0.rgb = expandGamut(o0.rgb, shader_injection.inverse_tonemap_extra_hdr_saturation);

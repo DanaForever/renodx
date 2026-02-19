@@ -107,6 +107,8 @@ struct ShaderInjectData {
   float dice_shoulder_start;
   float dice_desaturation;
   float dice_darkening;
+
+  float hdr_format;
 };
 
 #ifndef __cplusplus

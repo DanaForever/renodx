@@ -66,7 +66,6 @@ void main(
   o0.w = r1.w;
   r1.xyz = cb0[16].yyy * r1.xyz;
   float3 untonemapped = r1.xyz;
-  r1.xyz = displayMap(r1.xyz);
   
   // r2.xyz = r1.xyz * float3(2570.23999,2570.23999,2570.23999) + float3(0.0299999993,0.0299999993,0.0299999993);
   // r3.xyz = float3(1024,1024,1024) * r1.xyz;

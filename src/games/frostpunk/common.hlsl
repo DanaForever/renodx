@@ -1,6 +1,6 @@
 
 #include "./shared.h"
-
+#include "./macleod_boynton.hlsli"
 
 ///////////////////////////////////////////////////////////////////////////
 ////////// CUSTOM TONEMAPPASS//////////////////////////////////////////////
@@ -107,65 +107,7 @@ float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
   return color;
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
 
-float3 RestoreHighlightSaturation(float3 untonemapped) {
-  return untonemapped;
-}
-
-float3 displayMap(float3 untonemapped) {
-  return untonemapped;
-}
-
-#define PI    3.141592653589793238462643383279502884197
-#define PI_X2 (PI * 2.0)
-#define PI_X4 (PI * 4.0)
-
-float3 CorrectHuePolar(float3 incorrectOkLCH, float3 correctOkLCH, float strength) {
-  // skip adjustment for achromatic colors
-  const float chromaThreshold = 1e-5;
-  float iChroma = incorrectOkLCH.y;
-  float cChroma = correctOkLCH.y;
-
-  if (iChroma < chromaThreshold || cChroma < chromaThreshold) {
-    return incorrectOkLCH;
-  }
-
-  // hues in radians
-  float iHue = incorrectOkLCH.z;
-  float cHue = correctOkLCH.z;
-
-  // calculate shortest angular difference
-  float diff = cHue - iHue;
-  if (diff > PI) diff -= PI_X2;
-  else if (diff < -PI) diff += PI_X2;
-
-  // apply strength-based correction
-  float newHue = iHue + strength * diff;
-
-  float3 adjustedOkLCH = float3(
-      incorrectOkLCH.x,
-      incorrectOkLCH.y,
-      newHue
-  );
-
-  return adjustedOkLCH;
-}
-
-float UpgradeToneMapRatio(float color_hdr, float color_sdr, float post_process_color) {
-  if (color_hdr < color_sdr) {
-    // If substracting (user contrast or paperwhite) scale down instead
-    // Should only apply on mismatched HDR
-    return color_hdr / color_sdr;
-  } else {
-    float delta = color_hdr - color_sdr;
-    delta = max(0, delta);  // Cleans up NaN
-    const float new_value = post_process_color + delta;
-
-    const bool valid = (post_process_color > 0);  // Cleans up NaN and ignore black
-    return valid ? (new_value / post_process_color) : 0;
-  }
-}
 
 float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
@@ -327,3 +269,14 @@ float4 CustomSwapChainPass(float4 input_color) {
 
   return float4(color, 1.0f);
 }
+
+float3 CorrectHueAndPurity(
+    float3 target_color_bt709,
+    float3 reference_color_bt709,
+    float strength = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f) {
+  float hue_t_ramp_start = 0.5f;
+  float hue_t_ramp_end = 1.f;
+  return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
+};

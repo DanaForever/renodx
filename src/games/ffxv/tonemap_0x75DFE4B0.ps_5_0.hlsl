@@ -335,15 +335,18 @@ void main(
 
     float3 hdr_ungraded, hdr_graded;
 
-    float sdr_y = renodx::color::y::from::BT709(sdr);
+    // float sdr_y = renodx::color::y::from::BT709(sdr);
     // float sdr_m = renodx::math::Max(abs(sdr.rgb));
+    float sdr_l = CalculateLuminosity(sdr);
     
     [branch]
     if (shader_injection.tone_map_mode == 0.f) {
-      float hdr_y = renodx::color::y::from::BT709(untonemapped);
+      // float hdr_y = renodx::color::y::from::BT709(untonemapped);
+      float hdr_l = CalculateLuminosity(untonemapped);
       // float hdr_m = renodx::math::Max(abs(untonemapped.rgb));
       // float scale = renodx::math::DivideSafe(sdr_m, hdr_m, 1.f);
-      float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
+      // float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
+      float scale = renodx::math::DivideSafe(sdr_l, hdr_l, 1.f);
 
       hdr_ungraded = untonemapped;
       hdr_graded = colorGrade(hdr_ungraded * scale) / scale;
@@ -360,7 +363,8 @@ void main(
     } else {
       hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
       float hdr_y = renodx::color::y::from::BT709(hdr_ungraded);
-      float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
+      float hdr_l = CalculateLuminosity(untonemapped);
+      float scale = renodx::math::DivideSafe(sdr_l, hdr_l, 1.f);
 
       hdr_graded = colorGrade(hdr_ungraded * scale) / scale;
     }

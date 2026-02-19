@@ -38,17 +38,11 @@ float4 main(float4 vpos: SV_POSITION, float2 uv: TEXCOORD0)
 
   [branch]
   if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     color = renodx::color::bt709::from::BT709D93(color);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
   } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     color = renodx::color::bt709::from::BT601NTSCU(color);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
   } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     color = renodx::color::bt709::from::ARIBTRB9(color);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
   }
   
 
@@ -65,11 +59,18 @@ float4 main(float4 vpos: SV_POSITION, float2 uv: TEXCOORD0)
   color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
   color = max(0.f, color);
   color = renodx::color::bt709::from::BT2020(color);
+  if (shader_injection.hdr_format == 0.f) {
+    color = renodx::color::bt2020::from::BT709(color);
+    color = renodx::color::pq::EncodeSafe(o0.rgb, shader_injection.graphics_white_nits);
+  }
+  else {
+    
+    color *= shader_injection.graphics_white_nits / 80.f;
+  }
 
   o0.rgb = color;
 
-  o0.rgb *= shader_injection.graphics_white_nits / 80.f;
-
+ 
   o0.w = r0.w;
 
   return o0;

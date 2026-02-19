@@ -42,7 +42,7 @@ void main(
   // o0.w = r1.w;
 
   if (shader_injection.bloom == 0.f || RENODX_TONE_MAP_TYPE == 0.f) {
-    r0.rgb = saturate(gray);
+    r0.rgb = sdrToneMap(gray);
     // r1.rgb = saturate(r1.rgb);
     r0.xyz = godrayColor_g.xyz * r0.xyz;
     r2.xyz = float3(1, 1, 1) + -r1.xyz;
@@ -52,7 +52,7 @@ void main(
     return;
   } else {
     float3 blend = gray * godrayColor_g.xyz;
-    r0.xyz = godrayColor_g.xyz * saturate(gray);
+    r0.xyz = godrayColor_g.xyz * sdrToneMap(gray);
     r2.xyz = float3(1, 1, 1) + -(r1.xyz);
     r2.xyz = max(float3(0, 0, 0), r2.xyz);
     float3 sdr = r0.xyz * r2.xyz + r1.xyz;

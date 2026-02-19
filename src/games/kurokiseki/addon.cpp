@@ -70,6 +70,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0x83F2D19E), // blur sampler
     UpgradeRTVReplaceShader(0x5BB549F7), // blur gen
     UpgradeRTVReplaceShader(0xCE7C6E9D), // depth
+    UpgradeRTVReplaceShader(0x0A0B2E57), // depth
     UpgradeRTVReplaceShader(0x43E0BB74), // blur
     UpgradeRTVReplaceShader(0x2D620443), // blur
     UpgradeRTVReplaceShader(0xAF7B0499), // refraction

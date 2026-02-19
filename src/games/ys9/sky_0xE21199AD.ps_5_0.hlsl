@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jul 18 04:10:57 2025
-#include "shared.h"
+#include "common.hlsl"
 cbuffer CB0 : register(b0)
 {
 
@@ -164,7 +164,8 @@ void main(
   r2.xyz = r0.xxx ? r3.xyz : r1.xyz;
   r0.x = cmp(0 < shdBasicParam.m_scrEfxData.fGrimwardColor.w);
   if (r0.x != 0) {
-    r0.x = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
+    // r0.x = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
+    r0.x = calculateLuminanceSRGB(r2.rgb);
     r0.z = cmp(0 < r0.x);
     r0.w = dot(r2.xyz, r2.xyz);
     r0.w = rsqrt(r0.w);
@@ -200,7 +201,8 @@ void main(
   // r0.w = exp2(r0.w);
   r0.w = renodx::math::SafePow(r0.y, shdBasicParam.m_scrEfxData.isInsightMode.w);
   r0.y = r0.z ? r0.w : r0.y;
-  r0.z = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
+  // r0.z = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
+  r0.z = calculateLuminanceSRGB(r2.rgb);
   r0.w = cmp(0 < r0.z);
   r0.z = sqrt(r0.z);
   r1.xyz = r0.zzz * shdBasicParam.m_scrEfxData.fOtherParam.zzz + -r2.xyz;

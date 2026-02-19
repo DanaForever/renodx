@@ -55,20 +55,20 @@ void main(
   
   r0.xyz = cb0[16].yyy * r0.xyz;
 
+  float3 sdr0, sdr1, sdr;
   static const float ACES_MID_GRAY = 0.10f;
   static const float ACES_MIN = 0.0001f;
   const float mid_gray_scale = (0.1f / ACES_MID_GRAY);
+  const float diffuse_white_nits = 100.f;
+  const float peak_nits = 10000.f;
 
-  float aces_min = ACES_MIN / RENODX_DIFFUSE_WHITE_NITS;
-  float aces_max = (RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
-
-  aces_max /= mid_gray_scale;
-  aces_min /= mid_gray_scale;
+  float aces_min = ACES_MIN / diffuse_white_nits;
+  float aces_max = (peak_nits / diffuse_white_nits);
 
   if (RENODX_TONE_MAP_TYPE == 2) {
-    r0.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(r0.rgb, aces_min * 48.f, aces_max * 48.f);
+    r0.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(r0.rgb / 0.6f, aces_min * 48.f, aces_max * 48.f);
     r0.rgb /= 48.f;
-    r0.rgb *= mid_gray_scale;
+    sdr0 = renodx::tonemap::ACESFittedBT709(r0.xyz / 0.6f);
   } else 
     r0.xyz = renodx::tonemap::ACESFittedBT709(r0.xyz / 0.6f);
   r1.xyzw = t0.Sample(s0_s, v1.xy).xyzw;         // // fetch main buffer
@@ -92,17 +92,21 @@ void main(
   r1.xyz = cb0[16].yyy * r1.xyz;
 
   float3 untonemapped = r1.xyz;
-  r1.xyz = displayMap(r1.xyz);
 
   if (RENODX_TONE_MAP_TYPE == 2) {
-    r1.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(r1.rgb, aces_min * 48.f, aces_max * 48.f);
+    r1.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(r1.rgb / 0.6f, aces_min * 48.f, aces_max * 48.f);
     r1.rgb /= 48.f;
-    r1.rgb *= mid_gray_scale;
+    sdr1 = renodx::tonemap::ACESFittedBT709(r1.xyz / 0.6f);
   } else
     r1.xyz = renodx::tonemap::ACESFittedBT709(r1.xyz / 0.6f);
 
-  // lerp between two aces 
+  // lerp between two aces
   r0.xyz = lerp(r1.xyz, r0.xyz, cb2[6].z);
+  if (RENODX_TONE_MAP_TYPE == 2) {
+    sdr = lerp(sdr1, sdr0, cb2[6].z);
+
+    r0.rgb = CorrectHueAndPurity(r0.rgb, sdr, 0.25f);
+  }
 
   float3 sdr_ungraded = r0.xyz;
   float3 color_lut_input = r0.rgb;
@@ -161,7 +165,9 @@ void main(
   o0.xyz = r0.xyz;
 
   if (RENODX_TONE_MAP_TYPE >= 3.f || RENODX_TONE_MAP_TYPE == 1.f) {
-    o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);                                      
+    o0.xyz = renodx::draw::ToneMapPass(untonemapped, o0.xyz);
+  } else if (RENODX_TONE_MAP_TYPE >= 2.f || RENODX_TONE_MAP_TYPE == 1.f) {
+    o0.rgb = renodx::tonemap::neutwo::MaxChannel(o0.rgb, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
   }
    
   o0.w = r0.w;

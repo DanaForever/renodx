@@ -3,6 +3,15 @@
 #include "lms_matrix.hlsl"
 #include "macleod_boynton.hlsli"
 
+float3 sdrToneMap(float3 color) {
+  color = renodx::color::srgb::DecodeSafe(color);
+
+  color = renodx::tonemap::neutwo::MaxChannel(color);
+
+  color = renodx::color::srgb::EncodeSafe(color);
+  return color;
+}
+
 float3 srgbDecode(float3 color) {
   if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f) {
     return color;
@@ -28,13 +37,7 @@ float calculateLuminanceSRGB(float3 color) {
 
 float3 compress(float3 color) {
   return saturate(color);
-  // return ToneMapMaxCLL(color);
-  // return renodx::tonemap::dice::BT709(color, 2.0f, 0.25f);
-  // return renodx::tonemap::frostbite::BT709(color, 1.0f, 0.25f);
-  // return DICEToneMap(color);
-  // return max(0.f, color);
-  // return renodx::tonemap::renodrt::NeutralSDR(color);
-  // return color;
+
 }
 
 float4 compress(float4 color) {

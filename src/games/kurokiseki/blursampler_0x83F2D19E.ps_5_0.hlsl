@@ -117,7 +117,8 @@ void main(
       float  w  = offsetsAndWeights[i].z;
       float4 c = colorTexture.SampleLevel(samLinear_s, uv, 0);
 
-      c = saturate(c);
+      c.rgb = sdrToneMap(c.rgb);
+      c.w = saturate(c.w);
 
       acc  += c * w;
       wsum += w;
@@ -126,7 +127,10 @@ void main(
     // If weights are pre-normalized, accW≈1 and this is a no-op; otherwise it keeps brightness consistent.
     float4 outRGB = (wsum > 0.0) ? (acc / wsum) : 0.0;
 
-    o0 = saturate(outRGB);
+    // o0 = saturate(outRGB);
+    o0 = outRGB;
+
+    o0.rgb = sdrToneMap(o0.rgb);
   }
 
   return;

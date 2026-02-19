@@ -19,6 +19,8 @@ Texture2D<float4> blurTexture : register(t1);
 #define cmp -
 
 
+
+
 void main(
   float4 v0 : SV_Position0,
   float4 v1 : TEXCOORD0,
@@ -46,7 +48,7 @@ void main(
   // r3.xyz = cmp(float3(0.5,0.5,0.5) >= r2.xyz);
   // r3.xyz = r3.xyz ? float3(1,1,1) : 0;
   float3 Dark  = 2.0 * C * B;
-  float3 Light = 1.0 - 2.0 * (1.0 - C) * (1.0 - saturate(B));
+  float3 Light = 1.0 - 2.0 * (1.0 - C) * (1.0 - sdrToneMap(B));
   float3 oldLight = Light;
 
   // per-channel mask: 1 when C <= 0.5, else 0

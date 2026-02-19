@@ -334,6 +334,7 @@ float3 DisplayMap(float3 color) {
     // float3 bt2020_displaymapped_color = renodx::tonemap::HermiteSplineLuminanceRolloff(max(0, bt2020_final_color), peak_ratio, 100.f);  // Display map to peak
     // float3 bt2020_displaymapped_color = renodx::tonemap::neutwo::PerChannel(max(0, bt2020_final_color), peak_ratio, 100.f);  // Display map to peak
     color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
+    // color = renodx::draw::ToneMapPass(color);
 
   } else {
 

@@ -25,8 +25,16 @@ float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool hdr = tru
   float4 r2, r3, r4, r5, r6, r7, r8;
 
   if (!hdr) {
-    r0 = saturate(r0);
-    r1 = saturate(r1);
+    r1.rgb = renodx::color::srgb::DecodeSafe(r1.rgb);
+    r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
+
+    r1.rgb = renodx::tonemap::neutwo::MaxChannel(r1.rgb);
+    r0.rgb = renodx::tonemap::neutwo::MaxChannel(r0.rgb);
+    // r1.rgb = renodx::tonemap::uncharted2::BT709(r1.rgb);
+    // r0.rgb = renodx::tonemap::uncharted2::BT709(r0.rgb);
+
+    r1.rgb = renodx::color::srgb::EncodeSafe(r1.rgb);
+    r0.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
   }
 
   r2.xyz = r1.xyz + r0.xyz;
@@ -142,7 +150,8 @@ void main(
     // sdr = saturate(sdr);
 
     // hdr = renodx::tonemap::UpgradeToneMap(hdr, neutral_sdr, sdr, shader_injection.color_grade_strength);
-    o0.rgb = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.color_grade_strength, shader_injection.color_grade_strength);
+    // o0.rgb = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.color_grade_strength, shader_injection.color_grade_strength);
+    o0.rgb = CorrectPurityMB(hdr, sdr, shader_injection.color_grade_strength);
 
     o0.rgb = ToneMap(o0.rgb);
   } else {
