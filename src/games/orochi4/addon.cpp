@@ -42,6 +42,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xA08DCDDC),  // main menu tonemapping
     CustomShaderEntry(0x5A21461F),  // tonemapping 
     CustomShaderEntry(0x1C52C9A8),  // tonemapping sanada 
+    CustomShaderEntry(0x30866BF2),  // tonemapping sanada 
 };
 
 renodx::utils::settings::Settings settings = {

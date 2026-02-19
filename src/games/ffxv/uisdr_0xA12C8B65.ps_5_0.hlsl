@@ -24,7 +24,7 @@ void main(
   r1.xyzw = g_samp0Texture.Sample(g_samp0_s, v2.xy).xyzw;
   r1.w = r1.w * r0.x;
   r0.xyzw = v1.xyzw * r1.xyzw;
-  o0.xyzw = saturate(r0.xyzw * float4(2,2,2,2) + v3.xyzw);
+  o0.xyzw = (r0.xyzw * float4(2,2,2,2) + v3.xyzw);
 
   // o0.xyz = renodx::color::srgb::DecodeSafe(o0.xyz);
   return;
