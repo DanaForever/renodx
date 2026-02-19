@@ -31,7 +31,7 @@ float4 SwapChainPass(float4 inputColor) {
     color = GammaCorrectHuePreserving(color, 2.4f);
   }
 
-  color *= config.swap_chain_scaling_nits;
+  
   [branch]
   if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
     color = renodx::color::bt709::from::BT709D93(color);
@@ -59,7 +59,12 @@ float4 SwapChainPass(float4 inputColor) {
   color = max(0.f, color);
   color = renodx::color::bt709::from::BT2020(color);
 
-  color = min(color, config.swap_chain_clamp_nits);  // Clamp UI or Videos
+  color *= config.swap_chain_scaling_nits;
+  float max_channel = max(max(max(color.r, color.g), color.b), config.swap_chain_clamp_nits);
+  color *= config.swap_chain_clamp_nits / max_channel;  // Clamp UI or Videos
+
+  if (config.swap_chain_encoding_color_space == 1.f)
+    color = renodx::color::bt2020::from::BT709(color);
 
   color = renodx::draw::EncodeColor(color, config.swap_chain_encoding);
   

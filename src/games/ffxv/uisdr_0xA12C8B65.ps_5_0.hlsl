@@ -26,6 +26,6 @@ void main(
   r0.xyzw = v1.xyzw * r1.xyzw;
   o0.xyzw = saturate(r0.xyzw * float4(2,2,2,2) + v3.xyzw);
 
-  o0.xyz = renodx::color::srgb::DecodeSafe(o0.xyz);
+  // o0.xyz = renodx::color::srgb::DecodeSafe(o0.xyz);
   return;
 }

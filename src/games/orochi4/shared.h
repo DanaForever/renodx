@@ -26,6 +26,9 @@ struct ShaderInjectData {
   float gamma_correction;
   float tone_map_lms_contrast;
   float tone_map_lms_vibrancy;
+
+  float swap_chain_encoding;
+  float swap_chain_encoding_color_space;
 };
 
 #ifndef __cplusplus
@@ -51,6 +54,9 @@ cbuffer cb13 : register(b13) {
 #define RENODX_TONE_MAP_HUE_PROCESSOR        0
 #define RENODX_TONE_MAP_PER_CHANNEL          shader_injection.tone_map_per_channel
 #define RENODX_GAMMA_CORRECTION              shader_injection.gamma_correction
+
+#define RENODX_SWAP_CHAIN_ENCODING             shader_injection.swap_chain_encoding // 5.f
+#define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE shader_injection.swap_chain_encoding_color_space
 // #define CUSTOM_TONE_MAP_STRATEGY             shader_injection.custom_tone_map_strategy
 // #define CUSTOM_LUT_STRENGTH                  shader_injection.custom_lut_strength
 // #define CUSTOM_LUT_SCALING                   shader_injection.custom_lut_scaling

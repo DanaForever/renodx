@@ -287,6 +287,11 @@ void main(
   r1.z = dot(r0.xyz, float3(0.00642100023, 0.0243079998, 0.969271004));
 
   float3 untonemapped = r1.rgb;
+
+  // o0.rgb = renodx::color::srgb::EncodeSafe(untonemapped);
+  // o0.w = r0.w;
+  // return;
+  
   float3 sdr = toneMapLogContrast(r1.rgb);
 
   if (shader_injection.tone_map_mode == 0.f) {

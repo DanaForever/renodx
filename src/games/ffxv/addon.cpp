@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <include/reshade_api_format.hpp>
 #define ImTextureID ImU64
 
 #define DEBUG_LEVEL_0
@@ -670,31 +671,17 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::shader::expected_constant_buffer_space = 50;
         renodx::mods::shader::expected_constant_buffer_index = 13;
         renodx::mods::shader::allow_multiple_push_constants = true;
+        renodx::mods::swapchain::use_resource_cloning = true;
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8b8a8_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,
           .use_resource_view_cloning = true,
-          .aspect_ratio = static_cast<float>((true)
-                                                ? renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
-                                                : renodx::mods::swapchain::SwapChainUpgradeTarget::ANY),
-        //   .usage_include = reshade::api::resource_usage::render_target,
+          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          .usage_include = reshade::api::resource_usage::render_target,
           
         });
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r11g11b10_float,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .use_resource_view_cloning = true,
-          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-          .usage_include = reshade::api::resource_usage::render_target
-        });
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r11g11b10_float,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .use_resource_view_cloning = true,
-          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-          .usage_include = reshade::api::resource_usage::shader_resource
-        });
+
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r10g10b10a2_typeless,
           .new_format = reshade::api::format::r16g16b16a16_typeless,
@@ -704,15 +691,67 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r10g10b10a2_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,
+          .ignore_size = true,
           .use_resource_view_cloning = true,
-          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
+        //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
         });
 
-        bool is_hdr10 = false;
-        shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
-        shader_injection.swap_chain_encoding_color_space = (is_hdr10 ? 1.f : 0.f);
-        renodx::mods::swapchain::SetUseHDR10(is_hdr10);
-        renodx::mods::swapchain::use_resize_buffer = false;
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r8g8_unorm,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+          .ignore_size = true,
+          .use_resource_view_cloning = true,
+        //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
+        });
+
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r11g11b10_float,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+        //   .ignore_size = true,
+          .use_resource_view_cloning = true,
+          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          .usage_include = reshade::api::resource_usage::shader_resource
+        });
+
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r11g11b10_float,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+        //   .ignore_size = true,
+          .use_resource_view_cloning = true,
+          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          .usage_include = reshade::api::resource_usage::render_target
+        });
+
+        {
+            auto* setting = new renodx::utils::settings::Setting{
+                .key = "SwapChainEncoding",
+                .binding = &shader_injection.hdr_format,
+                .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+                .default_value = 1.f,
+                .label = "HDR Format",
+                .section = "Display Output",
+                .tooltip = "Sets the HDR format (HDR10 is compatible with Smooth Motion)",
+                .labels = {"HDR10", "scRGB (default)"},
+                .is_enabled = []() { return true; },
+                .is_global = true,
+                .is_visible = []() { return current_settings_mode >= 2; },
+            };
+
+            renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
+            bool is_hdr10 = setting->GetValue() == 0;
+            renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+            renodx::mods::swapchain::use_resize_buffer = false;
+            shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
+            shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
+            settings.push_back(setting);
+        }
+
+        // bool is_hdr10 = true;
+        // shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
+        // shader_injection.swap_chain_encoding_color_space = (is_hdr10 ? 1.f : 0.f);
+        // renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        // renodx::mods::swapchain::use_resize_buffer = false;
+
 
         initialized = true;
       }

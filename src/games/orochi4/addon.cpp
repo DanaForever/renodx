@@ -211,6 +211,8 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
 extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX";
 extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for Batman: Arkham Knight";
 
+bool is_hdr10 = true;
+
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   switch (fdw_reason) {
     case DLL_PROCESS_ATTACH:
@@ -267,6 +269,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .new_format = reshade::api::format::r16g16b16a16_float,
             .aspect_ratio = 16.f / 9.f
         });
+
+        
+        shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
+        shader_injection.swap_chain_encoding_color_space = (is_hdr10 ? 1.f : 0.f);
+        renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        renodx::mods::swapchain::use_resize_buffer = false;
+
 
       renodx::mods::swapchain::use_resource_cloning = true;
       renodx::mods::swapchain::swap_chain_proxy_vertex_shader = __swap_chain_proxy_vertex_shader;
