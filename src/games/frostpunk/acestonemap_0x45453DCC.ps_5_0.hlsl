@@ -101,16 +101,32 @@ void main(
   } else
     r1.xyz = renodx::tonemap::ACESFittedBT709(r1.xyz / 0.6f);
 
+  // lerp between two aces 
   r0.xyz = lerp(r1.xyz, r0.xyz, cb2[6].z);
 
   float3 sdr_ungraded = r0.xyz;
-  // lut sampling apparently
-  r1.x = t4.Sample(s4_s, r0.x).x;
-  r1.y = t4.Sample(s4_s, r0.y).y;
-  r1.z = t4.Sample(s4_s, r0.z).z;
+  float3 color_lut_input = r0.rgb;
+  if (RENODX_TONE_MAP_TYPE == 2) {
+
+    float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(color_lut_input);
+    float3 color_lut_input_tonemapped = (color_lut_input * scale);  // Tonemap MaxCh to 1
+
+    r0.rgb = color_lut_input_tonemapped;
+    r1.x = t4.Sample(s4_s, r0.x).x;
+    r1.y = t4.Sample(s4_s, r0.y).y;
+    r1.z = t4.Sample(s4_s, r0.z).z;
+
+    // inverse scale 
+    r1.rgb = r1.rgb / scale;
+  } else {
+    // lut sampling apparently
+    r1.x = t4.Sample(s4_s, r0.x).x;
+    r1.y = t4.Sample(s4_s, r0.y).y;
+    r1.z = t4.Sample(s4_s, r0.z).z;
+  }
   r0.xyz = cb2[8].xyz * r1.xyz;
   r2.xyz = sqrt(r0.xyz);
-  r0.w = renodx::color::y::from::BT709(r2.xyz);
+  r0.w = saturate(renodx::color::y::from::BT709(r2.xyz));
   r0.w = min(1, r0.w);
 
   r3.xyzw = t3.Sample(s3_s, r0.w).xyzw;

@@ -41,6 +41,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x987DC89C),  // ui
     CustomShaderEntry(0xA08DCDDC),  // main menu tonemapping
     CustomShaderEntry(0x5A21461F),  // tonemapping 
+    CustomShaderEntry(0x1C52C9A8),  // tonemapping sanada 
 };
 
 renodx::utils::settings::Settings settings = {
@@ -217,7 +218,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
     //   shader_injection.custom_has_drawn_menu = 0;
     //   renodx::mods::shader::trace_unmodified_shaders = true;
-        renodx::mods::swapchain::force_borderless = false;
+        renodx::mods::swapchain::force_borderless = true;
         renodx::mods::swapchain::prevent_full_screen = true;
         renodx::mods::shader::force_pipeline_cloning = true;
         renodx::mods::swapchain::use_resource_cloning = true;

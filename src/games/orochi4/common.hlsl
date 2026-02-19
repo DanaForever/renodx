@@ -23,7 +23,7 @@ float4 SwapChainPass(float4 inputColor) {
   renodx::draw::Config config = renodx::draw::BuildConfig();
 
   // color = renodx::draw::DecodeColor(color, config.swap_chain_decoding);
-  color = renodx::color::srgb::DecodeSafe(color);
+  // color = renodx::color::srgb::DecodeSafe(color);
 
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     color = GammaCorrectHuePreserving(color, 2.2f);
@@ -32,7 +32,6 @@ float4 SwapChainPass(float4 inputColor) {
   }
 
   color *= config.swap_chain_scaling_nits;
-
   [branch]
   if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
     color = renodx::color::bt709::from::BT709D93(color);
@@ -87,7 +86,7 @@ float3 PostToneMapProcess(float3 output) {
     output = renodx::color::correct::GammaSafe(output, true, 2.4f);
   }
 
-  output = renodx::color::srgb::EncodeSafe(output);
+  // output = renodx::color::srgb::EncodeSafe(output);
   // output = renodx::draw::RenderIntermediatePass(output);
 
   return output;
@@ -302,7 +301,7 @@ float3 ToneMapLMS(float3 untonemapped) {
   untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
 
   // naka rushton
-  untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
+  untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, RENODX_DIFFUSE_WHITE_NITS);
 
   float3 output = untonemapped_graded;
   float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;

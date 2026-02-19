@@ -598,7 +598,9 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
 
   // color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
   // color = lum_color;
+  color = renodx::color::bt2020::from::BT709(color);
   color = renodx::tonemap::neutwo::MaxChannel(color, rpeak, 100.f);
+  color = renodx::color::bt709::from::BT2020(color);
 
   return color;
 }

@@ -247,7 +247,7 @@ float3 MassEffectDisplayMap(float3 linear_color, float shoulder_start, float pea
 
 float3 LMS_Processing(float3 color) {
   color = LMS_Vibrancy(color, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
-  color = CastleDechroma_CVVDPStyle_NakaRushton(color);
+  color = CastleDechroma_CVVDPStyle_NakaRushton(color, RENODX_DIFFUSE_WHITE_NITS);
 
   return color;
 }
