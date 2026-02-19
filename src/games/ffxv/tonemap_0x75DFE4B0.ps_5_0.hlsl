@@ -286,15 +286,17 @@ void main(
   r1.y = dot(r0.xyz, float3(0.0496839993, 0.943306983, 0.00700900005));
   r1.z = dot(r0.xyz, float3(0.00642100023, 0.0243079998, 0.969271004));
 
+  float3 untonemapped = r1.rgb;
   float3 sdr = toneMapLogContrast(r1.rgb);
 
-  if (shader_injection.tone_map_mode < 2.f) {
+  if (shader_injection.tone_map_mode == 0.f) {
     r0.rgb = toneMapLogContrastExtended(r1.rgb);
+    untonemapped = r0.rgb;
   } else {
     r0.rgb = r1.rgb;
   }
-  float3 untonemapped = r0.rgb;
-  
+
+
   // 0 =  Vanilla (fake HDR)
   // 1 =  SDR
   if (shader_injection.tone_map_type == 0.f) {
@@ -328,28 +330,49 @@ void main(
 
     float3 hdr_ungraded, hdr_graded;
 
+    float sdr_y = renodx::color::y::from::BT709(sdr);
+    // float sdr_m = renodx::math::Max(abs(sdr.rgb));
+    
     [branch]
     if (shader_injection.tone_map_mode == 0.f) {
+      float hdr_y = renodx::color::y::from::BT709(untonemapped);
+      // float hdr_m = renodx::math::Max(abs(untonemapped.rgb));
+      // float scale = renodx::math::DivideSafe(sdr_m, hdr_m, 1.f);
+      float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
+
+      hdr_ungraded = untonemapped;
+      hdr_graded = colorGrade(hdr_ungraded * scale) / scale;
+      hdr_graded = ToneMapLMS(hdr_graded);
+
+      float3 reference_color = hdr_graded;
+
+      // float3 saturated_color = colorGrade(untonemapped);
+      // saturated_color = ToneMapLMS(saturated_color);
+
+      hdr_graded = reference_color;
       
-      hdr_ungraded = ToneMapLMS(untonemapped);
-      hdr_graded = colorGrade(hdr_ungraded);
-
-      // hdr_graded = r0.rgb;
-    } else if (shader_injection.tone_map_mode == 1.f) {
-      untonemapped = colorGrade(untonemapped);
-      hdr_ungraded = ToneMapLMS(untonemapped);
-
-      hdr_graded = hdr_ungraded;
-    
-    // upgraded SDR
-    } else if (shader_injection.tone_map_mode == 2.f) {
-      hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
-      hdr_graded = colorGrade(hdr_ungraded);
 
     } else {
-      hdr_ungraded = ToneMapPassLMS(untonemapped, sdr_graded);
-      hdr_graded = hdr_ungraded;
+      hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
+      float hdr_y = renodx::color::y::from::BT709(hdr_ungraded);
+      float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
+
+      hdr_graded = colorGrade(hdr_ungraded * scale) / scale;
     }
+
+    // upgraded SDR
+    // } else if (shader_injection.tone_map_mode == 2.f) {
+    //   hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
+
+    //   float hdr_y = renodx::color::y::from::BT709(hdr_ungraded);
+    //   float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
+
+    //   hdr_graded = colorGrade(hdr_ungraded);
+
+    // } else {
+    //   hdr_ungraded = ToneMapPassLMS(untonemapped, sdr_graded);
+    //   hdr_graded = hdr_ungraded;
+    // }
 
     if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f) {
       if (RENODX_TONE_MAP_HUE_PROCESSOR < 3.f)

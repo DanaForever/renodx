@@ -831,10 +831,10 @@ float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw
 
   float3 untonemapped_graded = renodx::draw::UpgradeToneMapByLuminance(untonemapped, neutral_sdr, graded_sdr_color, 1.f);
 
-  untonemapped_graded = LMS_ToneMap_Stockman(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
 
   // this dechromas too much
-  // untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, 50.f);
+  // untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, RENODX_DIFFUSE_WHITE_NITS, 100.f, 1.f);
 
   return renodx::draw::ToneMapPass(untonemapped_graded, config);
 }
@@ -850,15 +850,13 @@ float3 ToneMapLMS(float3 untonemapped) {
   untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
 
   // naka rushton
-  untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded);
+  float3 untonemapped_graded_dechroma = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, RENODX_DIFFUSE_WHITE_NITS, 100.f, 1.f);
+
+  untonemapped_graded = lerp(untonemapped_graded, untonemapped_graded_dechroma, shader_injection.color_grade_strength);
 
   float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
-  float3 bt2020_untonemapped = renodx::color::bt2020::from::BT709(untonemapped_graded);                    // displaymap in bt2020
-  float3 bt2020_tonemapped = renodx::tonemap::neutwo::MaxChannel(bt2020_untonemapped, peak_ratio, 100.f);  // Display map to peak
-  float3 bt709_tonemapped = renodx::color::bt709::from::BT2020(bt2020_tonemapped);
-  // float3 bt2020_displaymapped_color = renodx::tonemap::HermiteSplineLuminanceRolloff(max(0, bt2020_final_color), peak_ratio, 100.f);  // Display map to peak
-  // float3 bt2020_displaymapped_color = renodx::tonemap::neutwo::PerChannel(max(0, bt2020_final_color), peak_ratio, 100.f);  // Display map to peak
+  float3 bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded);
 
   return bt709_tonemapped;
 }
