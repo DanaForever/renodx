@@ -73,7 +73,6 @@ struct ShaderInjectData {
   // float fix_post_process;
 
   float processing_path;
-  float processing_use_scrgb;
   float unreal_hdr_setting;
 };
 

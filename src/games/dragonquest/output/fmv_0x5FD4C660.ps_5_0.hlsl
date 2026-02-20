@@ -50,36 +50,6 @@ void main(
   r0.w = cmp(cb0[2].y != 1.000000);
   o0.xyz = r0.www ? r1.xyz : r0.xyz;
 
-  // // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
-
-  if (RENODX_TONE_MAP_TYPE > 0.f) {
-    float videoPeak = RENODX_FMV_PEAK_WHITE_NITS;
-
-    float peak = videoPeak / (RENODX_DIFFUSE_WHITE_NITS / 203.f);
-
-    o0.rgb = renodx::color::gamma::DecodeSafe(o0.rgb, 2.4f);  // 2.4 for BT2446a
-    // o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);  // 2.4 for BT2446a
-    o0.rgb = renodx::tonemap::inverse::bt2446a::BT709(o0.rgb, 100.f, videoPeak);
-    o0.rgb /= videoPeak;                              // Normalize to 1.0f = peak;
-    o0.rgb *= videoPeak /
-                  RENODX_DIFFUSE_WHITE_NITS;  // 1.f = game nits
-
-    // Inverse AutoHDR?
-  } else {
-    o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-  }
-
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.4f);
-  }
-
-  // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
-  // o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-
-
-  o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
   o0.w = v1.w;
   return;
 }

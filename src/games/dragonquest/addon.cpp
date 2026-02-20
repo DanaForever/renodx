@@ -41,8 +41,21 @@ renodx::utils::settings::Settings settings = {
         .default_value = 0.f,
         .can_reset = false,
         .label = "Settings Mode",
+        .section = "Settings",
         .labels = {"Simple", "Intermediate", "Advanced"},
         .is_global = true,
+    },
+
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapUnrealIni",
+        .binding = &shader_injection.processing_path,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 1.f,
+        .can_reset = false,
+        .label = "Processing Path",
+        .section = "Settings",
+        .tooltip = "Use Unreal Engine HDR path or Upgrade SDR path.",
+        .labels = {"Engine HDR", "Upgrade SDR"},
     },
 
     new renodx::utils::settings::Setting{
@@ -69,6 +82,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Skips a mapping-polynomial grading effect which brightens the image.",
         .labels = {"Off", "On"},
     },
+    
 
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",
@@ -103,19 +117,20 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Sets the brightness of UI and HUD elements in nits",
         .min = 48.f,
         .max = 500.f,
+        .is_visible = []() { return shader_injection.processing_path == 1.f; },
     },
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapFmvPeakNits",
-        .binding = &shader_injection.fmv_peak_white_nits,
-        .default_value = 600.f,
-        .can_reset = false,
-        .label = "FMV Peak Brightness",
-        .section = "Tone Mapping",
-        .tooltip = "Sets the value of peak white in nits for FMVs.",
-        .min = 48.f,
-        .max = 4000.f,
-        .is_enabled = []() { return shader_injection.tone_map_type == 1.f; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapFmvPeakNits",
+    //     .binding = &shader_injection.fmv_peak_white_nits,
+    //     .default_value = 600.f,
+    //     .can_reset = false,
+    //     .label = "FMV Peak Brightness",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Sets the value of peak white in nits for FMVs.",
+    //     .min = 48.f,
+    //     .max = 4000.f,
+    //     .is_enabled = []() { return shader_injection.tone_map_type == 1.f; },
+    // },
 
     new renodx::utils::settings::Setting{
         .key = "ToneMapGammaCorrection",
@@ -1361,12 +1376,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
 
         renodx::mods::swapchain::use_resource_cloning = true;
+        renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
+        renodx::mods::swapchain::swapchain_proxy_revert_state = true;
         auto process_path = renodx::utils::platform::GetCurrentProcessPath();
         auto filename = process_path.filename().string();
         auto product_name = renodx::utils::platform::GetProductName(process_path);
         
-        if (product_name == "DQ7R" || filename == "DQ7R-Win64-Shipping.exe") {
-          renodx::mods::swapchain::swap_chain_proxy_shaders = {
+        renodx::mods::swapchain::swap_chain_proxy_shaders = {
               {
                   reshade::api::device_api::d3d11,
                   {
@@ -1382,10 +1398,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
                   },
               },
           };
-
-          
-        }
-
         // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
         //     .old_format = reshade::api::format::r8g8b8a8_typeless,
         //     .new_format = reshade::api::format::r16g16b16a16_float,
