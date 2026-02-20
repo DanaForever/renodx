@@ -317,7 +317,7 @@ float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
 
 float3 DisplayMap(float3 color) {
   // Tonemapping
-  if (RENODX_TONE_MAP_TYPE > 0.f) {
+  if (RENODX_TONE_MAP_TYPE > 1.f) {
     color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast);
     color = CastleDechroma_CVVDPStyle_NakaRushton(color, RENODX_DIFFUSE_WHITE_NITS);
 
@@ -330,11 +330,8 @@ float3 DisplayMap(float3 color) {
     }
 
     float3 bt2020_final_color = renodx::color::bt2020::from::BT709(color);               // displaymap in bt2020
-    color = renodx::tonemap::neutwo::MaxChannel(bt2020_final_color, peak_ratio, 100.f);  // Display map to peak
-    // float3 bt2020_displaymapped_color = renodx::tonemap::HermiteSplineLuminanceRolloff(max(0, bt2020_final_color), peak_ratio, 100.f);  // Display map to peak
-    // float3 bt2020_displaymapped_color = renodx::tonemap::neutwo::PerChannel(max(0, bt2020_final_color), peak_ratio, 100.f);  // Display map to peak
+    color = renodx::tonemap::neutwo::MaxChannel(bt2020_final_color, peak_ratio, 100.f);  // Display map to peak]
     color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
-    // color = renodx::draw::ToneMapPass(color);
 
   } else {
 
@@ -373,19 +370,19 @@ float3 DisplayMap(float3 color) {
   // }
 
   // Gamut Compression
-  color = renodx::color::bt2020::from::BT709(color);
-  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
-  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
-  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
-  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
-  float encode_gamma = MID_GRAY_GAMMA;
-  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
-  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
-  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
-  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
+  // color = renodx::color::bt2020::from::BT709(color);
+  // float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
+  // const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  // const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  // const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+  // float encode_gamma = MID_GRAY_GAMMA;
+  // float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+  // float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+  // float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+  // color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
 
-  color = max(0.f, color);
-  color = renodx::color::bt709::from::BT2020(color);
+  // color = max(0.f, color);
+  // color = renodx::color::bt709::from::BT2020(color);
 
   float3 output = color * RENODX_DIFFUSE_WHITE_NITS / 80.f;
 

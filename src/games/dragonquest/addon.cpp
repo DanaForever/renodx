@@ -54,7 +54,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"UE ACES (HDR)", "None", "ACES", "UE Filmic Extended (HDR)", "UE Filmic (SDR)"},
-        .labels = {"UE Vanilla (SDR)", "UE Filmic Extended (HDR)"},
+        .labels = {"UE Mobile (Vanilla SDR)", "UE Filmic (SDR)", "UE Filmic Extended (HDR)"},
     },
 
     new renodx::utils::settings::Setting{
@@ -159,7 +159,7 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Hue-shift emulation strength.",
         .min = 0.f,
         .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type == 1.f; },
+        .is_enabled = []() { return shader_injection.tone_map_type > 0.f; },
         .parse = [](float value) { return value * 0.01f; },
     },
 
@@ -1387,22 +1387,21 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_typeless,
             .new_format = reshade::api::format::r16g16b16a16_float,
-            .ignore_size = true,
             .use_resource_view_cloning = true,
+            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
             
         });
 
          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_unorm,
             .new_format = reshade::api::format::r16g16b16a16_float,
-            .ignore_size = true,
-            .use_resource_view_cloning = true
+            .use_resource_view_cloning = true,
+            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
         });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_unorm_srgb,
             .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
             .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
         });
 
@@ -1431,8 +1430,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r11g11b10_float,
             .new_format = reshade::api::format::r16g16b16a16_float,
-            .ignore_size = true,
             .use_resource_view_cloning = true,
+            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
         });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({

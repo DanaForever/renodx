@@ -21,6 +21,7 @@ struct UECbufferConfig {
   float4 ue_overlaycolor;
   float3 ue_colorscale;
   float ue_bluecorrection;
+  float ue_gamma;
   bool ue_haslut;
 };
 
@@ -40,6 +41,7 @@ UECbufferConfig CreateCbufferConfig(
     float4 ue_overlaycolor = 1.f,
     float3 ue_colorscale = 1.f,
     float ue_bluecorrection = 1.f,
+    float ue_gamma = 1.f,
     bool ue_haslut = false) {
   UECbufferConfig cb_config;
   cb_config.ue_filmblackclip = ue_filmblackclip;
@@ -55,6 +57,7 @@ UECbufferConfig CreateCbufferConfig(
   cb_config.ue_colorscale = ue_colorscale;
   cb_config.ue_bluecorrection = ue_bluecorrection;
   cb_config.ue_haslut = ue_haslut;
+  cb_config.ue_gamma = ue_gamma;
 
   return cb_config;
 }
@@ -116,7 +119,7 @@ void ApplyFilmToneMapWithBlueCorrect(float untonemapped_r, float untonemapped_g,
   float y = renodx::color::y::from::AP1(untonemapped_ap1);
   float3 hue_reference_color = untonemapped_ap1;
 
-  float3 untonemapped_ap1_graded = untonemapped_ap1;
+  float3 untonemapped_ap1_graded = lerp(y.xxx, untonemapped_ap1, 0.959999979f);
 
   // if (RENODX_TONE_MAP_TYPE != 0.f) {
   //   untonemapped_ap1_graded = ApplyExposureContrastFlareHighlightsShadowsByLuminance(untonemapped_ap1, y, cg_config, 0.18f);
@@ -125,9 +128,10 @@ void ApplyFilmToneMapWithBlueCorrect(float untonemapped_r, float untonemapped_g,
   float3 tonemapped_ap1;
 
   // Vanilla+ and UE Filmic
-  float3 untonemapped_prebluecorrect_ap1 = ApplyBlueCorrectionPre(untonemapped_ap1_graded, cb_config);
-  float3 untonemapped_rrt_prebluecorrect_ap1 = renodx::tonemap::aces::RRT(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_prebluecorrect_ap1));
-
+  // float3 untonemapped_prebluecorrect_ap1 = ApplyBlueCorrectionPre(untonemapped_ap1_graded, cb_config);
+  // float3 untonemapped_prebluecorrect_ap1 = untonemapped_ap1_graded;
+  // float3 untonemapped_rrt_prebluecorrect_ap1 = renodx::tonemap::aces::RRT(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_prebluecorrect_ap1));
+  float3 untonemapped_rrt_prebluecorrect_ap1 = untonemapped_ap1_graded;
   float3 tonemapped_prebluecorrect_ap1;
   if (RENODX_TONE_MAP_TYPE == 0.f) {  // Vanilla
     tonemapped_prebluecorrect_ap1 =
@@ -136,10 +140,14 @@ void ApplyFilmToneMapWithBlueCorrect(float untonemapped_r, float untonemapped_g,
     tonemapped_prebluecorrect_ap1 =
         ApplyToneCurveExtendedWithHermite(untonemapped_rrt_prebluecorrect_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
   }
+  // tonemapped_prebluecorrect_ap1 =
+  //       ApplyToneCurveExtendedWithHermite(untonemapped_rrt_prebluecorrect_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+  // tonemapped_prebluecorrect_ap1 =
+  //       unrealengine::filmtonemap::ApplyToneCurve(untonemapped_rrt_prebluecorrect_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
 
   tonemapped_prebluecorrect_ap1 = ApplyPostToneMapDesaturation(tonemapped_prebluecorrect_ap1);
-  tonemapped_prebluecorrect_ap1 = LerpToneMapStrength(tonemapped_prebluecorrect_ap1, untonemapped_ap1_graded, cb_config);
-  tonemapped_ap1 = ApplyBlueCorrectionPost(tonemapped_prebluecorrect_ap1, cb_config);
+  // tonemapped_prebluecorrect_ap1 = LerpToneMapStrength(tonemapped_prebluecorrect_ap1, untonemapped_ap1_graded, cb_config);
+  // tonemapped_ap1 = ApplyBlueCorrectionPost(tonemapped_prebluecorrect_ap1, cb_config);
   tonemapped_ap1 = tonemapped_prebluecorrect_ap1;
   tonemapped_ap1 = max(0, tonemapped_ap1);
 

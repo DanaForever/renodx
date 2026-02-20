@@ -21,15 +21,17 @@ float4 ProcessLutbuilder(float3 untonemapped_ap1, UECbufferConfig cb_config, flo
       float3 bt709_tonemapped_sdr = (bt709_tonemapped * scale);  // Tonemap MaxCh to 1
       bt709_tonemapped_sdr = (((cb_config.ue_mappingpolynomial.y + (cb_config.ue_mappingpolynomial.x * bt709_tonemapped_sdr)) * bt709_tonemapped_sdr) + cb_config.ue_mappingpolynomial.z);
       bt709_tonemapped = bt709_tonemapped_sdr / scale;
-      bt709_tonemapped = renodx::color::correct::Hue(bt709_tonemapped, unscaled);
+      // bt709_tonemapped = renodx::color::correct::Hue(bt709_tonemapped, unscaled);
     } else {
       bt709_tonemapped = (((cb_config.ue_mappingpolynomial.y + (cb_config.ue_mappingpolynomial.x * bt709_tonemapped)) * bt709_tonemapped) + cb_config.ue_mappingpolynomial.z);
     }
   }
+  bt709_tonemapped = (((cb_config.ue_mappingpolynomial.y + (cb_config.ue_mappingpolynomial.x * bt709_tonemapped)) * bt709_tonemapped) + cb_config.ue_mappingpolynomial.z);
 
   // post processing like usual
   float3 scaled = cb_config.ue_colorscale.xyz * bt709_tonemapped;
   float3 output = ((cb_config.ue_overlaycolor.xyz - scaled) * cb_config.ue_overlaycolor.w) + scaled;
+  output = renodx::math::SafePow(output, cb_config.ue_gamma);
 
   return GenerateOutput(output.x, output.y, output.z, SV_Target, outputdevice);
 }

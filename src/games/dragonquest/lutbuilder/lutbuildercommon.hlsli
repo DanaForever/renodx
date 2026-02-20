@@ -1,4 +1,5 @@
 #include "../shared.h"
+#include "./macleod_boynton.hlsli"
 
 #ifndef INCLUDE_LUTBUILDER_COMMON
 #define INCLUDE_LUTBUILDER_COMMON
@@ -258,11 +259,26 @@ float4 GenerateOutput(float r, float g, float b, inout float4 SV_Target, uint de
   // if (RENODX_TONE_MAP_TYPE == 0.f) final_color = saturate(final_color);
 
   // Intermediate Encoding
-  float3 encoded_color;
-  encoded_color = renodx::color::pq::EncodeSafe(final_color, 1.f);
-  // encoded_color = final_color;
+  // float3 encoded_color;
+
+  // encoded_color = renodx::color::pq::EncodeSafe(final_color);
+  float3 encoded_color = final_color;
 
   return SV_Target = float4(encoded_color / 1.05f, 0.f);
 }
+
+
+float3 CorrectHueAndPurity(
+    float3 target_color_bt709,
+    float3 reference_color_bt709,
+    float strength = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f) {
+
+  float hue_t_ramp_start = 0.5f;
+  float hue_t_ramp_end = 1.f;
+  return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
+};
+
 
 #endif  // INCLUDE_LUTBUILDER_COMMON

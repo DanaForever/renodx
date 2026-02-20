@@ -27,12 +27,8 @@ struct Config {
 
 namespace config {
 
-Config Create(
-    float FilmSlope,
-    float FilmToe,
-    float FilmShoulder,
-    float FilmBlackClip,
-    float FilmWhiteClip) {
+Config Create(float FilmSlope, float FilmToe, float FilmShoulder,
+              float FilmBlackClip, float FilmWhiteClip) {
   Config p;
   p.FilmSlope = FilmSlope;
   p.FilmToe = FilmToe;
@@ -42,14 +38,18 @@ Config Create(
 
   p.toe_width = (FilmBlackClip + 1.0f) - FilmToe;
   p.shoulder_width = (FilmWhiteClip + 1.0f) - FilmShoulder;
-  if (FilmToe > 0.8) {
-    p.log_toe_threshold = (((0.82 - FilmToe) / FilmSlope) - 0.7447274923324585f);
+
+  if (FilmToe > 0.8f) {
+    p.log_toe_threshold = ((0.82f - FilmToe) / FilmSlope) - 0.7447274923324585f;
   } else {
-    float toe_norm = (FilmBlackClip + 0.18) / p.toe_width;
-    p.log_toe_threshold = (-0.7447274923324585f - ((log2(toe_norm / (2.0f - toe_norm)) * 0.3465735912322998f) * (p.toe_width / FilmSlope)));
+    float toe_norm = (FilmBlackClip + 0.18f) / p.toe_width;
+    p.log_toe_threshold =
+      -0.7447274923324585f
+      - (log2(toe_norm / (2.0f - toe_norm)) * 0.3465735912322998f) * (p.toe_width / FilmSlope);
   }
 
-  p.log_mid_anchor = ((1.0f - FilmToe) / FilmSlope) - p.log_toe_threshold;
+  // IMPORTANT: includes FilmWhiteClip (matches ASM's (1 + whiteclip) term)
+  p.log_mid_anchor = ((1.0f + FilmWhiteClip - FilmToe) / FilmSlope) - p.log_toe_threshold;
   p.log_shoulder_threshold = (FilmShoulder / FilmSlope) - p.log_mid_anchor;
 
   return p;
