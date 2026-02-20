@@ -361,15 +361,45 @@ void main(
   float3 untonemapped_ap1 = r0.xyz;
   UECbufferConfig cb_config = CreateCbufferConfig();
 
-  // Film curve params (DQ11 packs them in cb0[27])
-  cb_config.ue_filmslope = asfloat(cb0[27].x);
-  cb_config.ue_filmtoe = asfloat(cb0[27].y);
-  cb_config.ue_filmshoulder = asfloat(cb0[27].z);
-  cb_config.ue_filmblackclip = asfloat(cb0[27].w);
+  // // Film curve params (DQ11 packs them in cb0[27])
 
-  // White clip (DQ11 uses cb0[28].x in the same “1 + …” way UE uses whiteclip)
-  cb_config.ue_filmwhiteclip = asfloat(cb0[28].x);
-
+  if (shader_injection.filmic_curve == 0.f) {
+    cb_config.ue_filmslope = asfloat(cb0[27].x);
+    cb_config.ue_filmtoe = asfloat(cb0[27].y);
+    cb_config.ue_filmshoulder = asfloat(cb0[27].z);
+    cb_config.ue_filmblackclip = asfloat(cb0[27].w);
+  
+    // White clip (DQ11 uses cb0[28].x in the same “1 + …” way UE uses whiteclip)
+    cb_config.ue_filmwhiteclip = asfloat(cb0[28].x);
+  } else if (shader_injection.filmic_curve == 1.f) {
+    // Uncharted settings
+    cb_config.ue_filmslope = 0.63;
+    cb_config.ue_filmtoe = 0.55;
+    cb_config.ue_filmshoulder = 0.47;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.01;
+  } else if (shader_injection.filmic_curve == 2.f) {
+    // HP settings
+    cb_config.ue_filmslope = 0.65;
+    cb_config.ue_filmtoe = 0.63;
+    cb_config.ue_filmshoulder = 0.45;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.f;
+  } else if (shader_injection.filmic_curve == 3.f) {
+    // Legacy settings
+    cb_config.ue_filmslope = 0.98;
+    cb_config.ue_filmtoe = 0.3;
+    cb_config.ue_filmshoulder = 0.22;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.025;
+  } else if (shader_injection.filmic_curve == 4.f) {
+    // aces settings
+    cb_config.ue_filmslope = 0.91;
+    cb_config.ue_filmtoe = 0.53;
+    cb_config.ue_filmshoulder = 0.23;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.035;
+  }
   // Mapping polynomial (this one matches the “cb0[17].xyz” pattern exactly)
   cb_config.ue_mappingpolynomial = asfloat(cb0[17].xyz);
 

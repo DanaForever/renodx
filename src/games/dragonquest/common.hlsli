@@ -410,6 +410,7 @@ float3 DisplayMap(float3 color) {
     color = CastleDechroma_CVVDPStyle_NakaRushton(color, RENODX_DIFFUSE_WHITE_NITS);
 
     float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+    
     if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
       peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.2f);
 

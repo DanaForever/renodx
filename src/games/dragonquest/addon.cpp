@@ -34,6 +34,8 @@ ShaderInjectData shader_injection;
 
 float current_settings_mode = 0;
 
+
+
 renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "SettingsMode",
@@ -69,7 +71,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"UE ACES (HDR)", "None", "ACES", "UE Filmic Extended (HDR)", "UE Filmic (SDR)"},
-        .labels = {"UE Mobile (Vanilla SDR)", "UE Filmic (SDR)", "Mobile Extended (HDR)", "UE Filmic Extended (HDR)"},
+        .labels = {"UE Mobile (SDR)", "UE Filmic (Vanilla SDR)", "Mobile Extended (HDR)", "UE Filmic Extended (HDR)"},
     },
 
     new renodx::utils::settings::Setting{
@@ -84,7 +86,19 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Off", "On"},
     },
     
-
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapBase",
+        .binding = &shader_injection.filmic_curve,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 4.f,
+        .can_reset = false,
+        .label = "Filmic Tonemapping Curve",
+        .section = "Tone Mapping",
+        .tooltip = "Sets the tone mapper type for filmic",
+        .labels = {"Default", "Uncharted", "High Precision", "Legacy", "ACES"},
+        .is_enabled = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
+        .is_visible = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
+    },
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",
         .binding = &shader_injection.peak_white_nits,
@@ -444,6 +458,7 @@ renodx::utils::settings::Settings settings = {
 
 };
 
+
 const std::unordered_map<std::string, reshade::api::format> UPGRADE_TARGETS = {
     {"R8G8B8A8_TYPELESS", reshade::api::format::r8g8b8a8_typeless},
     {"B8G8R8A8_TYPELESS", reshade::api::format::b8g8r8a8_typeless},
@@ -459,61 +474,61 @@ const std::unordered_map<std::string, reshade::api::format> UPGRADE_TARGETS = {
     {"R16G16B16A16_TYPELESS", reshade::api::format::r16g16b16a16_typeless},
 };
 
-renodx::utils::settings::Settings info_settings = {
-    new renodx::utils::settings::Setting{
-        .value_type = renodx::utils::settings::SettingValueType::BUTTON,
-        .label = "Reset All",
-        .section = "Options",
-        .group = "button-line-1",
-        .on_change = []() { renodx::utils::settings::ResetSettings(); },
-    },
+// renodx::utils::settings::Settings info_settings = {
+//     new renodx::utils::settings::Setting{
+//         .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+//         .label = "Reset All",
+//         .section = "Options",
+//         .group = "button-line-1",
+//         .on_change = []() { renodx::utils::settings::ResetSettings(); },
+//     },
 
-    new renodx::utils::settings::Setting{
-        .value_type = renodx::utils::settings::SettingValueType::BUTTON,
-        .label = "Discord",
-        .section = "Links",
-        .group = "button-line-2",
-        .tint = 0x5865F2,
-        .on_change = []() {
-          renodx::utils::platform::LaunchURL("https://discord.gg/", "F6AUTeWJHM");
-        },
-    },
-    new renodx::utils::settings::Setting{
-        .value_type = renodx::utils::settings::SettingValueType::BUTTON,
-        .label = "More Mods",
-        .section = "Links",
-        .group = "button-line-2",
-        .tint = 0x2B3137,
-        .on_change = []() {
-          renodx::utils::platform::LaunchURL("https://github.com/clshortfuse/renodx/wiki/Mods");
-        },
-    },
-    new renodx::utils::settings::Setting{
-        .value_type = renodx::utils::settings::SettingValueType::BUTTON,
-        .label = "Github",
-        .section = "Links",
-        .group = "button-line-2",
-        .tint = 0x2B3137,
-        .on_change = []() {
-          renodx::utils::platform::LaunchURL("https://github.com/clshortfuse/renodx");
-        },
-    },
-    new renodx::utils::settings::Setting{
-        .value_type = renodx::utils::settings::SettingValueType::BUTTON,
-        .label = "ShortFuse's Ko-Fi",
-        .section = "Links",
-        .group = "button-line-2",
-        .tint = 0xFF5A16,
-        .on_change = []() {
-          renodx::utils::platform::LaunchURL("https://ko-fi.com/shortfuse");
-        },
-    },
-    new renodx::utils::settings::Setting{
-        .value_type = renodx::utils::settings::SettingValueType::TEXT,
-        .label = std::string("Build: ") + renodx::utils::date::ISO_DATE_TIME,
-        .section = "About",
-    },
-};
+//     new renodx::utils::settings::Setting{
+//         .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+//         .label = "Discord",
+//         .section = "Links",
+//         .group = "button-line-2",
+//         .tint = 0x5865F2,
+//         .on_change = []() {
+//           renodx::utils::platform::LaunchURL("https://discord.gg/", "F6AUTeWJHM");
+//         },
+//     },
+//     new renodx::utils::settings::Setting{
+//         .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+//         .label = "More Mods",
+//         .section = "Links",
+//         .group = "button-line-2",
+//         .tint = 0x2B3137,
+//         .on_change = []() {
+//           renodx::utils::platform::LaunchURL("https://github.com/clshortfuse/renodx/wiki/Mods");
+//         },
+//     },
+//     new renodx::utils::settings::Setting{
+//         .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+//         .label = "Github",
+//         .section = "Links",
+//         .group = "button-line-2",
+//         .tint = 0x2B3137,
+//         .on_change = []() {
+//           renodx::utils::platform::LaunchURL("https://github.com/clshortfuse/renodx");
+//         },
+//     },
+//     new renodx::utils::settings::Setting{
+//         .value_type = renodx::utils::settings::SettingValueType::BUTTON,
+//         .label = "ShortFuse's Ko-Fi",
+//         .section = "Links",
+//         .group = "button-line-2",
+//         .tint = 0xFF5A16,
+//         .on_change = []() {
+//           renodx::utils::platform::LaunchURL("https://ko-fi.com/shortfuse");
+//         },
+//     },
+//     new renodx::utils::settings::Setting{
+//         .value_type = renodx::utils::settings::SettingValueType::TEXT,
+//         .label = std::string("Build: ") + renodx::utils::date::ISO_DATE_TIME,
+//         .section = "About",
+//     },
+// };
 
 void OnPresetOff() {
   renodx::utils::settings::UpdateSettings({
@@ -544,24 +559,32 @@ void OnPresetOff() {
 
 bool fired_on_init_swapchain = false;
 
+
+
+
 void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
-  if (fired_on_init_swapchain) return;
-  auto peak = renodx::utils::swapchain::GetPeakNits(swapchain);
-  if (peak.has_value()) {
-    settings[2]->default_value = peak.value();
-    settings[2]->can_reset = true;
-    fired_on_init_swapchain = true;
-  }
-}
 
-
-void AddGamePatches() {
   auto process_path = renodx::utils::platform::GetCurrentProcessPath();
   auto filename = process_path.filename().string();
   auto product_name = renodx::utils::platform::GetProductName(process_path);
-                       
-  reshade::log::message(reshade::log::level::info, std::format("Applied patches for {} ({}).", filename, product_name).c_str());
+  if (fired_on_init_swapchain) return;
+  auto peak = renodx::utils::swapchain::GetPeakNits(swapchain);
+  if (peak.has_value()) {
+    settings[5]->default_value = peak.value();
+    settings[5]->can_reset = true;
+    fired_on_init_swapchain = true;
+  }
+
 }
+
+
+// void AddGamePatches() {
+  // auto process_path = renodx::utils::platform::GetCurrentProcessPath();
+  // auto filename = process_path.filename().string();
+  // auto product_name = renodx::utils::platform::GetProductName(process_path);
+                       
+//   reshade::log::message(reshade::log::level::info, std::format("Applied patches for {} ({}).", filename, product_name).c_str());
+// }
 
 const auto UPGRADE_TYPE_NONE = 0.f;
 const auto UPGRADE_TYPE_OUTPUT_SIZE = 1.f;

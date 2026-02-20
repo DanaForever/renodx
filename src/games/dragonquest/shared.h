@@ -74,6 +74,7 @@ struct ShaderInjectData {
 
   float processing_path;
   float unreal_hdr_setting;
+  float filmic_curve;
 };
 
 #ifndef __cplusplus
