@@ -35,7 +35,7 @@ MobileTonemapResult mobile_tonemap(float3 bt709_input, ContrastConfig contrast_c
 
   r2.xyz = cb0[26].xyz * r0.www + cb0[25].xyz;
   r0.xyz = r2.xyz * r0.xyz;
-  r0.xyz = max(float3(0, 0, 0), r0.xyz);
+  // r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
   result.graded_untonemapped = r0.rgb;
 
