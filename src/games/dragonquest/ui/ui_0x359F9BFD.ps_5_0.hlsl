@@ -36,6 +36,9 @@ void main(
   r0.x = t0.Sample(s0_s, v4.xy).w;
   r0.x = v1.w * r0.x;
   r0.y = cmp(cb0[0].y != 1.000000);
+
+  float hdr = r0.y;
+
   r1.xyz = log2(v1.xyz);
   r1.xyz = cb0[0].xxx * r1.xyz;
   r2.xyz = exp2(r1.xyz);
@@ -111,16 +114,16 @@ void main(
   } else {
     o0.w = r0.x;
   }
+  if (hdr == 0) {
+    o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
 
-  o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.4f);
+    }
 
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.4f);
+    o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / 80.f;
   }
-
-  o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / 80.f;
-
   return;
 }

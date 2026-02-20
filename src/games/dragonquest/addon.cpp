@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <include/reshade_api_resource.hpp>
 #define ImTextureID ImU64
 #define DEBUG_LEVEL_0
 
@@ -48,13 +49,13 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapType",
         .binding = &shader_injection.tone_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
+        .default_value = 3.f,
         .can_reset = false,
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"UE ACES (HDR)", "None", "ACES", "UE Filmic Extended (HDR)", "UE Filmic (SDR)"},
-        .labels = {"UE Mobile (Vanilla SDR)", "UE Filmic (SDR)", "UE Filmic Extended (HDR)"},
+        .labels = {"UE Mobile (Vanilla SDR)", "UE Filmic (SDR)", "Mobile Extended (HDR)", "UE Filmic Extended (HDR)"},
     },
 
     new renodx::utils::settings::Setting{
@@ -63,9 +64,9 @@ renodx::utils::settings::Settings settings = {
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
         .default_value = 1.f,
         .can_reset = false,
-        .label = "Unreal HDR setting",
+        .label = "Skips Polynomial-mapping",
         .section = "Tone Mapping",
-        .tooltip = "Use the Unreal HDR setting. This skips a mapping-polynomial grading effect.",
+        .tooltip = "Skips a mapping-polynomial grading effect which brightens the image.",
         .labels = {"Off", "On"},
     },
 
@@ -154,26 +155,27 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapHueShift",
         .binding = &shader_injection.tone_map_hue_shift,
         .default_value = 50.f,
-        .label = "Hue Shift",
+        .label = "Filmic Hue Shift",
         .section = "Scene Grading",
-        .tooltip = "Hue-shift emulation strength.",
+        .tooltip = "Hue-shift emulation strength (from Filmic to Mobile).",
         .min = 0.f,
         .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type > 0.f; },
+        .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
         .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
     },
 
-    new renodx::utils::settings::Setting{
-        .key = "ColorGradeChromaCorrectBlowout",
-        .binding = &shader_injection.tone_map_chroma_correct_blowout,
-        .default_value = 70.f,
-        .label = "Blowout",
-        .section = "Scene Grading",
-        .tooltip = "Emulates blowout from per channel tonemapping.",
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type != 0; },
-        .parse = [](float value) { return value * 0.01f; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ColorGradeChromaCorrectBlowout",
+    //     .binding = &shader_injection.tone_map_chroma_correct_blowout,
+    //     .default_value = 70.f,
+    //     .label = "Blowout",
+    //     .section = "Scene Grading",
+    //     .tooltip = "Emulates blowout from per channel tonemapping.",
+    //     .max = 100.f,
+    //     .is_enabled = []() { return shader_injection.tone_map_type != 0; },
+    //     .parse = [](float value) { return value * 0.01f; },
+    // },
 
     new renodx::utils::settings::Setting{
         .key = "OverrideBlackClip",
@@ -1384,55 +1386,65 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           
         }
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r8g8b8a8_typeless,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r8g8b8a8_typeless,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .use_resource_view_cloning = true,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
             
-        });
+        // });
 
-         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r8g8b8a8_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+        //  renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r8g8b8a8_unorm,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .use_resource_view_cloning = true,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        // });
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r8g8b8a8_unorm_srgb,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r8g8b8a8_unorm_srgb,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        // });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::b8g8r8a8_typeless,
             .new_format = reshade::api::format::r16g16b16a16_float,
             .use_resource_view_cloning = true,
             .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+            .usage_include = reshade::api::resource_usage::render_target
         });
 
-          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::b8g8r8a8_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::b8g8r8a8_typeless,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .use_resource_view_cloning = true,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        //     .usage_include = reshade::api::resource_usage::copy_dest
+        // });
 
-         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::b8g8r8a8_unorm_srgb,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+
+        //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::b8g8r8a8_unorm,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .use_resource_view_cloning = true,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        // });
+
+        //  renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::b8g8r8a8_unorm_srgb,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .use_resource_view_cloning = true,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        // });
  
-        //  11 bit float
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r11g11b10_float,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+        // //  11 bit float
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r11g11b10_float,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .use_resource_view_cloning = true,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        // });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r10g10b10a2_unorm,
@@ -1441,12 +1453,12 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
         });
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r10g10b10a2_typeless,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r10g10b10a2_typeless,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .use_resource_view_cloning = true,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        // });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r10g10b10a2_unorm,

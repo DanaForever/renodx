@@ -4,6 +4,30 @@
 #include "../shared.h"
 #include "./lutbuildercommon.hlsli"
 
+struct ContrastConfig {
+  float4 ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3;
+  float4 ColorCurve_Ch1_Ch2;    
+  float4 ColorMatrixR_ColorCurveCd1; 
+  float4 ColorMatrixG_ColorCurveCd3Cm3;
+  float4 ColorMatrixB_ColorCurveCm2; 
+};
+
+ContrastConfig CreateContrast(float4 ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3,
+  float4 ColorCurve_Ch1_Ch2,
+  float4 ColorMatrixR_ColorCurveCd1,
+  float4 ColorMatrixG_ColorCurveCd3Cm3,
+  float4 ColorMatrixB_ColorCurveCm2) {
+  ContrastConfig p;
+  
+  p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3 = ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3;
+  p.ColorCurve_Ch1_Ch2 = ColorCurve_Ch1_Ch2;    
+  p.ColorMatrixR_ColorCurveCd1 = ColorMatrixR_ColorCurveCd1; 
+  p.ColorMatrixG_ColorCurveCd3Cm3 = ColorMatrixG_ColorCurveCd3Cm3;
+  p.ColorMatrixB_ColorCurveCm2 = ColorMatrixB_ColorCurveCm2; 
+
+  return p;
+}
+
 namespace unrealengine {
 
 namespace filmtonemap {
@@ -24,6 +48,9 @@ struct Config {
   float log_mid_anchor;
   float log_shoulder_threshold;
 };
+
+
+
 
 namespace config {
 
@@ -54,6 +81,9 @@ Config Create(float FilmSlope, float FilmToe, float FilmShoulder,
 
   return p;
 }
+
+
+
 
 }  // config
 
@@ -94,6 +124,48 @@ float3 ApplyToneCurve(
     float FilmSlope, float FilmToe, float FilmShoulder, float FilmBlackClip, float FilmWhiteClip) {
   unrealengine::filmtonemap::Config film_params = config::Create(FilmSlope, FilmToe, FilmShoulder, FilmBlackClip, FilmWhiteClip);
   return ApplyToneCurve(untonemapped, film_params);
+}
+
+
+#define CONTRASTTONECURVE_GENERATOR(T)                                                                                 \
+  T ApplyContrastToneCurve(T x, ContrastConfig p) {                                                                                      \
+    /* Parameters */                                                                                                   \
+    const T  Cm0 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.xxx;                                                            \
+    const T  Cd0 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.yyy;                                                            \
+    const T  Cd2 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.zzz;                                                            \
+    const T  Ch0 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.www;                                                            \
+    const T  Ch1 = (T)p.ColorCurve_Ch1_Ch2.xxx;                                                                          \
+    const T  Ch2 = (T)p.ColorCurve_Ch1_Ch2.yyy;                                                                          \
+    const T  Cd1 = (T)p.ColorMatrixR_ColorCurveCd1.www;                                                                  \
+    const T  Cd3 = (T)p.ColorMatrixG_ColorCurveCd3Cm3.www;                                                               \
+    const T  Cm2 = (T)p.ColorMatrixB_ColorCurveCm2.www;                                                                  \
+                                                                                                                       \
+    /* Region proxies */                                                                                               \
+    T D = max((T)0, Cm0 - x);                 /* MatrixColorD */                                                       \
+    T H = max(Cd2, x);                        /* MatrixColorH */                                                       \
+    T M = clamp(x, Cm0, Cd2);                 /* MatrixColorM */                                                       \
+                                                                                                                       \
+    /* Highlights: (H*Ch1 + Ch2) / (H + Ch0) */                                                                        \
+    T highlights = (H * Ch1 + Ch2) * rcp(H + Ch0);                                                                     \
+                                                                                                                       \
+    /* Darks: (D*Cd1)/(D+Cd0) + Cd3 */                                                                                 \
+    T darks = (D * Cd1) * rcp(D + Cd0) + Cd3;                                                                          \
+                                                                                                                       \
+    /* Midtones: M*Cm2 + darks */                                                                                      \
+    T midtones = M * Cm2 + darks;                                                                                      \
+                                                                                                                       \
+    /* Full curve + black offset */                                                                                    \
+    T y = highlights + midtones - (T)0.00200000009;                                                                    \
+    return y;                                                                                                          \
+  }
+
+CONTRASTTONECURVE_GENERATOR(float)
+CONTRASTTONECURVE_GENERATOR(float3)
+#undef CONTRASTTONECURVE_GENERATOR
+
+float3 ApplyMobileTonemap(
+    float3 untonemapped, ContrastConfig p) {
+  return ApplyContrastToneCurve(untonemapped, p);
 }
 
 namespace extended {
@@ -139,6 +211,44 @@ float3 ApplyToneCurveExtended(
   unrealengine::filmtonemap::Config film_params = config::Create(FilmSlope, FilmToe, FilmShoulder, FilmBlackClip, FilmWhiteClip);
   return ApplyToneCurveExtended(untonemapped, vanilla, film_params);
 }
+
+
+// Derivative of the highlight rational: d/dx((Ch1*x + Ch2)/(x + Ch0))
+#define CONTRASTDERIV_GENERATOR(T)                                                                 \
+  T ContrastHighlightDerivative(T x, const ContrastConfig p) {                                     \
+    T Ch0 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.w;                                               \
+    T Ch1 = (T)p.ColorCurve_Ch1_Ch2.x;                                                             \
+    T Ch2 = (T)p.ColorCurve_Ch1_Ch2.y;                                                             \
+    T denom = x + Ch0;                                                                             \
+    T K = Ch1 * Ch0 - Ch2;                                                                         \
+    return K * rcp(denom * denom);                                                                 \
+  }
+
+CONTRASTDERIV_GENERATOR(float)
+CONTRASTDERIV_GENERATOR(float3)
+#undef CONTRASTDERIV_GENERATOR
+
+
+#define APPLYCONTRASTEXTENDED_GENERATOR(T)                                                         \
+  T ApplyContrastExtended(T x, const ContrastConfig p) {                                            \
+    T base = ApplyContrastToneCurve(x, p);                                                         \
+                                                                                                   \
+    const T Cd2 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.zzz;                                        \
+    const T pivot_x = Cd2;                                                                         \
+    const T pivot_y = ApplyContrastToneCurve(pivot_x, p);                                          \
+    const T slope   = ContrastHighlightDerivative(pivot_x, p);                                     \
+                                                                                                   \
+    /* line through (pivot_x, pivot_y) with matching slope */                                      \
+    const T offset  = pivot_y - slope * pivot_x;                                                   \
+    const T extended = slope * x + offset;                                                         \
+                                                                                                   \
+    return lerp(base, extended, step(pivot_x, x));                                                 \
+  }
+
+APPLYCONTRASTEXTENDED_GENERATOR(float)
+APPLYCONTRASTEXTENDED_GENERATOR(float3)
+#undef APPLYCONTRASTEXTENDED_GENERATOR
+
 
 }  // extended
 
@@ -190,4 +300,13 @@ float3 ApplyToneCurveExtendedWithHermite(
   return tonemapped_prebluecorrect_ap1;
 }
 
+
+
+
+
+
+
 #endif  // INCLUDE_FILMTONEMAP
+
+
+

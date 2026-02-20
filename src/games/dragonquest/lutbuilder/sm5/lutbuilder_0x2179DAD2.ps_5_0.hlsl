@@ -5,13 +5,20 @@ cbuffer cb0 : register(b0)
   float4 cb0[57];
 }
 
+struct MobileTonemapResult
+{
+  float3 graded_untonemapped;
+  float3 graded_tonemapped;
+};
 
 
 
 // 3Dmigoto declarations
 #define cmp -
 
-float3 mobile_tonemap(float3 bt709_input) {
+MobileTonemapResult mobile_tonemap(float3 bt709_input, ContrastConfig contrast_config) {
+  MobileTonemapResult result;
+
   float3 r1 = bt709_input;
   float4 r0, r2, r3, r4, r5;
 
@@ -30,24 +37,38 @@ float3 mobile_tonemap(float3 bt709_input) {
   r0.xyz = r2.xyz * r0.xyz;
   r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-  // blackpoint
-  r2.xyz = cb0[22].xxx + -r0.xyz;
-  r2.xyz = max(float3(0, 0, 0), r2.xyz);
-  r3.xyz = max(cb0[22].zzz, r0.xyz);
-  r0.xyz = max(cb0[22].xxx, r0.xyz);
-  r0.xyz = min(cb0[22].zzz, r0.xyz);
-  r4.xyz = r3.xyz * cb0[23].xxx + cb0[23].yyy;
-  r3.xyz = cb0[22].www + r3.xyz;
-  r3.xyz = rcp(r3.xyz);
-  r5.xyz = cb0[19].www * r2.xyz;
-  r2.xyz = cb0[22].yyy + r2.xyz;
-  r2.xyz = rcp(r2.xyz);
-  r2.xyz = r5.xyz * r2.xyz + cb0[20].www;
-  r0.xyz = r0.xyz * cb0[21].www + r2.xyz;
-  r0.xyz = r4.xyz * r3.xyz + r0.xyz;
-  r0.xyz = float3(-0.00200000009, -0.00200000009, -0.00200000009) + r0.xyz;
+  result.graded_untonemapped = r0.rgb;
 
-  return r0.rgb;
+  // ContrastConfig contrast_config = CreateContrast(
+  //     cb0[22],  // ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3
+  //     cb0[23],  // ColorCurve_Ch1_Ch2
+  //     cb0[19],  // ColorMatrixR_ColorCurveCd1
+  //     cb0[20],  // ColorMatrixG_ColorCurveCd3Cm3
+  //     cb0[21]   // ColorMatrixB_ColorCurveCm2
+  // );
+
+  // tonemapping starts from here
+  // r2.xyz = cb0[22].xxx + -r0.xyz;
+  // r2.xyz = max(float3(0, 0, 0), r2.xyz);
+  // r3.xyz = max(cb0[22].zzz, r0.xyz);
+  // r0.xyz = max(cb0[22].xxx, r0.xyz);
+  // r0.xyz = min(cb0[22].zzz, r0.xyz);
+  // r4.xyz = r3.xyz * cb0[23].xxx + cb0[23].yyy;
+  // r3.xyz = cb0[22].www + r3.xyz;
+  // r3.xyz = rcp(r3.xyz);
+  // r5.xyz = cb0[19].www * r2.xyz;
+  // r2.xyz = cb0[22].yyy + r2.xyz;
+  // r2.xyz = rcp(r2.xyz);
+  // r2.xyz = r5.xyz * r2.xyz + cb0[20].www;
+  // r0.xyz = r0.xyz * cb0[21].www + r2.xyz;
+  // r0.xyz = r4.xyz * r3.xyz + r0.xyz;
+  // r0.xyz = float3(-0.00200000009, -0.00200000009, -0.00200000009) + r0.xyz;
+  r0.rgb = unrealengine::filmtonemap::ApplyMobileTonemap(r0.rgb, contrast_config);
+
+  result.graded_tonemapped = r0.rgb;
+
+  // return r0.rgb;
+  return result;
 }
 
 float3 postprocessing_sdr(float3 bt709_input) {
@@ -63,10 +84,11 @@ float3 postprocessing_sdr(float3 bt709_input) {
   r2.xyz = cb0[33].yzw * r0.xyz;
   r0.xyz = -r0.xyz * cb0[33].yzw + cb0[34].xyz;
   r0.xyz = cb0[34].www * r0.xyz + r2.xyz;
-  r0.xyz = max(float3(0, 0, 0), r0.xyz);
-  r0.xyz = log2(r0.xyz);
-  r0.xyz = cb0[18].yyy * r0.xyz;
-  r2.xyz = exp2(r0.xyz);
+  // r0.xyz = max(float3(0, 0, 0), r0.xyz);
+  // r0.xyz = log2(r0.xyz);
+  // r0.xyz = cb0[18].yyy * r0.xyz;
+  // r2.xyz = exp2(r0.xyz);
+  r0.rgb = renodx::math::SafePow(r0.rgb, cb0[18].y);
 
   return r2.rgb;
 }
@@ -93,10 +115,11 @@ float3 postprocessing_hdr(float3 bt709_input, float3 sdr) {
   r2.xyz = cb0[33].yzw * r0.xyz;
   r0.xyz = -r0.xyz * cb0[33].yzw + cb0[34].xyz;
   r0.xyz = cb0[34].www * r0.xyz + r2.xyz;
-  r0.xyz = max(float3(0, 0, 0), r0.xyz);
-  r0.xyz = log2(r0.xyz);
-  r0.xyz = cb0[18].yyy * r0.xyz;
-  r2.xyz = exp2(r0.xyz);
+  // r0.xyz = max(float3(0, 0, 0), r0.xyz);
+  // r0.xyz = log2(r0.xyz);
+  // r0.xyz = cb0[18].yyy * r0.xyz;
+  // r2.xyz = exp2(r0.xyz);
+  r0.rgb = renodx::math::SafePow(r0.rgb, cb0[18].y);
 
   return r2.rgb;
 }
@@ -364,132 +387,181 @@ void main(
   float is_mobile_tonemapping = r0.x;
 
   // Note: this game uses mobile tonemap so we will take its hue to apply for HDR
-  float3 sdr1 = mobile_tonemap(r1.rgb);
 
-  r2.rgb = untonemapped_ap1;
-  r2.xyz = max(float3(0,0,0), r2.xyz);
+  ContrastConfig contrast_config = CreateContrast(
+      cb0[22],  // ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3
+      cb0[23],  // ColorCurve_Ch1_Ch2
+      cb0[19],  // ColorMatrixR_ColorCurveCd1
+      cb0[20],  // ColorMatrixG_ColorCurveCd3Cm3
+      cb0[21]   // ColorMatrixB_ColorCurveCm2
+  );
+  MobileTonemapResult result = mobile_tonemap(r1.rgb, contrast_config);
 
-  // luma in AP1
-  r0.w = dot(r2.xyz, float3(0.272228718,0.674081743,0.0536895171));
+  float3 sdr1 = result.graded_tonemapped;
+  float3 hdr1 = result.graded_untonemapped;
 
-  // desaturation
-  r2.xyz = r2.xyz + -r0.www;
-  r2.xyz = r2.xyz * float3(0.959999979,0.959999979,0.959999979) + r0.www;
-  
-  // r3.xy = float2(1,0.180000007) + cb0[27].ww;
-  // r0.w = -cb0[27].y + r3.x;
-  // r1.w = 1 + cb0[28].x;
-  // r2.w = -cb0[27].z + r1.w;
-  // r3.x = cmp(0.800000012 < cb0[27].y);
-  // r3.zw = float2(0.819999993,1) + -cb0[27].yy;
-  // r3.zw = r3.zw / cb0[27].xx;
-  // r3.z = -0.744727492 + r3.z;
-  // r3.y = r3.y / r0.w;
-  // r4.x = -1 + r3.y;
-  // r4.x = 1 + -r4.x;
-  // r3.y = r3.y / r4.x;
-  // r3.y = log2(r3.y);
-  // r3.y = 0.346573591 * r3.y;
-  // r4.x = r0.w / cb0[27].x;
-  // r3.y = -r3.y * r4.x + -0.744727492;
-  // r3.x = r3.x ? r3.z : r3.y;
-  // r3.y = r3.w + -r3.x;
-  // r3.z = cb0[27].z / cb0[27].x;
-  // r3.z = r3.z + -r3.y;
+  if (RENODX_TONE_MAP_TYPE == 0.f || RENODX_TONE_MAP_TYPE == 2.f) {
+    // sdr1 = postprocessing_sdr(sdr1);
 
-  // // log10 untonemapped
-  // r2.xyz = log2(r2.xyz);
-  // r4.xyz = float3(0.30103001,0.30103001,0.30103001) * r2.xyz;
+    if (RENODX_TONE_MAP_TYPE == 2.f) {
+      // float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(hdr1);
 
-  // r5.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + r3.yyy;
-  // r5.xyz = cb0[27].xxx * r5.xyz;
-  // r3.y = r0.w + r0.w;
-  // r3.w = -2 * cb0[27].x;
-  // r0.w = r3.w / r0.w;
-  // r6.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + -r3.xxx;
-  // r7.xyz = r6.xyz * r0.www;
-  // r7.xyz = float3(1.44269502,1.44269502,1.44269502) * r7.xyz;
-  // r7.xyz = exp2(r7.xyz);
-  // r7.xyz = float3(1,1,1) + r7.xyz;
-  // r7.xyz = r3.yyy / r7.xyz;
-  // r7.xyz = -cb0[27].www + r7.xyz;
-  // r0.w = r2.w + r2.w;
-  // r3.y = cb0[27].x + cb0[27].x;
-  // r2.w = r3.y / r2.w;
-  // r2.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + -r3.zzz;
-  // r2.xyz = r2.www * r2.xyz;
-  // r2.xyz = float3(1.44269502,1.44269502,1.44269502) * r2.xyz;
-  // r2.xyz = exp2(r2.xyz);
-  // r2.xyz = float3(1,1,1) + r2.xyz;
-  // r2.xyz = r0.www / r2.xyz;
-  // r2.xyz = -r2.xyz + r1.www;
-  // r8.xyz = cmp(r4.xyz < r3.xxx);
-  // r7.xyz = r8.xyz ? r7.xyz : r5.xyz;
-  // r4.xyz = cmp(r3.zzz < r4.xyz);
-  // r2.xyz = r4.xyz ? r2.xyz : r5.xyz;
-  // r0.w = r3.z + -r3.x;
-  // r4.xyz = saturate(r6.xyz / r0.www);
-  // r0.w = cmp(r3.z < r3.x);
-  // r3.xyz = float3(1,1,1) + -r4.xyz;
-  // r3.xyz = r0.www ? r3.xyz : r4.xyz;
-  // r4.xyz = -r3.xyz * float3(2,2,2) + float3(3,3,3);
-  // r3.xyz = r3.xyz * r3.xyz;
-  // r3.xyz = r3.xyz * r4.xyz;
-  // r2.xyz = r2.xyz + -r7.xyz;
-  // r2.xyz = r3.xyz * r2.xyz + r7.xyz;
+      // float3 graded_sdr_color = renodx::draw::ApplyPerChannelCorrection(
+      //     untonemapped_bt709,
+      //     sdr1,
+      //     0.5f,
+      //     0.5f,
+      //     0.5f);
 
-  float3 untonemapped_graded_ap1 = r2.rgb;
+      // o0.rgb = renodx::tonemap::UpgradeToneMap(hdr1, neutral_sdr, sdr1);
+      hdr1 = unrealengine::filmtonemap::extended::ApplyContrastExtended(hdr1, contrast_config);
+      o0.rgb = postprocessing_hdr(hdr1, sdr1);
+    } else {
+      sdr1 = postprocessing_sdr(sdr1);
+      o0.rgb = sdr1;
+    }
 
-  if (RENODX_TONE_MAP_TYPE == 1.f) {
-    r2.rgb = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
-  } else if (RENODX_TONE_MAP_TYPE == 2.f) {
-    r2.rgb = ApplyToneCurveExtendedWithHermite(untonemapped_graded_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
-  }
-
-  // PostToneMapDesaturation
-  r0.w = dot(r2.xyz, float3(0.272228718,0.674081743,0.0536895171));
-  r2.xyz = r2.xyz + -r0.www;
-  r2.xyz = r2.xyz * float3(0.930000007,0.930000007,0.930000007) + r0.www;
-  r2.xyz = max(float3(0,0,0), r2.xyz);
-
-  // AP1 -> BT709
-  // r3.x = dot(float3(1.70505154,-0.621790707,-0.0832583979), r2.xyz);
-  // r3.y = dot(float3(-0.130257145,1.14080286,-0.0105485283), r2.xyz);
-  // r3.z = dot(float3(-0.0240032747,-0.128968775,1.15297174), r2.xyz);
-  // r0.xyz = max(float3(0,0,0), r3.xyz);
-
-  r3.rgb = renodx::color::bt709::from::AP1(r2.rgb);
-
-  float3 filmic = r3.rgb;
-
-  // r2.xyz = r0.xyz * r0.xyz;
-  // r0.xyz = cb0[17].yyy * r0.xyz;
-  // r0.xyz = cb0[17].xxx * r2.xyz + r0.xyz;
-  // r0.xyz = cb0[17].zzz + r0.xyz;
-  // r2.xyz = cb0[33].yzw * r0.xyz;
-  // r0.xyz = -r0.xyz * cb0[33].yzw + cb0[34].xyz;
-  // r0.xyz = cb0[34].www * r0.xyz + r2.xyz;
-  // r0.xyz = max(float3(0,0,0), r0.xyz);
-  // r0.xyz = log2(r0.xyz);
-  // r0.xyz = cb0[18].yyy * r0.xyz;
-  // r2.xyz = exp2(r0.xyz);
-
-  float3 graded_sdr = postprocessing_sdr(sdr1);
-  float3 graded_filmic;
-
-  if (RENODX_TONE_MAP_TYPE == 1.f) {
-    graded_filmic = postprocessing_sdr(filmic);
-  } else if (RENODX_TONE_MAP_TYPE == 2.f) {
-    graded_filmic = postprocessing_hdr(filmic, sdr1);
-  }
-
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
-    o0.rgb = graded_sdr;
   } else {
-    graded_filmic = CorrectHueAndPurity(graded_filmic, sdr1, RENODX_TONE_MAP_HUE_SHIFT);
+
+    r2.rgb = untonemapped_ap1;
+    r2.xyz = max(float3(0,0,0), r2.xyz);
+
+    r2.rgb = renodx::color::bt709::from::AP1(r2.rgb);
+    r2.x = dot(r2.xyz, cb0[19].xyz);
+    r2.y = dot(r2.xyz, cb0[20].xyz);
+    r2.z = dot(r2.xyz, cb0[21].xyz);
+    r0.w = dot(r2.xyz, cb0[24].xyz);
+
+    r0.w = 1 + r0.w;
+    r0.w = rcp(r0.w);
+
+    r3.xyz = cb0[26].xyz * r0.www + cb0[25].xyz;
+    r2.xyz = r2.xyz * r3.xyz;
+    r2.rgb = renodx::color::ap1::from::BT709(r2.rgb);
+    // luma in AP1
+    r0.w = dot(r2.xyz, float3(0.272228718,0.674081743,0.0536895171));
+
+    // desaturation
+    r2.xyz = r2.xyz + -r0.www;
+    r2.xyz = r2.xyz * float3(0.959999979,0.959999979,0.959999979) + r0.www;
+    
+    // r3.xy = float2(1,0.180000007) + cb0[27].ww;
+    // r0.w = -cb0[27].y + r3.x;
+    // r1.w = 1 + cb0[28].x;
+    // r2.w = -cb0[27].z + r1.w;
+    // r3.x = cmp(0.800000012 < cb0[27].y);
+    // r3.zw = float2(0.819999993,1) + -cb0[27].yy;
+    // r3.zw = r3.zw / cb0[27].xx;
+    // r3.z = -0.744727492 + r3.z;
+    // r3.y = r3.y / r0.w;
+    // r4.x = -1 + r3.y;
+    // r4.x = 1 + -r4.x;
+    // r3.y = r3.y / r4.x;
+    // r3.y = log2(r3.y);
+    // r3.y = 0.346573591 * r3.y;
+    // r4.x = r0.w / cb0[27].x;
+    // r3.y = -r3.y * r4.x + -0.744727492;
+    // r3.x = r3.x ? r3.z : r3.y;
+    // r3.y = r3.w + -r3.x;
+    // r3.z = cb0[27].z / cb0[27].x;
+    // r3.z = r3.z + -r3.y;
+
+    // // log10 untonemapped
+    // r2.xyz = log2(r2.xyz);
+    // r4.xyz = float3(0.30103001,0.30103001,0.30103001) * r2.xyz;
+
+    // r5.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + r3.yyy;
+    // r5.xyz = cb0[27].xxx * r5.xyz;
+    // r3.y = r0.w + r0.w;
+    // r3.w = -2 * cb0[27].x;
+    // r0.w = r3.w / r0.w;
+    // r6.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + -r3.xxx;
+    // r7.xyz = r6.xyz * r0.www;
+    // r7.xyz = float3(1.44269502,1.44269502,1.44269502) * r7.xyz;
+    // r7.xyz = exp2(r7.xyz);
+    // r7.xyz = float3(1,1,1) + r7.xyz;
+    // r7.xyz = r3.yyy / r7.xyz;
+    // r7.xyz = -cb0[27].www + r7.xyz;
+    // r0.w = r2.w + r2.w;
+    // r3.y = cb0[27].x + cb0[27].x;
+    // r2.w = r3.y / r2.w;
+    // r2.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + -r3.zzz;
+    // r2.xyz = r2.www * r2.xyz;
+    // r2.xyz = float3(1.44269502,1.44269502,1.44269502) * r2.xyz;
+    // r2.xyz = exp2(r2.xyz);
+    // r2.xyz = float3(1,1,1) + r2.xyz;
+    // r2.xyz = r0.www / r2.xyz;
+    // r2.xyz = -r2.xyz + r1.www;
+    // r8.xyz = cmp(r4.xyz < r3.xxx);
+    // r7.xyz = r8.xyz ? r7.xyz : r5.xyz;
+    // r4.xyz = cmp(r3.zzz < r4.xyz);
+    // r2.xyz = r4.xyz ? r2.xyz : r5.xyz;
+    // r0.w = r3.z + -r3.x;
+    // r4.xyz = saturate(r6.xyz / r0.www);
+    // r0.w = cmp(r3.z < r3.x);
+    // r3.xyz = float3(1,1,1) + -r4.xyz;
+    // r3.xyz = r0.www ? r3.xyz : r4.xyz;
+    // r4.xyz = -r3.xyz * float3(2,2,2) + float3(3,3,3);
+    // r3.xyz = r3.xyz * r3.xyz;
+    // r3.xyz = r3.xyz * r4.xyz;
+    // r2.xyz = r2.xyz + -r7.xyz;
+    // r2.xyz = r3.xyz * r2.xyz + r7.xyz;
+
+    float3 untonemapped_graded_ap1 = r2.rgb;
+
+    if (RENODX_TONE_MAP_TYPE == 1.f) {
+      r2.rgb = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    } else if (RENODX_TONE_MAP_TYPE == 3.f) {
+      r2.rgb = ApplyToneCurveExtendedWithHermite(untonemapped_graded_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    }
+
+    // PostToneMapDesaturation
+    r0.w = dot(r2.xyz, float3(0.272228718,0.674081743,0.0536895171));
+    r2.xyz = r2.xyz + -r0.www;
+    r2.xyz = r2.xyz * float3(0.930000007,0.930000007,0.930000007) + r0.www;
+    r2.xyz = max(float3(0,0,0), r2.xyz);
+
+    // AP1 -> BT709
+    // r3.x = dot(float3(1.70505154,-0.621790707,-0.0832583979), r2.xyz);
+    // r3.y = dot(float3(-0.130257145,1.14080286,-0.0105485283), r2.xyz);
+    // r3.z = dot(float3(-0.0240032747,-0.128968775,1.15297174), r2.xyz);
+    // r0.xyz = max(float3(0,0,0), r3.xyz);
+
+    r3.rgb = renodx::color::bt709::from::AP1(r2.rgb);
+
+    float3 filmic = r3.rgb;
+
+    // r2.xyz = r0.xyz * r0.xyz;
+    // r0.xyz = cb0[17].yyy * r0.xyz;
+    // r0.xyz = cb0[17].xxx * r2.xyz + r0.xyz;
+    // r0.xyz = cb0[17].zzz + r0.xyz;
+    // r2.xyz = cb0[33].yzw * r0.xyz;
+    // r0.xyz = -r0.xyz * cb0[33].yzw + cb0[34].xyz;
+    // r0.xyz = cb0[34].www * r0.xyz + r2.xyz;
+    // r0.xyz = max(float3(0,0,0), r0.xyz);
+    // r0.xyz = log2(r0.xyz);
+    // r0.xyz = cb0[18].yyy * r0.xyz;
+    // r2.xyz = exp2(r0.xyz);
+
+    float3 graded_sdr = postprocessing_sdr(sdr1);
+    float3 graded_filmic;
+    float3 graded_color;
+
+    if (RENODX_TONE_MAP_TYPE == 1.f) {
+      graded_filmic = postprocessing_sdr(filmic);
+      graded_color = sdr1;
+    } else if (RENODX_TONE_MAP_TYPE == 3.f) {
+      graded_filmic = postprocessing_hdr(filmic, sdr1);
+      graded_color = unrealengine::filmtonemap::extended::ApplyContrastExtended(hdr1, contrast_config);
+    }
+
+    float3 hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, graded_color, RENODX_TONE_MAP_HUE_SHIFT);
+
+    graded_filmic = hue_shifted_graded_filmic;
     o0.rgb = graded_filmic;
   }
 
+  // final output
   o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb);
   o0.rgb = float3(0.952381015, 0.952381015, 0.952381015) * o0.rgb;
   o0.w = 0;

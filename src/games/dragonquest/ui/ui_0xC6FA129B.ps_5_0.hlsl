@@ -43,10 +43,22 @@ void main(
   r1.xzw = cmp(r1.xzw >= float3(0.00313066994,0.00313066994,0.00313066994));
   r1.xzw = r1.xzw ? r2.xyz : r3.xyz;
   o0.xyz = r1.yyy ? r1.xzw : r0.xyz;
+
+  float hdr = r1.y;
+
   r0.x = t0.Sample(s0_s, v4.xy).w;
   r0.x = v1.w * r0.x;
   r0.y = r0.x * -2 + 1;
   o0.w = cb0[0].z * r0.y + r0.x;
 
+  if (hdr == 0) {
+    o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.4f);
+    }
+    o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / 80.f;
+  }
   return;
 }

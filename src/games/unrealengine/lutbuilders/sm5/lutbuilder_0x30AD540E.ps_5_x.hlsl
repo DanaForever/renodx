@@ -363,6 +363,7 @@ void main(
     r3.xyz = ColorShadow_Tint2.xyz * r0.www + ColorShadow_Tint1.xyz;
     r2.xyz = r3.xyz * r2.xyz;
     r2.xyz = max(float3(0, 0, 0), r2.xyz);
+    
     r3.xyz = ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.xxx + -r2.xyz;
     r3.xyz = max(float3(0, 0, 0), r3.xyz);
     r4.xyz = max(ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.zzz, r2.xyz);
