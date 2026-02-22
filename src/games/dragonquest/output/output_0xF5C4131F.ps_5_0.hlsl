@@ -115,16 +115,19 @@ void main(
   r0.yzw = renodx::lut::SampleTetrahedral(t3, r0.yzw, 32u);
 
   r2.xyz = float3(1.04999995, 1.04999995, 1.04999995) * r0.yzw;
+  r2.rgb = renodx::color::pq::DecodeSafe(r2.rgb);
   o0.xyz = r2.xyz + r0.xxx;
 
-  r0.x = saturate(dot(r2.xyz, float3(0.298999995,0.587000012,0.114)));
+  // r0.x = saturate(dot(r2.xyz, float3(0.298999995,0.587000012,0.114)));
+  r0.x = saturate(renodx::color::y::from::BT709(r2.rgb));
   r0.y = cmp(cb1[166].w == 0.000000);
   r0.z = (int)r1.y | (int)r1.x;
   r0.z = (int)r1.z | (int)r0.z;
   r0.z = r0.z ? 1 : r2.w;
   o0.w = saturate(r0.y ? r0.x : r0.z);
 
-  o0.rgb = DisplayMap(renodx::color::srgb::DecodeSafe(o0.rgb));
+  // o0.rgb = DisplayMap(o0.rgb);
+  o0.rgb = PostToneMapProcess(o0.rgb);
 
   return;
 }

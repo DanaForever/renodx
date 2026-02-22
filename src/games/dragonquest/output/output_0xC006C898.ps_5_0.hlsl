@@ -117,7 +117,8 @@ void main(
   // r0.yzw = renodx::lut::SampleTetrahedral(t3, r0.yzw, 32u);
   r0.yzw = renodx::lut::SampleTetrahedral(t3, r0.yzw, 32u);
   r1.xyz = float3(1.04999995, 1.04999995, 1.04999995) * r0.yzw;
-  r1.rgb = renodx::color::pq::DecodeSafe(r1.rgb, 1.f);
+  // r1.rgb = renodx::color::pq::DecodeSafe(r1.rgb, 1.f);
+  r1.rgb = renodx::color::srgb::DecodeSafe(r1.rgb);
   // o0.w = saturate(dot(r1.xyz, float3(0.298999995,0.587000012,0.114)));
   o0.w = saturate(renodx::color::y::from::BT709(r1.xyz));
   r0.x = r0.x * 0.00390625 + -0.001953125;

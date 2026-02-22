@@ -1,4 +1,4 @@
-#include "../shared.h"
+// #include "../common.hlsli"
 #include "./macleod_boynton.hlsli"
 
 #ifndef INCLUDE_LUTBUILDER_COMMON
@@ -79,14 +79,6 @@ float3 CorrectHueAndChrominanceOKLab(
   return corrected_color_bt709;
 }
 
-float3 GammaCorrectByLuminance(float3 color, bool pow_to_srgb = false) {
-  float y_in = renodx::color::y::from::BT709(color);
-  float y_out = renodx::color::correct::Gamma(y_in, pow_to_srgb);
-
-  color = renodx::color::correct::Luminance(color, y_in, y_out);
-
-  return color;
-}
 
 float Highlights(float x, float highlights, float mid_gray) {
   if (highlights == 1.f) return x;
@@ -199,13 +191,6 @@ renodx::color::grade::Config CreateColorGradingConfig() {
   return cg_config;
 }
 
-float3 GammaCorrectHuePreserving(float3 incorrect_color) {
-  float3 result = renodx::color::correct::GammaSafe(incorrect_color);
-  result = renodx::color::correct::Hue(result, incorrect_color);
-
-  return result;
-}
-
 float3 ApplyGammaCorrection(float3 incorrect_color) {
   float3 corrected_color;
 
@@ -263,6 +248,7 @@ float4 GenerateOutput(float r, float g, float b, inout float4 SV_Target, uint de
 
   // encoded_color = renodx::color::pq::EncodeSafe(final_color);
   float3 encoded_color = final_color;
+  encoded_color = renodx::color::pq::EncodeSafe(final_color);
 
   return SV_Target = float4(encoded_color / 1.05f, 0.f);
 }
@@ -279,6 +265,100 @@ float3 CorrectHueAndPurity(
   float hue_t_ramp_end = 1.f;
   return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
 };
+
+
+
+static const float3x3 XYZ_2_sRGB_MAT = float3x3(
+	3.2409699419, -1.5373831776, -0.4986107603,
+	-0.9692436363, 1.8759675015, 0.0415550574,
+	0.0556300797, -0.2039769589, 1.0569715142);
+static const float3x3 sRGB_2_XYZ_MAT = float3x3(
+	0.4124564, 0.3575761, 0.1804375,
+	0.2126729, 0.7151522, 0.0721750,
+	0.0193339, 0.1191920, 0.9503041);
+static const float3x3 XYZ_2_AP1_MAT = float3x3(
+	1.6410233797, -0.3248032942, -0.2364246952,
+	-0.6636628587, 1.6153315917, 0.0167563477,
+	0.0117218943, -0.0082844420, 0.9883948585);
+static const float3x3 D65_2_D60_CAT = float3x3(
+	1.01303, 0.00610531, -0.014971,
+	0.00769823, 0.998165, -0.00503203,
+	-0.00284131, 0.00468516, 0.924507);
+static const float3x3 D60_2_D65_CAT = float3x3(
+	0.987224, -0.00611327, 0.0159533,
+	-0.00759836, 1.00186, 0.00533002,
+	0.00307257, -0.00509595, 1.08168);
+static const float3x3 AP1_2_XYZ_MAT = float3x3(
+	0.6624541811, 0.1340042065, 0.1561876870,
+	0.2722287168, 0.6740817658, 0.0536895174,
+	-0.0055746495, 0.0040607335, 1.0103391003);
+static const float3 AP1_RGB2Y = float3(
+	0.2722287168, //AP1_2_XYZ_MAT[0][1],
+	0.6740817658, //AP1_2_XYZ_MAT[1][1],
+	0.0536895174 //AP1_2_XYZ_MAT[2][1]
+);
+// Bizarre matrix but this expands sRGB to between P3 and AP1
+// CIE 1931 chromaticities:	x		y
+//				Red:		0.6965	0.3065
+//				Green:		0.245	0.718
+//				Blue:		0.1302	0.0456
+//				White:		0.31271	0.32902
+static const float3x3 Wide_2_XYZ_MAT = float3x3(
+    0.5441691, 0.2395926, 0.1666943,
+    0.2394656, 0.7021530, 0.0583814,
+    -0.0023439, 0.0361834, 1.0552183);
+
+
+
+float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
+
+    static const float sRGB_max_nits = 80.f;
+    static const float ReferenceWhiteNits_BT2408 = 203.f;
+    const float recommendedBrightnessScale = ReferenceWhiteNits_BT2408 / sRGB_max_nits;
+
+    if (fExpandGamut > 0.f) {
+      
+      float3 ColorAP1 = color * recommendedBrightnessScale;
+
+      const float3x3 sRGB_2_AP1 = mul(XYZ_2_AP1_MAT, mul(D65_2_D60_CAT, sRGB_2_XYZ_MAT));
+      const float3x3 AP1_2_sRGB = mul(XYZ_2_sRGB_MAT, mul(D60_2_D65_CAT, AP1_2_XYZ_MAT));
+      const float3x3 Wide_2_AP1 = mul(XYZ_2_AP1_MAT, Wide_2_XYZ_MAT);
+      const float3x3 ExpandMat = mul(Wide_2_AP1, AP1_2_sRGB);
+
+      float LumaAP1 = renodx::color::y::from::AP1(ColorAP1);
+      if (LumaAP1 <= 0.f)
+      {
+          return ColorAP1;
+      }
+      float3 ChromaAP1 = ColorAP1 / LumaAP1;
+
+      float ChromaDistSqr = dot(ChromaAP1 - 1, ChromaAP1 - 1);
+      float ExpandAmount = (1 - exp2(-4 * ChromaDistSqr)) * (1 - exp2(-4 * fExpandGamut * LumaAP1 * LumaAP1));
+
+      float3 ColorExpand = mul(ExpandMat, ColorAP1);
+      ColorAP1 = lerp(ColorAP1, ColorExpand, ExpandAmount);
+
+      color = ColorAP1 / recommendedBrightnessScale;
+    }
+
+    return color;
+
+}
+
+float3 CorrectGammaHuePreservingSRGB(float3 incorrect_color, float gamma=2.2f) {
+  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, true, gamma);
+
+  const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  const float y_out = max(0, renodx::color::correct::Gamma(y_in, true, gamma));
+
+  float3 lum = incorrect_color * (y_in > 0 ?  y_out / y_in : 0.f);
+
+  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
+
+  return result;
+}
+
 
 
 #endif  // INCLUDE_LUTBUILDER_COMMON

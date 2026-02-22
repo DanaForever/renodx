@@ -74,6 +74,9 @@ struct ShaderInjectData {
 
   float processing_path;
   float unreal_hdr_setting;
+  float unreal_expand_gamut;
+  float unreal_blue_correction;
+  float unreal_lut_gamma_correction;
   float filmic_curve;
 };
 

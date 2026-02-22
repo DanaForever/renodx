@@ -1,25 +1,116 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sun Jul 20 20:16:50 2025
-#include "../common.hlsl"
-#include "../shared.h"
-Texture2D<float4> t2 : register(t2);
-
-Texture2D<float4> t1 : register(t1);
-
-Texture2D<float4> t0 : register(t0);
-
-SamplerState s2_s : register(s2);
-
-SamplerState s1_s : register(s1);
-
-SamplerState s0_s : register(s0);
-
+// ---- Created with 3Dmigoto v1.3.16 on Tue Feb 17 16:25:50 2026
+#include "../lutbuilderoutput.hlsli"
 cbuffer cb0 : register(b0)
 {
   float4 cb0[57];
 }
 
+
 // 3Dmigoto declarations
 #define cmp -
+
+MobileTonemapResult mobile_tonemap(float3 bt709_input, LegacyFilmicConfig legacy_config) {
+  MobileTonemapResult result;
+
+  float3 r1 = bt709_input;
+  float4 r0, r2, r3, r4, r5;
+
+  r0.x = dot(r1.xyz, cb0[19].xyz);
+  r0.y = dot(r1.xyz, cb0[20].xyz);
+  r0.z = dot(r1.xyz, cb0[21].xyz);
+
+  // M2
+  r0.w = dot(r1.xyz, cb0[24].xyz);
+
+  // Reinhard
+  r0.w = 1 + r0.w;
+  r0.w = rcp(r0.w);
+
+  r2.xyz = cb0[26].xyz * r0.www + cb0[25].xyz;
+  r0.xyz = r2.xyz * r0.xyz;
+  // r0.xyz = max(float3(0, 0, 0), r0.xyz);
+
+  result.graded_untonemapped = r0.rgb;
+
+  // ContrastConfig legacy_config = CreateContrast(
+  //     cb0[22],  // ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3
+  //     cb0[23],  // ColorCurve_Ch1_Ch2
+  //     cb0[19],  // ColorMatrixR_ColorCurveCd1
+  //     cb0[20],  // ColorMatrixG_ColorCurveCd3Cm3
+  //     cb0[21]   // ColorMatrixB_ColorCurveCm2
+  // );
+
+  // tonemapping starts from here
+  // r2.xyz = cb0[22].xxx + -r0.xyz;
+  // r2.xyz = max(float3(0, 0, 0), r2.xyz);
+  // r3.xyz = max(cb0[22].zzz, r0.xyz);
+  // r0.xyz = max(cb0[22].xxx, r0.xyz);
+  // r0.xyz = min(cb0[22].zzz, r0.xyz);
+  // r4.xyz = r3.xyz * cb0[23].xxx + cb0[23].yyy;
+  // r3.xyz = cb0[22].www + r3.xyz;
+  // r3.xyz = rcp(r3.xyz);
+  // r5.xyz = cb0[19].www * r2.xyz;
+  // r2.xyz = cb0[22].yyy + r2.xyz;
+  // r2.xyz = rcp(r2.xyz);
+  // r2.xyz = r5.xyz * r2.xyz + cb0[20].www;
+  // r0.xyz = r0.xyz * cb0[21].www + r2.xyz;
+  // r0.xyz = r4.xyz * r3.xyz + r0.xyz;
+  // r0.xyz = float3(-0.00200000009, -0.00200000009, -0.00200000009) + r0.xyz;
+  r0.rgb = unrealengine::filmtonemap::ApplyMobileTonemap(r0.rgb, legacy_config);
+
+  result.graded_tonemapped = r0.rgb;
+
+  // return r0.rgb;
+  return result;
+}
+
+float3 postprocessing_sdr(float3 bt709_input) {
+  float3 r0 = bt709_input;
+  float4 r2;
+
+  r2.xyz = r0.xyz * r0.xyz;
+  r0.xyz = cb0[17].yyy * r0.xyz;
+  r0.xyz = cb0[17].xxx * r2.xyz + r0.xyz;
+  r0.xyz = cb0[17].zzz + r0.xyz;
+  r2.xyz = cb0[33].yzw * r0.xyz;
+  r0.xyz = -r0.xyz * cb0[33].yzw + cb0[34].xyz;
+  r0.xyz = cb0[34].www * r0.xyz + r2.xyz;
+  // r0.xyz = max(float3(0, 0, 0), r0.xyz);
+  // r0.xyz = log2(r0.xyz);
+  // r0.xyz = cb0[18].yyy * r0.xyz;
+  // r2.xyz = exp2(r0.xyz);
+  r0.rgb = renodx::math::SafePow(r0.rgb, cb0[18].y);
+
+  return r2.rgb;
+}
+
+float3 postprocessing_hdr(float3 bt709_input, float3 sdr) {
+  float3 r0 = bt709_input;
+  float4 r2;
+
+  float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(bt709_input);
+
+  // polynomial mapping is designed for LDR
+  r0.rgb *= scale;
+
+  r2.xyz = r0.xyz * r0.xyz;
+  r0.xyz = cb0[17].yyy * r0.xyz;
+  r0.xyz = cb0[17].xxx * r2.xyz + r0.xyz;
+  r0.xyz = cb0[17].zzz + r0.xyz;
+
+  r0.rgb /= scale;
+
+  r2.xyz = cb0[33].yzw * r0.xyz;
+  r0.xyz = -r0.xyz * cb0[33].yzw + cb0[34].xyz;
+  r0.xyz = cb0[34].www * r0.xyz + r2.xyz;
+  // r0.xyz = max(float3(0, 0, 0), r0.xyz);
+  // r0.xyz = log2(r0.xyz);
+  // r0.xyz = cb0[18].yyy * r0.xyz;
+  // r2.xyz = exp2(r0.xyz);
+  r0.rgb = renodx::math::SafePow(r0.rgb, cb0[18].y);
+
+  return r2.rgb;
+}
 
 
 void main(
@@ -169,10 +260,13 @@ void main(
   r0.x = dot(float3(0.613191485,0.33951208,0.0473663323), r1.xyz);
   r0.y = dot(float3(0.0702069029,0.916335821,0.0134500116), r1.xyz);
   r0.z = dot(float3(0.0206188709,0.109567292,0.869606733), r1.xyz);
-  r0.w = dot(r0.xyz, float3(0.272228718,0.674081743,0.0536895171));
+  // r0.w = dot(r0.xyz, float3(0.272228718,0.674081743,0.0536895171));
 
-  SetUngradedAP1(r0.xyz);
+  // ungraded ap1 = r0.rgb
+  r0.rgb = expandGamut(r0.rgb, shader_injection.unreal_expand_gamut);
+  r0.w = renodx::color::y::from::AP1(r0.rgb); 
 
+  // color correction
   r1.xyzw = cb0[41].xyzw * cb0[36].xyzw;
   r2.xyzw = cb0[42].xyzw * cb0[37].xyzw;
   r3.xyzw = cb0[43].xyzw * cb0[38].xyzw;
@@ -258,174 +352,299 @@ void main(
   r0.xyz = r1.xyz * r1.www + r0.xyz;
   r0.xyz = r2.xyz * r3.yyy + r0.xyz;
 
-  SetUntonemappedAP1(r0.xyz);
+  float3 untonemapped_ap1 = r0.xyz;
+  UECbufferConfig cb_config = CreateCbufferConfig();
 
-  r1.x = dot(float3(1.70505154,-0.621790707,-0.0832583979), r0.xyz);
-  r1.y = dot(float3(-0.130257145,1.14080286,-0.0105485283), r0.xyz);
-  r1.z = dot(float3(-0.0240032747,-0.128968775,1.15297174), r0.xyz);
+  // // Film curve params (DQ11 packs them in cb0[27])
+
+  if (shader_injection.filmic_curve == 0.f) {
+    cb_config.ue_filmslope = asfloat(cb0[27].x);
+    cb_config.ue_filmtoe = asfloat(cb0[27].y);
+    cb_config.ue_filmshoulder = asfloat(cb0[27].z);
+    cb_config.ue_filmblackclip = asfloat(cb0[27].w);
+  
+    // White clip (DQ11 uses cb0[28].x in the same “1 + …” way UE uses whiteclip)
+    cb_config.ue_filmwhiteclip = asfloat(cb0[28].x);
+  } else if (shader_injection.filmic_curve == 1.f) {
+    // Uncharted settings
+    cb_config.ue_filmslope = 0.63;
+    cb_config.ue_filmtoe = 0.55;
+    cb_config.ue_filmshoulder = 0.47;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.01;
+  } else if (shader_injection.filmic_curve == 2.f) {
+    // HP settings
+    cb_config.ue_filmslope = 0.65;
+    cb_config.ue_filmtoe = 0.63;
+    cb_config.ue_filmshoulder = 0.45;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.f;
+  } else if (shader_injection.filmic_curve == 3.f) {
+    // Legacy settings
+    cb_config.ue_filmslope = 0.98;
+    cb_config.ue_filmtoe = 0.3;
+    cb_config.ue_filmshoulder = 0.22;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.025;
+  } else if (shader_injection.filmic_curve == 4.f) {
+    // aces settings
+    cb_config.ue_filmslope = 0.91;
+    cb_config.ue_filmtoe = 0.53;
+    cb_config.ue_filmshoulder = 0.23;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.035;
+  }
+  // Mapping polynomial (this one matches the “cb0[17].xyz” pattern exactly)
+  cb_config.ue_mappingpolynomial = asfloat(cb0[17].xyz);
+
+  // Color scale + overlay color (DQ11 does a very UE-like: scaled = scale*rgb; then lerp(scaled, overlay.rgb, overlay.a))
+  cb_config.ue_colorscale = asfloat(cb0[33].yzw);
+  cb_config.ue_overlaycolor = asfloat(cb0[34].xyzw);
+  cb_config.ue_gamma = cb0[18].y;
+
+  r1.rgb = renodx::color::bt709::from::AP1(r0.rgb);
+
+  float3 untonemapped_bt709 = r1.rgb;
+
   r0.x = cmp(cb0[26].w == 0.000000);
-  if (r0.x != 0) {
-    r0.x = dot(r1.xyz, cb0[19].xyz);
-    r0.y = dot(r1.xyz, cb0[20].xyz);
-    r0.z = dot(r1.xyz, cb0[21].xyz);
-    r0.w = dot(r1.xyz, cb0[24].xyz);
-    r0.w = 1 + r0.w;
-    r0.w = rcp(r0.w);
-    r2.xyz = cb0[26].xyz * r0.www + cb0[25].xyz;
-    r0.xyz = r2.xyz * r0.xyz;
-    r0.xyz = max(float3(0,0,0), r0.xyz);
-    r2.xyz = cb0[22].xxx + -r0.xyz;
-    r2.xyz = max(float3(0,0,0), r2.xyz);
-    r3.xyz = max(cb0[22].zzz, r0.xyz);
-    r0.xyz = max(cb0[22].xxx, r0.xyz);
-    r0.xyz = min(cb0[22].zzz, r0.xyz);
-    r4.xyz = r3.xyz * cb0[23].xxx + cb0[23].yyy;
-    r3.xyz = cb0[22].www + r3.xyz;
-    r3.xyz = rcp(r3.xyz);
-    r5.xyz = cb0[19].www * r2.xyz;
-    r2.xyz = cb0[22].yyy + r2.xyz;
-    r2.xyz = rcp(r2.xyz);
-    r2.xyz = r5.xyz * r2.xyz + cb0[20].www;
-    r0.xyz = r0.xyz * cb0[21].www + r2.xyz;
-    r0.xyz = r4.xyz * r3.xyz + r0.xyz;
-    r0.xyz = float3(-0.00200000009,-0.00200000009,-0.00200000009) + r0.xyz;
 
-    SetTonemappedBT709(r0.xyz);
+  float is_mobile_tonemapping = r0.x;
+
+  // Note: this game uses mobile tonemap so we will take its hue to apply for HDR
+
+  LegacyFilmicConfig legacy_config = CreateLegacy(
+      cb0[22],  // ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3
+      cb0[23],  // ColorCurve_Ch1_Ch2
+      cb0[19],  // ColorMatrixR_ColorCurveCd1
+      cb0[20],  // ColorMatrixG_ColorCurveCd3Cm3
+      cb0[21],  // ColorMatrixB_ColorCurveCm2
+      cb0[24],  // ColorShadow_Luma,
+      cb0[25],  // Tint
+  );
+
+  // float3 r1 = bt709_input;
+  // float4 r0, r2, r3, r4, r5;
+
+  // r0.x = dot(r1.xyz, cb0[19].xyz);
+  // r0.y = dot(r1.xyz, cb0[20].xyz);
+  // r0.z = dot(r1.xyz, cb0[21].xyz);
+
+  // // M2
+  // r0.w = dot(r1.xyz, cb0[24].xyz);
+
+  // // Reinhard
+  // r0.w = 1 + r0.w;
+  // r0.w = rcp(r0.w);
+
+  // r2.xyz = cb0[26].xyz * r0.www + cb0[25].xyz;
+  // r0.xyz = r2.xyz * r0.xyz;
+
+  MobileTonemapResult result = mobile_tonemap(r1.rgb, legacy_config);
+
+  float3 sdr1 = result.graded_tonemapped;
+  float3 hdr1 = result.graded_untonemapped;
+
+  if (RENODX_TONE_MAP_TYPE == 0.f || RENODX_TONE_MAP_TYPE == 2.f) {
+    // sdr1 = postprocessing_sdr(sdr1);
+
+    if (RENODX_TONE_MAP_TYPE == 2.f) {
+      // float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(hdr1);
+
+      // float3 graded_sdr_color = renodx::draw::ApplyPerChannelCorrection(
+      //     untonemapped_bt709,
+      //     sdr1,
+      //     0.5f,
+      //     0.5f,
+      //     0.5f);
+
+      // o0.rgb = renodx::tonemap::UpgradeToneMap(hdr1, neutral_sdr, sdr1);
+      hdr1 = unrealengine::filmtonemap::extended::ApplyContrastExtended(hdr1, legacy_config);
+      o0.rgb = postprocessing_hdr(hdr1, sdr1);
+    } else {
+      sdr1 = postprocessing_sdr(sdr1);
+      o0.rgb = sdr1;
+    }
 
   } else {
-    r2.x = dot(float3(0.613191485,0.33951208,0.0473663323), r1.xyz);
-    r2.y = dot(float3(0.0702069029,0.916335821,0.0134500116), r1.xyz);
-    r2.z = dot(float3(0.0206188709,0.109567292,0.869606733), r1.xyz);
+
+    r2.rgb = untonemapped_ap1;
     r2.xyz = max(float3(0,0,0), r2.xyz);
+
+    r2.rgb = renodx::color::bt709::from::AP1(r2.rgb);
+    r2.x = dot(r2.xyz, cb0[19].xyz);
+    r2.y = dot(r2.xyz, cb0[20].xyz);
+    r2.z = dot(r2.xyz, cb0[21].xyz);
+    r0.w = dot(r2.xyz, cb0[24].xyz);
+
+    r0.w = 1 + r0.w;
+    r0.w = rcp(r0.w);
+
+    r3.xyz = cb0[26].xyz * r0.www + cb0[25].xyz;
+    r2.xyz = r2.xyz * r3.xyz;
+    r2.rgb = renodx::color::ap1::from::BT709(r2.rgb);
+    // luma in AP1
     r0.w = dot(r2.xyz, float3(0.272228718,0.674081743,0.0536895171));
+
+    // desaturation
     r2.xyz = r2.xyz + -r0.www;
     r2.xyz = r2.xyz * float3(0.959999979,0.959999979,0.959999979) + r0.www;
-    r3.xy = float2(1,0.180000007) + cb0[27].ww;
-    r0.w = -cb0[27].y + r3.x;
-    r1.w = 1 + cb0[28].x;
-    r2.w = -cb0[27].z + r1.w;
-    r3.x = cmp(0.800000012 < cb0[27].y);
-    r3.zw = float2(0.819999993,1) + -cb0[27].yy;
-    r3.zw = r3.zw / cb0[27].xx;
-    r3.z = -0.744727492 + r3.z;
-    r3.y = r3.y / r0.w;
-    r4.x = -1 + r3.y;
-    r4.x = 1 + -r4.x;
-    r3.y = r3.y / r4.x;
-    r3.y = log2(r3.y);
-    r3.y = 0.346573591 * r3.y;
-    r4.x = r0.w / cb0[27].x;
-    r3.y = -r3.y * r4.x + -0.744727492;
-    r3.x = r3.x ? r3.z : r3.y;
-    r3.y = r3.w + -r3.x;
-    r3.z = cb0[27].z / cb0[27].x;
-    r3.z = r3.z + -r3.y;
-    r2.xyz = log2(r2.xyz);
-    r4.xyz = float3(0.30103001,0.30103001,0.30103001) * r2.xyz;
-    r5.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + r3.yyy;
-    r5.xyz = cb0[27].xxx * r5.xyz;
-    r3.y = r0.w + r0.w;
-    r3.w = -2 * cb0[27].x;
-    r0.w = r3.w / r0.w;
-    r6.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + -r3.xxx;
-    r7.xyz = r6.xyz * r0.www;
-    r7.xyz = float3(1.44269502,1.44269502,1.44269502) * r7.xyz;
-    r7.xyz = exp2(r7.xyz);
-    r7.xyz = float3(1,1,1) + r7.xyz;
-    r7.xyz = r3.yyy / r7.xyz;
-    r7.xyz = -cb0[27].www + r7.xyz;
-    r0.w = r2.w + r2.w;
-    r3.y = cb0[27].x + cb0[27].x;
-    r2.w = r3.y / r2.w;
-    r2.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + -r3.zzz;
-    r2.xyz = r2.www * r2.xyz;
-    r2.xyz = float3(1.44269502,1.44269502,1.44269502) * r2.xyz;
-    r2.xyz = exp2(r2.xyz);
-    r2.xyz = float3(1,1,1) + r2.xyz;
-    r2.xyz = r0.www / r2.xyz;
-    r2.xyz = -r2.xyz + r1.www;
-    r8.xyz = cmp(r4.xyz < r3.xxx);
-    r7.xyz = r8.xyz ? r7.xyz : r5.xyz;
-    r4.xyz = cmp(r3.zzz < r4.xyz);
-    r2.xyz = r4.xyz ? r2.xyz : r5.xyz;
-    r0.w = r3.z + -r3.x;
-    r4.xyz = saturate(r6.xyz / r0.www);
-    r0.w = cmp(r3.z < r3.x);
-    r3.xyz = float3(1,1,1) + -r4.xyz;
-    r3.xyz = r0.www ? r3.xyz : r4.xyz;
-    r4.xyz = -r3.xyz * float3(2,2,2) + float3(3,3,3);
-    r3.xyz = r3.xyz * r3.xyz;
-    r3.xyz = r3.xyz * r4.xyz;
-    r2.xyz = r2.xyz + -r7.xyz;
-    r2.xyz = r3.xyz * r2.xyz + r7.xyz;
+    
+    // r3.xy = float2(1,0.180000007) + cb0[27].ww;
+    // r0.w = -cb0[27].y + r3.x;
+    // r1.w = 1 + cb0[28].x;
+    // r2.w = -cb0[27].z + r1.w;
+    // r3.x = cmp(0.800000012 < cb0[27].y);
+    // r3.zw = float2(0.819999993,1) + -cb0[27].yy;
+    // r3.zw = r3.zw / cb0[27].xx;
+    // r3.z = -0.744727492 + r3.z;
+    // r3.y = r3.y / r0.w;
+    // r4.x = -1 + r3.y;
+    // r4.x = 1 + -r4.x;
+    // r3.y = r3.y / r4.x;
+    // r3.y = log2(r3.y);
+    // r3.y = 0.346573591 * r3.y;
+    // r4.x = r0.w / cb0[27].x;
+    // r3.y = -r3.y * r4.x + -0.744727492;
+    // r3.x = r3.x ? r3.z : r3.y;
+    // r3.y = r3.w + -r3.x;
+    // r3.z = cb0[27].z / cb0[27].x;
+    // r3.z = r3.z + -r3.y;
+
+    // // log10 untonemapped
+    // r2.xyz = log2(r2.xyz);
+    // r4.xyz = float3(0.30103001,0.30103001,0.30103001) * r2.xyz;
+
+    // r5.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + r3.yyy;
+    // r5.xyz = cb0[27].xxx * r5.xyz;
+    // r3.y = r0.w + r0.w;
+    // r3.w = -2 * cb0[27].x;
+    // r0.w = r3.w / r0.w;
+    // r6.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + -r3.xxx;
+    // r7.xyz = r6.xyz * r0.www;
+    // r7.xyz = float3(1.44269502,1.44269502,1.44269502) * r7.xyz;
+    // r7.xyz = exp2(r7.xyz);
+    // r7.xyz = float3(1,1,1) + r7.xyz;
+    // r7.xyz = r3.yyy / r7.xyz;
+    // r7.xyz = -cb0[27].www + r7.xyz;
+    // r0.w = r2.w + r2.w;
+    // r3.y = cb0[27].x + cb0[27].x;
+    // r2.w = r3.y / r2.w;
+    // r2.xyz = r2.xyz * float3(0.30103001,0.30103001,0.30103001) + -r3.zzz;
+    // r2.xyz = r2.www * r2.xyz;
+    // r2.xyz = float3(1.44269502,1.44269502,1.44269502) * r2.xyz;
+    // r2.xyz = exp2(r2.xyz);
+    // r2.xyz = float3(1,1,1) + r2.xyz;
+    // r2.xyz = r0.www / r2.xyz;
+    // r2.xyz = -r2.xyz + r1.www;
+    // r8.xyz = cmp(r4.xyz < r3.xxx);
+    // r7.xyz = r8.xyz ? r7.xyz : r5.xyz;
+    // r4.xyz = cmp(r3.zzz < r4.xyz);
+    // r2.xyz = r4.xyz ? r2.xyz : r5.xyz;
+    // r0.w = r3.z + -r3.x;
+    // r4.xyz = saturate(r6.xyz / r0.www);
+    // r0.w = cmp(r3.z < r3.x);
+    // r3.xyz = float3(1,1,1) + -r4.xyz;
+    // r3.xyz = r0.www ? r3.xyz : r4.xyz;
+    // r4.xyz = -r3.xyz * float3(2,2,2) + float3(3,3,3);
+    // r3.xyz = r3.xyz * r3.xyz;
+    // r3.xyz = r3.xyz * r4.xyz;
+    // r2.xyz = r2.xyz + -r7.xyz;
+    // r2.xyz = r3.xyz * r2.xyz + r7.xyz;
+
+    float3 untonemapped_graded_ap1 = r2.rgb;
+
+    // Blue Correction Pre
+
+    const float3x3 BlueCorrect =
+        {
+          0.9404372683, -0.0183068787, 0.0778696104,
+          0.0083786969, 0.8286599939, 0.1629613092,
+          0.0005471261, -0.0008833746, 1.0003362486
+        };
+
+    const float3x3 BlueCorrectAP1 = mul(renodx::color::AP0_TO_AP1_MAT, mul(BlueCorrect, renodx::color::AP1_TO_AP0_MAT));
+
+    untonemapped_graded_ap1 = lerp(untonemapped_graded_ap1, mul(BlueCorrectAP1, untonemapped_graded_ap1), shader_injection.unreal_blue_correction);
+
+    if (RENODX_TONE_MAP_TYPE == 1.f) {
+      r2.rgb = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    } else if (RENODX_TONE_MAP_TYPE == 3.f) {
+      r2.rgb = ApplyToneCurveExtendedWithHermite(untonemapped_graded_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    }
+
+    // PostToneMapDesaturation
     r0.w = dot(r2.xyz, float3(0.272228718,0.674081743,0.0536895171));
     r2.xyz = r2.xyz + -r0.www;
     r2.xyz = r2.xyz * float3(0.930000007,0.930000007,0.930000007) + r0.www;
     r2.xyz = max(float3(0,0,0), r2.xyz);
-    r3.x = dot(float3(1.70505154,-0.621790707,-0.0832583979), r2.xyz);
-    r3.y = dot(float3(-0.130257145,1.14080286,-0.0105485283), r2.xyz);
-    r3.z = dot(float3(-0.0240032747,-0.128968775,1.15297174), r2.xyz);
 
-    SetTonemappedBT709(r3.xyz);
+    const float3x3 BlueCorrectInv =
+        {
+          1.06318, 0.0233956, -0.0865726,
+          -0.0106337, 1.20632, -0.19569,
+          -0.000590887, 0.00105248, 0.999538
+        };
 
-    r0.xyz = max(float3(0,0,0), r3.xyz);
-  }
-  r0.xyz = saturate(r0.xyz);
-  r2.xyz = float3(12.9200001,12.9200001,12.9200001) * r0.xyz;
-  r3.xyz = cmp(r0.xyz >= float3(0.00313066994,0.00313066994,0.00313066994));
-  r0.xyz = log2(r0.xyz);
-  r0.xyz = float3(0.416666657,0.416666657,0.416666657) * r0.xyz;
-  r0.xyz = exp2(r0.xyz);
-  r0.xyz = r0.xyz * float3(1.05499995,1.05499995,1.05499995) + float3(-0.0549999997,-0.0549999997,-0.0549999997);
-  r0.xyz = r3.xyz ? r0.xyz : r2.xyz;
-  r2.yzw = r0.xyz * float3(0.9375,0.9375,0.9375) + float3(0.03125,0.03125,0.03125);
-  r0.w = r2.w * 16 + -0.5;
-  r1.w = floor(r0.w);
-  r0.w = -r1.w + r0.w;
-  r1.w = r2.y + r1.w;
-  r2.x = 0.0625 * r1.w;
-  r3.xyz = t0.Sample(s0_s, r2.xz).xyz;
-  r2.yw = float2(0.0625,0) + r2.xz;
-  r4.xyz = t0.Sample(s0_s, r2.yw).xyz;
-  r4.xyz = r4.xyz + -r3.xyz;
-  r3.xyz = r0.www * r4.xyz + r3.xyz;
-  r3.xyz = cb0[30].xxx * r3.xyz;
-  r0.xyz = cb0[29].xxx * r0.xyz + r3.xyz;
-  r3.xyz = t1.Sample(s1_s, r2.xz).xyz;
-  r4.xyz = t1.Sample(s1_s, r2.yw).xyz;
-  r4.xyz = r4.xyz + -r3.xyz;
-  r3.xyz = r0.www * r4.xyz + r3.xyz;
-  r0.xyz = cb0[31].xxx * r3.xyz + r0.xyz;
-  r3.xyz = t2.Sample(s2_s, r2.xz).xyz;
-  r2.xyz = t2.Sample(s2_s, r2.yw).xyz;
-  r2.xyz = r2.xyz + -r3.xyz;
-  r2.xyz = r0.www * r2.xyz + r3.xyz;
-  r0.xyz = cb0[32].xxx * r2.xyz + r0.xyz;
-  r0.xyz = max(float3(6.10351999e-005,6.10351999e-005,6.10351999e-005), r0.xyz);
-  r2.xyz = cmp(float3(0.0404499993,0.0404499993,0.0404499993) < r0.xyz);
-  r3.xyz = r0.xyz * float3(0.947867274,0.947867274,0.947867274) + float3(0.0521326996,0.0521326996,0.0521326996);
-  r3.xyz = log2(r3.xyz);
-  r3.xyz = float3(2.4000001,2.4000001,2.4000001) * r3.xyz;
-  r3.xyz = exp2(r3.xyz);
-  r0.xyz = float3(0.0773993805,0.0773993805,0.0773993805) * r0.xyz;
-  r0.xyz = r2.xyz ? r3.xyz : r0.xyz;
-  r2.xyz = r0.xyz * r0.xyz;
-  r0.xyz = cb0[17].yyy * r0.xyz;
-  r0.xyz = cb0[17].xxx * r2.xyz + r0.xyz;
-  r0.xyz = cb0[17].zzz + r0.xyz;
-  r2.xyz = cb0[33].yzw * r0.xyz;
-  r0.xyz = -r0.xyz * cb0[33].yzw + cb0[34].xyz;
-  r0.xyz = cb0[34].www * r0.xyz + r2.xyz;
-  r0.xyz = max(float3(0,0,0), r0.xyz);
-  r0.xyz = log2(r0.xyz);
-  r0.xyz = cb0[18].yyy * r0.xyz;
-  r2.xyz = exp2(r0.xyz);
+    const float3x3 BlueCorrectInvAP1 = mul(renodx::color::AP0_TO_AP1_MAT, mul(BlueCorrectInv, renodx::color::AP1_TO_AP0_MAT));
 
-  if (RENODX_TONE_MAP_TYPE != 0) {
-    o0 = GenerateOutput(r2.xyz, asuint(cb0[56].z));
-    return;
+    // Uncorrect blue to maintain white point
+    r2.xyz = lerp(r2.xyz, mul(BlueCorrectInvAP1, r2.xyz), shader_injection.unreal_blue_correction);
+
+    // AP1 -> BT709
+    // r3.x = dot(float3(1.70505154,-0.621790707,-0.0832583979), r2.xyz);
+    // r3.y = dot(float3(-0.130257145,1.14080286,-0.0105485283), r2.xyz);
+    // r3.z = dot(float3(-0.0240032747,-0.128968775,1.15297174), r2.xyz);
+    // r0.xyz = max(float3(0,0,0), r3.xyz);
+
+    r3.rgb = renodx::color::bt709::from::AP1(r2.rgb);
+
+    float3 filmic = r3.rgb;
+
+    // r2.xyz = r0.xyz * r0.xyz;
+    // r0.xyz = cb0[17].yyy * r0.xyz;
+    // r0.xyz = cb0[17].xxx * r2.xyz + r0.xyz;
+    // r0.xyz = cb0[17].zzz + r0.xyz;
+    // r2.xyz = cb0[33].yzw * r0.xyz;
+    // r0.xyz = -r0.xyz * cb0[33].yzw + cb0[34].xyz;
+    // r0.xyz = cb0[34].www * r0.xyz + r2.xyz;
+    // r0.xyz = max(float3(0,0,0), r0.xyz);
+    // r0.xyz = log2(r0.xyz);
+    // r0.xyz = cb0[18].yyy * r0.xyz;
+    // r2.xyz = exp2(r0.xyz);
+
+    float3 graded_sdr = postprocessing_sdr(sdr1);
+    float3 graded_filmic = hdr1;
+    float3 graded_color = sdr1;
+
+    if (RENODX_TONE_MAP_TYPE == 1.f) {
+      graded_filmic = postprocessing_sdr(filmic);
+      graded_color = sdr1;
+    } else if (RENODX_TONE_MAP_TYPE == 3.f) {
+      graded_filmic = postprocessing_hdr(filmic, sdr1);
+      graded_color = unrealengine::filmtonemap::extended::ApplyContrastExtended(hdr1, legacy_config);
+    }
+
+    float3 hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, graded_color, RENODX_TONE_MAP_HUE_SHIFT);
+
+    graded_filmic = hue_shifted_graded_filmic;
+    o0.rgb = graded_filmic;
   }
 
+  // final output
+  float gamma = 1.f / cb0[18].z;
+  uint device = asuint(cb0[56].z);
+
+  // correct gamma - this is important for SDR
+  if (shader_injection.unreal_lut_gamma_correction == 1) {
+    // o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, true, gamma);
+    o0.rgb = CorrectGammaHuePreservingSRGB(o0.rgb, gamma);
+  }
+
+  o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb);
+  o0.rgb = float3(0.952381015, 0.952381015, 0.952381015) * o0.rgb;
+  o0.w = 0;
+  return;
+  
   if (cb0[56].z == 0) {
     r3.xyz = float3(12.9200001,12.9200001,12.9200001) * r2.xyz;
     r4.xyz = cmp(r2.xyz >= float3(0.00313066994,0.00313066994,0.00313066994));

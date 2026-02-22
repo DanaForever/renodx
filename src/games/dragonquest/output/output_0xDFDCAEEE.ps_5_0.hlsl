@@ -90,7 +90,7 @@ void main(
   // r0.yzw = t3.Sample(s3_s, r0.yzw).xyz;
   r0.yzw = renodx::lut::SampleTetrahedral(t3, r0.yzw, 32u);
   r1.xyz = float3(1.04999995, 1.04999995, 1.04999995) * r0.yzw;
-
+  r1.rgb = renodx::color::pq::DecodeSafe(r1.rgb);
   r0.x = r0.x * 0.00390625 + -0.001953125;
   // r0.xyz = r0.yzw * float3(1.04999995,1.04999995,1.04999995) + r0.xxx;
   r0.xyz = r1.xyz + r0.xxx;
@@ -98,43 +98,41 @@ void main(
   r1.xy = cmp(asint(cb0[34].xx) == int2(5,6));
   r0.w = (int)r1.y | (int)r1.x;
 
-  r0.rgb = renodx::color::pq::DecodeSafe(r0.rgb);
-
   o0.w = saturate(renodx::color::y::from::BT709(r0.xyz));
 
   o0.rgb = DisplayMap(r0.rgb);
 
-  //   o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+
   // } else {
-  //   if (r0.w != 0) {
+    // if (r0.w != 0) {
 
-  //     // PQ Decode? 
-  //     r0.w = cmp(asint(cb0[34].x) == 4);
-  //     r0.w = (int)r1.y | (int)r0.w;
+    //   // PQ Decode? 
+    //   r0.w = cmp(asint(cb0[34].x) == 4);
+    //   r0.w = (int)r1.y | (int)r0.w;
 
-  //     // ACES 1000 or 2000 
-  //     r1.xyzw = r0.wwww ? float4(2000,0.00499999989,-0.00499999989,25) : float4(1000,9.99999975e-005,-9.99999975e-005,12.5);
-  //     // r2.xyz = log2(r0.xyz);
-  //     // r2.xyz = float3(0.0126833133,0.0126833133,0.0126833133) * r2.xyz;
-  //     // r2.xyz = exp2(r2.xyz);
-  //     // r3.xyz = float3(-0.8359375,-0.8359375,-0.8359375) + r2.xyz;
-  //     // r3.xyz = max(float3(0,0,0), r3.xyz);
-  //     // r2.xyz = -r2.xyz * float3(18.6875,18.6875,18.6875) + float3(18.8515625,18.8515625,18.8515625);
-  //     // r2.xyz = r3.xyz / r2.xyz;
-  //     // r2.xyz = log2(r2.xyz);
-  //     // r2.xyz = float3(6.27739477,6.27739477,6.27739477) * r2.xyz;
-  //     // r2.xyz = exp2(r2.xyz);
-  //     // r2.xyz = float3(10000,10000,10000) * r2.xyz;
-  //     r2.xyz = renodx::color::pq::DecodeSafe(r0.xyz, 1.f);
-  //     r2.xyz = max(r2.xyz, r1.yyy);
-  //     r2.xyz = min(r2.xyz, r1.xxx);
-  //     r2.xyz = r2.xyz + r1.zzz;
-  //     r0.w = r1.x + r1.z;
-  //     r1.xyz = r2.xyz / r0.www;
-  //     r2.x = dot(float3(1.73125386,-0.604043067,-0.0801077113), r1.xyz);
-  //     r2.y = dot(float3(-0.131618932,1.13484156,-0.00867943279), r1.xyz);
-  //     r2.z = dot(float3(-0.0245682523,-0.125750408,1.06563699), r1.xyz);
-  //     o0.xyz = r2.xyz * r1.www;
+    //   // ACES 1000 or 2000 
+    //   r1.xyzw = r0.wwww ? float4(2000,0.00499999989,-0.00499999989,25) : float4(1000,9.99999975e-005,-9.99999975e-005,12.5);
+    //   // r2.xyz = log2(r0.xyz);
+    //   // r2.xyz = float3(0.0126833133,0.0126833133,0.0126833133) * r2.xyz;
+    //   // r2.xyz = exp2(r2.xyz);
+    //   // r3.xyz = float3(-0.8359375,-0.8359375,-0.8359375) + r2.xyz;
+    //   // r3.xyz = max(float3(0,0,0), r3.xyz);
+    //   // r2.xyz = -r2.xyz * float3(18.6875,18.6875,18.6875) + float3(18.8515625,18.8515625,18.8515625);
+    //   // r2.xyz = r3.xyz / r2.xyz;
+    //   // r2.xyz = log2(r2.xyz);
+    //   // r2.xyz = float3(6.27739477,6.27739477,6.27739477) * r2.xyz;
+    //   // r2.xyz = exp2(r2.xyz);
+    //   // r2.xyz = float3(10000,10000,10000) * r2.xyz;
+    //   r2.xyz = renodx::color::pq::DecodeSafe(r0.xyz, 1.f);
+    //   r2.xyz = max(r2.xyz, r1.yyy);
+    //   r2.xyz = min(r2.xyz, r1.xxx);
+    //   r2.xyz = r2.xyz + r1.zzz;
+    //   r0.w = r1.x + r1.z;
+    //   r1.xyz = r2.xyz / r0.www;
+    //   r2.x = dot(float3(1.73125386,-0.604043067,-0.0801077113), r1.xyz);
+    //   r2.y = dot(float3(-0.131618932,1.13484156,-0.00867943279), r1.xyz);
+    //   r2.z = dot(float3(-0.0245682523,-0.125750408,1.06563699), r1.xyz);
+    //   o0.xyz = r2.xyz * r1.www;
   //   } else {
 
   //     o0.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);

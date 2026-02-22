@@ -4,20 +4,27 @@
 #include "../shared.h"
 #include "./lutbuildercommon.hlsli"
 
-struct ContrastConfig {
+struct LegacyFilmicConfig {
   float4 ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3;
   float4 ColorCurve_Ch1_Ch2;    
   float4 ColorMatrixR_ColorCurveCd1; 
   float4 ColorMatrixG_ColorCurveCd3Cm3;
   float4 ColorMatrixB_ColorCurveCm2; 
+  float4  ColorShadow_Luma;
+  float4  ColorShadow_Tint1;
+  float4  ColorShadow_Tint2;
 };
 
-ContrastConfig CreateContrast(float4 ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3,
+LegacyFilmicConfig CreateLegacy(
+  float4 ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3,
   float4 ColorCurve_Ch1_Ch2,
   float4 ColorMatrixR_ColorCurveCd1,
   float4 ColorMatrixG_ColorCurveCd3Cm3,
-  float4 ColorMatrixB_ColorCurveCm2) {
-  ContrastConfig p;
+  float4 ColorMatrixB_ColorCurveCm2,
+  float4  ColorShadow_Luma,
+  float4  ColorShadow_Tint1,
+  float4  ColorShadow_Tint2) {
+  LegacyFilmicConfig p;
   
   p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3 = ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3;
   p.ColorCurve_Ch1_Ch2 = ColorCurve_Ch1_Ch2;    
@@ -25,8 +32,13 @@ ContrastConfig CreateContrast(float4 ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3,
   p.ColorMatrixG_ColorCurveCd3Cm3 = ColorMatrixG_ColorCurveCd3Cm3;
   p.ColorMatrixB_ColorCurveCm2 = ColorMatrixB_ColorCurveCm2; 
 
+  p.ColorShadow_Luma = ColorShadow_Luma;
+  p.ColorShadow_Tint1 = ColorShadow_Tint1;
+  p.ColorShadow_Tint2 = ColorShadow_Tint2;
+
   return p;
 }
+
 
 namespace unrealengine {
 
@@ -128,7 +140,7 @@ float3 ApplyToneCurve(
 
 
 #define CONTRASTTONECURVE_GENERATOR(T)                                                                                 \
-  T ApplyContrastToneCurve(T x, ContrastConfig p) {                                                                                      \
+  T ApplyContrastToneCurve(T x, LegacyFilmicConfig p) {                                                                                      \
     /* Parameters */                                                                                                   \
     const T  Cm0 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.xxx;                                                            \
     const T  Cd0 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.yyy;                                                            \
@@ -164,7 +176,7 @@ CONTRASTTONECURVE_GENERATOR(float3)
 #undef CONTRASTTONECURVE_GENERATOR
 
 float3 ApplyMobileTonemap(
-    float3 untonemapped, ContrastConfig p) {
+    float3 untonemapped, LegacyFilmicConfig p) {
   return ApplyContrastToneCurve(untonemapped, p);
 }
 
@@ -215,7 +227,7 @@ float3 ApplyToneCurveExtended(
 
 // Derivative of the highlight rational: d/dx((Ch1*x + Ch2)/(x + Ch0))
 #define CONTRASTDERIV_GENERATOR(T)                                                                 \
-  T ContrastHighlightDerivative(T x, const ContrastConfig p) {                                     \
+  T ContrastHighlightDerivative(T x, const LegacyFilmicConfig p) {                                     \
     T Ch0 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.w;                                               \
     T Ch1 = (T)p.ColorCurve_Ch1_Ch2.x;                                                             \
     T Ch2 = (T)p.ColorCurve_Ch1_Ch2.y;                                                             \
@@ -230,7 +242,7 @@ CONTRASTDERIV_GENERATOR(float3)
 
 
 #define APPLYCONTRASTEXTENDED_GENERATOR(T)                                                         \
-  T ApplyContrastExtended(T x, const ContrastConfig p) {                                            \
+  T ApplyContrastExtended(T x, const LegacyFilmicConfig p) {                                            \
     T base = ApplyContrastToneCurve(x, p);                                                         \
                                                                                                    \
     const T Cd2 = (T)p.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3.zzz;                                        \

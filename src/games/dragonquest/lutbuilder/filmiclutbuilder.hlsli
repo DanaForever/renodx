@@ -7,6 +7,15 @@
 // Create cbuffer struct
 
 struct UECbufferConfig {
+  //Legacy filmic parameters 
+  float4  ColorMatrixR_ColorCurveCd1;
+  float4  ColorMatrixG_ColorCurveCd3Cm3;
+  float4  ColorMatrixB_ColorCurveCm2;
+  float4  ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3;
+  float4  ColorCurve_Ch1_Ch2;
+  float4  ColorShadow_Luma;
+  float4  ColorShadow_Tint1;
+  float4  ColorShadow_Tint2;
   // Filmic paramaters
   float ue_filmblackclip;
   float ue_filmtoe;
@@ -22,12 +31,21 @@ struct UECbufferConfig {
   float3 ue_colorscale;
   float ue_bluecorrection;
   float ue_gamma;
+  float ue_inv_gamma;
   bool ue_haslut;
 };
 
 // // Config builder
 
 UECbufferConfig CreateCbufferConfig(
+    float4  ColorMatrixR_ColorCurveCd1 = 1.f,
+    float4  ColorMatrixG_ColorCurveCd3Cm3 = 1.f,
+    float4  ColorMatrixB_ColorCurveCm2 = 1.f,
+    float4  ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3 = 1.f,
+    float4  ColorCurve_Ch1_Ch2 = 1.f,
+    float4  ColorShadow_Luma = 1.f,
+    float4  ColorShadow_Tint1 = 1.f,
+    float4  ColorShadow_Tint2 = 1.f,
     float ue_filmblackclip = 1.f,
     float ue_filmtoe = 1.f,
     float ue_filmshoulder = 1.f,
@@ -42,8 +60,18 @@ UECbufferConfig CreateCbufferConfig(
     float3 ue_colorscale = 1.f,
     float ue_bluecorrection = 1.f,
     float ue_gamma = 1.f,
+    float ue_inv_gamma = 1.f,
     bool ue_haslut = false) {
   UECbufferConfig cb_config;
+  cb_config.ColorMatrixR_ColorCurveCd1 = ColorMatrixR_ColorCurveCd1;
+  cb_config.ColorMatrixG_ColorCurveCd3Cm3 = ColorMatrixG_ColorCurveCd3Cm3;
+  cb_config.ColorMatrixB_ColorCurveCm2 = ColorMatrixB_ColorCurveCm2;
+  cb_config.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3 = ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3;
+  cb_config.ColorCurve_Ch1_Ch2 = ColorCurve_Ch1_Ch2;
+  cb_config.ColorShadow_Luma = ColorShadow_Luma;
+  cb_config.ColorShadow_Tint1 = ColorShadow_Tint1;
+  cb_config.ColorShadow_Tint2 = ColorShadow_Tint2;
+
   cb_config.ue_filmblackclip = ue_filmblackclip;
   cb_config.ue_filmtoe = ue_filmtoe;
   cb_config.ue_filmshoulder = ue_filmshoulder;
@@ -56,8 +84,11 @@ UECbufferConfig CreateCbufferConfig(
   cb_config.ue_overlaycolor = ue_overlaycolor;
   cb_config.ue_colorscale = ue_colorscale;
   cb_config.ue_bluecorrection = ue_bluecorrection;
+
   cb_config.ue_haslut = ue_haslut;
+
   cb_config.ue_gamma = ue_gamma;
+  cb_config.ue_inv_gamma = ue_inv_gamma;
 
   return cb_config;
 }
@@ -98,9 +129,11 @@ float3 ApplyBlueCorrectionPre(float3 untonemapped_ap1, UECbufferConfig cb_config
   float corrected_r = ((mad(0.061360642313957214f, b, mad(-4.540197551250458e-09f, g, (r * 0.9386394023895264f))) - r) * cb_config.ue_bluecorrection) + r;
   float corrected_g = ((mad(0.169205904006958f, b, mad(0.8307942152023315f, g, (r * 6.775371730327606e-08f))) - g) * cb_config.ue_bluecorrection) + g;
   float corrected_b = (mad(-2.3283064365386963e-10f, g, (r * -9.313225746154785e-10f)) * cb_config.ue_bluecorrection) + b;
+  
 
   return float3(corrected_r, corrected_g, corrected_b);
 }
+
 
 float3 ApplyBlueCorrectionPost(float3 tonemapped, UECbufferConfig cb_config) {
   float _1131 = tonemapped.r, _1132 = tonemapped.g, _1133 = tonemapped.b;
@@ -121,10 +154,6 @@ void ApplyFilmToneMapWithBlueCorrect(float untonemapped_r, float untonemapped_g,
 
   float3 untonemapped_ap1_graded = lerp(y.xxx, untonemapped_ap1, 0.959999979f);
 
-  // if (RENODX_TONE_MAP_TYPE != 0.f) {
-  //   untonemapped_ap1_graded = ApplyExposureContrastFlareHighlightsShadowsByLuminance(untonemapped_ap1, y, cg_config, 0.18f);
-  // }
-
   float3 tonemapped_ap1;
 
   // Vanilla+ and UE Filmic
@@ -140,21 +169,12 @@ void ApplyFilmToneMapWithBlueCorrect(float untonemapped_r, float untonemapped_g,
     tonemapped_prebluecorrect_ap1 =
         ApplyToneCurveExtendedWithHermite(untonemapped_rrt_prebluecorrect_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
   }
-  // tonemapped_prebluecorrect_ap1 =
-  //       ApplyToneCurveExtendedWithHermite(untonemapped_rrt_prebluecorrect_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
-  // tonemapped_prebluecorrect_ap1 =
-  //       unrealengine::filmtonemap::ApplyToneCurve(untonemapped_rrt_prebluecorrect_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
 
   tonemapped_prebluecorrect_ap1 = ApplyPostToneMapDesaturation(tonemapped_prebluecorrect_ap1);
   // tonemapped_prebluecorrect_ap1 = LerpToneMapStrength(tonemapped_prebluecorrect_ap1, untonemapped_ap1_graded, cb_config);
-  // tonemapped_ap1 = ApplyBlueCorrectionPost(tonemapped_prebluecorrect_ap1, cb_config);
+  tonemapped_ap1 = ApplyBlueCorrectionPost(tonemapped_prebluecorrect_ap1, cb_config);
   tonemapped_ap1 = tonemapped_prebluecorrect_ap1;
   tonemapped_ap1 = max(0, tonemapped_ap1);
-
-  // Moved to GenerateOutput
-  // if (RENODX_TONE_MAP_TYPE != 0.f) {
-  //   tonemapped_ap1 = ApplySaturationBlowoutHueCorrectionHighlightSaturationAP1(tonemapped_ap1, hue_reference_color, y, cg_config, RENODX_TONE_MAP_HUE_CORRECTION_TYPE);
-  // }
 
   tonemapped_r = tonemapped_ap1.r, tonemapped_g = tonemapped_ap1.g, tonemapped_b = tonemapped_ap1.b;
 

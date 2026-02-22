@@ -56,7 +56,7 @@ renodx::utils::settings::Settings settings = {
         .default_value = 1.f,
         .can_reset = false,
         .label = "Processing Path",
-        .section = "Settings",
+        .section = "Unreal Settings",
         .tooltip = "Use Unreal Engine HDR path or Upgrade SDR path.",
         .labels = {"Engine HDR", "Upgrade SDR"},
     },
@@ -65,40 +65,78 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapType",
         .binding = &shader_injection.tone_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 3.f,
+        .default_value = 2.f,
         .can_reset = false,
-        .label = "Tone Mapper",
-        .section = "Tone Mapping",
+        .label = "Tone Curve",
+        .section = "Unreal Settings",
         .tooltip = "Sets the tone mapper type",
-        // .labels = {"UE ACES (HDR)", "None", "ACES", "UE Filmic Extended (HDR)", "UE Filmic (SDR)"},
-        .labels = {"UE Mobile (SDR)", "UE Filmic (Vanilla SDR)", "Mobile Extended (HDR)", "UE Filmic Extended (HDR)"},
+        .labels = {"UE Legacy (Vanilla SDR)", "UE Filmic (SDR)", "UE Legacy Extended (HDR)", "UE Filmic Extended (HDR)"},
     },
 
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapUnreal",
-        .binding = &shader_injection.unreal_hdr_setting,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
-        .can_reset = false,
-        .label = "Skips Polynomial-mapping",
-        .section = "Tone Mapping",
-        .tooltip = "Skips a mapping-polynomial grading effect which brightens the image.",
-        .labels = {"Off", "On"},
-    },
-    
     new renodx::utils::settings::Setting{
         .key = "ToneMapBase",
         .binding = &shader_injection.filmic_curve,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 4.f,
+        .default_value = 0.f,
         .can_reset = false,
         .label = "Filmic Tonemapping Curve",
-        .section = "Tone Mapping",
+        .section = "Unreal Settings",
         .tooltip = "Sets the tone mapper type for filmic",
         .labels = {"Default", "Uncharted", "High Precision", "Legacy", "ACES"},
         .is_enabled = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
         .is_visible = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
     },
+
+    new renodx::utils::settings::Setting{
+        .key = "UnrealExpandGamut",
+        .binding = &shader_injection.unreal_expand_gamut,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Gamut Expansion",
+        .section = "Unreal Settings",
+        .tooltip = "Expand bright saturated colors outside the BT709 gamut to fake wide gamut rendering.",
+        .min = 0.f,
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.01f; },
+    },
+
+    new renodx::utils::settings::Setting{
+        .key = "UnrealBlueCorrection",
+        .binding = &shader_injection.unreal_blue_correction,
+        .default_value = 0.f,
+        .can_reset = false,
+        .label = "Blue Correction",
+        .section = "Unreal Settings",
+        .tooltip = "Blue Correction.",
+        .min = 0.f,
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
+    },
+
+    new renodx::utils::settings::Setting{
+        .key = "UnrealOverrideBlackClip",
+        .binding = &shader_injection.override_black_clip,
+        .value_type = renodx::utils::settings::SettingValueType::BOOLEAN,
+        .default_value = 0.f,
+        .label = "Override Black Clip",
+        .section = "Unreal Settings",
+        .tooltip = "Disables black clip in the tonemapper. Prevents crushing when the black clip parameter is used",
+        .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
+    },
+
+    new renodx::utils::settings::Setting{
+        .key = "UnrealLUTGammaCorrection",
+        .binding = &shader_injection.unreal_lut_gamma_correction,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 1.f,
+        .label = "LUT Gamma Correction",
+        .section = "Unreal Settings",
+        .tooltip = "The game encodes gamma instead of srgb by default in the LUT. Removing this behaviour deviates from SDR.",
+        .labels = {"Off", "On"},
+    },
+
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",
         .binding = &shader_injection.peak_white_nits,
@@ -155,7 +193,7 @@ renodx::utils::settings::Settings settings = {
         .label = "SDR EOTF Emulation",
         .section = "Tone Mapping",
         .tooltip = "Emulates a 2.2 EOTF",
-        .labels = {"Off", "2.2", "2.4"},
+        .labels = {"Off", "2.2", "BT.1886 (2.4)"},
     },
 
     // new renodx::utils::settings::Setting{
@@ -207,16 +245,7 @@ renodx::utils::settings::Settings settings = {
     //     .parse = [](float value) { return value * 0.01f; },
     // },
 
-    new renodx::utils::settings::Setting{
-        .key = "OverrideBlackClip",
-        .binding = &shader_injection.override_black_clip,
-        .value_type = renodx::utils::settings::SettingValueType::BOOLEAN,
-        .default_value = 1.f,
-        .label = "Override Black Clip",
-        .section = "Scene Grading",
-        .tooltip = "Disables black clip in the tonemapper. Prevents crushing when the black clip parameter is used",
-        .is_enabled = []() { return shader_injection.tone_map_type == 1.f; },
-    },
+    
 
     new renodx::utils::settings::Setting{
         .key = "ColorGradeExposure",
@@ -564,27 +593,27 @@ bool fired_on_init_swapchain = false;
 
 void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
 
+  int n_unreal_settings = 6;
   auto process_path = renodx::utils::platform::GetCurrentProcessPath();
   auto filename = process_path.filename().string();
   auto product_name = renodx::utils::platform::GetProductName(process_path);
   if (fired_on_init_swapchain) return;
   auto peak = renodx::utils::swapchain::GetPeakNits(swapchain);
   if (peak.has_value()) {
-    settings[5]->default_value = peak.value();
-    settings[5]->can_reset = true;
+    settings[1 + n_unreal_settings]->default_value = peak.value();
+    settings[1 + n_unreal_settings]->can_reset = true;
     fired_on_init_swapchain = true;
+  }
+
+  if (filename == "DRAGON QUEST XI.exe")  {
+    settings[n_unreal_settings]->default_value = 0;
+  } else if (filename == "DRAGON QUEST XI S.exe") {
+    settings[n_unreal_settings]->default_value = 1;
   }
 
 }
 
 
-// void AddGamePatches() {
-  // auto process_path = renodx::utils::platform::GetCurrentProcessPath();
-  // auto filename = process_path.filename().string();
-  // auto product_name = renodx::utils::platform::GetProductName(process_path);
-                       
-//   reshade::log::message(reshade::log::level::info, std::format("Applied patches for {} ({}).", filename, product_name).c_str());
-// }
 
 const auto UPGRADE_TYPE_NONE = 0.f;
 const auto UPGRADE_TYPE_OUTPUT_SIZE = 1.f;
