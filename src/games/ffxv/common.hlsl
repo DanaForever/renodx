@@ -439,14 +439,10 @@ float3 ToneMapLMS(float3 untonemapped) {
   untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
 
   // naka rushton
-  float3 untonemapped_graded_dechroma = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, RENODX_DIFFUSE_WHITE_NITS, 100.f, 1.f);
+  float3 untonemapped_graded_dechroma = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded);
+  // untonemapped_graded_dechroma = untonemapped_graded;
 
-  // untonemapped_graded = lerp(untonemapped_graded, untonemapped_graded_dechroma, shader_injection.color_grade_strength);
-
-  float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-
-  //
-  float3 bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded);
+  float3 bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
   // float3 bt709_tonemapped = NeutwoBT709WhiteForEnergy(untonemapped_graded, peak_ratio);
 
   return bt709_tonemapped;

@@ -402,6 +402,23 @@ const auto UPGRADE_TYPE_OUTPUT_SIZE = 1.f;
 const auto UPGRADE_TYPE_OUTPUT_RATIO = 2.f;
 const auto UPGRADE_TYPE_ANY = 3.f;
 
+bool fired_on_init_swapchain = false;
+
+void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
+
+  auto process_path = renodx::utils::platform::GetCurrentProcessPath();
+  auto filename = process_path.filename().string();
+  auto product_name = renodx::utils::platform::GetProductName(process_path);
+  if (fired_on_init_swapchain) return;
+  auto peak = renodx::utils::swapchain::GetPeakNits(swapchain);
+  if (peak.has_value()) {
+    settings[3]->default_value = peak.value();
+    settings[3]->can_reset = true;
+    fired_on_init_swapchain = true;
+  }
+
+}
+
 bool initialized = false;
 
 }  // namespace
@@ -413,6 +430,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   switch (fdw_reason) {
     case DLL_PROCESS_ATTACH:
       if (!reshade::register_addon(h_module)) return FALSE;
+
+      reshade::register_event<reshade::addon_event::init_swapchain>(OnInitSwapchain);
 
       if (!initialized) {
         renodx::mods::shader::force_pipeline_cloning = true;
@@ -501,6 +520,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       break;
     case DLL_PROCESS_DETACH:
       reshade::unregister_addon(h_module);
+      reshade::unregister_event<reshade::addon_event::init_swapchain>(OnInitSwapchain);
       break;
   }
 

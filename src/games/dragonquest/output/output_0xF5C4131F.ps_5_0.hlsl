@@ -126,8 +126,7 @@ void main(
   r0.z = r0.z ? 1 : r2.w;
   o0.w = saturate(r0.y ? r0.x : r0.z);
 
-  // o0.rgb = DisplayMap(o0.rgb);
-  o0.rgb = PostToneMapProcess(o0.rgb);
+  o0.rgb = DisplayMap(o0.rgb);
 
   return;
 }

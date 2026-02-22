@@ -1,6 +1,19 @@
 #include "./shared.h"
 
 
+float ReinhardExtended(float x, float white_max, float x_max = 1.f, float shoulder = 0.18f) {
+  const float x_min = 0.f;
+  // float exposure = renodx::tonemap::ComputeReinhardExtendableScale(white_max, x_max, x_min, shoulder, shoulder);
+  // float extended = renodx::tonemap::ReinhardExtended(x * exposure, white_max * exposure, x_max);
+  float exposure = renodx::tonemap::ComputeReinhardExtendableScale(white_max, x_max, x_min, shoulder, shoulder);
+  float extended = renodx::tonemap::ReinhardExtended(x * exposure, white_max * exposure, x_max);
+  extended = min(extended, x_max);
+
+  return extended;
+}
+
+
+
 float3 CorrectGammaHuePreserving(float3 incorrect_color, float gamma=2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
 
@@ -128,7 +141,7 @@ float3 LMSFromDKL(float3 dkl) {
   return lms;
 }
 
-float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
+float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast, bool tonemap_to_human_vision = false) {
   float3 XYZ = renodx::color::xyz::from::BT709(color);
   float original_y = XYZ.y;
 
@@ -209,6 +222,24 @@ float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
   lms_vibrancy = LMSFromDKL(vibrant_dkl);
 
   float3 lms = lms_vibrancy;
+
+  if (tonemap_to_human_vision)  {
+
+    const float human_vision_peak = (4000.f / 203.f);
+    float3 peak_human_lms = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
+    float3 midgray_lms = LMS_GRAY;
+    // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
+    float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
+
+    // Naka Rushton per cone
+    float3 new_lms = float3(
+        sign(lms.x) * ReinhardExtended(abs(lms.x), 100.f, peak_human_lms.x, abs(midgray_lms.x)),
+        sign(lms.y) * ReinhardExtended(abs(lms.y), 100.f, peak_human_lms.y, abs(midgray_lms.y)),
+        sign(lms.z) * ReinhardExtended(abs(lms.z), 100.f, peak_human_lms.z, abs(midgray_lms.z)));
+
+    lms = new_lms;
+  }
+
   XYZ = mul(LMS_TO_XYZ, lms);
 
   color = renodx::color::bt709::from::XYZ(XYZ);
@@ -605,8 +636,11 @@ float3 ReinhardBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
 float3 DisplayMap(float3 color) {
   // Tonemapping
   if (RENODX_TONE_MAP_TYPE > 1.f) {
-    color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast);
-    color = CastleDechroma_CVVDPStyle_NakaRushton(color, RENODX_DIFFUSE_WHITE_NITS);
+    color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, true);
+    // color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
+    float3 dechroma = CastleDechroma_CVVDPStyle_NakaRushton(color);
+
+    color = lerp(color, dechroma, shader_injection.tone_map_blowout);
 
     float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
     
@@ -617,11 +651,12 @@ float3 DisplayMap(float3 color) {
       peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
     }
 
-    // color = renodx::color::bt2020::from::BT709(color);               // displaymap in bt2020
-    // color = renodx::tonemap::neutwo::MaxChannel(color, peak_ratio, 100.f);  // Display map to peak]
-    // color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
+    color = renodx::color::bt2020::from::BT709(color);               // displaymap in bt2020
+    color = renodx::tonemap::neutwo::MaxChannel(color, peak_ratio, 100.f);  // Display map to peak]
+    color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
 
-    color = ReinhardBT709WhiteForEnergy(color, peak_ratio);
+    // color = ReinhardBT709WhiteForEnergy(color, peak_ratio);
+    // color = renodx::draw::ToneMapPass(color);
 
   } else {
 

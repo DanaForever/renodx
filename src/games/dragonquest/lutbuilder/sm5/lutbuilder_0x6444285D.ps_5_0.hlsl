@@ -387,8 +387,6 @@ void main(
   cb_config.ue_inv_gamma = cb0[18].z;
 
   uint device = asuint(cb0[40].w);
-
-  // untonemapped_ap1 = renodx::color::ap1::from::BT709(untonemapped_bt709);
   
   // o0 = createLegacyLUT(untonemapped_ap1, untonemapped_bt709, cb_config, device);
   o0 = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, cb_config, device);

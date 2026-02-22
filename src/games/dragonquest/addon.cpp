@@ -233,18 +233,7 @@ renodx::utils::settings::Settings settings = {
         .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
     },
 
-    // new renodx::utils::settings::Setting{
-    //     .key = "ColorGradeChromaCorrectBlowout",
-    //     .binding = &shader_injection.tone_map_chroma_correct_blowout,
-    //     .default_value = 70.f,
-    //     .label = "Blowout",
-    //     .section = "Scene Grading",
-    //     .tooltip = "Emulates blowout from per channel tonemapping.",
-    //     .max = 100.f,
-    //     .is_enabled = []() { return shader_injection.tone_map_type != 0; },
-    //     .parse = [](float value) { return value * 0.01f; },
-    // },
-
+   
     
 
     new renodx::utils::settings::Setting{
@@ -300,6 +289,18 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type != 0; },
         .parse = [](float value) { return value * 0.02f; },
     },
+
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeBlowout",
+        .binding = &shader_injection.tone_map_blowout,
+        .default_value = 0.f,
+        .label = "Dechroma",
+        .section = "Custom Color Grading",
+        .tooltip = "Controls highlight desaturation with CastleCSF.",
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type != 0; },
+        .parse = [](float value) { return value * 0.01f; },
+    },
     new renodx::utils::settings::Setting{
         .key = "ColorGradeHighlightSaturation",
         .binding = &shader_injection.tone_map_highlight_saturation,
@@ -313,18 +314,7 @@ renodx::utils::settings::Settings settings = {
         .is_visible = []() { return false; },
     },
 
-    new renodx::utils::settings::Setting{
-        .key = "ColorGradeBlowout",
-        .binding = &shader_injection.tone_map_blowout,
-        .default_value = 0.f,
-        .label = "Dechroma",
-        .section = "Custom Color Grading",
-        .tooltip = "Controls highlight desaturation due to overexposure.",
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type != 0; },
-        .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return false; },
-    },
+    
 
     new renodx::utils::settings::Setting{
         .key = "ColorGradeFlare",
