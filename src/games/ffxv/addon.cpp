@@ -153,7 +153,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueCorrection",
         .binding = &shader_injection.tone_map_hue_correction,
-        .default_value = 0.f,
+        .default_value = 30.f,
         .label = "Hue Correction",
         .section = "Tone Mapping",
         .tooltip = "Hue retention strength.",
@@ -423,30 +423,21 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8b8a8_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
+          .new_format = reshade::api::format::r16g16b16a16_unorm,
           .use_resource_view_cloning = true,
-          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-          .usage_include = reshade::api::resource_usage::render_target,
           
         });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r10g10b10a2_typeless,
-          .new_format = reshade::api::format::r16g16b16a16_typeless,
-          .use_resource_view_cloning = true,
+                .old_format = reshade::api::format::r10g10b10a2_unorm,
+                .new_format = reshade::api::format::r16g16b16a16_float,
+                .use_resource_view_cloning = true,
+                //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
         });
-
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r10g10b10a2_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,
-          .use_resource_view_cloning = true,
-        //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
-        });
-
+        
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
+          .new_format = reshade::api::format::r16g16_unorm,
           .ignore_size = true,
           .use_resource_view_cloning = true,
         //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
@@ -492,6 +483,16 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
             shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
             settings.push_back(setting);
+
+            if (is_hdr10)   {
+                
+
+                renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+                .old_format = reshade::api::format::r10g10b10a2_typeless,
+                .new_format = reshade::api::format::r16g16b16a16_typeless,
+                .use_resource_view_cloning = true,
+                });
+            }
         }
 
         initialized = true;

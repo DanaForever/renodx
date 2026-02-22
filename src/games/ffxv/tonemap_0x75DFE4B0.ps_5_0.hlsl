@@ -287,11 +287,6 @@ void main(
   r1.z = dot(r0.xyz, float3(0.00642100023, 0.0243079998, 0.969271004));
 
   float3 untonemapped = r1.rgb;
-
-  // o0.rgb = renodx::color::srgb::EncodeSafe(untonemapped);
-  // o0.w = r0.w;
-  // return;
-  
   float3 sdr = toneMapLogContrast(r1.rgb);
 
   if (shader_injection.tone_map_mode == 0.f) {
@@ -300,7 +295,6 @@ void main(
   } else {
     r0.rgb = r1.rgb;
   }
-
 
   // 0 =  Vanilla (fake HDR)
   // 1 =  SDR
@@ -324,7 +318,6 @@ void main(
     // clamping and srgb gamma encoding
     r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-    // r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
     r1.rgb = PostToneMapProcess(r0.rgb);
     o0.xyz = Gamma ? r1.xyz : r0.xyz;
     o0.w = r0.w;
@@ -354,12 +347,9 @@ void main(
 
       float3 reference_color = hdr_graded;
 
-      // float3 saturated_color = colorGrade(untonemapped);
-      // saturated_color = ToneMapLMS(saturated_color);
 
       hdr_graded = reference_color;
-      
-
+    
     } else {
       hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
       float hdr_y = renodx::color::y::from::BT709(hdr_ungraded);
@@ -368,20 +358,6 @@ void main(
 
       hdr_graded = colorGrade(hdr_ungraded * scale) / scale;
     }
-
-    // upgraded SDR
-    // } else if (shader_injection.tone_map_mode == 2.f) {
-    //   hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
-
-    //   float hdr_y = renodx::color::y::from::BT709(hdr_ungraded);
-    //   float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
-
-    //   hdr_graded = colorGrade(hdr_ungraded);
-
-    // } else {
-    //   hdr_ungraded = ToneMapPassLMS(untonemapped, sdr_graded);
-    //   hdr_graded = hdr_ungraded;
-    // }
 
     if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f) {
       if (RENODX_TONE_MAP_HUE_PROCESSOR < 3.f)

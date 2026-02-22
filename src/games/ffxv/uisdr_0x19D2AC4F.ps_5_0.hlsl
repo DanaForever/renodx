@@ -24,6 +24,5 @@ void main(
   o0.w = r0.x * 1.33333337 + v2.w;
   o0.xyz = v2.xyz + v1.xyz;
 
-  // o0.xyz = renodx::color::srgb::DecodeSafe(o0.xyz);
   return;
 }

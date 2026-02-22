@@ -67,7 +67,7 @@ void main(
     if (RENODX_TONE_MAP_TYPE == 0.f) {
       // SDR gamma = 1.0, HDR gamma = 1.3
       // this can be considered as a poor attempt to correct gamma
-      r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
+      // r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
 
       // r0.w = 0.587700009 * r0.y;
       // r0.w = r0.x * 1.66050005 + -r0.w;
@@ -80,6 +80,7 @@ void main(
       r1.rgb = SE_Saturation(r0.rgb);
 
       o0.xyz = pqScale * r1.xyz;
+
 
       return;
     }

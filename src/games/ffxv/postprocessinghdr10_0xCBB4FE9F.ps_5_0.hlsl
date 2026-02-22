@@ -51,7 +51,8 @@ void main(
     // gamma scaling
     if (RENODX_TONE_MAP_TYPE == 0.f) {
       // SDR gamma = 1.0, HDR gamma = 1.3
-      r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
+      // r0.xyz = renodx::math::SignPow(r0.xyz, gamma);
+      r0.xyz = renodx::math::SignPow(r0.xyz, 1.3f);
 
       // r0.w = 0.587700009 * r0.y;
       // r0.w = r0.x * 1.66050005 + -r0.w;
@@ -63,7 +64,11 @@ void main(
       // r1.y = -r0.z * 0.0083999997 + r0.x;
       r1.rgb = SE_Saturation(r0.rgb);
 
-      o0.xyz = pqScale * r1.xyz;
+      // 
+      o0.rgb = r1.rgb;
+
+      o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
+      o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, 500.f);
 
       return;
     }

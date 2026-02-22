@@ -297,9 +297,6 @@ void main(
 
       float3 reference_color = hdr_graded;
 
-      // float3 saturated_color = colorGrade(untonemapped);
-      // saturated_color = ToneMapLMS(saturated_color);
-
       hdr_graded = reference_color;
 
     } else {
@@ -309,20 +306,6 @@ void main(
 
       hdr_graded = colorGrade(hdr_ungraded * scale) / scale;
     }
-
-    // upgraded SDR
-    // } else if (shader_injection.tone_map_mode == 2.f) {
-    //   hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
-
-    //   float hdr_y = renodx::color::y::from::BT709(hdr_ungraded);
-    //   float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
-
-    //   hdr_graded = colorGrade(hdr_ungraded);
-
-    // } else {
-    //   hdr_ungraded = ToneMapPassLMS(untonemapped, sdr_graded);
-    //   hdr_graded = hdr_ungraded;
-    // }
 
     if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f) {
       if (RENODX_TONE_MAP_HUE_PROCESSOR < 3.f)
