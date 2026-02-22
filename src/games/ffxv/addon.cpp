@@ -421,12 +421,12 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::shader::allow_multiple_push_constants = true;
         renodx::mods::swapchain::use_resource_cloning = true;
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r8g8b8a8_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_unorm,
-          .use_resource_view_cloning = true,
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //   .old_format = reshade::api::format::r8g8b8a8_unorm,
+        //   .new_format = reshade::api::format::r16g16b16a16_unorm,
+        //   .use_resource_view_cloning = true,
           
-        });
+        // });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
                 .old_format = reshade::api::format::r10g10b10a2_unorm,
@@ -435,13 +435,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
                 //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
         });
         
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r8g8_unorm,
-          .new_format = reshade::api::format::r16g16_unorm,
-          .ignore_size = true,
-          .use_resource_view_cloning = true,
-        //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
-        });
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //   .old_format = reshade::api::format::r8g8_unorm,
+        //   .new_format = reshade::api::format::r16g16_unorm,
+        //   .ignore_size = true,
+        //   .use_resource_view_cloning = true,
+        // //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
+        // });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r11g11b10_float,
