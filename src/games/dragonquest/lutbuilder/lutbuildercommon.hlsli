@@ -1,5 +1,5 @@
 // #include "../common.hlsli"
-#include "./macleod_boynton.hlsli"
+#include "../macleod_boynton.hlsli"
 
 #ifndef INCLUDE_LUTBUILDER_COMMON
 #define INCLUDE_LUTBUILDER_COMMON
@@ -345,6 +345,51 @@ float3 expandGamut(float3 color, float fExpandGamut /*= 1.0f*/) {
 
 }
 
+
+float3 CorrectPurityMBBT709WithBT2020_1(
+    float3 target_color_bt709,
+    float3 purity_reference_bt709,
+    float strength = 1.f,
+    float curve_gamma = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f,
+    float clamp_purity_loss = 0.f) {
+  if (strength <= 0.f) return target_color_bt709;
+
+  float3 target_color_bt2020 = renodx::color::bt2020::from::BT709(target_color_bt709);
+  float3 purity_reference_bt2020 = renodx::color::bt2020::from::BT709(purity_reference_bt709);
+
+  float reference_purity01 =
+      renodx_custom::color::macleod_boynton::ApplyBT2020(purity_reference_bt2020, 1.f, 1.f,
+                                                         mb_white_override, t_min)
+          .purityCur01;
+
+  float applied_purity01;
+  if (strength == 1.f && clamp_purity_loss <= 0.f) {
+    // Fast path: full transfer only needs donor purity.
+    applied_purity01 = reference_purity01;
+  } else {
+    float target_purity01 =
+        renodx_custom::color::macleod_boynton::ApplyBT2020(target_color_bt2020, 1.f, 1.f,
+                                                           mb_white_override, t_min)
+            .purityCur01;
+
+    applied_purity01 = lerp(target_purity01, reference_purity01, strength);
+
+    if (clamp_purity_loss > 0.f) {
+      float clamp_strength = saturate(clamp_purity_loss);
+      // Only clamp purity reductions: if applied < target, pull back toward target.
+      float t = 1.f - step(target_purity01, applied_purity01);
+      applied_purity01 = lerp(applied_purity01, target_purity01, t * clamp_strength);
+    }
+  }
+
+  return renodx::color::bt709::from::BT2020(
+      renodx_custom::color::macleod_boynton::ApplyBT2020(
+          target_color_bt2020, applied_purity01, curve_gamma, mb_white_override, t_min)
+          .rgbOut);
+}
+
 float3 CorrectGammaHuePreservingSRGB(float3 incorrect_color, float gamma=2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, true, gamma);
 
@@ -354,7 +399,8 @@ float3 CorrectGammaHuePreservingSRGB(float3 incorrect_color, float gamma=2.2f) {
   float3 lum = incorrect_color * (y_in > 0 ?  y_out / y_in : 0.f);
 
   // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
+  // float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
+  float3 result = CorrectPurityMBBT709WithBT2020_1(lum, incorrect_color);
 
   return result;
 }

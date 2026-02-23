@@ -1,4 +1,5 @@
 #include "./shared.h"
+#include "./macleod_boynton.hlsli"
 
 float NR(float x, float sigma, float n) {
   float ax = abs(x);
@@ -163,19 +164,6 @@ float3 ApplySaturationBlowoutHueCorrectionHighlightSaturation(float3 tonemapped,
 }
 
 
-float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
-  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
-
-  const float y_in = renodx::color::y::from::BT709(incorrect_color);
-  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
-
-  float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
-
-  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
-
-  return result;
-}
 
 // For LMS
 
@@ -216,7 +204,7 @@ float3 LMSFromDKL(float3 dkl) {
   return lms;
 }
 
-float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
+float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast, bool tonemap_to_human_vision = false) {
   float3 XYZ = renodx::color::xyz::from::BT709(color);
   float original_y = XYZ.y;
 
@@ -297,6 +285,23 @@ float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
   lms_vibrancy = LMSFromDKL(vibrant_dkl);
 
   float3 lms = lms_vibrancy;
+
+  if (tonemap_to_human_vision) {
+    const float human_vision_peak = (4000.f / 203.f);
+    float3 peak_human_lms = mul(XYZ_TO_LMS, renodx::color::xyz::from::BT709(float3(human_vision_peak, human_vision_peak, human_vision_peak)));
+    float3 midgray_lms = LMS_GRAY;
+    // --- Physiological sigma values in your unit scale (1.0 = 100 nits)
+    float3 sigma = float3(4.0f, 3.0f, 1.5f);  // L, M, S cones: 400, 300, 150 nits
+
+    // Naka Rushton per cone
+    float3 new_lms = float3(
+        sign(lms.x) * ReinhardExtended(abs(lms.x), 100.f, peak_human_lms.x, abs(midgray_lms.x)),
+        sign(lms.y) * ReinhardExtended(abs(lms.y), 100.f, peak_human_lms.y, abs(midgray_lms.y)),
+        sign(lms.z) * ReinhardExtended(abs(lms.z), 100.f, peak_human_lms.z, abs(midgray_lms.z)));
+
+    lms = new_lms;
+  }
+
   XYZ = mul(LMS_TO_XYZ, lms);
 
   color = renodx::color::bt709::from::XYZ(XYZ);
@@ -304,19 +309,120 @@ float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
   return color;
 }
 
+float3x3 XYZ_TO_LMS_PROPOSED_2023 = float3x3(
+    0.185083290265044, 0.584080232530060, -0.0240724126371618,
+    -0.134432464433222, 0.405751419882862, 0.0358251078084051,
+    0.000789395399878065, -0.000912213029667692, 0.0198489810108856);
 
+float3 ReinhardBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
+  float peak_ref = max(peak, 1e-6f);
+
+  // float3x3 xyz_to_lms = renodx::color::XYZ_TO_STOCKMAN_SHARP_LMS_MAT;
+  float3x3 xyz_to_lms = XYZ_TO_LMS_PROPOSED_2023;
+  float3x3 lms_to_xyz = renodx::math::Invert3x3(xyz_to_lms);
+  float3 xyz = renodx::color::xyz::from::BT709(bt709_linear);
+  float3 lms = mul(xyz_to_lms, xyz);
+
+  float3 d65_xyz = renodx::color::xyz::from::xyY(float3(renodx::color::WHITE_POINT_D65, 1.f));
+  float3 lms_white = mul(xyz_to_lms, d65_xyz);
+
+  float3 lms_norm_input = lms / lms_white;
+  float scalar_raw_input = lms_norm_input.x + lms_norm_input.y + lms_norm_input.z;
+
+  const float units = 1.f;  // Use 3.f for broken values
+  float scalar_input = scalar_raw_input / units;
+
+  float3 lms_peak = lms_white * peak_ref;
+  float3 lms_norm_peak = lms_peak / lms_white;
+  float scalar_raw_peak = lms_norm_peak.x + lms_norm_peak.y + lms_norm_peak.z;
+  float scalar_peak = scalar_raw_peak / units;
+
+  float scalar_output = renodx::tonemap::ReinhardPiecewiseExtended(scalar_input, 100.f, scalar_peak, 0.000001);
+
+  float scalar_input_raw = scalar_input * units;
+  float scalar_output_raw = scalar_output * units;
+
+  float d65_gray = 0.18f;
+  float3 gray_xyz = renodx::color::xyz::from::xyY(float3(renodx::color::WHITE_POINT_D65, d65_gray));
+  float3 lms_gray = mul(xyz_to_lms, gray_xyz);
+  float3 lms_gray_in = lms_gray * (scalar_input_raw / units);
+  float3 lms_gray_out = lms_gray * (scalar_output_raw / units);
+  float3 lms_chroma = lms - lms_gray_in;
+  float available_white = saturate(renodx::math::DivideSafe(
+      scalar_peak - scalar_output,
+      scalar_peak,
+      0.f));
+  float3 lms_out = lms_gray_out + lms_chroma * available_white;
+
+  float3 lms_norm_out = lms_out / lms_white;
+  float scalar_out_raw = lms_norm_out.x + lms_norm_out.y + lms_norm_out.z;
+  lms_out *= renodx::math::DivideSafe(scalar_output_raw, scalar_out_raw, 0.f);
+
+  float3 xyz_out = mul(lms_to_xyz, lms_out);
+  return renodx::color::bt709::from::XYZ(xyz_out);
+}
+
+float3 NeutwoBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
+  float peak_ref = max(peak, 1e-6f);
+
+  float3x3 xyz_to_lms = renodx::color::XYZ_TO_STOCKMAN_SHARP_LMS_MAT;
+  // float3x3 xyz_to_lms = XYZ_TO_LMS_PROPOSED_2023;
+  float3x3 lms_to_xyz = renodx::math::Invert3x3(xyz_to_lms);
+  float3 xyz = renodx::color::xyz::from::BT709(bt709_linear);
+  float3 lms = mul(xyz_to_lms, xyz);
+
+  float3 d65_xyz = renodx::color::xyz::from::xyY(float3(renodx::color::WHITE_POINT_D65, 1.f));
+  float3 lms_white = mul(xyz_to_lms, d65_xyz);
+
+  float3 lms_norm_input = lms / lms_white;
+  float scalar_raw_input = lms_norm_input.x + lms_norm_input.y + lms_norm_input.z;
+
+  const float units = 1.f;  // Use 3.f for broken values
+  float scalar_input = scalar_raw_input / units;
+
+  float3 lms_peak = lms_white * peak_ref;
+  float3 lms_norm_peak = lms_peak / lms_white;
+  float scalar_raw_peak = lms_norm_peak.x + lms_norm_peak.y + lms_norm_peak.z;
+  float scalar_peak = scalar_raw_peak / units;
+
+  float scalar_output = renodx::tonemap::Neutwo(scalar_input, scalar_peak);
+
+  float scalar_input_raw = scalar_input * units;
+  float scalar_output_raw = scalar_output * units;
+
+  float d65_gray = 0.18f;
+  float3 gray_xyz = renodx::color::xyz::from::xyY(float3(renodx::color::WHITE_POINT_D65, d65_gray));
+  float3 lms_gray = mul(xyz_to_lms, gray_xyz);
+  float3 lms_gray_in = lms_gray * (scalar_input_raw / units);
+  float3 lms_gray_out = lms_gray * (scalar_output_raw / units);
+  float3 lms_chroma = lms - lms_gray_in;
+  float available_white = saturate(renodx::math::DivideSafe(
+      scalar_peak - scalar_output,
+      scalar_peak,
+      0.f));
+  float3 lms_out = lms_gray_out + lms_chroma * available_white;
+
+  float3 lms_norm_out = lms_out / lms_white;
+  float scalar_out_raw = lms_norm_out.x + lms_norm_out.y + lms_norm_out.z;
+  lms_out *= renodx::math::DivideSafe(scalar_output_raw, scalar_out_raw, 0.f);
+
+  float3 xyz_out = mul(lms_to_xyz, lms_out);
+  return renodx::color::bt709::from::XYZ(xyz_out);
+}
 
 float3 ToneMapLMS(float3 untonemapped, float paperWhite, float peakWhite,
 float vibrancy = 1.0f, float contrast = 1.0f) {
   float3 color;
-  color = untonemapped;
+  color = LMS_Vibrancy(untonemapped, vibrancy, contrast, true);
   
   float peak = peakWhite / paperWhite;
 
   // color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
   // color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, peak);
-  color = renodx::tonemap::neutwo::MaxChannel(color, peak);
-  
+  // color = renodx::tonemap::neutwo::MaxChannel(color, peak);
+  // peak = renodx::color::correct::Gamma(peak, false, 2.2f);
+
+  color = NeutwoBT709WhiteForEnergy(color, peak);
 
   return color;
 }
@@ -521,7 +627,70 @@ float3 SampleSDRLUT(float3 lut_input_color, SamplerState sampleLinear_s, Texture
   lut_config.recolor = 0.f;
 
   color = renodx::tonemap::neutwo::BT709(color);
+  float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(color);
 
+  // color *= scale;
   color = SampleScaledLUT(g_tLdrLut, lut_config, color);
+
+  // color /= scale;
   return color;
+}
+
+float3 CorrectPurityMBBT709WithBT2020(
+    float3 target_color_bt709,
+    float3 purity_reference_bt709,
+    float strength = 1.f,
+    float curve_gamma = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f,
+    float clamp_purity_loss = 0.f) {
+  if (strength <= 0.f) return target_color_bt709;
+
+  float3 target_color_bt2020 = renodx::color::bt2020::from::BT709(target_color_bt709);
+  float3 purity_reference_bt2020 = renodx::color::bt2020::from::BT709(purity_reference_bt709);
+
+  float reference_purity01 =
+      renodx_custom::color::macleod_boynton::ApplyBT2020(purity_reference_bt2020, 1.f, 1.f,
+                                                         mb_white_override, t_min)
+          .purityCur01;
+
+  float applied_purity01;
+  if (strength == 1.f && clamp_purity_loss <= 0.f) {
+    // Fast path: full transfer only needs donor purity.
+    applied_purity01 = reference_purity01;
+  } else {
+    float target_purity01 =
+        renodx_custom::color::macleod_boynton::ApplyBT2020(target_color_bt2020, 1.f, 1.f,
+                                                           mb_white_override, t_min)
+            .purityCur01;
+
+    applied_purity01 = lerp(target_purity01, reference_purity01, strength);
+
+    if (clamp_purity_loss > 0.f) {
+      float clamp_strength = saturate(clamp_purity_loss);
+      // Only clamp purity reductions: if applied < target, pull back toward target.
+      float t = 1.f - step(target_purity01, applied_purity01);
+      applied_purity01 = lerp(applied_purity01, target_purity01, t * clamp_strength);
+    }
+  }
+
+  return renodx::color::bt709::from::BT2020(
+      renodx_custom::color::macleod_boynton::ApplyBT2020(
+          target_color_bt2020, applied_purity01, curve_gamma, mb_white_override, t_min)
+          .rgbOut);
+}
+
+float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
+  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
+
+  const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
+
+  float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
+
+  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  // float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
+  float3 result = CorrectPurityMBBT709WithBT2020(lum, incorrect_color);
+
+  return result;
 }

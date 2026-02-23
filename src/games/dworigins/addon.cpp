@@ -6,7 +6,7 @@
 #include <include/reshade_api_format.hpp>
 #define ImTextureID ImU64
 
-#define DEBUG_LEVEL_1
+#define DEBUG_LEVEL_0
 
 #include <deps/imgui/imgui.h>
 #include <include/reshade.hpp>
@@ -697,7 +697,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       break;
   }
 
-  renodx::utils::settings::Use(fdw_reason, &settings, &OnPresetOff);
+//   renodx::utils::settings::Use(fdw_reason, &settings, &OnPresetOff);
   renodx::mods::swapchain::Use(fdw_reason, &shader_injection);
   renodx::mods::shader::Use(fdw_reason, custom_shaders, &shader_injection);
 

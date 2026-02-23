@@ -590,15 +590,15 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
   if (fired_on_init_swapchain) return;
   auto peak = renodx::utils::swapchain::GetPeakNits(swapchain);
   if (peak.has_value()) {
-    settings[1 + n_unreal_settings]->default_value = peak.value();
-    settings[1 + n_unreal_settings]->can_reset = true;
+    settings[1 + n_unreal_settings + 1]->default_value = peak.value();
+    settings[1 + n_unreal_settings + 1]->can_reset = true;
     fired_on_init_swapchain = true;
   }
 
   if (filename == "DRAGON QUEST XI.exe")  {
-    settings[n_unreal_settings]->default_value = 0;
+    settings[1 + n_unreal_settings]->default_value = 0;
   } else if (filename == "DRAGON QUEST XI S.exe") {
-    settings[n_unreal_settings]->default_value = 1;
+    settings[1 + n_unreal_settings]->default_value = 1;
   }
 
 }
@@ -1390,7 +1390,7 @@ bool initialized = false;
 }  // namespace
 
 extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX";
-extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for Unreal Engine";
+extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for Dragon Quest XI: Echoes of an Elusive Age";
 
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   switch (fdw_reason) {

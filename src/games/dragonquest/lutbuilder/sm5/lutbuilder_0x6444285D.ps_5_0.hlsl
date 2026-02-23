@@ -163,6 +163,7 @@ void main(
   r0.w = renodx::color::y::from::AP1(r0.rgb);
 
   float3 untonemapped_ap1 = r0.rgb;
+  untonemapped_bt709 = renodx::color::bt709::from::AP1(untonemapped_ap1);
 
   // color correction: note this block is totally skipped in this game
   float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(r0.xyz);

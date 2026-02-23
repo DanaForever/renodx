@@ -1,7 +1,7 @@
 #ifndef SRC_SHADERS_COLOR_MACLEOD_BOYNTON_HLSL_
 #define SRC_SHADERS_COLOR_MACLEOD_BOYNTON_HLSL_
 
-#include "../shared.h"
+#include "./shared.h"
 
 namespace renodx_custom {
 namespace color {
