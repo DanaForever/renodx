@@ -1,5 +1,8 @@
-// ---- Created with 3Dmigoto v1.3.16 on Wed Feb 18 13:03:13 2026
+// High On Life
+
+// #include "../../common.hlsl"
 #include "../lutbuilderoutput.hlsli"
+// ---- Created with 3Dmigoto v1.4.1 on Mon Jan 13 19:06:50 2025
 cbuffer cb0 : register(b0) {
   float4 cb0[68];
 }
@@ -162,6 +165,10 @@ void main(uint3 vThreadID: SV_DispatchThreadID) {
   r0.z = dot(float3(0.0206188709, 0.109567292, 0.869606733), r1.xyz);
   r0.w = dot(r0.xyz, float3(0.272228718, 0.674081743, 0.0536895171));
 
+  r0.rgb = renodx::color::ap1::from::BT709(r1.rgb);
+  r0.rgb = expandGamut(r0.rgb, shader_injection.unreal_expand_gamut);
+  r0.w = renodx::color::y::from::AP1(r0.rgb);
+
   r1.xyz = r0.xyz / r0.www;
   r1.xyz = float3(-1, -1, -1) + r1.xyz;
   r1.x = dot(r1.xyz, r1.xyz);
@@ -266,31 +273,70 @@ void main(uint3 vThreadID: SV_DispatchThreadID) {
   r0.xyz = r1.xyz * r1.www + r0.xyz;
   r0.xyz = r2.xyz * r3.yyy + r0.xyz;
 
-  float3 untonemapped_ap1 = r0.xyz;
-
   UECbufferConfig cb_config = CreateCbufferConfig();
-  // --- Filmic tonemapper (UE4) ---
-  cb_config.ue_filmslope = asfloat(cb0[36].x);
+  cb_config.ue_filmblackclip = asfloat(cb0[36].w);
   cb_config.ue_filmtoe = asfloat(cb0[36].y);
   cb_config.ue_filmshoulder = asfloat(cb0[36].z);
-  cb_config.ue_filmblackclip = asfloat(cb0[36].w);
+  cb_config.ue_filmslope = asfloat(cb0[36].x);
   cb_config.ue_filmwhiteclip = asfloat(cb0[37].x);
 
-  // --- Tone curve blend amount ---
-  cb_config.ue_tonecurveammount = asfloat(cb0[66].x);
+  if (shader_injection.filmic_curve == 1.f) {
+    // Uncharted settings
+    cb_config.ue_filmslope = 0.63;
+    cb_config.ue_filmtoe = 0.55;
+    cb_config.ue_filmshoulder = 0.47;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.01;
+  } else if (shader_injection.filmic_curve == 2.f) {
+    // HP settings
+    cb_config.ue_filmslope = 0.65;
+    cb_config.ue_filmtoe = 0.63;
+    cb_config.ue_filmshoulder = 0.45;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.f;
+  } else if (shader_injection.filmic_curve == 3.f) {
+    // Legacy settings
+    cb_config.ue_filmslope = 0.98;
+    cb_config.ue_filmtoe = 0.3;
+    cb_config.ue_filmshoulder = 0.22;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.025;
+  } else if (shader_injection.filmic_curve == 4.f) {
+    // aces settings
+    cb_config.ue_filmslope = 0.91;
+    cb_config.ue_filmtoe = 0.53;
+    cb_config.ue_filmshoulder = 0.23;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.035;
+  }
+  // Mapping polynomial (this one matches the “cb0[17].xyz” pattern exactly)
+  cb_config.ue_bluecorrection = asfloat(cb0[66].x);
+  cb_config.ue_tonecurveammount = asfloat(cb0[66].z);
+  cb_config.ue_mappingpolynomial = asfloat(cb0[26].xyz);  // used as: x* x *A + x*B + C
+  cb_config.ue_overlaycolor = asfloat(cb0[43].xyzw);      // used in: lerp(polyScaled, overlay, overlay.w)
+  cb_config.ue_colorscale = asfloat(cb0[42].yzw);         // multiplies + blends with cb0[43].www
 
-  // --- Quadratic mapping polynomial (A, B, C) ---
-  cb_config.ue_mappingpolynomial = asfloat(cb0[26].xyz);
+  cb_config.ue_gamma = cb0[27].y;
+  cb_config.ue_inv_gamma = cb0[27].z;
 
-  // --- Color grading ---
-  cb_config.ue_colorscale = asfloat(cb0[42].yzw);
-  cb_config.ue_overlaycolor = asfloat(cb0[43].xyzw);
+  uint device = asuint(cb0[65].z);
 
-  // --- Blue correction ---
-  cb_config.ue_bluecorrection = asfloat(cb0[66].z);
+  cb_config.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3 = cb0[31];
+  cb_config.ColorCurve_Ch1_Ch2 = cb0[32];
+  cb_config.ColorMatrixR_ColorCurveCd1 = cb0[28];
+  cb_config.ColorMatrixG_ColorCurveCd3Cm3 = cb0[29];
+  cb_config.ColorMatrixB_ColorCurveCm2 = cb0[30];
 
-  u0[vThreadID.xyz] = ProcessLutbuilder(float3(untonemapped_ap1), cb_config, u0[vThreadID.xyz], asuint(cb0[65].z));
-  
+  cb_config.ColorShadow_Luma = cb0[33];
+  cb_config.ColorShadow_Tint1 = cb0[34];
+  cb_config.ColorShadow_Tint2 = cb0[35];
+
+  float3 untonemapped_ap1 = r0.rgb;
+  float3 untonemapped_bt709 = renodx::color::bt709::from::AP1(untonemapped_ap1);
+
+  // u0[vThreadID.xyz] = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, cb_config, device);
+
+  // return;
 
   r1.x = dot(float3(1.70505154, -0.621790707, -0.0832583979), r0.xyz);
   r1.y = dot(float3(-0.130257145, 1.14080286, -0.0105485283), r0.xyz);

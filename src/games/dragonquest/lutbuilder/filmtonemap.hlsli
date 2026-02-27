@@ -2,7 +2,7 @@
 #define INCLUDE_FILMTONEMAP
 
 #include "../shared.h"
-#include "./lutbuildercommon.hlsli"
+// #include "./lutbuildercommon.hlsli"
 
 struct LegacyFilmicConfig {
   float4 ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3;
@@ -277,39 +277,94 @@ float3 ApplyToneCurveExtendedWithHermite(
       unrealengine::filmtonemap::config::Create(FilmSlope, FilmToe, FilmShoulder, film_black_clip, FilmWhiteClip);
 
   float3 vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_rrt_prebluecorrect_ap1, film_params);
-  float3 tonemapped_prebluecorrect_ap1 =
+  float3 tonemapped_ap1 =
       unrealengine::filmtonemap::extended::ApplyToneCurveExtended(untonemapped_rrt_prebluecorrect_ap1, vanilla, film_params);
 
+//   // #if 1
+//   //   // Blend extended with vanilla (0.2 strength) up to 0.5f
+//   //   tonemapped_prebluecorrect_ap1 = lerp(
+//   //       vanilla,
+//   //       lerp(tonemapped_prebluecorrect_ap1, vanilla, 0.2f),
+//   //       saturate(vanilla / 0.5f));
+//   // #endif
+
+//   //
+// #if 1
+//   tonemapped_prebluecorrect_ap1 = lerp(
+//       vanilla,
+//       tonemapped_prebluecorrect_ap1,
+//       saturate(vanilla / 0.2f));
+// #endif
+
+  return tonemapped_ap1;
+}
+
+
+float3 ApplyToneCurveExtended(
+    float3 untonemapped_rrt_prebluecorrect_ap1, float FilmSlope, float FilmToe,
+    float FilmShoulder, float FilmBlackClip, float FilmWhiteClip) {
+  float film_black_clip = FilmBlackClip;
+  if (OVERRIDE_BLACK_CLIP) film_black_clip = 0.f;
+  unrealengine::filmtonemap::Config film_params =
+      unrealengine::filmtonemap::config::Create(FilmSlope, FilmToe, FilmShoulder, film_black_clip, FilmWhiteClip);
+
+  float3 vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_rrt_prebluecorrect_ap1, film_params);
+  float3 tonemapped_ap1 =
+      unrealengine::filmtonemap::extended::ApplyToneCurveExtended(untonemapped_rrt_prebluecorrect_ap1, vanilla, film_params);
+
+  // tonemapped_ap1 = CorrectHueAndPurity(renodx::color::bt709::from::AP1(tonemapped_ap1), renodx::color::bt709::from::AP1(vanilla));
+  // tonemapped_ap1 = renodx::color::ap1::from::BT709(tonemapped_ap1);
   // #if 1
   //   // Blend extended with vanilla (0.2 strength) up to 0.5f
-  //   tonemapped_prebluecorrect_ap1 = lerp(
+  //   tonemapped_ap1 = lerp(
   //       vanilla,
-  //       lerp(tonemapped_prebluecorrect_ap1, vanilla, 0.2f),
+  //       lerp(tonemapped_ap1, vanilla, 0.2f),
   //       saturate(vanilla / 0.5f));
   // #endif
 
-  //
-#if 1
-  tonemapped_prebluecorrect_ap1 = lerp(
-      vanilla,
-      tonemapped_prebluecorrect_ap1,
-      saturate(vanilla / 0.2f));
-#endif
+//   //
+// #if 1
+//   tonemapped_prebluecorrect_ap1 = lerp(
+//       vanilla,
+//       tonemapped_prebluecorrect_ap1,
+//       saturate(vanilla / 0.2f));
+// #endif
 
-  // Correct Hue/Chroma
-  float3 bt709_tonemapped_prebluecorrect = renodx::color::bt709::from::AP1(tonemapped_prebluecorrect_ap1);
-  float3 bt709_hue_and_chrominance_source = renodx::color::bt709::from::AP1(vanilla);
-  // float3 bt709_hue_and_chrominance_source = renodx::color::bt709::from::AP1(renodx::tonemap::ReinhardPiecewise(tonemapped_prebluecorrect_ap1, 10.f, 1.f));
-  tonemapped_prebluecorrect_ap1 = renodx::color::ap1::from::BT709(HueAndChrominanceOKLab(bt709_tonemapped_prebluecorrect, bt709_hue_and_chrominance_source, RENODX_TONE_MAP_HUE_SHIFT, RENODX_TONE_MAP_CHROMA_CORRECT_BLOWOUT, 1.0f));
+  return tonemapped_ap1;
+}
 
-  // tonemapped_prebluecorrect_ap1 = renodx::color::ap1::from::BT709(renodx::draw::ApplyPerChannelCorrection(renodx::color::bt709::from::AP1(untonemapped_rrt_prebluecorrect_ap1), renodx::color::bt709::from::AP1(tonemapped_prebluecorrect_ap1)));
 
-  // Move to pre-encode
-  // float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-  // if (RENODX_GAMMA_CORRECTION) peak_ratio = renodx::color::correct::Gamma(peak_ratio, true);
-  // tonemapped_prebluecorrect_ap1 = renodx::tonemap::HermiteSplinePerChannelRolloff(max(0, tonemapped_prebluecorrect_ap1), peak_ratio, 100.f);
+float3 ApplyToneCurveExtended(
+    float3 untonemapped_rrt_prebluecorrect_ap1, float3 vanilla, float FilmSlope, float FilmToe,
+    float FilmShoulder, float FilmBlackClip, float FilmWhiteClip) {
+  float film_black_clip = FilmBlackClip;
+  if (OVERRIDE_BLACK_CLIP) film_black_clip = 0.f;
+  unrealengine::filmtonemap::Config film_params =
+      unrealengine::filmtonemap::config::Create(FilmSlope, FilmToe, FilmShoulder, film_black_clip, FilmWhiteClip);
 
-  return tonemapped_prebluecorrect_ap1;
+  // float3 vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_rrt_prebluecorrect_ap1, film_params);
+  float3 tonemapped_ap1 =
+      unrealengine::filmtonemap::extended::ApplyToneCurveExtended(untonemapped_rrt_prebluecorrect_ap1, vanilla, film_params);
+
+  // tonemapped_ap1 = CorrectHueAndPurity(renodx::color::bt709::from::AP1(tonemapped_ap1), renodx::color::bt709::from::AP1(vanilla));
+  // tonemapped_ap1 = renodx::color::ap1::from::BT709(tonemapped_ap1);
+  // #if 1
+  //   // Blend extended with vanilla (0.2 strength) up to 0.5f
+  //   tonemapped_ap1 = lerp(
+  //       vanilla,
+  //       lerp(tonemapped_ap1, vanilla, 0.2f),
+  //       saturate(vanilla / 0.5f));
+  // #endif
+
+//   //
+// #if 1
+//   tonemapped_prebluecorrect_ap1 = lerp(
+//       vanilla,
+//       tonemapped_prebluecorrect_ap1,
+//       saturate(vanilla / 0.2f));
+// #endif
+
+  return tonemapped_ap1;
 }
 
 

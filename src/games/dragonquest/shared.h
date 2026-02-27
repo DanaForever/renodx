@@ -38,6 +38,8 @@
 #define SWAP_CHAIN_ENCODING shader_injection.processing_use_scrgb  // 0 HDR10, 1 scRGB
 #define UNREAL_HDR_SETTING shader_injection.unreal_hdr_setting  // 0 HDR10, 1 scRGB
 
+#define RENODX_SWAP_CHAIN_CUSTOM_COLOR_SPACE shader_injection.swap_chain_custom_color_space
+
 // Must be 32bit aligned
 // Should be 4x32
 struct ShaderInjectData {
@@ -64,6 +66,7 @@ struct ShaderInjectData {
   float custom_lut_strength;
   float custom_lut_scaling;
   float custom_lut_gamut_restoration;
+  float swap_chain_custom_color_space;
 
   float custom_random;
   float custom_grain_type;

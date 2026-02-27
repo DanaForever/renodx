@@ -48,6 +48,8 @@ float3 compositeColor(float4 r0, float4 r1, float2 v1, float4 v2, bool hdr = tru
     r3.xyz = float3(-1, -1, -1) + r3.xyz;
     r4.xyz = cmp(float3(0.5, 0.5, 0.5) < r1.xyz);
     r2.xyz = r4.xyz ? r3.xyz : r2.xyz;
+  } else {
+    r2.rgb = r1.rgb * r2.rgb * 2;
   }
 
   r0.xyz = -r0.xyz * v2.xyz + r2.xyz;
@@ -152,6 +154,7 @@ void main(
     // hdr = renodx::tonemap::UpgradeToneMap(hdr, neutral_sdr, sdr, shader_injection.color_grade_strength);
     // o0.rgb = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.color_grade_strength, shader_injection.color_grade_strength);
     o0.rgb = CorrectPurityMB(hdr, sdr, shader_injection.color_grade_strength);
+    // o0.rgb = hdr;
 
     o0.rgb = ToneMap(o0.rgb);
   } else {

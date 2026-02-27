@@ -135,6 +135,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Unreal Settings",
         .tooltip = "The game encodes gamma instead of srgb by default in the LUT. Removing this behaviour deviates from SDR.",
         .labels = {"Off", "On"},
+        // .is_visible = []() { return false; },
     },
 
     new renodx::utils::settings::Setting{
@@ -595,10 +596,11 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
     fired_on_init_swapchain = true;
   }
 
-  if (filename == "DRAGON QUEST XI.exe")  {
-    settings[1 + n_unreal_settings]->default_value = 0;
-  } else if (filename == "DRAGON QUEST XI S.exe") {
+  // lut gamma correction
+  if (filename == "DRAGON QUEST XI S.exe")  {
     settings[1 + n_unreal_settings]->default_value = 1;
+  } else {
+    settings[1 + n_unreal_settings]->default_value = 0;
   }
 
 }
@@ -1370,7 +1372,7 @@ void AddAdvancedSettings() {
             "On",
         },
         .is_global = true,
-        .is_visible = []() { return settings[0]->GetValue() >= 2; },
+        .is_visible = []() { return false; },
     };
     add_setting(lut_dump_setting);
 
@@ -1422,21 +1424,21 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         auto product_name = renodx::utils::platform::GetProductName(process_path);
         
         renodx::mods::swapchain::swap_chain_proxy_shaders = {
-              {
-                  reshade::api::device_api::d3d11,
-                  {
-                      .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
-                      .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
-                  },
-              },
-              {
-                  reshade::api::device_api::d3d12,
-                  {
-                      .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
-                      .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
-                  },
-              },
-          };
+            {
+                reshade::api::device_api::d3d11,
+                {
+                    .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
+                    .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
+                },
+            },
+            {
+                reshade::api::device_api::d3d12,
+                {
+                    .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
+                    .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
+                },
+            },
+        };
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_unorm,
@@ -1444,30 +1446,40 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .use_resource_view_cloning = true,
             .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
         });
+        
+        if (filename == "Tales of Arise.exe")  {
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r8g8b8a8_typeless,
-            .new_format = reshade::api::format::r16g16b16a16_typeless,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+        } else {
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::r8g8b8a8_typeless,
+              .new_format = reshade::api::format::r16g16b16a16_typeless,
+              .use_resource_view_cloning = true,
+              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          });
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::b8g8r8a8_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::b8g8r8a8_unorm,
+              .new_format = reshade::api::format::r16g16b16a16_float,
+              .use_resource_view_cloning = true,
+              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          });
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::b8g8r8a8_typeless,
-            .new_format = reshade::api::format::r16g16b16a16_typeless,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::b8g8r8a8_typeless,
+              .new_format = reshade::api::format::r16g16b16a16_typeless,
+              .use_resource_view_cloning = true,
+              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          });
 
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::r10g10b10a2_unorm,
+              .new_format = reshade::api::format::r16g16b16a16_float,
+              .use_resource_view_cloning = true,
+              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          });
+        }
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r10g10b10a2_unorm,
+            .old_format = reshade::api::format::r11g11b10_float,
             .new_format = reshade::api::format::r16g16b16a16_float,
             .use_resource_view_cloning = true,
             .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
@@ -1479,6 +1491,10 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .use_resource_view_cloning = true,
             .dimensions = {.width = 32, .height = 32, .depth = 32},
         });
+
+        
+
+        // AddGamePatches();
 
         initialized = true;
       }

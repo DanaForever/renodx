@@ -1,5 +1,5 @@
-// #include "../common.hlsli"
-#include "../macleod_boynton.hlsli"
+#include "../common.hlsli"
+// #include "../macleod_boynton.hlsli"
 
 #ifndef INCLUDE_LUTBUILDER_COMMON
 #define INCLUDE_LUTBUILDER_COMMON
@@ -403,6 +403,46 @@ float3 CorrectGammaHuePreservingSRGB(float3 incorrect_color, float gamma=2.2f) {
   float3 result = CorrectPurityMBBT709WithBT2020_1(lum, incorrect_color);
 
   return result;
+}
+
+
+float3 DisplayMap(float3 color, uint device = 0u) {
+  // Tonemapping
+  if (RENODX_TONE_MAP_TYPE > 1.f) {
+    color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, true);
+    // color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
+    float3 dechroma = CastleDechroma_CVVDPStyle_NakaRushton(color);
+
+    color = lerp(color, dechroma, shader_injection.tone_map_blowout);
+
+    float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+    
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.2f);
+
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
+    }
+
+    color = renodx::color::bt2020::from::BT709(color);               // displaymap in bt2020
+    color = renodx::tonemap::neutwo::MaxChannel(color, peak_ratio, 100.f);  // Display map to peak]
+    color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
+
+    // color = psychotm_test4(color, peak_ratio);
+
+
+  } else {
+
+  }
+  
+  if (shader_injection.processing_path == 0.f)  {
+    return CustomSwapchainPass(color);
+    
+  } else {
+    // SDR path, process later
+    // maybe PostToneMapScale?
+    return PostToneMapProcess(color, device);
+  }
 }
 
 

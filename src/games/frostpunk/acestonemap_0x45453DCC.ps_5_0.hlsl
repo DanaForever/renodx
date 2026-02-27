@@ -65,16 +65,17 @@ void main(
   float aces_min = ACES_MIN / diffuse_white_nits;
   float aces_max = (peak_nits / diffuse_white_nits);
 
+  float3 untonemapped1 = r0.rgb;
+
   if (RENODX_TONE_MAP_TYPE == 2) {
-    r0.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(r0.rgb / 0.6f, aces_min * 48.f, aces_max * 48.f);
+    r0.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(untonemapped1 / 0.6f, aces_min * 48.f, aces_max * 48.f);
     r0.rgb /= 48.f;
-    sdr0 = renodx::tonemap::ACESFittedBT709(r0.xyz / 0.6f);
-  } else 
-    r0.xyz = renodx::tonemap::ACESFittedBT709(r0.xyz / 0.6f);
+    sdr0 = renodx::tonemap::ACESFittedBT709(untonemapped1 / 0.6f);
+  } else
+    r0.xyz = renodx::tonemap::ACESFittedBT709(untonemapped1 / 0.6f);
   r1.xyzw = t0.Sample(s0_s, v1.xy).xyzw;         // // fetch main buffer
   r1.xyz = float3(1024, 1024, 1024) * r1.xyz;  // scale to HDR space
 
-  // cb2[2].w = 1.
   r2.xy = cb2[2].ww * v1.xy;
   r2.xyzw = t11.Sample(s11_s, r2.xy).xyzw;
   r2.xyz = r2.xyz * float3(1024,1024,1024) + -r1.xyz;
@@ -82,30 +83,27 @@ void main(
   
   r2.xyz = t1.Sample(s1_s, v1.zw).xyz;
 
-  // cb2[0] = 0.5
   r2.xyz = cb2[0].xyz * r2.xyz;
 
-  // this changes rapidly between 0-1
   r1.xyz = r1.xyz * cb2[9].xyz + r2.xyz;
   
-  // this is 0.001129
   r1.xyz = cb0[16].yyy * r1.xyz;
 
   float3 untonemapped = r1.xyz;
 
   if (RENODX_TONE_MAP_TYPE == 2) {
-    r1.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(r1.rgb / 0.6f, aces_min * 48.f, aces_max * 48.f);
+    r1.rgb = renodx::tonemap::aces::RGCAndRRTAndODT(untonemapped / 0.6f, aces_min * 48.f, aces_max * 48.f);
     r1.rgb /= 48.f;
-    sdr1 = renodx::tonemap::ACESFittedBT709(r1.xyz / 0.6f);
+    sdr1 = renodx::tonemap::ACESFittedBT709(untonemapped / 0.6f);
   } else
-    r1.xyz = renodx::tonemap::ACESFittedBT709(r1.xyz / 0.6f);
+    r1.xyz = renodx::tonemap::ACESFittedBT709(untonemapped / 0.6f);
 
   // lerp between two aces
   r0.xyz = lerp(r1.xyz, r0.xyz, cb2[6].z);
   if (RENODX_TONE_MAP_TYPE == 2) {
     sdr = lerp(sdr1, sdr0, cb2[6].z);
 
-    r0.rgb = CorrectHueAndPurity(r0.rgb, sdr, 0.25f);
+    r0.rgb = CorrectHueAndPurity(r0.rgb, sdr, RENODX_TONE_MAP_HUE_CORRECTION);
   }
 
   float3 sdr_ungraded = r0.xyz;

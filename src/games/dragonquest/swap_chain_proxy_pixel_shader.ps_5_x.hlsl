@@ -16,6 +16,7 @@ float4 main(float4 vpos: SV_POSITION, float2 uv: TEXCOORD0) : SV_TARGET {
     return color;
   }
 
+  // only for the SDR upgrade path
   color.rgb = renodx::color::srgb::DecodeSafe(color.rgb);
   color.rgb = CustomSwapchainPass(color.rgb);
 

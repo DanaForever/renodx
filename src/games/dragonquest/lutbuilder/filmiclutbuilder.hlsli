@@ -55,7 +55,7 @@ UECbufferConfig CreateCbufferConfig(
     // float4 ue_lutweights[2], Doesn't work
     float4 ue_lutweights0 = float4(1.0, 1.0, 1.0, 1.0),  // First member of LutWeights[2] array
     float4 ue_lutweights1 = float4(1.0, 1.0, 1.0, 1.0),  // Second member of LutWeights[2] array
-    float3 ue_mappingpolynomail = 1.f,
+    float3 ue_mappingpolynomial = 1.f,
     float4 ue_overlaycolor = 1.f,
     float3 ue_colorscale = 1.f,
     float ue_bluecorrection = 1.f,
@@ -80,7 +80,7 @@ UECbufferConfig CreateCbufferConfig(
   cb_config.ue_tonecurveammount = ue_tonecurveammount;
   cb_config.ue_lutweights[0] = ue_lutweights0;
   cb_config.ue_lutweights[1] = ue_lutweights1;
-  cb_config.ue_mappingpolynomial = ue_mappingpolynomail;
+  cb_config.ue_mappingpolynomial = ue_mappingpolynomial;
   cb_config.ue_overlaycolor = ue_overlaycolor;
   cb_config.ue_colorscale = ue_colorscale;
   cb_config.ue_bluecorrection = ue_bluecorrection;
@@ -332,7 +332,7 @@ void SampleLUTUpgradeToneMap(float3 color_lut_input, SamplerState lut_sampler, T
   float3 color_output = color_lut_input;
 
   // Clip lut if SDR
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
+  if (RENODX_TONE_MAP_TYPE == 0.f || RENODX_TONE_MAP_TYPE == 1.f) {
     float3 sdr_lut = SampleLUTSRGBInSRGBOut(lut_texture, lut_sampler, color_lut_input, cb_config);
     color_output = saturate(lerp(color_lut_input, sdr_lut, saturate(CUSTOM_LUT_STRENGTH)));
   } else {

@@ -58,8 +58,6 @@ void main(
   r0.xyz = float3(0.0773993805,0.0773993805,0.0773993805) * r0.xyz;
   o0.xyz = r2.xyz ? r1.xyz : r0.xyz;
 
-  // r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
-  // o0.rgb = r0.rgb;
   o0.w = 1;
   return;
 }

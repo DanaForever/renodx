@@ -317,22 +317,20 @@ float3 CustomSwapchainPass(float3 color)  {
     color = CorrectGammaHuePreserving(color, 2.4f);
   }
 
-  // color = expandGamut(color, 1000.f);
-
-  // [branch]
-  // if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
-  //   color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-  //   color = renodx::color::bt709::from::BT709D93(color);
-  //   config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  // } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
-  //   color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-  //   color = renodx::color::bt709::from::BT601NTSCU(color);
-  //   config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  // } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
-  //   color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-  //   color = renodx::color::bt709::from::ARIBTRB9(color);
-  //   config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  // }
+  [branch]
+  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT709D93(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT601NTSCU(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::ARIBTRB9(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  }
 
   // Gamut Compression
   color = renodx::color::bt2020::from::BT709(color);
@@ -357,11 +355,18 @@ float3 CustomSwapchainPass(float3 color)  {
     swap_chain_scale_nits = RENODX_GRAPHICS_WHITE_NITS;
   }
 
+  // linear -> nits
   color *= swap_chain_scale_nits;
   float max_channel = max(max(max(color.r, color.g), color.b), config.swap_chain_clamp_nits);
   color *= config.swap_chain_clamp_nits / max_channel;  // Clamp UI or Videos
 
-  color /= 80.f;
+  if (shader_injection.processing_path == 0.f)  {
+    color = renodx::color::ap1::from::BT709(color);
+    color = renodx::color::pq::EncodeSafe(color, 1.f);
+  } else {
+    // SDR path - maybe use GRAPHICS_WHITE_NITS
+    color /= 80.f;
+  }
 
   return color;
 
@@ -423,7 +428,7 @@ float3 NeutwoBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
 
 
 
-float3 PostToneMapProcess(float3 output) {
+float3 PostToneMapProcess(float3 output, uint device = 0u) {
   
   [branch]
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
@@ -441,9 +446,9 @@ float3 PostToneMapProcess(float3 output) {
     output = renodx::color::correct::GammaSafe(output, true, 2.4f);
   }
 
-  output = renodx::color::srgb::EncodeSafe(output);
-  // output = renodx::draw::RenderIntermediatePass(output);
-
+  if (device == 0u || device == 2u) {
+    output = renodx::color::srgb::EncodeSafe(output);
+  }
   return output;
 
 }
@@ -682,41 +687,4 @@ float3 ReinhardBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
 
 
 
-float3 DisplayMap(float3 color) {
-  // Tonemapping
-  if (RENODX_TONE_MAP_TYPE > 1.f) {
-    color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, true);
-    // color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
-    float3 dechroma = CastleDechroma_CVVDPStyle_NakaRushton(color);
 
-    color = lerp(color, dechroma, shader_injection.tone_map_blowout);
-
-    float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-    
-    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.2f);
-
-    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
-    }
-
-    color = renodx::color::bt2020::from::BT709(color);               // displaymap in bt2020
-    color = renodx::tonemap::neutwo::MaxChannel(color, peak_ratio, 100.f);  // Display map to peak]
-    color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
-
-    // color = ReinhardBT709WhiteForEnergy(color, peak_ratio);
-    // color = renodx::draw::ToneMapPass(color);
-
-  } else {
-
-  }
-  
-  if (shader_injection.processing_path == 0.f)  {
-    return CustomSwapchainPass(color);
-    
-  } else {
-    // SDR path, process later
-    // maybe PostToneMapScale?
-    return PostToneMapProcess(color);
-  }
-}

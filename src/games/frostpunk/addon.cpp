@@ -584,114 +584,14 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .new_format = reshade::api::format::r16g16b16a16_float,
         });
 
-        // {
-        //   auto* setting = new renodx::utils::settings::Setting{
-        //       .key = "SwapChainForceBorderless",
-        //       .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        //       .default_value = 0.f,
-        //       .label = "Force Borderless",
-        //       .section = "Display Output",
-        //       .tooltip = "Forces fullscreen to be borderless for proper HDR",
-        //       .labels = {
-        //           "Disabled",
-        //           "Enabled",
-        //       },
-        //       .on_change_value = [](float previous, float current) { renodx::mods::swapchain::force_borderless = (current == 1.f); },
-        //       .is_global = true,
-        //       .is_visible = []() { return current_settings_mode >= 2; },
-        //   };
-        //   renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-        //   renodx::mods::swapchain::force_borderless = (setting->GetValue() == 1.f);
-        //   settings.push_back(setting);
-        // }
-
-        // {
-        //   auto* setting = new renodx::utils::settings::Setting{
-        //       .key = "SwapChainPreventFullscreen",
-        //       .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        //       .default_value = 0.f,
-        //       .label = "Prevent Fullscreen",
-        //       .section = "Display Output",
-        //       .tooltip = "Prevent exclusive fullscreen for proper HDR",
-        //       .labels = {
-        //           "Disabled",
-        //           "Enabled",
-        //       },
-        //       .on_change_value = [](float previous, float current) { renodx::mods::swapchain::prevent_full_screen = (current == 1.f); },
-        //       .is_global = true,
-        //       .is_visible = []() { return current_settings_mode >= 2; },
-        //   };
-        //   renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-        //   renodx::mods::swapchain::prevent_full_screen = (setting->GetValue() == 1.f);
-        //   settings.push_back(setting);
-        // }
+ 
 
         {
-        //   auto* setting = new renodx::utils::settings::Setting{
-        //       .key = "SwapChainEncoding",
-        //       .binding = &shader_injection.swap_chain_encoding,
-        //       .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        //       .default_value = 5.f,
-        //       .label = "Encoding",
-        //       .section = "Display Output",
-        //       .labels = {"None", "SRGB", "2.2", "2.4", "HDR10", "scRGB"},
-        //       .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
-        //       .on_change_value = [](float previous, float current) {
-        //         bool is_hdr10 = current == 4;
-        //         shader_injection.swap_chain_encoding_color_space = (is_hdr10 ? 1.f : 0.f);
-        //         // return void
-        //       },
-        //       .is_global = true,
-        //       .is_visible = []() { return current_settings_mode >= 2; },
-        //   };
-        //   renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-        //   bool is_hdr10 = setting->GetValue() == 4;
-        //   renodx::mods::swapchain::SetUseHDR10(is_hdr10);
-        //   renodx::mods::swapchain::use_resize_buffer = setting->GetValue() < 4;
-        //   shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
-        //   settings.push_back(setting);
+      
             bool is_hdr10 = false;
             renodx::mods::swapchain::SetUseHDR10(is_hdr10);
             renodx::mods::swapchain::use_resize_buffer = false;
         }
-
-        // for (const auto& [key, format] : UPGRADE_TARGETS) {
-        //   auto* setting = new renodx::utils::settings::Setting{
-        //       .key = "Upgrade_" + key,
-        //       .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        //       .default_value = 0.f,
-        //       .label = key,
-        //       .section = "Resource Upgrades",
-        //       .labels = {
-        //           "Off",
-        //           "Output size",
-        //           "Output ratio",
-        //           "Any size",
-        //       },
-        //       .is_global = true,
-        //       .is_visible = []() { return settings[0]->GetValue() >= 2; },
-        //   };
-        //   renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-        //   settings.push_back(setting);
-
-        //   auto value = setting->GetValue();
-        //   if (value > 0) {
-        //     renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //         .old_format = format,
-        //         .new_format = reshade::api::format::r16g16b16a16_float,
-        //         .ignore_size = (value == UPGRADE_TYPE_ANY),
-        //         .use_resource_view_cloning = true,
-        //         .aspect_ratio = static_cast<float>((value == UPGRADE_TYPE_OUTPUT_RATIO)
-        //                                                ? renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
-        //                                                : renodx::mods::swapchain::SwapChainUpgradeTarget::ANY),
-        //         .usage_include = reshade::api::resource_usage::render_target,
-        //     });
-        //     std::stringstream s;
-        //     s << "Applying user resource upgrade for ";
-        //     s << format << ": " << value;
-        //     reshade::log::message(reshade::log::level::info, s.str().c_str());
-        //   }
-        // }
 
         initialized = true;
       }
