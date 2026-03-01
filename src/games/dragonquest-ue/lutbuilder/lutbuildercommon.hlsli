@@ -410,7 +410,7 @@ float3 CorrectGammaHuePreservingSRGB(float3 incorrect_color, float gamma=2.2f) {
 float3 DisplayMap(float3 color, uint device = 0u) {
   // Tonemapping
   if (RENODX_TONE_MAP_TYPE > 1.f) {
-    color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, true);
+    color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
     // color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
     float3 dechroma = CastleDechroma_CVVDPStyle_NakaRushton(color);
 
@@ -435,7 +435,7 @@ float3 DisplayMap(float3 color, uint device = 0u) {
         color,
         peak_ratio,                          // peak
         1.0f,                                // exposure
-        1.1f,                                // highlights
+        1.0f,                                // highlights
         1.0f,                                // shadows
         1.0f,                                // contrast
         1.0f,                                // purity_scale
