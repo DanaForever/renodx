@@ -1,4 +1,5 @@
 #include "../common.hlsli"
+#include "./psycho_test11.hlsl"
 // #include "../macleod_boynton.hlsli"
 
 #ifndef INCLUDE_LUTBUILDER_COMMON
@@ -424,13 +425,27 @@ float3 DisplayMap(float3 color, uint device = 0u) {
       peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
     }
 
-    color = renodx::color::bt2020::from::BT709(color);               // displaymap in bt2020
-    color = renodx::tonemap::neutwo::MaxChannel(color, peak_ratio, 100.f);  // Display map to peak]
-    color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
-
-    // color = psychotm_test4(color, peak_ratio);
-    // color = renodx::draw::ToneMapPass(color);
-
+    if (shader_injection.display_map_type == 0.f) {
+      color = renodx::color::bt2020::from::BT709(color);               // displaymap in bt2020
+      color = renodx::tonemap::neutwo::MaxChannel(color, peak_ratio, 100.f);  // Display map to peak]
+      color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
+    } else {
+      
+      color = renodx::tonemap::psycho::psychotm_test11(
+        color,
+        peak_ratio,                          // peak
+        1.0f,                                // exposure
+        1.1f,                                // highlights
+        1.0f,                                // shadows
+        1.0f,                                // contrast
+        1.0f,                                // purity_scale
+        0.5f,                                // bleaching_intensity
+        100.f,                               // clip_point
+        0.0f,                                // hue_restore
+        1.0f,                                // adaptation_contrast
+        1,                                   // naka rushton
+        1.0f + 0.025 * (peak_ratio - 1.0f)); // cone_response_exponent
+    }
 
   } else {
 

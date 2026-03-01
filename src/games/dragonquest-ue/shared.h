@@ -46,6 +46,7 @@
 // Should be 4x32
 struct ShaderInjectData {
   float tone_map_type;
+  float display_map_type;
   float peak_white_nits;
   float fmv_peak_white_nits;
   float diffuse_white_nits;

@@ -1,4 +1,4 @@
-// #include "../output.hlsli"
+#include "../output.hlsli"
 
 Texture2D<float4> t0 : register(t0);
 
@@ -104,33 +104,36 @@ float4 main(
   float4 SV_Target;
   float _17 = (SV_Position.x - float((uint)((int)($Globals_592.x)))) * ($Globals_616.x);
   float _18 = (SV_Position.y - float((uint)((int)($Globals_592.y)))) * ($Globals_616.y);
-  // float4 _38 = t0.Sample(s0, float2(min(max(((_17 * ($Globals_080.x)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((_18 * ($Globals_080.y)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
-  // _38.rgb = PQtoLinear(_38.rgb);
+  float4 _38 = t0.Sample(s0, float2(min(max(((_17 * ($Globals_080.x)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((_18 * ($Globals_080.y)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  _38.rgb = PQtoSRGB(_38.rgb);
 
-  // float4 _62 = t0.Sample(s0, float2(min(max(((($Globals_080.x) * _17) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * (_18 + 0.0010000000474974513f)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
-  // _62.rgb = PQtoLinear(_62.rgb);
+  float4 _62 = t0.Sample(s0, float2(min(max(((($Globals_080.x) * _17) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * (_18 + 0.0010000000474974513f)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  _62.rgb = PQtoSRGB(_62.rgb);
 
-  // float4 _86 = t0.Sample(s0, float2(min(max(((($Globals_080.x) * _17) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * (_18 + -0.0010000000474974513f)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
-  // _86.rgb = PQtoLinear(_86.rgb);
+  float4 _86 = t0.Sample(s0, float2(min(max(((($Globals_080.x) * _17) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * (_18 + -0.0010000000474974513f)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  _86.rgb = PQtoSRGB(_86.rgb);
 
-  // float4 _110 = t0.Sample(s0, float2(min(max(((($Globals_080.x) * (_17 + 0.0010000000474974513f)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * _18) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
-  // _110.rgb = PQtoLinear(_110.rgb);
+  float4 _110 = t0.Sample(s0, float2(min(max(((($Globals_080.x) * (_17 + 0.0010000000474974513f)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * _18) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  _110.rgb = PQtoSRGB(_110.rgb);
 
-  // float4 _134 = t0.Sample(s0, float2(min(max(((($Globals_080.x) * (_17 + -0.0010000000474974513f)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * _18) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
-  // _134.rgb = PQtoLinear(_134.rgb);
+  float4 _134 = t0.Sample(s0, float2(min(max(((($Globals_080.x) * (_17 + -0.0010000000474974513f)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * _18) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  _134.rgb = PQtoSRGB(_134.rgb);
 
-  // float3 average_color = float3(((_38.x - ((((_86.x + _62.x) + _110.x) + _134.x) * 0.25f)) * 0.30000001192092896f), ((_38.y - ((((_86.y + _62.y) + _110.y) + _134.y) * 0.25f)) * 0.30000001192092896f), ((_38.z - ((((_86.z + _62.z) + _110.z) + _134.z) * 0.25f)) * 0.30000001192092896f));
-  // float _156 = renodx::color::y::from::BT709(average_color);
+  float3 average_color = float3(((_38.x - ((((_86.x + _62.x) + _110.x) + _134.x) * 0.25f)) * 0.30000001192092896f), ((_38.y - ((((_86.y + _62.y) + _110.y) + _134.y) * 0.25f)) * 0.30000001192092896f), ((_38.z - ((((_86.z + _62.z) + _110.z) + _134.z) * 0.25f)) * 0.30000001192092896f));
+  float _156 = renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(average_color));
 
-  // float _157 = _156 + _38.x;
-  // float _158 = _156 + _38.y;
-  // float _159 = _156 + _38.z;
-  // SV_Target.x = max(((((Material_000[1].x) - _157) * (Material_032[0].x)) + _157), 0.0f);
-  // SV_Target.y = max(((((Material_000[1].y) - _158) * (Material_032[0].x)) + _158), 0.0f);
-  // SV_Target.z = max(((((Material_000[1].z) - _159) * (Material_032[0].x)) + _159), 0.0f);
+  float _157 = _156 + _38.x;
+  float _158 = _156 + _38.y;
+  float _159 = _156 + _38.z;
+  SV_Target.x = max(((((Material_000[1].x) - _157) * (Material_032[0].x)) + _157), 0.0f);
+  SV_Target.y = max(((((Material_000[1].y) - _158) * (Material_032[0].x)) + _158), 0.0f);
+  SV_Target.z = max(((((Material_000[1].z) - _159) * (Material_032[0].x)) + _159), 0.0f);
+  
+  SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
+
+  // disable this shader
   float4 output = t0.Sample(s0, float2(_17, _18));
   SV_Target = output;
-  // SV_Target.rgb = LinearToPQ(SV_Target.rgb);
   SV_Target.w = 1.0f;
   return SV_Target;
 }
