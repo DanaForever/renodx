@@ -49,6 +49,7 @@ struct ShaderInjectData {
   // float tone_map_shadows;
   float tone_map_lms_contrast;
   float tone_map_lms_vibrancy;
+  float tone_map_lms_dechroma;
   // float tone_map_saturation;
   // float tone_map_highlight_saturation;
   // float tone_map_blowout;

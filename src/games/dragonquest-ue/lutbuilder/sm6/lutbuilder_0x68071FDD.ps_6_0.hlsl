@@ -529,8 +529,6 @@ float4 main(
   float3 untonemapped_bt709 = renodx::color::bt709::from::AP1(untonemapped_ap1);
   float4 output = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, s0, t0, cb_config, device);
 
-  // output.rgb = renodx::color::srgb::EncodeSafe(output.rgb);
-
   SV_Target.x = (output.x);
   SV_Target.y = (output.y);
   SV_Target.z = (output.z);
@@ -718,6 +716,8 @@ float4 main(
   //   return GenerateOutput(float3(_1457, _1458, _1459), cb0_044y);
   // }
 
+  float3 tonemapped_color = float3(_1443, _1444, _1445);
+
   [branch]
   if (cb0_044y == 0) {
     do {
@@ -758,9 +758,13 @@ float4 main(
       if ((bool)(cb0_044y == 3) || (bool)(cb0_044y == 5)) {
         float _1548 = _1444 * 1.5f;
         float _1549 = _1445 * 1.5f;
+
+        // BT709 -> AP0 
         float _1552 = mad(0.17733481526374817f, _1549, mad(0.38297808170318604f, _1548, (_1443 * 0.659551203250885f)));
         float _1555 = mad(0.09676162153482437f, _1549, mad(0.8134231567382812f, _1548, (_1443 * 0.13468848168849945f)));
         float _1558 = mad(0.870704174041748f, _1549, mad(0.11154405772686005f, _1548, (_1443 * 0.02631598338484764f)));
+
+        // channel
         float _1562 = max(max(_1552, _1555), _1558);
         float _1567 = (max(_1562, 1.000000013351432e-10f) - max(min(min(_1552, _1555), _1558), 1.000000013351432e-10f)) / max(_1562, 0.009999999776482582f);
         float _1580 = ((_1555 + _1552) + _1558) + (sqrt((((_1558 - _1555) * _1558) + ((_1555 - _1552) * _1555)) + ((_1552 - _1558) * _1552)) * 1.75f);
@@ -1017,15 +1021,32 @@ float4 main(
                                 }
                               }
                             }
+                            
+
                             float _2120 = exp2(_1987 * 3.321928024291992f) + -3.507384462864138e-05f;
                             float _2121 = exp2(_2052 * 3.321928024291992f) + -3.507384462864138e-05f;
                             float _2122 = exp2(_2117 * 3.321928024291992f) + -3.507384462864138e-05f;
+
+                            float3 tonemapped_ap1 = float3(_2120, _2121, _2122);
+                            float3 tonemapped_bt2020 = renodx::color::bt2020::from::AP1(tonemapped_ap1);
+
+                            // tonemapped_bt2020 = CreateStellarBladeOutput(untonemapped_ap1, untonemapped_bt709, cb_config, device);
+
+
                             float _2141 = exp2(log2(mad(_54, _2122, mad(_53, _2121, (_2120 * _52))) * 9.999999747378752e-05f) * 0.1593017578125f);
                             float _2142 = exp2(log2(mad(_57, _2122, mad(_56, _2121, (_2120 * _55))) * 9.999999747378752e-05f) * 0.1593017578125f);
                             float _2143 = exp2(log2(mad(_60, _2122, mad(_59, _2121, (_2120 * _58))) * 9.999999747378752e-05f) * 0.1593017578125f);
                             _2899 = exp2(log2((1.0f / ((_2141 * 18.6875f) + 1.0f)) * ((_2141 * 18.8515625f) + 0.8359375f)) * 78.84375f);
                             _2900 = exp2(log2((1.0f / ((_2142 * 18.6875f) + 1.0f)) * ((_2142 * 18.8515625f) + 0.8359375f)) * 78.84375f);
                             _2901 = exp2(log2((1.0f / ((_2143 * 18.6875f) + 1.0f)) * ((_2143 * 18.8515625f) + 0.8359375f)) * 78.84375f);
+
+                            // float3 output = float3(_2899, _2900, _2901);
+                            float3 output = renodx::color::pq::EncodeSafe(tonemapped_bt2020, 1.f);
+
+                            _2899 = output.x;
+                            _2900 = output.y;
+                            _2901 = output.z;
+
                           } while (false);
                         } while (false);
                       } while (false);
@@ -1037,6 +1058,7 @@ float4 main(
           } while (false);
         } while (false);
       } else {
+        // 4 or 6
         if ((cb0_044y & -3) == 4) {
           float _2175 = _1444 * 1.5f;
           float _2176 = _1445 * 1.5f;

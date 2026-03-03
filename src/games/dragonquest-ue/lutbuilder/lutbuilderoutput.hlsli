@@ -133,10 +133,101 @@ float4 createLegacyLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   }
   else if (outputdevice == 2u) {
     output.rgb = renodx::color::gamma::EncodeSafe(output.rgb, gamma);
-  }
+  } 
   // lut output encoding
   output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
   output.w = 0;
+
+  return output;
+}
+
+
+float3 CreateStellarBladeOutput(float3 untonemapped_ap1, float3 untonemapped_bt709,
+                       UECbufferConfig cb_config, uint outputdevice) {
+
+  float3 output;
+  float3 org_input = untonemapped_bt709;
+
+  // luma in AP1
+  float y = renodx::color::y::from::AP1(untonemapped_ap1);
+
+  // desaturation
+  untonemapped_ap1 = lerp(y.xxx, untonemapped_ap1, 0.959999979f);
+
+  float3 untonemapped_graded_ap1;
+  float3 tonemapped_graded_ap1;
+  float3 tonemapped_graded_bt709;
+
+  // Blue Correction Pre
+
+  const float3x3 BlueCorrect =
+      {
+        0.9404372683, -0.0183068787, 0.0778696104,
+        0.0083786969, 0.8286599939, 0.1629613092,
+        0.0005471261, -0.0008833746, 1.0003362486
+      };
+
+  const float3x3 BlueCorrectAP1 = mul(renodx::color::AP0_TO_AP1_MAT, mul(BlueCorrect, renodx::color::AP1_TO_AP0_MAT));
+
+  untonemapped_graded_ap1 = lerp(untonemapped_ap1, mul(BlueCorrectAP1, untonemapped_ap1), shader_injection.unreal_blue_correction);
+
+  // float3 untonemapped_graded_rrt_ap1 = renodx::tonemap::aces::RRT(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1));
+  float3 untonemapped_graded_rrt_ap1 = renodx::tonemap::aces::RRT(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1));
+
+  float3 vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_rrt_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+
+  // if (RENODX_TONE_MAP_TYPE == 1.f) {  // SDR 
+  //   tonemapped_graded_ap1 = vanilla;  
+  // } else if (RENODX_TONE_MAP_TYPE == 3.f) { // HDR
+  tonemapped_graded_ap1 = vanilla;
+  // tonemapped_graded_ap1 = ApplyToneCurveExtended(untonemapped_graded_rrt_ap1, vanilla, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+  // }
+
+  // PostToneMapDesaturation
+  float grayscale = renodx::color::y::from::AP1(tonemapped_graded_ap1);
+  tonemapped_graded_ap1 = max(0.f, lerp(grayscale, tonemapped_graded_ap1, 0.93f));
+
+  // Tonecurve Amount
+  tonemapped_graded_ap1 = lerp(untonemapped_graded_ap1, tonemapped_graded_ap1, cb_config.ue_tonecurveammount);
+
+  const float3x3 BlueCorrectInv =
+      {
+        1.06318, 0.0233956, -0.0865726,
+        -0.0106337, 1.20632, -0.19569,
+        -0.000590887, 0.00105248, 0.999538
+      };
+
+  const float3x3 BlueCorrectInvAP1 = mul(renodx::color::AP0_TO_AP1_MAT, mul(BlueCorrectInv, renodx::color::AP1_TO_AP0_MAT));
+
+  // Uncorrect blue to maintain white point
+  tonemapped_graded_ap1 = lerp(tonemapped_graded_ap1, mul(BlueCorrectInvAP1, tonemapped_graded_ap1), shader_injection.unreal_blue_correction);
+
+  // AP1 -> BT709
+
+  tonemapped_graded_bt709 = renodx::color::bt709::from::AP1(tonemapped_graded_ap1);
+
+  float3 filmic = tonemapped_graded_bt709;
+
+  float3 graded_filmic = filmic;
+
+  // graded_filmic = PostProcess(filmic, cb_config, true);
+  graded_filmic = PostProcess(filmic, cb_config);
+  
+  output.rgb = graded_filmic;
+
+  // // final output
+  // float gamma = 1.f / cb_config.ue_inv_gamma;
+
+  // // correct gamma - this is important for SDR
+  // if (shader_injection.unreal_lut_gamma_correction == 1) {
+  //   output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
+  // }
+
+  // // lut output encoding
+  // output.rgb = DisplayMap(output.rgb, outputdevice);
+
+  // output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
+  // output.w = 0;
 
   return output;
 }

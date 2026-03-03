@@ -302,7 +302,7 @@ float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast, bool tonemap_t
 
 
 
-float3 CustomSwapchainPass(float3 color)  {
+float3 CustomSwapchainPass(float3 color, uint device = 0u)  {
   renodx::draw::Config config = renodx::draw::BuildConfig();
 
   [branch]
@@ -350,6 +350,7 @@ float3 CustomSwapchainPass(float3 color)  {
 
   if (shader_injection.processing_path == 0.f)  {
     swap_chain_scale_nits = RENODX_DIFFUSE_WHITE_NITS;
+    
   } else {
     // SDR path - maybe use GRAPHICS_WHITE_NITS
     swap_chain_scale_nits = RENODX_GRAPHICS_WHITE_NITS;
@@ -361,8 +362,15 @@ float3 CustomSwapchainPass(float3 color)  {
   color *= config.swap_chain_clamp_nits / max_channel;  // Clamp UI or Videos
 
   if (shader_injection.processing_path == 0.f)  {
-    color = renodx::color::ap1::from::BT709(color);
-    color = renodx::color::pq::EncodeSafe(color, 1.f);
+
+    if (device == 0u || device == 2u) {
+      color = renodx::color::ap1::from::BT709(color);
+      color = renodx::color::pq::EncodeSafe(color, 1.f);
+    } else if (device == 3u) {
+      color = renodx::color::bt2020::from::BT709(color);
+      color = renodx::color::pq::EncodeSafe(color, 1.f);
+    }
+    
   } else {
     // SDR path - maybe use GRAPHICS_WHITE_NITS
     if (shader_injection.swap_chain_encoding == 5.f)  {

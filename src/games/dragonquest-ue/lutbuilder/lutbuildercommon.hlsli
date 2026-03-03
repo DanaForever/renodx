@@ -451,6 +451,7 @@ float3 DisplayMap(float3 color, uint device = 0u) {
 
   }
   
+  // HDR ini path
   if (shader_injection.processing_path == 0.f)  {
     return CustomSwapchainPass(color);
     

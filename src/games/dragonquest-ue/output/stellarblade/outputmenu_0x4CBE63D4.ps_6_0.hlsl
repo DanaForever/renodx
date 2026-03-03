@@ -83,9 +83,6 @@ float4 main(
     output = float3(_40, _41, _42);
     
   }
-  // SV_Target.x = _88;
-  // SV_Target.y = _89;
-  // SV_Target.z = _90;
 
   SV_Target.rgb = output;
   SV_Target.w = ((($Globals_000.z) * ((_22 * -2.0f) + 1.0f)) + _22);

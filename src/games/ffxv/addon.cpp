@@ -68,7 +68,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
         // .labels = {"Vanilla", "SDR", "ACES", "RenoDRT w/ ColorGrading", "RenoDRT"},
-        .labels = {"Vanilla", "SDR", "ACES", "RenoDRT"},
+        .labels = {"Vanilla", "SDR", "PsychoV", "RenoDRT"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
@@ -209,6 +209,16 @@ renodx::utils::settings::Settings settings = {
         .section = "Color Grading",
         .max = 100.f,
         .parse = [](float value) { return value * 0.02f; },
+    },
+
+    new renodx::utils::settings::Setting{
+        .key = "ColorGradeVibrancy",
+        .binding = &shader_injection.tone_map_lms_dechroma,
+        .default_value = 0.f,
+        .label = "Dechroma",
+        .section = "Color Grading",
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.01f; },
     },
 
     // new renodx::utils::settings::Setting{

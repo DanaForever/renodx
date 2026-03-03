@@ -1,6 +1,7 @@
 
 #include "./shared.h"
 #include "./macleod_boynton.hlsli"
+#include "./psycho_test11.hlsl"
 
 
 float3 PostToneMapProcess(float3 output) {
@@ -319,22 +320,7 @@ float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
   return color;
 }
 
-float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw::Config config) {
-  float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
 
-  float3 untonemapped_graded = renodx::draw::UpgradeToneMapByLuminance(untonemapped, neutral_sdr, graded_sdr_color, 1.f);
-
-  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
-
-  // this dechromas too much
-  // untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, RENODX_DIFFUSE_WHITE_NITS, 100.f, 1.f);
-
-  return renodx::draw::ToneMapPass(untonemapped_graded, config);
-}
-
-float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color) {
-  return ToneMapPassLMS(untonemapped, graded_sdr_color, renodx::draw::BuildConfig());
-}
 
 // Samsung research
 static const float3x3 XYZ_TO_LMS_PROPOSED_2023 = float3x3(
@@ -390,92 +376,6 @@ float3 NeutwoBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
   return renodx::color::bt709::from::XYZ(xyz_out);
 }
 
-float3 ApplyRenoDRT(float3 color, renodx::tonemap::Config tm_config) {
-  float reno_drt_max = (tm_config.peak_nits / tm_config.game_nits);
-  [branch]
-  if (tm_config.gamma_correction != 0) {
-    reno_drt_max = renodx::color::correct::Gamma(
-        reno_drt_max,
-        tm_config.gamma_correction > 0.f,
-        abs(tm_config.gamma_correction) == 1.f ? 2.2f : 2.4f);
-  } else {
-    // noop
-  }
-
-  renodx::tonemap::renodrt::Config reno_drt_config = renodx::tonemap::renodrt::config::Create();
-  reno_drt_config.nits_peak = reno_drt_max * 100.f;
-  reno_drt_config.mid_gray_value = 0.18f;
-  reno_drt_config.mid_gray_nits = tm_config.mid_gray_nits;
-  reno_drt_config.exposure = tm_config.exposure;
-  reno_drt_config.highlights = tm_config.reno_drt_highlights;
-  reno_drt_config.shadows = tm_config.reno_drt_shadows;
-  reno_drt_config.contrast = tm_config.reno_drt_contrast;
-  reno_drt_config.saturation = tm_config.reno_drt_saturation;
-  reno_drt_config.dechroma = tm_config.reno_drt_dechroma;
-  reno_drt_config.flare = tm_config.reno_drt_flare;
-  reno_drt_config.hue_correction_strength = tm_config.hue_correction_strength;
-  reno_drt_config.hue_correction_type = renodx::tonemap::renodrt::config::hue_correction_type::CUSTOM;
-  if (tm_config.hue_correction_type == renodx::tonemap::config::hue_correction_type::CUSTOM) {
-    reno_drt_config.hue_correction_source = tm_config.hue_correction_color;
-  } else if (tm_config.hue_correction_type == renodx::tonemap::config::hue_correction_type::CLAMPED) {
-    reno_drt_config.hue_correction_source = tm_config.hue_correction_color;
-  } else {
-    reno_drt_config.hue_correction_source = color;
-  }
-  reno_drt_config.hue_correction_method = tm_config.reno_drt_hue_correction_method;
-  // reno_drt_config.tone_map_method = tm_config.reno_drt_tone_map_method;
-  reno_drt_config.tone_map_method = renodx::tonemap::renodrt::config::tone_map_method::REINHARD;
-  reno_drt_config.working_color_space = tm_config.reno_drt_working_color_space;
-  reno_drt_config.per_channel = tm_config.reno_drt_per_channel;
-  reno_drt_config.blowout = tm_config.reno_drt_blowout;
-  reno_drt_config.clamp_color_space = tm_config.reno_drt_clamp_color_space;
-  reno_drt_config.clamp_peak = tm_config.reno_drt_clamp_peak;
-  reno_drt_config.white_clip = tm_config.reno_drt_white_clip;
-
-  return renodx::tonemap::renodrt::BT709(color, reno_drt_config);
-}
-
-float3 ToneMapPass(float3 color, renodx::draw::Config draw_config) {
-  renodx::tonemap::Config tone_map_config = renodx::tonemap::config::Create();
-  tone_map_config.peak_nits = draw_config.peak_white_nits;
-  tone_map_config.game_nits = draw_config.diffuse_white_nits;
-  tone_map_config.type = draw_config.tone_map_type;
-  tone_map_config.gamma_correction = draw_config.gamma_correction;
-  tone_map_config.exposure = draw_config.tone_map_exposure;
-  tone_map_config.highlights = draw_config.tone_map_highlights;
-  tone_map_config.shadows = draw_config.tone_map_shadows;
-  tone_map_config.contrast = draw_config.tone_map_contrast;
-  tone_map_config.saturation = draw_config.tone_map_saturation;
-
-  tone_map_config.reno_drt_highlights = 1.0f;
-  tone_map_config.reno_drt_shadows = 1.0f;
-  tone_map_config.reno_drt_contrast = 1.0f;
-  tone_map_config.reno_drt_saturation = 1.0f;
-  tone_map_config.reno_drt_blowout = -1.f * (draw_config.tone_map_highlight_saturation - 1.f);
-  tone_map_config.reno_drt_dechroma = draw_config.tone_map_blowout;
-  tone_map_config.reno_drt_flare = 0.10f * pow(draw_config.tone_map_flare, 10.f);
-  tone_map_config.reno_drt_working_color_space = draw_config.tone_map_working_color_space;
-  tone_map_config.reno_drt_per_channel = draw_config.tone_map_per_channel == 1.f;
-  tone_map_config.reno_drt_hue_correction_method = draw_config.tone_map_hue_processor;
-  tone_map_config.reno_drt_clamp_color_space = draw_config.tone_map_clamp_color_space;
-  tone_map_config.reno_drt_clamp_peak = draw_config.tone_map_clamp_peak;
-  tone_map_config.reno_drt_tone_map_method = draw_config.reno_drt_tone_map_method;
-  tone_map_config.reno_drt_white_clip = draw_config.reno_drt_white_clip;
-
-  tone_map_config.hue_correction_strength = draw_config.tone_map_hue_correction;
-
-  float3 output_color = ApplyRenoDRT(color, tone_map_config);
-
-  return output_color;
-}
-
-float3 ApplyReinhardPiecewiseByLuminance(float3 color, float peak_white = 1.f, float shoulder = 0.0001f) {
-  float y_in = renodx::color::y::from::BT709(color);
-  float y_out = renodx::tonemap::ReinhardPiecewiseExtended(y_in, peak_white, shoulder);
-  color = renodx::color::correct::Luminance(color, y_in, y_out);
-
-  return color;
-}
 
 float3 ToneMapLMS(float3 untonemapped) {
   renodx::draw::Config config = renodx::draw::BuildConfig();
@@ -485,12 +385,88 @@ float3 ToneMapLMS(float3 untonemapped) {
 
   // naka rushton
   float3 untonemapped_graded_dechroma = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded);
-  // untonemapped_graded_dechroma = untonemapped_graded;
+  untonemapped_graded_dechroma = lerp(untonemapped_graded, untonemapped_graded_dechroma, shader_injection.tone_map_lms_dechroma);
 
-  float3 bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
+  // float3 bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
   // float3 bt709_tonemapped = NeutwoBT709WhiteForEnergy(untonemapped_graded, peak_ratio);
+  float3 bt709_tonemapped;
+  float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.2f);
+
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
+  }
+
+  if (RENODX_TONE_MAP_TYPE == 2.f) {
+    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
+        untonemapped_graded_dechroma,
+        peak_ratio,                           // peak
+        1.0f,                                 // exposure
+        1.0f,                                 // highlights
+        1.0f,                                 // shadows
+        1.0f,                                 // contrast
+        1.0f,                                 // purity_scale
+        1.0f,                                 // bleaching_intensity
+        100.f,                                // clip_point
+        0.0f,                                 // hue_restore
+        1.0f,                                 // adaptation_contrast
+        1,                                    // naka rushton
+        1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+  } else {
+    bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
+  }
+  return bt709_tonemapped;
+}
+
+float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw::Config config) {
+  float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
+
+  float3 untonemapped_graded = renodx::draw::UpgradeToneMapByLuminance(untonemapped, neutral_sdr, graded_sdr_color, 1.f);
+
+  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+
+  // this dechromas too much
+  float3 untonemapped_graded_dechroma = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded);
+
+  untonemapped_graded_dechroma = lerp(untonemapped_graded, untonemapped_graded_dechroma, shader_injection.tone_map_lms_dechroma);
+
+  // return renodx::draw::ToneMapPass(untonemapped_graded_dechroma, config);
+
+  float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+  float3 bt709_tonemapped;
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.2f);
+
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
+  }
+
+  if (RENODX_TONE_MAP_TYPE == 2.f) {
+    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
+        untonemapped_graded_dechroma,
+        peak_ratio,                           // peak
+        1.0f,                                 // exposure
+        1.0f,                                 // highlights
+        1.0f,                                 // shadows
+        1.0f,                                 // contrast
+        1.0f,                                 // purity_scale
+        1.0f,                                 // bleaching_intensity
+        100.f,                                // clip_point
+        0.0f,                                 // hue_restore
+        1.0f,                                 // adaptation_contrast
+        1,                                    // naka rushton
+        1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+  } else {
+    bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
+  }
 
   return bt709_tonemapped;
+}
+
+float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color) {
+  return ToneMapPassLMS(untonemapped, graded_sdr_color, renodx::draw::BuildConfig());
 }
 
 /// Log contrast curve used in case 4 of Nioh LUT builder.

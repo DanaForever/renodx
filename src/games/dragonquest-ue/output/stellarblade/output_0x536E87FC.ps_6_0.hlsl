@@ -399,20 +399,6 @@ float4 main(
       _505 = _429;
       _506 = _430;
 
-      float3 color = float3(_504, _505, _506);
-      color = renodx::color::pq::DecodeSafe(color, RENODX_DIFFUSE_WHITE_NITS);
-      float y = renodx::color::y::from::BT2020(color);
-
-      // I know that the game boosts brightness to around 350.f but don't know what that value is
-      color *= (RENODX_DIFFUSE_WHITE_NITS / cb0_064w);
-
-      color = renodx::color::pq::EncodeSafe(color, RENODX_DIFFUSE_WHITE_NITS);
-      _507 = saturate(y);
-
-      _504 = color.x;
-      _505 = color.y;
-      _506 = color.z;
-
     }
   }
   SV_Target.x = _504;

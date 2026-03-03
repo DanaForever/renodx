@@ -77,7 +77,13 @@ void main(
       // r1.z = r0.z * 1.11870003 + r0.w;
       // r0.x = dot(r0.xy, float2(-0.124600001, 1.13300002));
       // r1.y = -r0.z * 0.0083999997 + r0.x;
-      r1.rgb = SE_Saturation(r0.rgb);
+      // r1.rgb = SE_Saturation(r0.rgb);
+
+      if (FFXV_HDR_GRADING) {
+        r1.rgb = SE_Saturation(r0.rgb);
+      } else {
+        r1.rgb = r0.rgb;
+      }
 
       o0.xyz = pqScale * r1.xyz;
 
@@ -96,13 +102,11 @@ void main(
         color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
         config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
         color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-        // color = GammaCorrectHuePreserving(color, 2.2f);
 
       } else if (config.swap_chain_gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
         color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
         config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
         color = renodx::color::correct::GammaSafe(color, false, 2.4f);
-        // color = GammaCorrectHuePreserving(color, 2.4f);
       }
 
       color *= config.swap_chain_scaling_nits;
