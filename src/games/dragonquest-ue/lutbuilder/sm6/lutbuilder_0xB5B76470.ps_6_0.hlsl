@@ -1,6 +1,6 @@
 // #include "../lutbuilderoutput.hlsli"
 
-// Found in Stellar Blade HDR
+// Found in Stellar Blade HDR - totally skipped color grading and correction
 
 cbuffer cb0 : register(b0) {
   int cb0_010y : packoffset(c010.y);

@@ -139,7 +139,7 @@ float4 main(
   SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
   output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
 
-  SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb, 1.f);
+  SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
   SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
   SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
   SV_Target.w = 1.0f;
