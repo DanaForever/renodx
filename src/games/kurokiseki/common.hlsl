@@ -2,6 +2,7 @@
 #include "./shared.h"
 #include "lms_matrix.hlsl"
 #include "macleod_boynton.hlsli"
+#include "./psycho_test11.hlsl"
 
 float3 sdrToneMap(float3 color) {
   color = renodx::color::srgb::DecodeSafe(color);
@@ -250,7 +251,7 @@ float3 MassEffectDisplayMap(float3 linear_color, float shoulder_start, float pea
 
 float3 LMS_Processing(float3 color) {
   color = LMS_Vibrancy(color, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
-  color = CastleDechroma_CVVDPStyle_NakaRushton(color, RENODX_DIFFUSE_WHITE_NITS);
+  color = lerp(color, CastleDechroma_CVVDPStyle_NakaRushton(color), shader_injection.tone_map_lms_dechroma);
 
   return color;
 }
@@ -410,12 +411,37 @@ float3 ToneMap(float3 color) {
     color = LMS_Processing(color);
 
     float peak_nits = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-    // color = renodx::tonemap::neutwo::MaxChannel(color, peak_nits);
     color = NeutwoBT709WhiteForEnergy(color, peak_nits);
-    // color = ReinhardBT709WhiteForEnergy(color, peak_nits);
 
     return color;
-  }else {
+  } else if (shader_injection.tone_map_type == 6.f) {
+    color = LMS_Processing(color);
+
+    float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.2f);
+
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
+    }
+    color = renodx::tonemap::psycho::psychotm_test11(
+        color,
+        peak_ratio,                           // peak
+        1.0f,                                 // exposure
+        1.0f,                                 // highlights
+        1.0f,                                 // shadows
+        1.0f,                                 // contrast
+        1.0f,                                 // purity_scale
+        1.0f,                                 // bleaching_intensity
+        100.f,                                // clip_point
+        0.0f,                                 // hue_restore
+        1.0f,                                 // adaptation_contrast
+        1,                                    // naka rushton
+        1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+
+    return color;
+  } else {
     return color;
   }
 }

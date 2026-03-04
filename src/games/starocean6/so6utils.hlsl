@@ -1,7 +1,7 @@
 #include "shared.h"
 #define DEFAULT_GAMMA true
 
-float3 PQtoLinear(float3 pqColor, float white,
+float3 PQtoLinear(float3 pqColor, float white = 250.f,
                   bool gamma_correction = DEFAULT_GAMMA,
                   float gamma = 2.4) {
   float3 output = renodx::color::pq::DecodeSafe(pqColor, white);
@@ -14,7 +14,7 @@ float3 PQtoLinear(float3 pqColor, float white,
   return output;
 }
 
-float3 LinearToPQ(float3 pqColor, float white,
+float3 LinearToPQ(float3 pqColor, float white = 250.f,
                   bool gamma_correction = DEFAULT_GAMMA,
                   float gamma = 2.4) {
   float3 output = renodx::color::bt2020::from::BT709(pqColor);

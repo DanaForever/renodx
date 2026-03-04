@@ -1,23 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Tue Jun 03 16:56:57 2025
 #include "common.hlsl"
-#include "so6utils.hlsl"
-
-
-float getMidGray(Texture3D<float4> lut_texture,
-                 SamplerState lut_sampler,
-                 float paper_white) {
-  float3 mid = 0.18f;
-  float3 lutInputColor = LinearToPQ(mid, paper_white, true);
-
-  float3 lutResult = renodx::lut::Sample(lut_texture,
-                                         lut_sampler,
-                                         lutInputColor,
-                                         32u);
-  float3 lutOutputColor_bt2020 = renodx::color::pq::DecodeSafe(lutResult, 1.f);
-  lutOutputColor_bt2020 /= paper_white;
-
-  return renodx::color::y::from::BT2020(lutOutputColor_bt2020);
-}
 
 
 cbuffer cb_gp : register(b2)
@@ -106,68 +88,19 @@ void main(
 
   // point 1: after vignetting: SUPER BRIGHT picture, definitely not PQ or linear
 
-  // cvConst_8 0.12325, 0.01882, 0.00455, 0.19141 128 float4
   r1.x = dot(cvConst_8.xyzw, r0.xyzw);
-  // cvConst_9 0.00857, 0.14715, 0.00455, 0.19141 144 float4
   r1.y = dot(cvConst_9.xyzw, r0.xyzw);
-  // cvConst_10 0.00857, 0.01882, 0.1637, 0.19141 160 float4
   r1.z = dot(cvConst_10.xyzw, r0.xyzw);
 
   // point 2: look like PQ image (display-able on HDR10, but very lifted black)
 
-  // cvConst_13 0.21756, 0.00, 0.19141, 0.53458 208 float4
   r0.xyz = max(cvConst_13.zzz, r1.xyz);
-  // r0.xyz = r1.xyz;
   r0.xyz = log2(r0.xyz);
-  r0.xyz = (r0.xyz * cvConst_13.xxx + cvConst_13.www);
+  r0.xyz = saturate(r0.xyz * cvConst_13.xxx + cvConst_13.www);
 
   // point 3: PQ image (looks similar to the final output, lifted black a bit, about 0.05)
 
-  // untonemapped in PQ
-  float white = 250.f;
-
-  float3 lut_input_hdr = r0.rgb;
-  float3 untonemapped = PQtoLinear(r0.xyz,  white, true);
-
-  float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(untonemapped);
-
-  untonemapped *= scale;
-
-  float3 lut_input = LinearToPQ(untonemapped, white, true);
-
-  // r0.xyz = asTexObject3D_3_.Sample(asTexSamp_3__s, r0.xyz).xyz; // LUT sampling in PQ
-  // r0.xyz = renodx::lut::Sample(asTexObject3D_3_, asTexSamp_3__s, r0.xyz, 32u);
-  r0.xyz = renodx::lut::SampleTetrahedral(asTexObject3D_3_, lut_input, 32u);
-  float3 pq_graded = r0.xyz;
-
-  float3 linear_graded = PQtoLinear(pq_graded, white, true);  
-  linear_graded /= scale;
-
-  float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-
-  float3 bt709_tonemapped;
-  peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
-  linear_graded = renodx::tonemap::psycho::psychotm_test11(
-      linear_graded,
-      peak_ratio,                           // peak
-      1.0f,                                 // exposure
-      1.0f,                                 // highlights
-      1.0f,                                 // shadows
-      1.0f,                                 // contrast
-      1.0f,                                 // purity_scale
-      1.0f,                                 // bleaching_intensity
-      100.f,                                // clip_point
-      0.0f,                                 // hue_restore
-      1.0f,                                 // adaptation_contrast
-      1,                                    // naka rushton
-      1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
-
-  float3 reference_pq = renodx::lut::SampleTetrahedral(asTexObject3D_3_, lut_input_hdr, 32u);
-  float3 reference_linear = PQtoLinear(reference_pq, white, true);
-
-  linear_graded = CorrectHueAndPurity(linear_graded, reference_linear, 1.f);
-
-  pq_graded = LinearToPQ(linear_graded, RENODX_DIFFUSE_WHITE_NITS, true); 
+  float3 pq_graded = LUTSampleAndToneMap(r0, asTexObject3D_3_, asTexSamp_3__s);
 
   o0.rgb = pq_graded;
 

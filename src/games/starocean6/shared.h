@@ -80,9 +80,7 @@ struct ShaderInjectData {
   float vignette;
   float depthoffield;
 
-  float custom_tonemap_upgrade_type;
-  float custom_tonemap_upgrade_huecorr;
-  float custom_tonemap_upgrade_strength;
+  float lut_scaling;
 
   // float color_grade_hue_shift;
 };
@@ -130,7 +128,7 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::REINHARD
 
 
-#define PEAK_CLAMP                 shader_injection.peak_clamp
+#define CUSTOM_LUT_SCALING                 shader_injection.lut_scaling
 
 #include "../../shaders/renodx.hlsl"
 

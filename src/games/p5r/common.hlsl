@@ -1,5 +1,7 @@
 
 #include "./shared.h"
+#include "./macleod_boynton.hlsli"
+#include "./psycho_test11.hlsl"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -584,29 +586,83 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
   
   float3 originalColor = color;
 
-  // color = LMS_ToneMap_Stockman(color, 1.f,
-  //                              1.f);
   color = LMS_Vibrancy(color, injectedData.colorGradeSaturation, injectedData.colorGradeContrast);
-  color = CastleDechroma_CVVDPStyle_NakaRushton(color);
+  color = lerp(color, CastleDechroma_CVVDPStyle_NakaRushton(color), injectedData.colorGradeDechroma);
 
 
   // color = renodx::draw::ToneMapPass(color, config);
-  float rpeak = peak / paperwhite;
+  float peak_ratio = peak / paperwhite;
+
+  color = renodx::tonemap::psycho::psychotm_test11(
+      color,
+      peak_ratio,                           // peak
+      1.0f,                                 // exposure
+      1.0f,                                 // highlights
+      1.0f,                                 // shadows
+      1.0f,                                 // contrast
+      1.0f,                                 // purity_scale
+      1.0f,                                 // bleaching_intensity
+      100.f,                                // clip_point
+      0.0f,                                 // hue_restore
+      1.0f,                                 // adaptation_contrast
+      1,                                    // naka rushton
+      1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
 
   // float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, rpeak);
   // float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
 
   // color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
   // color = lum_color;
-  color = renodx::color::bt2020::from::BT709(color);
-  color = renodx::tonemap::neutwo::MaxChannel(color, rpeak, 100.f);
-  color = renodx::color::bt709::from::BT2020(color);
+  // color = renodx::color::bt2020::from::BT709(color);
+  // color = renodx::tonemap::neutwo::MaxChannel(color, rpeak, 100.f);
+  // color = renodx::color::bt709::from::BT2020(color);
 
   return color;
 }
 
+float3 CorrectPurityMBBT709WithBT2020(
+    float3 target_color_bt709,
+    float3 purity_reference_bt709,
+    float strength = 1.f,
+    float curve_gamma = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f,
+    float clamp_purity_loss = 0.f) {
+  if (strength <= 0.f) return target_color_bt709;
 
+  float3 target_color_bt2020 = renodx::color::bt2020::from::BT709(target_color_bt709);
+  float3 purity_reference_bt2020 = renodx::color::bt2020::from::BT709(purity_reference_bt709);
 
+  float reference_purity01 =
+      renodx_custom::color::macleod_boynton::ApplyBT2020(purity_reference_bt2020, 1.f, 1.f,
+                                                         mb_white_override, t_min)
+          .purityCur01;
+
+  float applied_purity01;
+  if (strength == 1.f && clamp_purity_loss <= 0.f) {
+    // Fast path: full transfer only needs donor purity.
+    applied_purity01 = reference_purity01;
+  } else {
+    float target_purity01 =
+        renodx_custom::color::macleod_boynton::ApplyBT2020(target_color_bt2020, 1.f, 1.f,
+                                                           mb_white_override, t_min)
+            .purityCur01;
+
+    applied_purity01 = lerp(target_purity01, reference_purity01, strength);
+
+    if (clamp_purity_loss > 0.f) {
+      float clamp_strength = saturate(clamp_purity_loss);
+      // Only clamp purity reductions: if applied < target, pull back toward target.
+      float t = 1.f - step(target_purity01, applied_purity01);
+      applied_purity01 = lerp(applied_purity01, target_purity01, t * clamp_strength);
+    }
+  }
+
+  return renodx::color::bt709::from::BT2020(
+      renodx_custom::color::macleod_boynton::ApplyBT2020(
+          target_color_bt2020, applied_purity01, curve_gamma, mb_white_override, t_min)
+          .rgbOut);
+}
 
 float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
@@ -617,8 +673,8 @@ float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
 
   // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  float3 result = renodx::color::correct::Chrominance(lum, ch, 1.0f, 0.0f);
   // float3 result = renodx::color::correct::Chrominance(lum, ch);
+  float3 result = CorrectPurityMBBT709WithBT2020(lum, ch);
 
   return result;
 }
@@ -635,57 +691,3 @@ float3 SDRTonemap(float3 untonemapped) {
   }
 }
 
-float3 restoreBlackLevelSRGB(float3 x, float3 y, float cutoff_srgb) {
-
-  x = renodx::color::srgb::DecodeSafe(x);
-  y = renodx::color::srgb::DecodeSafe(y);
-  y = renodx::color::bt709::clamp::BT2020(y);
-
-  float l = renodx::color::y::from::BT709(x);
-
-  // Convert cutoff from sRGB -> linear
-  float cutoff_lin = renodx::color::y::from::BT709(
-      renodx::color::srgb::DecodeSafe(float3(cutoff_srgb, cutoff_srgb, cutoff_srgb))
-    );
-
-  // Protection band around cutoff.
-  // margin controls how quickly grading turns on above cutoff.
-  // Start here; tune:
-  float margin_lin = 0.1 * cutoff_lin;
-
-  // w=0 near/below cutoff -> use x (restore shadows)
-  // w=1 well above cutoff -> use y (full grade)
-  float w = smoothstep(cutoff_lin, cutoff_lin + margin_lin, l);
-
-  float3 output = lerp(x, y, w);
-
-  // output = renodx::color::correct::HueOKLab(output, y);
-  // output = renodx::color::correct::ChrominanceICtCp(output, y);
-
-  output = renodx::color::srgb::EncodeSafe(output);
-
-  return output;
-}
-
-float3 restoreBlackLevel(float3 x, float3 y, float cutoff_srgb) {
-
-  float l = renodx::color::y::from::BT709(x);
-
-  // Convert cutoff from sRGB -> linear
-  float cutoff_lin = renodx::color::y::from::BT709(
-      renodx::color::srgb::DecodeSafe(float3(cutoff_srgb, cutoff_srgb, cutoff_srgb))
-    );
-
-  // Protection band around cutoff.
-  // margin controls how quickly grading turns on above cutoff.
-  // Start here; tune:
-  float margin_lin = 0.1 * cutoff_lin;
-
-  // w=0 near/below cutoff -> use x (restore shadows)
-  // w=1 well above cutoff -> use y (full grade)
-  float w = smoothstep(cutoff_lin, cutoff_lin + margin_lin, l);
-
-  float3 output = lerp(x, y, w);
-
-  return output;
-}

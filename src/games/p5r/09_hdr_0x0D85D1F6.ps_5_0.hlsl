@@ -103,9 +103,9 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   float scale = 1.0 / (colorBlend.x * colorBlend.y);
   float cutoff = colorBlend.x * (1 - colorBlend.y);
 
-
+  float min_value = renodx::color::srgb::Encode(1 * 0.01 / 100);
   // compute the danger threshold in *linear*
-  float t0_srgb = -bias / scale;  // where srgb affine crosses 0
+  float t0_srgb = (min_value - bias) / scale;  // where srgb affine crosses 0
   float t0_lin = renodx::color::srgb::DecodeSafe(float3(t0_srgb, t0_srgb, t0_srgb)).r;
 
   float m = min(t_lin.r, min(t_lin.g, t_lin.b));
@@ -140,10 +140,8 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
 
   t_linear = renodx::color::bt709::clamp::BT2020(t_linear);
   
-  // t_linear = renodx::color::correct::Luminance(ungraded_linear, t_linear);
   t = renodx::color::srgb::EncodeSafe(t_linear);
 
-  
   float3 tOut = t;
 
   // Final invert to output (original does: r1 = 1 + (-t) = 1 - t)
@@ -157,8 +155,6 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   outRGB = renodx::color::srgb::EncodeSafe(outRGB);
   
   o0 = float4(outRGB, 1.0);
-
-  // o0.rgb = UserColorGradeSRGB(o0.rgb);
 
   return;
 }
