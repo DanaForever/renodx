@@ -134,63 +134,107 @@ void main(
   r0.xyz = saturate(r0.xyz * cvConst_13.xxx + cvConst_13.www);
   // r0.xyz = (r0.xyz * cvConst_13.xxx + cvConst_13.www);
 
-  // untonemapped in PQ
-  float white = 203.f;
-  float3 untonemapped = PQtoLinear(r0.rgb, white);
-
   // r0.xyz = asTexObject3D_3_.Sample(asTexSamp_3__s, r0.xyz).xyz;
   // r0.xyz = renodx::lut::Sample(asTexObject3D_3_, asTexSamp_3__s, r0.xyz, 32u);
-  r0.xyz = renodx::lut::SampleTetrahedral(asTexObject3D_3_, r0.xyz, 32u);
+  // r0.xyz = renodx::lut::SampleTetrahedral(asTexObject3D_3_, r0.xyz, 32u);
+
+  float white = 203.f;
+
+  float3 untonemapped = PQtoLinear(r0.rgb, white, true);
+
+  float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(untonemapped);
+
+  untonemapped *= scale;
+
+  float3 lut_input = LinearToPQ(untonemapped, white, true);
+
+  // r0.xyz = asTexObject3D_3_.Sample(asTexSamp_3__s, r0.xyz).xyz; // LUT sampling in PQ
+  // r0.xyz = renodx::lut::Sample(asTexObject3D_3_, asTexSamp_3__s, r0.xyz, 32u);
+  r0.xyz = renodx::lut::SampleTetrahedral(asTexObject3D_3_, lut_input, 32u);
+  float3 pq_graded = r0.xyz;
+
+  float3 linear_graded = PQtoLinear(pq_graded, white, true);
+  linear_graded /= scale;
+
+  float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+
+  float3 bt709_tonemapped;
+  peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
+  linear_graded = renodx::tonemap::psycho::psychotm_test11(
+      linear_graded,
+      peak_ratio,                           // peak
+      1.0f,                                 // exposure
+      1.0f,                                 // highlights
+      1.0f,                                 // shadows
+      1.0f,                                 // contrast
+      1.0f,                                 // purity_scale
+      1.0f,                                 // bleaching_intensity
+      100.f,                                // clip_point
+      0.0f,                                 // hue_restore
+      1.0f,                                 // adaptation_contrast
+      1,                                    // naka rushton
+      1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+
+  float3 linear_graded_maxch = renodx::tonemap::neutwo::MaxChannel(linear_graded, peak_ratio);
+
+  // linear_graded = renodx::draw::ToneMapPass(linear_graded);
+  linear_graded = CorrectHueAndPurity(linear_graded_maxch, linear_graded, 0.5f);
+
+  pq_graded = LinearToPQ(linear_graded, RENODX_DIFFUSE_WHITE_NITS, true);
+
+  o0.rgb = pq_graded;
+  r0.rgb = pq_graded;
 
   if (shader_injection.dithering == 0.f) {
     r1.xyz = asTexObject_2_.Sample(asTexSamp_2__s, v1.zw).xyz;
-    r1.xyz = r1.xyz * float3(2,2,2) + float3(-1,-1,-1);
+    r1.xyz = r1.xyz * float3(2, 2, 2) + float3(-1, -1, -1);
     o0.xyz = r1.xyz * cvConst_0.yyy + r0.xyz;
   } else {
     o0.xyz = r0.xyz;
   }
 
-  if (RENODX_TONE_MAP_TYPE > 0.f) {
-    // post-LUT output
-    float3 graded = PQtoLinear(o0.rgb, white, true);
 
-    float midGray = getMidGray(asTexObject3D_3_, asTexSamp_3__s, white);
+  // if (RENODX_TONE_MAP_TYPE > 0.f) {
+  //   // post-LUT output
+  //   float3 graded = PQtoLinear(o0.rgb, white, true);
 
-    o0.rgb = ToneMapPass(untonemapped, renodx::tonemap::renodrt::NeutralSDR(graded), midGray);
-    float color_y = renodx::color::y::from::BT709(o0.rgb);
+  //   float midGray = getMidGray(asTexObject3D_3_, asTexSamp_3__s, white);
 
-    // random number for perception
-    float bias = 2.4;
-    float weight = saturate(pow(color_y, bias));
+  //   o0.rgb = ToneMapPass(untonemapped, renodx::tonemap::renodrt::NeutralSDR(graded), midGray);
+  //   float color_y = renodx::color::y::from::BT709(o0.rgb);
 
-    // lerp in oklab: keep the sdr colors from SE, and hdr colors from tonemapped
-    float3 hdr_graded_oklab = renodx::color::oklab::from::BT709(graded);
-    float3 hdr_saturated_oklab = renodx::color::oklab::from::BT709(o0.rgb);
-    hdr_graded_oklab = lerp(hdr_graded_oklab, hdr_saturated_oklab, weight);
+  //   // random number for perception
+  //   float bias = 2.4;
+  //   float weight = saturate(pow(color_y, bias));
 
-    o0.rgb = renodx::color::bt709::from::OkLab(hdr_graded_oklab);
+  //   // lerp in oklab: keep the sdr colors from SE, and hdr colors from tonemapped
+  //   float3 hdr_graded_oklab = renodx::color::oklab::from::BT709(graded);
+  //   float3 hdr_saturated_oklab = renodx::color::oklab::from::BT709(o0.rgb);
+  //   hdr_graded_oklab = lerp(hdr_graded_oklab, hdr_saturated_oklab, weight);
 
-    o0.rgb = renodx::color::grade::UserColorGrading(
-        o0.rgb,
-        RENODX_TONE_MAP_EXPOSURE,
-        RENODX_TONE_MAP_HIGHLIGHTS,
-        RENODX_TONE_MAP_SHADOWS,
-        RENODX_TONE_MAP_CONTRAST,
-        RENODX_TONE_MAP_SATURATION,
-        RENODX_TONE_MAP_BLOWOUT,
-        0.f,
-        graded);
+  //   o0.rgb = renodx::color::bt709::from::OkLab(hdr_graded_oklab);
 
-    float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-    o0.rgb *= RENODX_DIFFUSE_WHITE_NITS;
-    o0.rgb = convertColorSpace(o0.rgb);
-    o0.rgb = min(o0.rgb, RENODX_PEAK_WHITE_NITS);
+  //   o0.rgb = renodx::color::grade::UserColorGrading(
+  //       o0.rgb,
+  //       RENODX_TONE_MAP_EXPOSURE,
+  //       RENODX_TONE_MAP_HIGHLIGHTS,
+  //       RENODX_TONE_MAP_SHADOWS,
+  //       RENODX_TONE_MAP_CONTRAST,
+  //       RENODX_TONE_MAP_SATURATION,
+  //       RENODX_TONE_MAP_BLOWOUT,
+  //       0.f,
+  //       graded);
 
-    o0.rgb /= RENODX_DIFFUSE_WHITE_NITS;
+  //   float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+  //   o0.rgb *= RENODX_DIFFUSE_WHITE_NITS;
+  //   o0.rgb = convertColorSpace(o0.rgb);
+  //   o0.rgb = min(o0.rgb, RENODX_PEAK_WHITE_NITS);
 
-    // game has 2.4 gamma correction
-    o0.rgb = LinearToPQ(o0.rgb, RENODX_DIFFUSE_WHITE_NITS, true);
-  }
+  //   o0.rgb /= RENODX_DIFFUSE_WHITE_NITS;
+
+  //   // game has 2.4 gamma correction
+  //   o0.rgb = LinearToPQ(o0.rgb, RENODX_DIFFUSE_WHITE_NITS, true);
+  // }
 
   oDepth = 0;
   return;

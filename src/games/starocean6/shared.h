@@ -42,14 +42,14 @@ struct ShaderInjectData {
   float graphics_white_nits;
   float color_grade_strength;
   float tone_map_type;
-  float tone_map_exposure;
-  float tone_map_highlights;
-  float tone_map_shadows;
-  float tone_map_contrast;
-  float tone_map_saturation;
-  float tone_map_highlight_saturation;
-  float tone_map_blowout;
-  float tone_map_flare;
+  // float tone_map_exposure;
+  // float tone_map_highlights;
+  // float tone_map_shadows;
+  // float tone_map_contrast;
+  // float tone_map_saturation;
+  // float tone_map_highlight_saturation;
+  // float tone_map_blowout;
+  // float tone_map_flare;
   float tone_map_hue_correction;
   float tone_map_hue_shift;
   float tone_map_working_color_space;
@@ -71,15 +71,9 @@ struct ShaderInjectData {
   float swap_chain_encoding;
   float swap_chain_encoding_color_space;
 
-  float color_grade_per_channel_hue_correction;
-  float color_grade_per_channel_chrominance_correction;
-  float color_grade_per_channel_blowout_restoration;
-
-  float displayMapType;
-  float displayMapPeak;
-  float displayMapShoulder;
-
-  float peak_clamp;
+  float tone_map_lms_contrast;
+  float tone_map_lms_vibrancy;
+  float tone_map_lms_dechroma;
 
   float taa;
   float dithering;
@@ -114,14 +108,14 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_TONE_MAP_HUE_SHIFT            shader_injection.tone_map_hue_shift
 #define RENODX_TONE_MAP_CLAMP_COLOR_SPACE    shader_injection.tone_map_clamp_color_space
 #define RENODX_TONE_MAP_CLAMP_PEAK           shader_injection.tone_map_clamp_peak
-#define RENODX_TONE_MAP_EXPOSURE             shader_injection.tone_map_exposure
-#define RENODX_TONE_MAP_HIGHLIGHTS           shader_injection.tone_map_highlights
-#define RENODX_TONE_MAP_SHADOWS              shader_injection.tone_map_shadows
-#define RENODX_TONE_MAP_CONTRAST             shader_injection.tone_map_contrast
-#define RENODX_TONE_MAP_SATURATION           shader_injection.tone_map_saturation
-#define RENODX_TONE_MAP_HIGHLIGHT_SATURATION shader_injection.tone_map_highlight_saturation
-#define RENODX_TONE_MAP_BLOWOUT              shader_injection.tone_map_blowout
-#define RENODX_TONE_MAP_FLARE                shader_injection.tone_map_flare
+// #define RENODX_TONE_MAP_EXPOSURE             shader_injection.tone_map_exposure
+// #define RENODX_TONE_MAP_HIGHLIGHTS           shader_injection.tone_map_highlights
+// #define RENODX_TONE_MAP_SHADOWS              shader_injection.tone_map_shadows
+// #define RENODX_TONE_MAP_CONTRAST             shader_injection.tone_map_contrast
+// #define RENODX_TONE_MAP_SATURATION           shader_injection.tone_map_saturation
+// #define RENODX_TONE_MAP_HIGHLIGHT_SATURATION shader_injection.tone_map_highlight_saturation
+// #define RENODX_TONE_MAP_BLOWOUT              shader_injection.tone_map_blowout
+// #define RENODX_TONE_MAP_FLARE                shader_injection.tone_map_flare
 #define RENODX_COLOR_GRADE_STRENGTH          shader_injection.color_grade_strength
 #define RENODX_INTERMEDIATE_ENCODING         4.f // shader_injection.intermediate_encoding
 #define RENODX_SWAP_CHAIN_DECODING           0.f // shader_injection.swap_chain_decoding
@@ -135,16 +129,6 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE 0.f // shader_injection.swap_chain_encoding_color_space
 #define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::REINHARD
 
-#define RENODX_PER_CHANNEL_BLOWOUT_RESTORATION  shader_injection.color_grade_per_channel_blowout_restoration
-#define RENODX_PER_CHANNEL_HUE_CORRECTION  shader_injection.color_grade_per_channel_hue_correction
-#define RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION  shader_injection.color_grade_per_channel_chrominance_correction
-
-#define DISPLAY_MAP_TYPE                     shader_injection.displayMapType
-#define DISPLAY_MAP_PEAK                     shader_injection.displayMapPeak
-#define DISPLAY_MAP_SHOULDER                 shader_injection.displayMapShoulder
-
-#define CUSTOM_TONEMAP_UPGRADE_HUECORR            shader_injection.custom_tonemap_upgrade_huecorr
-#define CUSTOM_TONEMAP_UPGRADE_STRENGTH           shader_injection.custom_tonemap_upgrade_strength
 
 #define PEAK_CLAMP                 shader_injection.peak_clamp
 

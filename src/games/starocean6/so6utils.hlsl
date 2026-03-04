@@ -7,7 +7,8 @@ float3 PQtoLinear(float3 pqColor, float white,
   float3 output = renodx::color::pq::DecodeSafe(pqColor, white);
   if (gamma_correction)
     output = renodx::color::correct::GammaSafe(output, true, gamma);
-  
+
+  // float3 output = pqColor;
   output = renodx::color::bt709::from::BT2020(output);
 
   return output;
@@ -19,7 +20,7 @@ float3 LinearToPQ(float3 pqColor, float white,
   float3 output = renodx::color::bt2020::from::BT709(pqColor);
   if (gamma_correction)
     output = renodx::color::correct::GammaSafe(output, false, gamma);
-  
+  // float3 output = pqColor;
   output = renodx::color::pq::EncodeSafe(output, white);
 
   return output;

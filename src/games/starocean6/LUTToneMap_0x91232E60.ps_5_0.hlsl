@@ -1,8 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Tue Jun 03 16:56:57 2025
-#include "shared.h"
 #include "common.hlsl"
 #include "so6utils.hlsl"
-#include "colorcorrection.hlsl"
 
 
 float getMidGray(Texture3D<float4> lut_texture,
@@ -126,85 +124,52 @@ void main(
   // point 3: PQ image (looks similar to the final output, lifted black a bit, about 0.05)
 
   // untonemapped in PQ
-  float white = 203.f;
+  float white = 250.f;
 
+  float3 lut_input_hdr = r0.rgb;
   float3 untonemapped = PQtoLinear(r0.xyz,  white, true);
-// 
+
+  float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(untonemapped);
+
+  untonemapped *= scale;
+
+  float3 lut_input = LinearToPQ(untonemapped, white, true);
+
   // r0.xyz = asTexObject3D_3_.Sample(asTexSamp_3__s, r0.xyz).xyz; // LUT sampling in PQ
   // r0.xyz = renodx::lut::Sample(asTexObject3D_3_, asTexSamp_3__s, r0.xyz, 32u);
-  r0.xyz = renodx::lut::SampleTetrahedral(asTexObject3D_3_, r0.xyz, 32u);
+  r0.xyz = renodx::lut::SampleTetrahedral(asTexObject3D_3_, lut_input, 32u);
   float3 pq_graded = r0.xyz;
 
-  if (shader_injection.dithering == 0.f) {
-    r1.xyz = asTexObject_2_.Sample(asTexSamp_2__s, v1.zw).xyz; // dithering? 
-    r1.xyz = r1.xyz * float3(2,2,2) + float3(-1,-1,-1);
-    o0.xyz = r1.xyz * cvConst_0.yyy + r0.xyz;
-  } else {
-    o0.xyz = r0.xyz;
-  } 
-   
-  // point 4: tonemapped to display (SE's display, not mine). Looks plausible but lots of highlights being compressed
+  float3 linear_graded = PQtoLinear(pq_graded, white, true);  
+  linear_graded /= scale;
 
-  if (RENODX_TONE_MAP_TYPE > 0.f) {
-    // post-LUT output
-    float3 graded = PQtoLinear(o0.rgb, white, true);
+  float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
-    float midGray = getMidGray(asTexObject3D_3_, asTexSamp_3__s, white);
-    float3 graded_tonemapped = ToneMap(graded);
-    o0.rgb = ToneMapPass(untonemapped, 
-      graded,
-      midGray);
+  float3 bt709_tonemapped;
+  peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
+  linear_graded = renodx::tonemap::psycho::psychotm_test11(
+      linear_graded,
+      peak_ratio,                           // peak
+      1.0f,                                 // exposure
+      1.0f,                                 // highlights
+      1.0f,                                 // shadows
+      1.0f,                                 // contrast
+      1.0f,                                 // purity_scale
+      1.0f,                                 // bleaching_intensity
+      100.f,                                // clip_point
+      0.0f,                                 // hue_restore
+      1.0f,                                 // adaptation_contrast
+      1,                                    // naka rushton
+      1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
 
-    float color_y = renodx::color::y::from::BT709(o0.rgb);
-    float graded_y = renodx::color::y::from::BT709(graded_tonemapped);
+  float3 reference_pq = renodx::lut::SampleTetrahedral(asTexObject3D_3_, lut_input_hdr, 32u);
+  float3 reference_linear = PQtoLinear(reference_pq, white, true);
 
-    // // random number for perception
-    // float bias = 2.4;
-    // float weight = saturate(pow(color_y, bias));
+  linear_graded = CorrectHueAndPurity(linear_graded, reference_linear, 1.f);
 
-    // Compute t: more saturated if sat is bright and unsat is dark
-    float t = saturate((graded_y - color_y) / max(graded_y, 1e-5));
+  pq_graded = LinearToPQ(linear_graded, RENODX_DIFFUSE_WHITE_NITS, true); 
 
-    float ratio = color_y / (graded_y + 1e-5);
-    t = 1 - saturate(ratio);
-    t = 1 - saturate(color_y);
-
-    // Optional: boost t when Y_sat is significantly > SDR
-    // float t_boost = smoothstep(1.0, RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS, color_y);  // ramp from SDR to HDR
-    // t *= t_boost;
-
-    // lerp in oklab: keep the sdr colors from SE, and hdr colors from tonemapped
-    // float3 hdr_graded_oklab = renodx::color::oklab::from::BT709(graded_tonemapped);
-    // float3 hdr_saturated_oklab = renodx::color::oklab::from::BT709(o0.rgb);
-    // hdr_graded_oklab = lerp(hdr_graded_oklab, hdr_saturated_oklab, weight);
-
-    // o0.rgb = renodx::color::bt709::from::OkLab(hdr_graded_oklab);
-
-    o0.rgb = lerp(o0.rgb, graded_tonemapped, t);
-
-    // o0.rgb = graded;
-
-    // o0.rgb = renodx::color::grade::UserColorGrading(
-    //     o0.rgb,
-    //     RENODX_TONE_MAP_EXPOSURE,
-    //     RENODX_TONE_MAP_HIGHLIGHTS,
-    //     RENODX_TONE_MAP_SHADOWS,
-    //     RENODX_TONE_MAP_CONTRAST,
-    //     RENODX_TONE_MAP_SATURATION,
-    //     RENODX_TONE_MAP_BLOWOUT,
-    //     0.f,
-    //     graded);
-
-    float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-    o0.rgb *= RENODX_DIFFUSE_WHITE_NITS;
-    o0.rgb = convertColorSpace(o0.rgb);
-    o0.rgb = min(o0.rgb, RENODX_PEAK_WHITE_NITS);
-
-    o0.rgb /= RENODX_DIFFUSE_WHITE_NITS;
-    
-    // game has 2.4 gamma correction 
-    o0.rgb = LinearToPQ(o0.rgb, RENODX_DIFFUSE_WHITE_NITS, true);
-  } 
+  o0.rgb = pq_graded;
 
   oDepth = 0;
   return;
