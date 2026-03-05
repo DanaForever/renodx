@@ -62,9 +62,7 @@ float4 main(
   float _92 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_57)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
   float _93 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_58)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
   float _94 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_27.z)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
-  float _95 = dot(float3(0.29899999499320984f, 0.5870000123977661f, 0.11400000005960464f), float3(_92, _93, _94));
-  float _101 = saturate((_95 - CustomPixelConsts_160.x) * CustomPixelConsts_160.y);
-  float _106 = saturate((_95 - CustomPixelConsts_160.z) * CustomPixelConsts_160.w);
+  
   
   // float _116 = exp2(log2(max(0.0f, _92)) * 2.200000047683716f);
   // float _117 = exp2(log2(max(0.0f, _93)) * 2.200000047683716f);
@@ -73,8 +71,15 @@ float4 main(
   float _117 = CustomGammaDecode(_93);
   float _118 = CustomGammaDecode(_94);
   float3 ungraded = float3(_116, _117, _118);
-  
-  float _119 = dot(float3(0.2125999927520752f, 0.7152000069618225f, 0.0722000002861023f), float3(_116, _117, _118));
+
+  // float _119 = dot(float3(0.2125999927520752f, 0.7152000069618225f, 0.0722000002861023f), float3(_116, _117, _118));
+  float _119 = renodx::color::y::from::BT709(float3(_116, _117, _118));
+
+  // float _95 = dot(float3(0.29899999499320984f, 0.5870000123977661f, 0.11400000005960464f), float3(_92, _93, _94));
+  float _95 = _119;
+  float _101 = saturate((_95 - CustomPixelConsts_160.x) * CustomPixelConsts_160.y);
+  float _106 = saturate((_95 - CustomPixelConsts_160.z) * CustomPixelConsts_160.w);
+
   float _138 = ((CustomPixelConsts_176.x - CustomPixelConsts_192.x) * _101) + CustomPixelConsts_192.x;
   float _139 = ((CustomPixelConsts_176.y - CustomPixelConsts_192.y) * _101) + CustomPixelConsts_192.y;
   float _140 = ((CustomPixelConsts_176.z - CustomPixelConsts_192.z) * _101) + CustomPixelConsts_192.z;

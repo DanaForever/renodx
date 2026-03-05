@@ -39,9 +39,9 @@ float4 main(
   float _45 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_8.x)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
   float _46 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_8.y)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
   float _47 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_8.z)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
-  float _48 = dot(float3(0.29899999499320984f, 0.5870000123977661f, 0.11400000005960464f), float3(_45, _46, _47));
-  float _54 = saturate((_48 - CustomPixelConsts_160.x) * CustomPixelConsts_160.y);
-  float _59 = saturate((_48 - CustomPixelConsts_160.z) * CustomPixelConsts_160.w);
+  // float _48 = dot(float3(0.29899999499320984f, 0.5870000123977661f, 0.11400000005960464f), float3(_45, _46, _47));
+  // float _54 = saturate((_48 - CustomPixelConsts_160.x) * CustomPixelConsts_160.y);
+  // float _59 = saturate((_48 - CustomPixelConsts_160.z) * CustomPixelConsts_160.w);
 
   // float _69 = exp2(log2(max(0.0f, _45)) * 2.200000047683716f);
   // float _70 = exp2(log2(max(0.0f, _46)) * 2.200000047683716f);
@@ -51,7 +51,12 @@ float4 main(
   float _71 = CustomGammaDecode(_47);
   float3 ungraded = float3(_69, _70, _71);
 
-  float _72 = dot(float3(0.2125999927520752f, 0.7152000069618225f, 0.0722000002861023f), float3(_69, _70, _71));
+  // float _72 = dot(float3(0.2125999927520752f, 0.7152000069618225f, 0.0722000002861023f), float3(_69, _70, _71));
+  float _72 = renodx::color::y::from::BT709(float3(_69, _70, _71));
+  float _48 = _72;
+  float _54 = saturate((_48 - CustomPixelConsts_160.x) * CustomPixelConsts_160.y);
+  float _59 = saturate((_48 - CustomPixelConsts_160.z) * CustomPixelConsts_160.w);
+
   float _91 = ((CustomPixelConsts_176.x - CustomPixelConsts_192.x) * _54) + CustomPixelConsts_192.x;
   float _92 = ((CustomPixelConsts_176.y - CustomPixelConsts_192.y) * _54) + CustomPixelConsts_192.y;
   float _93 = ((CustomPixelConsts_176.z - CustomPixelConsts_192.z) * _54) + CustomPixelConsts_192.z;

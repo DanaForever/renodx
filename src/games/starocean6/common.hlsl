@@ -517,20 +517,30 @@ float3 RestoreSaturationLoss(float3 color_input, float3 color_output, float stre
   return renodx::color::bt709::from::OkLab(perceptual_out);
 }
 
-float3 LUTSampleAndToneMap(float4 r0, Texture3D<float4> lut, SamplerState lut_sampler) {
+float3 lutEncode(float3 inputColor, float4 cvConst) {
+
+
+  float3 r1 = renodx::color::srgb::EncodeSafe(inputColor);
+  float3 r0;
+  r0.xyz = max(cvConst.zzz, r1.xyz);
+  r0.xyz = log2(r0.xyz);
+  r0.xyz = saturate(r0.xyz * cvConst.xxx + cvConst.www);
+
+  return r0;
+}
+
+float3 LUTSampleAndToneMap(float3 lut_input_srgb, Texture3D<float4> lut, SamplerState lut_sampler, float4 cvConst) {
   // untonemapped in PQ
   float white = 203.f;
 
-  float3 lut_input_hdr = r0.rgb;
-  float3 untonemapped = PQtoLinear(r0.xyz, white, true);
+  float3 untonemapped = renodx::color::srgb::DecodeSafe(lut_input_srgb);
 
   // we scale it down to SDR range to treat the HDR LUT as SDR LUT, and scale it back up after
 
-  // untonemapped = min(untonemapped, 10000.f / white);
   float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(untonemapped);
   float3 sdr = untonemapped * scale;
 
-  float3 lut_input = LinearToPQ(sdr, white, true);
+  float3 lut_input = lutEncode(sdr, cvConst);
 
   renodx::lut::Config lut_config = CreatePQInPQBOutLUTConfig();
 
@@ -559,13 +569,12 @@ float3 LUTSampleAndToneMap(float4 r0, Texture3D<float4> lut, SamplerState lut_sa
       1,                                    // naka rushton
       1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
 
-  float3 reference_pq = renodx::lut::SampleTetrahedral(lut, lut_input_hdr, 32u);
+  float3 reference_pq = renodx::lut::SampleTetrahedral(lut, lutEncode(untonemapped, cvConst), 32u);
 
-  // return reference_pq; 
   float3 reference_linear = PQtoLinear(reference_pq, white, true);
 
   // linear_graded = RestoreSaturationLoss(linear_graded, untonemapped);
-  linear_graded = CorrectHueAndPurity(linear_graded, reference_linear, 1.f);
+  // linear_graded = CorrectHueAndPurity(linear_graded, reference_linear, 1.f);
   float3 pq_graded = LinearToPQ(linear_graded, RENODX_DIFFUSE_WHITE_NITS, true);
 
   return pq_graded;

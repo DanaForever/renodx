@@ -58,9 +58,8 @@ float4 main(
   float _90 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_55)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
   float _91 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_56)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
   float _92 = exp2(log2(max(0.0f, ((CustomPixelConsts_224.x * exp2(log2(abs(_25.z)) * CustomPixelConsts_128.x)) + CustomPixelConsts_224.y))) * CustomPixelConsts_224.z);
-  float _93 = dot(float3(0.29899999499320984f, 0.5870000123977661f, 0.11400000005960464f), float3(_90, _91, _92));
-  float _99 = saturate((_93 - CustomPixelConsts_160.x) * CustomPixelConsts_160.y);
-  float _104 = saturate((_93 - CustomPixelConsts_160.z) * CustomPixelConsts_160.w);
+  // float _93 = dot(float3(0.29899999499320984f, 0.5870000123977661f, 0.11400000005960464f), float3(_90, _91, _92));
+  
 
   // float _114 = exp2(log2(max(0.0f, _90)) * 2.200000047683716f);
   // float _115 = exp2(log2(max(0.0f, _91)) * 2.200000047683716f);
@@ -68,9 +67,15 @@ float4 main(
   float _114 = CustomGammaDecode(_90);
   float _115 = CustomGammaDecode(_91);
   float _116 = CustomGammaDecode(_92);
+
+  float _93 = renodx::color::y::from::BT709(float3(_114, _115, _116));
+  float _99 = saturate((_93 - CustomPixelConsts_160.x) * CustomPixelConsts_160.y);
+  float _104 = saturate((_93 - CustomPixelConsts_160.z) * CustomPixelConsts_160.w);
+
   float3 ungraded = float3(_114, _115, _116);
 
-  float _117 = dot(float3(0.2125999927520752f, 0.7152000069618225f, 0.0722000002861023f), float3(_114, _115, _116));
+  // float _117 = dot(float3(0.2125999927520752f, 0.7152000069618225f, 0.0722000002861023f), float3(_114, _115, _116));
+  float _117 = _93;
   float _136 = ((CustomPixelConsts_176.x - CustomPixelConsts_192.x) * _99) + CustomPixelConsts_192.x;
   float _137 = ((CustomPixelConsts_176.y - CustomPixelConsts_192.y) * _99) + CustomPixelConsts_192.y;
   float _138 = ((CustomPixelConsts_176.z - CustomPixelConsts_192.z) * _99) + CustomPixelConsts_192.z;

@@ -92,18 +92,42 @@ void main(
   r1.y = dot(cvConst_9.xyzw, r0.xyzw);
   r1.z = dot(cvConst_10.xyzw, r0.xyzw);
 
+  float3 output = r1.rgb;
+
+  float3 lut_input_srgb = output;
+
+  // output = renodx::tonemap::psycho::psychotm_test11(
+  //     output,
+  //     1156.f / 203.f,                            // peak
+  //     1.0f,                                 // exposure
+  //     1.0f,                                     // highlights
+  //     1.0f,                                     // shadows
+  //     1.0f,                                     // contrast
+  //     1.0f,                                     // purity_scale
+  //     1.0f,                                     // bleaching_intensity
+  //     100.f,                                    // clip_point
+  //     0.0f,                                     // hue_restore
+  //     1.0f,                                     // adaptation_contrast
+  //     1,                                        // naka rushton
+  //     1.0f + 0.025 * (1156.f / 203.f - 1.0f));  // cone_response_exponent
+
+  // o0.rgb = renodx::color::bt2020::from::BT709(output);
+  // o0.rgb = renodx::color::pq::EncodeSafe(output, 203.f);
+  oDepth = 0;
+  // return;
   // point 2: look like PQ image (display-able on HDR10, but very lifted black)
 
-  r0.xyz = max(cvConst_13.zzz, r1.xyz);
-  r0.xyz = log2(r0.xyz);
-  r0.xyz = saturate(r0.xyz * cvConst_13.xxx + cvConst_13.www);
+  // r0.xyz = max(cvConst_13.zzz, r1.xyz);
+  // r0.xyz = log2(r0.xyz);
+  // r0.xyz = saturate(r0.xyz * cvConst_13.xxx + cvConst_13.www);
 
+  // r0.rgb = LinearToPQ(lut_input_linear);
   // point 3: PQ image (looks similar to the final output, lifted black a bit, about 0.05)
 
-  float3 pq_graded = LUTSampleAndToneMap(r0, asTexObject3D_3_, asTexSamp_3__s);
+  float3 pq_graded = LUTSampleAndToneMap(lut_input_srgb, asTexObject3D_3_, asTexSamp_3__s, cvConst_13);
 
   o0.rgb = pq_graded;
 
-  oDepth = 0;
+  
   return;
 }

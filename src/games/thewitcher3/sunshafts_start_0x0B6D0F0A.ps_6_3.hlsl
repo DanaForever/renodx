@@ -48,7 +48,7 @@ float4 main(
 
   //if (RENODX_TONE_MAP_TYPE > 1.f) SV_Target.rgb = ToneMapMaxCLL(SV_Target.rgb, CUSTOM_SUNSHAFT_ROLLOFF_START, 100.f * CUSTOM_SUNSHAFT_PEAK);
   //SV_Target.rgb = min(2.0f, SV_Target.rgb);
-  SV_Target.rgb *= CUSTOM_SUNSHAFTS_STRENGTH;
+  // SV_Target.rgb *= CUSTOM_SUNSHAFTS_STRENGTH;
 
   SV_Target.w = 1.0f;
   return SV_Target;

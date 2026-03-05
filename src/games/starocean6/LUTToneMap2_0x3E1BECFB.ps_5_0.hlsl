@@ -127,16 +127,20 @@ void main(
   r1.x = dot(cvConst_8.xyzw, r0.xyzw);
   r1.y = dot(cvConst_9.xyzw, r0.xyzw);
   r1.z = dot(cvConst_10.xyzw, r0.xyzw);
-  r0.xyz = max(cvConst_13.zzz, r1.xyz);
-  r0.xyz = log2(r0.xyz);
-  r0.xyz = saturate(r0.xyz * cvConst_13.xxx + cvConst_13.www);
+
+  float3 output = r1.rgb;
+  float3 lut_input_srgb = output;
+
+  // r0.xyz = max(cvConst_13.zzz, r1.xyz);
+  // r0.xyz = log2(r0.xyz);
+  // r0.xyz = saturate(r0.xyz * cvConst_13.xxx + cvConst_13.www);
   // r0.xyz = (r0.xyz * cvConst_13.xxx + cvConst_13.www);
 
   // r0.xyz = asTexObject3D_3_.Sample(asTexSamp_3__s, r0.xyz).xyz;
   // r0.xyz = renodx::lut::Sample(asTexObject3D_3_, asTexSamp_3__s, r0.xyz, 32u);
   // r0.xyz = renodx::lut::SampleTetrahedral(asTexObject3D_3_, r0.xyz, 32u);
 
-  float3 pq_graded = LUTSampleAndToneMap(r0, asTexObject3D_3_, asTexSamp_3__s);
+  float3 pq_graded = LUTSampleAndToneMap(lut_input_srgb, asTexObject3D_3_, asTexSamp_3__s, cvConst_13);
   o0.rgb = pq_graded;
 
   if (shader_injection.dithering == 0.f) {
