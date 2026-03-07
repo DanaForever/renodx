@@ -215,19 +215,6 @@ float3 CreateStellarBladeOutput(float3 untonemapped_ap1, float3 untonemapped_bt7
   
   output.rgb = graded_filmic;
 
-  // // final output
-  // float gamma = 1.f / cb_config.ue_inv_gamma;
-
-  // // correct gamma - this is important for SDR
-  // if (shader_injection.unreal_lut_gamma_correction == 1) {
-  //   output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
-  // }
-
-  // // lut output encoding
-  // output.rgb = DisplayMap(output.rgb, outputdevice);
-
-  // output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
-  // output.w = 0;
 
   return output;
 }
@@ -350,7 +337,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
   // correct gamma - this is important for SDR
-  if (shader_injection.unreal_lut_gamma_correction == 1) {
+  if (shader_injection.unreal_lut_gamma_correction == 1 && outputdevice == 2u)  {
     output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
   }
 
@@ -481,7 +468,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
   // correct gamma - this is important for SDR
-  if (shader_injection.unreal_lut_gamma_correction == 1) {
+  if (shader_injection.unreal_lut_gamma_correction == 1 && outputdevice == 2u) {
     output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
   }
 
@@ -613,7 +600,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
   // correct gamma - this is important for SDR
-  if (shader_injection.unreal_lut_gamma_correction == 1) {
+  if (shader_injection.unreal_lut_gamma_correction == 1 && outputdevice == 2u) {
     output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
   }
 

@@ -56,7 +56,7 @@ renodx::utils::settings::Settings settings = {
         .default_value = 1.f,
         .can_reset = false,
         .label = "Processing Path",
-        .section = "Unreal Settings",
+        .section = "Unreal Engine Settings",
         .tooltip = "Use Unreal Engine HDR path or Upgrade SDR path.",
         .labels = {"Engine HDR", "Upgrade SDR"},
     },
@@ -68,7 +68,7 @@ renodx::utils::settings::Settings settings = {
         .default_value = 2.f,
         .can_reset = false,
         .label = "Tone Curve",
-        .section = "Unreal Settings",
+        .section = "Unreal Engine Settings",
         .tooltip = "Sets the tone mapper type",
         .labels = {"UE Legacy (Vanilla SDR)", "UE Filmic (SDR)", "UE Legacy Extended (HDR)", "UE Filmic Extended (HDR)"},
     },
@@ -80,11 +80,11 @@ renodx::utils::settings::Settings settings = {
         .default_value = 0.f,
         .can_reset = false,
         .label = "Filmic Tonemapping Curve",
-        .section = "Unreal Settings",
+        .section = "Unreal Engine Settings",
         .tooltip = "Sets the tone mapper type for filmic",
         .labels = {"Default", "Uncharted", "High Precision", "Legacy", "ACES"},
         .is_enabled = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
-        .is_visible = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
+        .is_visible = []() { return (shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f) && settings[0]->GetValue() >= 1; },
     },
 
     new renodx::utils::settings::Setting{
@@ -93,7 +93,7 @@ renodx::utils::settings::Settings settings = {
         .default_value = 0.f,
         .can_reset = false,
         .label = "Gamut Expansion",
-        .section = "Unreal Settings",
+        .section = "Unreal Engine Settings",
         .tooltip = "Expand bright saturated colors outside the BT709 gamut to fake wide gamut rendering.",
         .min = 0.f,
         .max = 100.f,
@@ -106,13 +106,13 @@ renodx::utils::settings::Settings settings = {
         .default_value = 0.f,
         .can_reset = false,
         .label = "Blue Correction",
-        .section = "Unreal Settings",
+        .section = "Unreal Engine Settings",
         .tooltip = "Blue Correction.",
         .min = 0.f,
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
         .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f; },
+        .is_visible = []() { return (shader_injection.tone_map_type == 1.f || shader_injection.tone_map_type == 3.f)  && settings[0]->GetValue() >= 1; },
     },
 
     new renodx::utils::settings::Setting{
@@ -121,9 +121,9 @@ renodx::utils::settings::Settings settings = {
         .value_type = renodx::utils::settings::SettingValueType::BOOLEAN,
         .default_value = 0.f,
         .label = "Override Black Clip",
-        .section = "Unreal Settings",
+        .section = "Unreal Engine Settings",
         .tooltip = "Disables black clip in the tonemapper. Prevents crushing when the black clip parameter is used",
-        .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
+        .is_enabled = []() { return shader_injection.tone_map_type == 3.f && settings[0]->GetValue() >= 1; },
     },
 
     new renodx::utils::settings::Setting{
@@ -132,10 +132,22 @@ renodx::utils::settings::Settings settings = {
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
         .default_value = 1.f,
         .label = "LUT Gamma Correction",
-        .section = "Unreal Settings",
+        .section = "Unreal Engine Settings",
         .tooltip = "The game encodes gamma instead of srgb by default in the LUT. Removing this behaviour deviates from SDR.",
         .labels = {"Off", "On"},
-        // .is_visible = []() { return false; },
+        .is_visible = []() { return settings[0]->GetValue() >= 1; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "UnrealLUTScaling",
+        .binding = &shader_injection.custom_lut_scaling,
+        .default_value = 100.f,
+        .label = "LUT Scaling",
+        .section = "Unreal Engine Settings",
+        .tooltip = "Scales the color grade LUT to full range when size is clamped.",
+        .max = 100.f,
+        .is_enabled = []() { return shader_injection.tone_map_type > 1.f; },
+        .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return shader_injection.tone_map_type > 1.f; },
     },
 
     new renodx::utils::settings::Setting{
@@ -324,18 +336,6 @@ renodx::utils::settings::Settings settings = {
         .default_value = 100.f,
         .label = "LUT Strength",
         .section = "Color Grading LUTs",
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type != 0; },
-        .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return false; },
-    },
-    new renodx::utils::settings::Setting{
-        .key = "ColorGradeLUTScaling",
-        .binding = &shader_injection.custom_lut_scaling,
-        .default_value = 100.f,
-        .label = "LUT Scaling",
-        .section = "Color Grading LUTs",
-        .tooltip = "Scales the color grade LUT to full range when size is clamped.",
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type != 0; },
         .parse = [](float value) { return value * 0.01f; },
@@ -545,21 +545,6 @@ void OnPresetOff() {
       {"ToneMapGameNits", 203.f},
       {"ToneMapUINits", 203.f},
       {"ToneMapGammaCorrection", 0.f},
-      {"UIGammaCorrection", 0.f},
-      {"ToneMapHueCorrectionType", 0.f},
-      {"ToneMapHueCorrection", 0.f},
-      {"OverrideBlackClip", 0.f},
-      {"ColorGradeExposure", 1.f},
-      {"ColorGradeHighlights", 50.f},
-      {"ColorGradeShadows", 50.f},
-      {"ColorGradeContrast", 50.f},
-      {"ColorGradeSaturation", 50.f},
-      {"ColorGradeHighlightSaturation", 50.f},
-      {"ColorGradeBlowout", 0.f},
-      {"ColorGradeFlare", 0.f},
-      {"ColorGradeLUTStrength", 100.f},
-      {"ColorGradeLUTScaling", 100.f},
-      {"ColorGradeLUTGamutRestoration", 1.f},
       // {"FxGrainType", 0.f},
       // {"FxGrainStrength", 50.f},
   });
@@ -579,8 +564,8 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
   if (fired_on_init_swapchain) return;
   auto peak = renodx::utils::swapchain::GetPeakNits(swapchain);
   if (peak.has_value()) {
-    settings[1 + n_unreal_settings + 2]->default_value = peak.value();
-    settings[1 + n_unreal_settings + 2]->can_reset = true;
+    settings[1 + n_unreal_settings + 3]->default_value = peak.value();
+    settings[1 + n_unreal_settings + 3]->can_reset = true;
     fired_on_init_swapchain = true;
   }
 

@@ -518,20 +518,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r11g11b10_float,
           .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,
-        //   .use_resource_view_cloning = true,
-          .use_resource_view_hot_swap = true,          
-        //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
-
-      // this might break the motion vectors
-      // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      //     .old_format = reshade::api::format::r11g11b10_float,
-      //     .new_format = reshade::api::format::r16g16b16a16_float,
-      //     .ignore_size = true
-      // });
-
-
+          .ignore_size = true,     
+      });
+      {
+        bool is_hdr10 = true;
+        renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        renodx::mods::swapchain::use_resize_buffer = false;
+      }
       shader_injection.clampState = CLAMP_STATE__NONE;
 
       if (!reshade::register_addon(h_module)) return FALSE;

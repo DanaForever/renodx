@@ -21,6 +21,7 @@ Texture2D<float4> bloomTexture : register(t1);
 Texture2D<float4> brightTexture : register(t2);
 
 
+
 // 3Dmigoto declarations
 #define cmp -
 
@@ -30,7 +31,8 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   // ---------------------------
 
   float2 uv = v1;
-  float3 bloom = bloomTexture.Sample(bloomSampler_s, uv).rgb * bloomScale;
+  // float3 bloom = bloomTexture.Sample(bloomSampler_s, uv).rgb * bloomScale;
+  float3 bloom = sample_bicubic(bloomTexture, bloomSampler_s, uv).rgb * bloomScale;
   float3 bright = brightTexture.Sample(brightSampler_s, uv).rgb * bloomScale;
   float3 base = opaueTexture.Sample(opaueSampler_s, uv).rgb;
 
@@ -103,7 +105,7 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   float scale = 1.0 / (colorBlend.x * colorBlend.y);
   float cutoff = colorBlend.x * (1 - colorBlend.y);
 
-  float min_value = renodx::color::srgb::Encode(1 * 0.01 / 100);
+  float min_value = renodx::color::srgb::Encode(0.01 / 100);
   // compute the danger threshold in *linear*
   float t0_srgb = (min_value - bias) / scale;  // where srgb affine crosses 0
   float t0_lin = renodx::color::srgb::DecodeSafe(float3(t0_srgb, t0_srgb, t0_srgb)).r;

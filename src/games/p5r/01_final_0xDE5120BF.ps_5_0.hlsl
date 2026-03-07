@@ -319,10 +319,11 @@ void main(
   color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
 
   color = max(0.f, color);
-  color = renodx::color::bt709::from::BT2020(color);
+  // color = renodx::color::bt709::from::BT2020(color);
 
   o0.rgb = color;
+  o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, injectedData.toneMapGameNits);
 
-  o0.rgb *= injectedData.toneMapGameNits / 80.f;
+  // o0.rgb *= injectedData.toneMapGameNits / 80.f;
   return;
 }
