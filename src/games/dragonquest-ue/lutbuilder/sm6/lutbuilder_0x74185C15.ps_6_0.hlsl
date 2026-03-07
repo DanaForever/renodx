@@ -515,6 +515,36 @@ float4 main(
   cb_config.ColorShadow_Tint2.y = asfloat(cb0_035y);
   cb_config.ColorShadow_Tint2.z = asfloat(cb0_035z);
 
+  if (shader_injection.filmic_curve == 1.f) {
+    // Uncharted settings
+    cb_config.ue_filmslope = 0.63;
+    cb_config.ue_filmtoe = 0.55;
+    cb_config.ue_filmshoulder = 0.47;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.01;
+  } else if (shader_injection.filmic_curve == 2.f) {
+    // HP settings
+    cb_config.ue_filmslope = 0.65;
+    cb_config.ue_filmtoe = 0.63;
+    cb_config.ue_filmshoulder = 0.45;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.f;
+  } else if (shader_injection.filmic_curve == 3.f) {
+    // Legacy settings
+    cb_config.ue_filmslope = 0.98;
+    cb_config.ue_filmtoe = 0.3;
+    cb_config.ue_filmshoulder = 0.22;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.025;
+  } else if (shader_injection.filmic_curve == 4.f) {
+    // aces settings
+    cb_config.ue_filmslope = 0.91;
+    cb_config.ue_filmtoe = 0.53;
+    cb_config.ue_filmshoulder = 0.23;
+    cb_config.ue_filmblackclip = 0.f;
+    cb_config.ue_filmwhiteclip = 0.035;
+  }
+
   uint device = asuint(cb0_044y);
 
   float3 untonemapped_ap1 = float3(_818, _821, _824);

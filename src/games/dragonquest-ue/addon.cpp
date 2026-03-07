@@ -34,8 +34,6 @@ ShaderInjectData shader_injection;
 
 float current_settings_mode = 0;
 
-
-
 renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "SettingsMode",
@@ -584,6 +582,22 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
 }
 
 
+void OnInitDevice(reshade::api::device* device) {
+  int vendor_id;
+  auto retrieved = device->get_property(reshade::api::device_properties::vendor_id, &vendor_id);
+  if (retrieved && vendor_id == 0x10de) {  // Nvidia vendor ID
+    // Bugs out AMD GPUs
+    renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+      .old_format = reshade::api::format::r11g11b10_float,
+      .new_format = reshade::api::format::r16g16b16a16_float,
+      .use_resource_view_cloning = true,
+      .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+    });
+  }
+}
+
+
+
 
 bool initialized = false;
 
@@ -646,6 +660,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
               .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
           }); 
           
+          // Upgrade for character screen 
           renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
               .old_format = reshade::api::format::b8g8r8a8_typeless,
               .new_format = reshade::api::format::r16g16b16a16_typeless,
@@ -659,9 +674,10 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
               .use_resource_view_cloning = true,
               .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
           });
+
         } else if (product_name == "Stellar Blade")  {
 
-        } else {
+        } else { // This is Dragon Quest XIS and Sword & Fairy 7. 
           renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8g8b8a8_unorm,
             .new_format = reshade::api::format::r16g16b16a16_float,
@@ -696,12 +712,17 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
               .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
           });
         }
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r11g11b10_float,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
+
+        // General Upgrades 
+
+        // fp11 upgrades only for nvidia
+        reshade::register_event<reshade::addon_event::init_device>(OnInitDevice);
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r11g11b10_float,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     .use_resource_view_cloning = true,
+        //     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        // });
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r10g10b10a2_unorm,
@@ -783,6 +804,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       renodx::utils::swapchain::Use(fdw_reason);
       renodx::utils::resource::Use(fdw_reason);
       reshade::unregister_event<reshade::addon_event::init_swapchain>(OnInitSwapchain);
+      reshade::unregister_event<reshade::addon_event::init_device>(OnInitDevice);
       reshade::unregister_addon(h_module);
       break;
   }
