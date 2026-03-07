@@ -607,6 +607,11 @@ extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX";
 extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for Dragon Quest XI: Echoes of an Elusive Age";
 
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
+
+  auto process_path = renodx::utils::platform::GetCurrentProcessPath();
+  auto filename = process_path.filename().string();
+  auto product_name = renodx::utils::platform::GetProductName(process_path);
+
   switch (fdw_reason) {
     case DLL_PROCESS_ATTACH:
       if (!reshade::register_addon(h_module)) return FALSE;
@@ -630,9 +635,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::use_resource_cloning = true;
         renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
         renodx::mods::swapchain::swapchain_proxy_revert_state = true;
-        auto process_path = renodx::utils::platform::GetCurrentProcessPath();
-        auto filename = process_path.filename().string();
-        auto product_name = renodx::utils::platform::GetProductName(process_path);
+        
         
         renodx::mods::swapchain::swap_chain_proxy_shaders = {
             {
@@ -716,7 +719,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         // General Upgrades 
 
         // fp11 upgrades only for nvidia
-        reshade::register_event<reshade::addon_event::init_device>(OnInitDevice);
+        if ((filename == "DQ7R-Win64-Shipping.exe") == false)
+            reshade::register_event<reshade::addon_event::init_device>(OnInitDevice);
         // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
         //     .old_format = reshade::api::format::r11g11b10_float,
         //     .new_format = reshade::api::format::r16g16b16a16_float,
@@ -804,7 +808,9 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       renodx::utils::swapchain::Use(fdw_reason);
       renodx::utils::resource::Use(fdw_reason);
       reshade::unregister_event<reshade::addon_event::init_swapchain>(OnInitSwapchain);
-      reshade::unregister_event<reshade::addon_event::init_device>(OnInitDevice);
+
+      if ((filename == "DQ7R-Win64-Shipping.exe") == false)
+        reshade::unregister_event<reshade::addon_event::init_device>(OnInitDevice);
       reshade::unregister_addon(h_module);
       break;
   }
