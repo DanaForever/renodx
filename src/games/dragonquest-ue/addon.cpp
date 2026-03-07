@@ -211,25 +211,13 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Off", "2.2", "BT.1886 (2.4)"},
     },
 
-    // new renodx::utils::settings::Setting{
-    //     .key = "ToneMapHueCorrection",
-    //     .binding = &shader_injection.tone_map_hue_correction,
-    //     .default_value = 100.f,
-    //     .label = "Hue Correction",
-    //     .section = "Tone Mapping & Color Grading",
-    //     .tooltip = "Hue retention strength.",
-    //     .max = 100.f,
-    //     .is_enabled = []() { return shader_injection.tone_map_type == 1.f; },
-    //     .parse = [](float value) { return value * 0.01f; },
-    // },
-
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueShift",
         .binding = &shader_injection.tone_map_hue_shift,
-        .default_value = 50.f,
+        .default_value = 0.f,
         .label = "Filmic Hue Shift",
         .section = "Scene Grading",
-        .tooltip = "Hue-shift emulation strength (from Filmic to Mobile).",
+        .tooltip = "Hue-shift emulation strength (from SDR to HDR).",
         .min = 0.f,
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
@@ -584,6 +572,15 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
     settings[1 + n_unreal_settings-2]->is_visible = []() { return false; };
   }
 
+  // gamut expansion and blue correction (only for DQ)
+  if (filename == "DQ7R-Win64-Shipping.exe")  {
+    settings[3]->default_value = 3.f; 
+    settings[1 + n_unreal_settings + 3 + 4]->default_value = 50.f;
+    
+  } else {
+    
+  }
+
 }
 
 
@@ -640,16 +637,37 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             },
         };
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r8g8b8a8_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
         
-        if (filename == "Tales of Arise.exe")  {
+        if (filename == "DQ7R-Win64-Shipping.exe")  {
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::b8g8r8a8_typeless,
+              .new_format = reshade::api::format::r16g16b16a16_typeless,
+              .use_resource_view_cloning = true,
+              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          }); 
+          
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::b8g8r8a8_typeless,
+              .new_format = reshade::api::format::r16g16b16a16_typeless,
+              .use_resource_view_cloning = true,
+              .dimensions = {.width = 1700, .height = 1700},
+          });
+
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+              .old_format = reshade::api::format::b8g8r8a8_unorm,
+              .new_format = reshade::api::format::r16g16b16a16_float,
+              .use_resource_view_cloning = true,
+              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          });
+        } else if (product_name == "Stellar Blade")  {
 
         } else {
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+            .old_format = reshade::api::format::r8g8b8a8_unorm,
+            .new_format = reshade::api::format::r16g16b16a16_float,
+            .use_resource_view_cloning = true
+          });
+
           renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
               .old_format = reshade::api::format::r8g8b8a8_typeless,
               .new_format = reshade::api::format::r16g16b16a16_typeless,
@@ -696,13 +714,19 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         if (product_name == "Stellar Blade")  {
           renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
               .old_format = reshade::api::format::b8g8r8a8_typeless,
-              .new_format = reshade::api::format::r16g16b16a16_float,
+              .new_format = reshade::api::format::r16g16b16a16_typeless,
               .ignore_size = false,
               .use_resource_view_cloning = true,
               .aspect_ratio = static_cast<float>(renodx::mods::swapchain::SwapChainUpgradeTarget::ANY),
               .usage_include = reshade::api::resource_usage::render_target
                               | reshade::api::resource_usage::copy_dest,
           });
+
+          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({.old_format = reshade::api::format::r10g10b10a2_unorm,
+                                                                         .new_format = reshade::api::format::r16g16b16a16_float,
+                                                                         .use_resource_view_cloning = true,
+                                                                         .aspect_ratio = 3780.f / 2128.f});
+
 
           renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
               .old_format = reshade::api::format::r10g10b10a2_unorm,
@@ -713,6 +737,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
               .usage_include = reshade::api::resource_usage::render_target
                               | reshade::api::resource_usage::copy_dest,
           });
+          
         }
 
         {

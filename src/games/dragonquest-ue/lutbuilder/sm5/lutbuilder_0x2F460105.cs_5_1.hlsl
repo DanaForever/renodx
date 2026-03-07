@@ -1,4 +1,5 @@
-// High On Life
+// High On Life 
+// Dragon Quest VII R
 
 #include "../lutbuilderoutput.hlsli"
 
@@ -180,6 +181,12 @@ void main(uint3 vThreadID: SV_DispatchThreadID) {
   cb_config.ue_filmshoulder = asfloat(cb0[36].z);
   cb_config.ue_filmslope = asfloat(cb0[36].x);
   cb_config.ue_filmwhiteclip = asfloat(cb0[37].x);
+
+  cb_config.ue_filmslope = 0.65;
+  cb_config.ue_filmtoe = 0.63;
+  cb_config.ue_filmshoulder = 0.45;
+  cb_config.ue_filmblackclip = 0.f;
+  cb_config.ue_filmwhiteclip = 0.f;
 
   if (shader_injection.filmic_curve == 1.f) {
     // Uncharted settings

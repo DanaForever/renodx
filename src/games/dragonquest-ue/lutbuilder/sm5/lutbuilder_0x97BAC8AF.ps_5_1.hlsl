@@ -339,6 +339,7 @@ void main(
   float3 untonemapped_bt709 = renodx::color::bt709::from::AP1(untonemapped_ap1);
 
   o0 = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, s0_s, t0, s1_s, t1, cb_config, device);
+  
   return;
 
   r1.x = dot(float3(1.70505154, -0.621790707, -0.0832583979), r0.xyz);
