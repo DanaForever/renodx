@@ -280,6 +280,12 @@ void main(uint3 vThreadID: SV_DispatchThreadID) {
   cb_config.ue_filmslope = asfloat(cb0[36].x);
   cb_config.ue_filmwhiteclip = asfloat(cb0[37].x);
 
+  cb_config.ue_filmslope = 0.65;
+  cb_config.ue_filmtoe = 0.63;
+  cb_config.ue_filmshoulder = 0.45;
+  cb_config.ue_filmblackclip = 0.f;
+  cb_config.ue_filmwhiteclip = 0.f;
+
   if (shader_injection.filmic_curve == 1.f) {
     // Uncharted settings
     cb_config.ue_filmslope = 0.63;
@@ -334,9 +340,9 @@ void main(uint3 vThreadID: SV_DispatchThreadID) {
   float3 untonemapped_ap1 = r0.rgb;
   float3 untonemapped_bt709 = renodx::color::bt709::from::AP1(untonemapped_ap1);
 
-  // u0[vThreadID.xyz] = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, cb_config, device);
+  u0[vThreadID.xyz] = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, cb_config, device);
 
-  // return;
+  return;
 
   r1.x = dot(float3(1.70505154, -0.621790707, -0.0832583979), r0.xyz);
   r1.y = dot(float3(-0.130257145, 1.14080286, -0.0105485283), r0.xyz);
