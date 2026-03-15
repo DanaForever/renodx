@@ -1,0 +1,215 @@
+// ---- Created with 3Dmigoto v1.3.16 on Wed May 14 11:39:13 2025
+#include "./common.hlsl"
+#include "uncharted2extended.hlsli"
+
+Texture2D<float4> t2 : register(t2);
+
+Texture2D<float4> t1 : register(t1);
+
+Texture2D<float4> t0 : register(t0);
+
+SamplerState s2_s : register(s2);
+
+SamplerState s1_s : register(s1);
+
+SamplerState s0_s : register(s0);
+
+cbuffer cb0 : register(b0)
+{
+  float4 cb0[7];
+}
+
+
+
+
+// 3Dmigoto declarations
+#define cmp -
+
+
+void main(
+  float4 v0 : SV_Position0,
+  float4 v1 : TEXCOORD0,
+  float4 v2 : TEXCOORD1,
+  float4 v3 : TEXCOORD2,
+  out float4 o0 : SV_Target0)
+{
+  float4 r0,r1,r2,r3,r4,r5;
+  uint4 bitmask, uiDest;
+  float4 fDest;
+
+  r0.xyzw = v2.xyzw * cb0[0].zwzw + cb0[0].xyxy;
+  r1.xyz = t2.Sample(s2_s, r0.xy).xyz;
+  r0.xyz = t2.Sample(s2_s, r0.zw).xyz;
+
+  // r1.xyz = ApplyRCAS(r1.xyz, r0.xy, t2, s2_s);
+  // r0.xyz = ApplyRCAS(r0.xyz, r0.zw, t2, s2_s);
+  
+  // r0.xyz = max(float3(0,0,0), r0.xyz);
+  // r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
+  r0.w = dot(r0.xyz, float3(0.2126390059f, 0.7151686788f, 0.0721923154f));
+  r0.w = renodx::color::y::from::BT709(r0.rgb);
+  // r1.xyz = max(float3(0,0,0), r1.xyz);
+  // r0.z = dot(r1.xyz, float3(0.298999995, 0.587000012, 0.114));
+  // r0.z = dot(r1.xyz, float3(0.2126390059f, 0.7151686788f, 0.0721923154f));
+  r0.z = renodx::color::y::from::BT709(r1.rgb);
+  r1.xyzw = v3.xyzw * cb0[0].zwzw + cb0[0].xyxy;
+  r2.xyz = t2.Sample(s2_s, r1.xy).xyz;
+  r1.xyz = t2.Sample(s2_s, r1.zw).xyz;
+  // r1.xyz = max(float3(0,0,0), r1.xyz);
+  // r0.x = dot(r1.xyz, float3(0.298999995, 0.587000012, 0.114));
+  // r0.x = dot(r1.xyz, float3(0.2126390059f, 0.7151686788f, 0.0721923154f));
+  r0.x = renodx::color::y::from::BT709(r1.rgb);
+  // r1.xyz = max(float3(0,0,0), r2.xyz);
+  // r0.y = dot(r1.xyz, float3(0.298999995, 0.587000012, 0.114));
+  // r0.y = dot(r1.xyz, float3(0.2126390059f, 0.7151686788f, 0.0721923154f));
+  r0.y = renodx::color::y::from::BT709(r2.rgb);
+  r1.xyzw = r0.yzzw + r0.xwyx;
+  r1.xy = r1.xz + -r1.yw;
+  r1.z = min(abs(r1.x), abs(r1.y));
+  r1.z = r1.z * cb0[1].x + 0.00100000005;
+  r1.zw = r1.xy / r1.zz;
+  r2.xy = cb0[2].zw * r1.xy;
+  r1.xy = max(-cb0[1].yy, r1.zw);
+  r1.xy = min(cb0[1].yy, r1.xy);
+  r1.zw = cb0[2].xy * cb0[1].yy;
+  r2.zw = r1.xy * r1.zw;
+  r1.xyzw = v1.xyxy * cb0[0].zwzw + cb0[0].xyxy;
+  r3.xyzw = r1.zwzw + -r2.xyzw;
+  r2.xyzw = r1.xyzw + r2.xyzw;
+  r1.xyzw = t2.Sample(s2_s, r1.zw).xyzw;
+  r4.xyz = t2.Sample(s2_s, r3.zw).xyz;
+  r3.xyz = t2.Sample(s2_s, r3.xy).xyz;
+  r3.xyz = max(float3(0,0,0), r3.xyz);
+  r4.xyz = max(float3(0,0,0), r4.xyz);
+  r5.xyz = t2.Sample(s2_s, r2.zw).xyz;
+  r2.xyz = t2.Sample(s2_s, r2.xy).xyz;
+
+  r2.xyz = max(float3(0,0,0), r2.xyz);
+  r2.xyz = r3.xyz + r2.xyz;
+  r3.xyz = max(float3(0,0,0), r5.xyz);
+  r3.xyz = r4.xyz + r3.xyz;
+  r3.xyz = float3(0.25,0.25,0.25) * r3.xyz;
+  r3.xyz = r2.xyz * float3(0.25,0.25,0.25) + r3.xyz;
+  r2.xyz = float3(0.5,0.5,0.5) * r2.xyz;
+  // r2.w = dot(r3.xyz, float3(0.298999995, 0.587000012, 0.114));
+  // r2.w = dot(r3.xyz, float3(0.2126390059f, 0.7151686788f, 0.0721923154f));
+  r2.w = renodx::color::y::from::BT709(r3.rgb);
+  r4.xy = min(r0.zy, r0.wx);
+  r0.xy = max(r0.zy, r0.wx);
+  r0.x = max(r0.x, r0.y);
+  r0.y = min(r4.x, r4.y);
+  r4.xyz = max(float3(0,0,0), r1.xyz);
+  // r0.z = dot(r4.xyz, float3(0.298999995, 0.587000012, 0.114));
+  // r0.z = dot(r4.xyz, float3(0.2126390059f, 0.7151686788f, 0.0721923154f));
+  r0.z = renodx::color::y::from::BT709(r4.rgb);
+  r0.y = min(r0.z, r0.y);
+  r0.x = max(r0.z, r0.x);
+  r0.x = cmp(r0.x < r2.w);
+  r0.y = cmp(r2.w < r0.y);
+  r0.x = (int)r0.x | (int)r0.y;
+  r0.xyz = r0.xxx ? r2.xyz : r3.xyz;
+
+  r1.xyz = cb0[3].xxx * r0.xyz;
+  r0.xyzw = t0.Sample(s0_s, v1.xy).xyzw;
+
+  r2.x = cb0[3].y / cb0[3].z;
+  r0.xyzw = r2.xxxx * r0.xyzw;
+  r0.xyzw = r0.xyzw * float4(0.5,0.5,0.5,0.5) + r1.xyzw;
+  r1.xyzw = t1.Sample(s1_s, v1.xy).xyzw;
+  r0.xyzw = r1.xyzw * cb0[3].wwww + r0.xyzw;
+
+  r0.xyz = cb0[4].xyz * r0.xyz;
+  o0.w = r0.w;
+
+  float3 untonemapped = r0.xyz;
+  // r0.xyz = displayMap(untonemapped);
+
+  // uncharted 2 
+  r1.xyz = cb0[4].www * r0.xyz + cb0[5].xxx;
+  r1.xyz = r0.xyz * r1.xyz + cb0[5].yyy;
+  r2.xyz = cb0[4].www * r0.xyz + cb0[5].zzz;
+  r0.xyz = r0.xyz * r2.xyz + cb0[5].www;
+  r0.xyz = r1.xyz / r0.xyz;
+  r0.xyz = -cb0[6].xxx + r0.xyz;
+  r0.xyz = cb0[6].yyy * r0.xyz;
+
+  if (RENODX_TONE_MAP_TYPE == 0.f) {
+    o0.rgb = r0.rgb;
+  } else {
+
+    float precompute_white = cb0[6].y;
+
+    const float A = 0.22, B = 0.30, C = 0.10, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
+    // const float A = cb0[4].w, B = cb0[5].z, C = cb0[5].x / cb0[5].z, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
+
+    float coeffs[6] = { A, B, C, D, E, F };
+    // float white_precompute = 1.f / renodx::tonemap::ApplyCurve(W, A, B, C, D, E, F);
+    Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfig(coeffs, precompute_white);
+
+
+    float3 base = r0.xyz;
+    float3 extended = Uncharted2::ApplyExtended(untonemapped, base, uc2_config);
+
+    o0.rgb = extended;
+
+    o0.rgb = ToneMapLMS(o0.rgb);
+  }
+  o0.rgb = PostToneMapProcess(o0.rgb);
+
+  // float3 sdr = r0.xyz;
+  
+  // // gamma slider
+  // // r0.xyz = renodx::math::SignPow(r0.xyz, cb0[6].z);
+
+  // if (shader_injection.tone_map_type == 0.f) {
+  //   // Gamma Encoding for SDR
+  //   r0.xyz = renodx::math::SignPow(r0.xyz, cb0[6].z);
+  //   o0.xyz = r0.xyz;
+  // } else if (shader_injection.tone_map_type == 2.f) {
+  //   // tonemap (0.18) to find mid gray
+  //   r0.xyz = float3(0.18f, 0.18f, 0.18f);
+  //   r1.xyz = cb0[4].www * r0.xyz + cb0[5].xxx;
+  //   r1.xyz = r0.xyz * r1.xyz + cb0[5].yyy;
+  //   r2.xyz = cb0[4].www * r0.xyz + cb0[5].zzz;
+  //   r0.xyz = r0.xyz * r2.xyz + cb0[5].www;
+  //   r0.xyz = r1.xyz / r0.xyz;
+  //   r0.xyz = -cb0[6].xxx + r0.xyz;
+  //   r0.xyz = cb0[6].yyy * r0.xyz;
+
+  //   float mid_gray = renodx::color::y::from::BT709(r0.xyz);
+  //   untonemapped *= mid_gray / 0.18f;
+
+  //   float3 hdr = DICEToneMap(untonemapped);
+  //   o0.rgb = renodx::color::correct::Hue(hdr, sdr, RENODX_TONE_MAP_HUE_CORRECTION, RENODX_TONE_MAP_HUE_PROCESSOR);
+  //   o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+
+  // } else {
+  //   float3 sdr = r0.xyz;
+  //   // tonemap (0.18) to find mid gray
+  //   r0.xyz = float3(0.18f, 0.18f, 0.18f);
+  //   r1.xyz = cb0[4].www * r0.xyz + cb0[5].xxx;
+  //   r1.xyz = r0.xyz * r1.xyz + cb0[5].yyy;
+  //   r2.xyz = cb0[4].www * r0.xyz + cb0[5].zzz;
+  //   r0.xyz = r0.xyz * r2.xyz + cb0[5].www;
+  //   r0.xyz = r1.xyz / r0.xyz;
+  //   r0.xyz = -cb0[6].xxx + r0.xyz;
+  //   r0.xyz = cb0[6].yyy * r0.xyz;
+
+  //   float mid_gray = renodx::color::y::from::BT709(r0.xyz);
+  //   untonemapped *= mid_gray / 0.18f;
+  //   float3 hdr;
+
+  //   if (CUSTOM_TONEMAP_UPGRADE_TYPE == 0.f) {
+  //     hdr = renodx::draw::ToneMapPass(untonemapped, sdr);
+  //   } else {
+  //     hdr = CustomUpgradeToneMapPerChannel(untonemapped, sdr);
+  //     hdr = renodx::draw::ToneMapPass(hdr);
+  //   }
+
+  //   o0.rgb = hdr;
+  //   o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+
+  // }
+
+  return;
+}

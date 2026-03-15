@@ -1,4 +1,4 @@
-#include "./shared.h"
+#include "./common.hlsl"
 
 cbuffer GFD_PSCONST_GAMMA : register(b13) {
   float4 clearColor : packoffset(c0);
@@ -288,12 +288,42 @@ void main(
   // o0.xyzw = r1.xyzw;
   o0.rgb = inputColor.rgb;
   o0.a = saturate(inputColor.a);
-  float3 signs = sign(o0.rgb);
-  o0.rgb = abs(o0.rgb);
-  o0.rgb = (injectedData.toneMapGammaCorrection
-                ? pow(o0.rgb, 2.2f)
-                : renodx::color::srgb::Decode(o0.rgb));
-  o0.rgb *= signs;
-  o0.rgb *= injectedData.toneMapUINits / 80.f;
+  o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+  
+  if (injectedData.colorGradeColorSpace == 1.f)
+    o0.rgb = renodx::color::bt709::clamp::BT709(o0.rgb);
+  else if (injectedData.colorGradeColorSpace == 2.f)
+    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
+  else 
+    o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
+  o0.rgb = ToneMap(o0.rgb, injectedData.toneMapPeakNits, injectedData.toneMapGameNits);
+
+  if (injectedData.toneMapGammaCorrection == 1.f) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
+  } else if (injectedData.toneMapGammaCorrection == 2.f) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
+  }
+
+  float3 color = o0.rgb;
+
+  // Gamut Compression
+  color = renodx::color::bt2020::from::BT709(color);
+  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+  float encode_gamma = MID_GRAY_GAMMA;
+  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
+
+  color = max(0.f, color);
+  // color = renodx::color::bt709::from::BT2020(color);
+
+  o0.rgb = color;
+  o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, injectedData.toneMapGameNits);
+
+  // o0.rgb *= injectedData.toneMapGameNits / 80.f;
   return;
 }

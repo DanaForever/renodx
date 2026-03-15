@@ -1,4 +1,4 @@
-#include "./shared.h"
+#include "./common.hlsl"
 
 cbuffer GFD_PSCONST_CORRECT : register(b12) {
   float3 colorBalance : packoffset(c0);  // 0,0,0
@@ -20,125 +20,143 @@ Texture2D<float4> opaueTexture : register(t0);
 Texture2D<float4> bloomTexture : register(t1);
 Texture2D<float4> brightTexture : register(t2);
 
+
+
 // 3Dmigoto declarations
 #define cmp -
 
-void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TARGET0) {
-  float4 r0, r1, r2, r3;
+void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGET0) {
+  // ---------------------------
+  // 1) Sample inputs (gamma/sRGB domain in your capture)
+  // ---------------------------
 
-  // r0.xyz = bloomTexture.Sample(bloomSampler_s, v1.xy).xyz;
-  // r0.xyz = bloomScale * r0.xyz;
-  r0.rgb = bloomTexture.Sample(bloomSampler_s, v1).rgb * bloomScale * injectedData.fxBloom;
+  float2 uv = v1;
+  // float3 bloom = bloomTexture.Sample(bloomSampler_s, uv).rgb * bloomScale;
+  float3 bloom = sample_bicubic(bloomTexture, bloomSampler_s, uv).rgb * bloomScale;
+  float3 bright = brightTexture.Sample(brightSampler_s, uv).rgb * bloomScale;
+  float3 base = opaueTexture.Sample(opaueSampler_s, uv).rgb;
 
-  // r1.xyz = brightTexture.Sample(brightSampler_s, v1.xy).xyz;
-  // r1.xyz = bloomScale * r1.xyz;
-  r1.rgb = brightTexture.Sample(brightSampler_s, v1).rgb * bloomScale * injectedData.fxBloom;
+  // ---------------------------
+  // 2) Bloom compositing
+  // ---------------------------
+  // The code does two "screen" blends:
+  // screen(a,b) = a + b - a*b
 
-  // r2.xyz = opaueTexture.Sample(opaueSampler_s, v1.xy).xyz;
-  r2.rgb = opaueTexture.Sample(opaueSampler_s, v1).rgb;
+  // screen(bright, bloom)
+  float3 screenBrightBloom = bright + bloom - (bright * bloom);
 
-  // r3.xyz = r1.xyz + r0.xyz;
+  // baseMinusBright = max(base - bright, 0)
+  float3 baseMinusBright = max(base - bright, 0.0);
 
-  // r0.xyz = r1.xyz * r0.xyz;
-  // r0.xyz = -r0.xyz;
-  // r0.xyz = r3.xyz + r0.xyz;
-  r0.xyz = (r1.xyz + r0.xyz) - (r1.xyz * r0.xyz);
+  // screen(baseMinusBright, screenBrightBloom)
+  float3 screen2 = baseMinusBright + screenBrightBloom - (baseMinusBright * screenBrightBloom);
 
-  // r1.xyz = -r1.xyz;
-  // r1.xyz = r2.xyz + r1.xyz;
-  r1.rgb = r2.rgb - r1.rgb;
+  // Lighten against base: max(base, screen2)
+  float3 untonemapped = max(base, screen2);
 
-  r1.rgb = max(0, r1.rgb);  // Clamp
+  // ---------------------------
+  // 3) "Tonemap"/grade block (still in gamma space)
+  // ---------------------------
 
-  // r3.xyz = r1.xyz + r0.xyz;
-  // r0.xyz = r1.xyz * r0.xyz;
-  // r0.xyz = -r0.xyz;
-  // r0.xyz = r3.xyz + r0.xyz;
-  r0.rgb = (r1.xyz + r0.xyz) - (r1.xyz + r0.xyz);
+  // max channel
+  float maxCh = max(untonemapped.r, max(untonemapped.g, untonemapped.b));
 
-  r0.xyz = max(r2.xyz, r0.xyz);  // Only apply if lighter than input
+  // oneMinusMax = 1 - maxCh  (this is r2.x in the original)
+  float oneMinusMax = 1.0 - maxCh;
 
-  float3 untonemapped = r0.xyz;
-  if (injectedData.toneMapType == 0.f) {
-    // r1.w = 1;
-    // r0.w = max(r0.x, r0.y);
-    // r0.w = max(r0.w, r0.z);
-    r0.w = max(r0.x, max(r0.y, r0.z));  // max channel
-    float maxChannel = r0.w;
+  // The original does:
+  //   tmp = (1 - untonemapped) - oneMinusMax;
+  //   tmp = tmp / maxCh;
+  //
+  // which simplifies to:
+  //   tmp = 1 - untonemapped/maxCh
+  //
+  // We'll keep it in the same conceptual steps for clarity:
+  float3 t = 1.0 - untonemapped;  // (float3(1)-untonemapped)
+  t = t - oneMinusMax;            // remove (1-maxCh)
+  t = renodx::math::DivideSafe(t, maxCh, 0.f);                  // normalize by max channel  (no guard: original assumes maxCh>0)
 
-    // r2.x = -r0.w;
-    // r2.x = 1 + r2.x;
-    r2.x = 1 - r0.w;  // 1-maxchannel
+  // Add balance
+  t = t + colorBalance;
 
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - r0.xyz;  //
+  // Original:
+  //   t = t * maxCh;
+  //   t = t + oneMinusMax;
+  //   t = 1 - t;
+  //
+  // i.e. t = 1 - (t*maxCh + (1-maxCh))
+  t = t * maxCh;
+  t = t + oneMinusMax;
+  t = 1.0 - t;
 
-    // r2.yzw = -r2.xxx;
-    // r0.xyz = r2.yzw + r0.xyz;
-    r0.xyz = r0.xyz - r2.x;  // remove maxchannel
-    r0.xyz = r0.xyz / r0.www;
+  // untonemapped = t.rgb;
+  float3 ungraded = t.rgb;
 
-    float3 vanillaToneMapped = ((1 - untonemapped) - (1 - maxChannel)) / maxChannel;
+  // Two more invert/divide stages:
+  //   t = 1 - (t / colorBlend.x)
+  //   t = 1 - (t / colorBlend.y)
+  // t = 1.0 - (t / colorBlend.x);
+  // t = 1.0 - (t / colorBlend.y);
 
-    r0.xyz = colorBalance.xyz + r0.xyz;  // Add to tonemapped
-    // r0.xyz = r0.xyz * r0.www; // scale up by max channel
-    // r0.xyz = r0.xyz + r2.xxx; // add (1 )
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - (r0.xyz * r0.w + r2.x);
+  float3 t_lin = renodx::color::srgb::DecodeSafe(t);
+  float Y = renodx::color::y::from::BT709(t_lin);
 
-    // r0.xyz = r0.xyz / colorBlend.x;
-    // r0.xyz = -r0.xyz;
-    // r0.xyz = float3(1, 1, 1) + r0.xyz;
-    r0.xyz = 1 - (r0.xyz / colorBlend.x);
+  float bias = 1.0 - 1.0 / colorBlend.y;
+  float scale = 1.0 / (colorBlend.x * colorBlend.y);
+  float cutoff = colorBlend.x * (1 - colorBlend.y);
 
-    // r0.xyz = r0.xyz / colorBlend.y;
-    // r0.xyz = -r0.xyz;
-    // r1.xyz = float3(1, 1, 1) + r0.xyz;
-    r1.xyz = 1 - (r0.xyz / colorBlend.y);
+  float min_value = renodx::color::srgb::Encode(0.01 / 100);
+  // compute the danger threshold in *linear*
+  float t0_srgb = (min_value - bias) / scale;  // where srgb affine crosses 0
+  float t0_lin = renodx::color::srgb::DecodeSafe(float3(t0_srgb, t0_srgb, t0_srgb)).r;
 
-    // r1.xyz = r1.xyz;
-    r1.xyz = lerp(untonemapped, r1.xyz, injectedData.colorGradeLUTStrength);
+  float m = min(t_lin.r, min(t_lin.g, t_lin.b));
+  float eps = 1e-6;
+  // k grows only when we're in the danger zone (m < t0)
+  // multiplicative “make-safe” factor based on linear luma
+  float k = max(1.0, t0_lin / (m + 1e-6));
 
-    // Fix Vanilla NaNs
-    if (maxChannel == 0) {
-      r1.xyz = 0;
-    }
-    r0.xyz = r1.xyz;
+  // apply safety lift in linear, then convert back to srgb for the game’s affine
+  float3 t_safe_srgb = renodx::color::srgb::EncodeSafe(t_lin * k);
+
+  // game affine (still in srgb, preserving its look)
+  float3 t_aff = t_safe_srgb * scale + bias;
+
+  // undo the lift back in linear so HDR energy is preserved
+  float3 out_lin = renodx::color::srgb::DecodeSafe(t_aff) / k;
+  
+  float3 t_aff_fixed = renodx::color::srgb::EncodeSafe(out_lin);
+
+  if (injectedData.toneMapBlackCorrection > 0.f) {
+    //   t = lerp(t, t_aff, w);
+    t = t_aff_fixed;
+    // optional: blend only when needed (k>1)
+    // float w = saturate((k - 1.0) / (k));  // 0 when k=1, ->1 as k grows
+    // t = lerp(t_aff, t_aff_fixed, 1.0);  // usually just use fixed version
   } else {
-    r0.xyz = max(0, untonemapped.xyz);
+    t = t * scale + bias;
   }
 
-  renodx::tonemap::Config config = renodx::tonemap::config::Create();
-  config.type = injectedData.toneMapType;
-  config.peak_nits = injectedData.toneMapPeakNits;
-  config.game_nits = injectedData.toneMapGameNits;
-  config.gamma_correction = injectedData.toneMapGammaCorrection - 1;
-  config.exposure = injectedData.colorGradeExposure;
-  config.highlights = injectedData.colorGradeHighlights;
-  config.shadows = injectedData.colorGradeShadows;
-  config.contrast = injectedData.colorGradeContrast;
-  config.saturation = injectedData.colorGradeSaturation;
-  config.reno_drt_dechroma = 0;
+  float3 ungraded_linear = renodx::color::srgb::DecodeSafe(ungraded);
+  float3 t_linear = renodx::color::srgb::DecodeSafe(t);
 
-  o0.rgb = sign(r0.xyz) * pow(abs(r0.xyz), 2.2f);
+  t_linear = renodx::color::bt709::clamp::BT2020(t_linear);
+  
+  t = renodx::color::srgb::EncodeSafe(t_linear);
 
-  o0.rgb = renodx::tonemap::config::Apply(o0.rgb, config);
+  float3 tOut = t;
 
-  if (injectedData.colorGradeColorSpace == COLOR_SPACE__BT709) {
-    o0.rgb = renodx::color::bt709::clamp::BT709(o0.rgb);
-  } else if (injectedData.colorGradeColorSpace == COLOR_SPACE__BT2020) {
-    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-  } else if (injectedData.colorGradeColorSpace == COLOR_SPACE__AP1) {
-    o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
-  }
+  // Final invert to output (original does: r1 = 1 + (-t) = 1 - t)
+  float3 outRGB = tOut;
 
-  o0.rgb *= injectedData.toneMapGameNits / injectedData.toneMapUINits;
+  outRGB = renodx::color::srgb::DecodeSafe(outRGB);
+  ungraded = renodx::color::srgb::DecodeSafe(ungraded);
 
-  o0.rgb = sign(o0.rgb) * pow(abs(o0.rgb), 1.f / 2.2f);
-
-  o0.a = 1.f;
+  outRGB = lerp(ungraded, outRGB, injectedData.colorGradeLUTStrength);
+  
+  outRGB = renodx::color::srgb::EncodeSafe(outRGB);
+  
+  o0 = float4(outRGB, 1.0);
 
   return;
 }
