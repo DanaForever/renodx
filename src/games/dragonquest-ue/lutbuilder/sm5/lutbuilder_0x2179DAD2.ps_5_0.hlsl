@@ -939,6 +939,8 @@ void main(
         r6.xyz = float3(78.84375,78.84375,78.84375) * r6.xyz;
         r0.xyz = exp2(r6.xyz);
       } else {
+
+        // HDR scrgb branch
         r6.xy = cmp(asint(cb0[56].zz) == int2(4,6));
         r0.w = (int)r6.y | (int)r6.x;
         if (r0.w != 0) {

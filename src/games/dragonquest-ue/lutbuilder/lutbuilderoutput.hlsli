@@ -211,11 +211,15 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
 
   
   if (RENODX_TONE_MAP_TYPE == 4.f)  {
-    float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config);
+
+    float3 graded_bt709 = untonemapped_bt709;
+    if (outputdevice == 3u || outputdevice == 4u) {
+      float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config);
+    }
+    
     output.rgb = ApplyACESRRTAndODT(graded_bt709);
 
     output.rgb = renodx::color::bt2020::from::AP1(output.rgb);
-    // output.rgb = renodx::color::bt2020::from::BT709(output.rgb);
 
     output.rgb = renodx::color::pq::EncodeSafe(output.rgb, RENODX_DIFFUSE_WHITE_NITS);
 
