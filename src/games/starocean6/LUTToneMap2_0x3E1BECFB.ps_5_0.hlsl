@@ -141,7 +141,8 @@ void main(
   // r0.xyz = renodx::lut::SampleTetrahedral(asTexObject3D_3_, r0.xyz, 32u);
 
   float3 pq_graded = LUTSampleAndToneMap(lut_input_srgb, asTexObject3D_3_, asTexSamp_3__s, cvConst_13);
-  o0.rgb = pq_graded;
+  // o0.rgb = pq_graded;
+  r0.rgb = pq_graded;
 
   if (shader_injection.dithering == 0.f) {
     r1.xyz = asTexObject_2_.Sample(asTexSamp_2__s, v1.zw).xyz;

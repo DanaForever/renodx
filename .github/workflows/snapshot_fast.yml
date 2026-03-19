@@ -78,6 +78,8 @@ jobs:
       - name: Build (x64) for Dynasty Warriors Origins
         run: cmake --build --preset clang-x64-release --target dworigins --verbose
     
+      - name: Build (x64) for Stellar Blade
+        run: cmake --build --preset clang-x64-release --target stellarblade --verbose
 
     #   - name: Set up Clang
     #     uses: egor-tensin/setup-clang@v1

@@ -289,6 +289,22 @@ float4 main(
     _114 = ((exp2((_6 * 14.45161247253418f) + -6.07624626159668f) * 0.18000000715255737f) + -0.002667719265446067f);
     _115 = ((exp2((_9 * 0.4516128897666931f) + -6.07624626159668f) * 0.18000000715255737f) + -0.002667719265446067f);
   }
+
+  float3 color = float3(_113, _114, _115);
+
+  if (RENODX_TONE_MAP_TYPE == 5.f) {
+    float4 output;
+    output.rgb = CreateNativeHDRLUT(color);
+
+    SV_Target.x = (output.x);
+    SV_Target.y = (output.y);
+    SV_Target.z = (output.z);
+
+    SV_Target.w = 0.0f;
+
+    return SV_Target;
+  }
+
   float _118 = cb0_044w * 1.0005563497543335f;
   float _132 = select((_118 <= 7000.0f), (((((2967800.0f - (4604438528.0f / cb0_044w)) / _118) + 99.11000061035156f) / _118) + 0.24406300485134125f), (((((1901800.0f - (2005284352.0f / cb0_044w)) / _118) + 247.47999572753906f) / _118) + 0.23703999817371368f));
   float _146 = ((((cb0_044w * 1.2864121856637212e-07f) + 0.00015411825734190643f) * cb0_044w) + 0.8601177334785461f) / ((((cb0_044w * 7.081451371959702e-07f) + 0.0008424202096648514f) * cb0_044w) + 1.0f);
@@ -431,12 +447,15 @@ float4 main(
   float _813 = ((_697 * (((cb0_050y + cb0_065y) + _595) + (((cb0_049y * cb0_064y) * _604) * exp2(log2(exp2(((cb0_047y * cb0_062y) * _622) * log2(max(0.0f, ((((cb0_046y * cb0_061y) * _631) * _522) + _447)) * 5.55555534362793f)) * 0.18000000715255737f) * (1.0f / ((cb0_048y * cb0_063y) * _613)))))) + (_586 * (((cb0_050y + cb0_055y) + _461) + (((cb0_049y * cb0_054y) * _475) * exp2(log2(exp2(((cb0_047y * cb0_052y) * _503) * log2(max(0.0f, ((((cb0_046y * cb0_051y) * _517) * _522) + _447)) * 5.55555534362793f)) * 0.18000000715255737f) * (1.0f / ((cb0_048y * cb0_053y) * _489))))))) + ((((cb0_050y + cb0_060y) + _706) + (((cb0_049y * cb0_059y) * _715) * exp2(log2(exp2(((cb0_047y * cb0_057y) * _733) * log2(max(0.0f, ((((cb0_046y * cb0_056y) * _742) * _522) + _447)) * 5.55555534362793f)) * 0.18000000715255737f) * (1.0f / ((cb0_048y * cb0_058y) * _724))))) * _800);
   float _815 = ((_697 * (((cb0_050z + cb0_065z) + _595) + (((cb0_049z * cb0_064z) * _604) * exp2(log2(exp2(((cb0_047z * cb0_062z) * _622) * log2(max(0.0f, ((((cb0_046z * cb0_061z) * _631) * _523) + _447)) * 5.55555534362793f)) * 0.18000000715255737f) * (1.0f / ((cb0_048z * cb0_063z) * _613)))))) + (_586 * (((cb0_050z + cb0_055z) + _461) + (((cb0_049z * cb0_054z) * _475) * exp2(log2(exp2(((cb0_047z * cb0_052z) * _503) * log2(max(0.0f, ((((cb0_046z * cb0_051z) * _517) * _523) + _447)) * 5.55555534362793f)) * 0.18000000715255737f) * (1.0f / ((cb0_048z * cb0_053z) * _489))))))) + ((((cb0_050z + cb0_060z) + _706) + (((cb0_049z * cb0_059z) * _715) * exp2(log2(exp2(((cb0_047z * cb0_057z) * _733) * log2(max(0.0f, ((((cb0_046z * cb0_056z) * _742) * _523) + _447)) * 5.55555534362793f)) * 0.18000000715255737f) * (1.0f / ((cb0_048z * cb0_058z) * _724))))) * _800);
 
-  float3 untonemapped_ap1 = float3(_811, _813, _815);
-  float3 untonemapped_bt709 = renodx::color::bt709::from::AP1(untonemapped_ap1);
+  // float3 untonemapped_ap1 = float3(_811, _813, _815);
+  // float3 untonemapped_bt709 = renodx::color::bt709::from::AP1(untonemapped_ap1);
   
   float _818 = mad(_25, _815, mad(_24, _813, (_811 * _23)));
   float _821 = mad(_28, _815, mad(_27, _813, (_811 * _26)));
   float _824 = mad(_31, _815, mad(_30, _813, (_811 * _29)));
+
+  float3 untonemapped_bt709 = float3(_818, _821, _824);
+  float3 untonemapped_ap1 = renodx::color::ap1::from::BT709(untonemapped_bt709);
 
   // SetUntonemappedAP1(float3(_811, _813, _815));
 
@@ -559,15 +578,15 @@ float4 main(
   uint device = asuint(cb0_044y);
 
   
-  // float4 output = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, cb_config, device);
+  float4 output = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, cb_config, device);
 
-  // SV_Target.x = (output.x);
-  // SV_Target.y = (output.y);
-  // SV_Target.z = (output.z);
+  SV_Target.x = (output.x);
+  SV_Target.y = (output.y);
+  SV_Target.z = (output.z);
 
-  // SV_Target.w = 0.0f;
+  SV_Target.w = 0.0f;
 
-  // return SV_Target;
+  return SV_Target;
 
 
   float _839 = ((mad(0.061360642313957214f, _815, mad(-4.540197551250458e-09f, _813, (_811 * 0.9386394023895264f))) - _811) * cb0_066z) + _811;
@@ -706,6 +725,7 @@ float4 main(
   float _1340 = ((cb0_043z - _1331) * cb0_043w) + _1331;
 
   float3 graded_untonemapped_bt709 = float3(_1338, _1339, _1340);
+  // untonemapped_ap1 = renodx::color::ap1::from::BT709(graded_untonemapped_bt709);
 
   float _1352 = exp2(log2(max(0.0f, _1326)) * cb0_027y);
   float _1353 = exp2(log2(max(0.0f, _1327)) * cb0_027y);
@@ -1020,9 +1040,7 @@ float4 main(
 
                             float3 tonemapped_ap1 = float3(_2013, _2014, _2015);
 
-                            // output here 
-
-                            
+                            // output here
 
                             // float _2034 = exp2(log2(mad(_52, _2015, mad(_51, _2014, (_2013 * _50))) * 9.999999747378752e-05f) * 0.1593017578125f);
                             // float _2035 = exp2(log2(mad(_55, _2015, mad(_54, _2014, (_2013 * _53))) * 9.999999747378752e-05f) * 0.1593017578125f);
@@ -1030,8 +1048,9 @@ float4 main(
                             // _2792 = exp2(log2((1.0f / ((_2034 * 18.6875f) + 1.0f)) * ((_2034 * 18.8515625f) + 0.8359375f)) * 78.84375f);
                             // _2793 = exp2(log2((1.0f / ((_2035 * 18.6875f) + 1.0f)) * ((_2035 * 18.8515625f) + 0.8359375f)) * 78.84375f);
                             // _2794 = exp2(log2((1.0f / ((_2036 * 18.6875f) + 1.0f)) * ((_2036 * 18.8515625f) + 0.8359375f)) * 78.84375f);
-
-                            tonemapped_ap1 = ApplyACESRRTAndODT(graded_untonemapped_bt709);
+                            // graded_untonemapped_bt709 = untonemapped_bt709;
+                            // graded_untonemapped_bt709 = PostProcess(untonemapped_bt709, cb_config, true);
+                            tonemapped_ap1 = ApplyACESRRTAndODT(untonemapped_bt709);
                             // tonemapped_ap1 = untonemapped_ap1;
                             float3 tonemapped_bt2020 = renodx::color::bt2020::from::AP1(tonemapped_ap1);
                             float3 output = renodx::color::pq::EncodeSafe(tonemapped_bt2020, RENODX_DIFFUSE_WHITE_NITS);

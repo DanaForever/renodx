@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <include/reshade_api_format.hpp>
 #define ImTextureID ImU64
 
 #define DEBUG_LEVEL_0
@@ -554,10 +555,9 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::b8g8r8a8_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          
-          
+          .new_format = reshade::api::format::r16g16b16a16_float, 
         });
+
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
           .old_format = reshade::api::format::r8g8b8a8_unorm,
           .new_format = reshade::api::format::r16g16b16a16_float,
@@ -580,20 +580,31 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           
         });
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r10g10b10a2_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .aspect_ratio = 16.f / 9.f,
-          
-        });
+       
 
         // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
         //   .old_format = reshade::api::format::r10g10b10a2_unorm,
-        //   .new_format = reshade::api::format::r16g16b16a16_float,
+        //   .new_format = reshade::api::format::r16g16b16a16_unorm,
+
         // //   .use_resource_view_cloning = true,
-        //   .use_resource_view_hot_swap = true, 
+        // //   .use_resource_view_hot_swap = true, 
         //   .dimensions = {.width = 32, .height = 32, .depth = 32},
         // });
+
+         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r10g10b10a2_unorm,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+          .use_resource_view_cloning = true,
+          .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+          
+        });
+
+
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::r8g8_unorm,
+          .new_format = reshade::api::format::r16g16_float, 
+          .ignore_size = true
+        });
         
 
         bool is_hdr10 = true;

@@ -550,6 +550,10 @@ float3 LUTSampleAndToneMap(float3 lut_input_srgb, Texture3D<float4> lut, Sampler
   
   linear_graded /= scale;
 
+  
+
+  linear_graded = lerp(untonemapped, linear_graded, shader_injection.lut_scaling);
+
   float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
   float3 bt709_tonemapped;
@@ -569,12 +573,16 @@ float3 LUTSampleAndToneMap(float3 lut_input_srgb, Texture3D<float4> lut, Sampler
       1,                                    // naka rushton
       1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
 
+  // Hue Correction
   float3 reference_pq = renodx::lut::SampleTetrahedral(lut, lutEncode(untonemapped, cvConst), 32u);
-
   float3 reference_linear = PQtoLinear(reference_pq, white, true);
-
+  // linear_graded = renodx::color::correct::Hue(linear_graded, reference_linear);
   // linear_graded = RestoreSaturationLoss(linear_graded, untonemapped);
-  // linear_graded = CorrectHueAndPurity(linear_graded, reference_linear, 1.f);
+
+  float3 chroma = linear_graded;
+  // linear_graded = CorrectHueAndPurity(linear_graded, reference_linear);
+  // linear_graded = renodx::color::correct::Chrominance(linear_graded, chroma);
+  // linear_graded = renodx::color::correct::Hue(linear_graded, reference_linear);
   float3 pq_graded = LinearToPQ(linear_graded, RENODX_DIFFUSE_WHITE_NITS, true);
 
   return pq_graded;
