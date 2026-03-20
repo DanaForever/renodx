@@ -107,7 +107,7 @@ renodx::utils::settings::Settings settings = {
     },
 
     new renodx::utils::settings::Setting{
-        .key = "UnrealOverrideBlackClip",
+        .key = "UnrealOverrideBlackClip", 
         .binding = &shader_injection.override_black_clip,
         .value_type = renodx::utils::settings::SettingValueType::BOOLEAN,
         .default_value = 0.f,
@@ -203,12 +203,35 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Off", "2.2", "BT.1886 (2.4)"},
     },
 
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapGammaCorrectionMethod",
+        .binding = &shader_injection.gamma_correction_method,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 1.f,
+        .label = "SDR EOTF Emulation",
+        .section = "Tone Mapping",
+        .tooltip = "Emulates a 2.2 EOTF",
+        .labels = {"Per channel (default)", "Macleod Byonton"},
+        .is_visible = []() { return current_settings_mode >= 2; },
+    },
+
+     new renodx::utils::settings::Setting{
+        .key = "ToneMapGammaCorrection",
+        .binding = &shader_injection.gamma_correction,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 1.f,
+        .label = "SDR EOTF Emulation",
+        .section = "Tone Mapping",
+        .tooltip = "Emulates a 2.2 EOTF",
+        .labels = {"Off", "2.2", "BT.1886 (2.4)"},
+    },
+
 
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueShiftSource",
         .binding = &shader_injection.tone_map_hue_shift_source,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
+        .default_value = 0.f,
         .label = "Filmic Hue Shift source",
         .section = "Tone Mapping",
         .tooltip = "Hue-shifting source",
@@ -220,7 +243,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueShift",
         .binding = &shader_injection.tone_map_hue_shift,
-        .default_value = 0.f,
+        .default_value = 50.f,
         .label = "Filmic Hue Shift",
         .section = "Tone Mapping",
         .tooltip = "Hue-shift emulation strength (from SDR to HDR).",
@@ -345,29 +368,6 @@ renodx::utils::settings::Settings settings = {
         .max = 100.f,
         .is_enabled = []() { return shader_injection.tone_map_type != 0; },
         .parse = [](float value) { return value * 0.02f; },
-        .is_visible = []() { return false; },
-    },
-
-    new renodx::utils::settings::Setting{
-        .key = "ColorGradeLUTStrength",
-        .binding = &shader_injection.custom_lut_strength,
-        .default_value = 100.f,
-        .label = "LUT Strength",
-        .section = "Color Grading LUTs",
-        .max = 100.f,
-        .is_enabled = []() { return shader_injection.tone_map_type != 0; },
-        .parse = [](float value) { return value * 0.01f; },
-        .is_visible = []() { return false; },
-    },
-    new renodx::utils::settings::Setting{
-        .key = "ColorGradeLUTGamutRestoration",
-        .binding = &shader_injection.custom_lut_gamut_restoration,
-        .value_type = renodx::utils::settings::SettingValueType::BOOLEAN,
-        .default_value = 1.f,
-        .label = "LUT Gamut Restoration",
-        .section = "Color Grading LUTs",
-        .tooltip = "Restores wide gamut colors clipped by the LUT",
-        .is_enabled = []() { return shader_injection.tone_map_type != 0; },
         .is_visible = []() { return false; },
     },
     // new renodx::utils::settings::Setting{

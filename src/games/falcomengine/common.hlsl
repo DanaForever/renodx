@@ -332,8 +332,8 @@ float3 ToneMapLMS(float3 untonemapped) {
         0.5f,        // hue_restore
         1.0f,        // adaptation_contrast
         1,           // naka rushton
-        1.0f + 0.025 * (contrast_ratio - 1.0f));  // cone_response_exponent
-        // 1.0f);  // cone_response_exponent
+        // 1.0f + 0.025 * (contrast_ratio - 1.0f));  // cone_response_exponent
+        1.0f);  // cone_response_exponent
   }
   return bt709_tonemapped;
 }

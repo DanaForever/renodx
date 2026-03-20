@@ -297,6 +297,15 @@ float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast, bool tonemap_t
 
 
 
+float3 GammaCorrection(float3 x, float gamma) {
+  
+  if (shader_injection.gamma_correction_method == 1.f)  {
+    return CorrectGammaHuePreserving(x, gamma);
+  } else  {
+    return renodx::color::correct::GammaSafe(x, false, gamma);
+  }
+}
+
 
 
 
@@ -309,14 +318,12 @@ float3 CustomSwapchainPass(float3 color, uint device = 0u)  {
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    // color = CorrectGammaHuePreserving(color, 2.2f);
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    color = GammaCorrection(color, 2.2f);
 
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    // color = CorrectGammaHuePreserving(color, 2.4f);
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    color = GammaCorrection(color, 2.4f);
   }
 
   [branch]

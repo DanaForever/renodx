@@ -52,6 +52,7 @@ struct ShaderInjectData {
   float diffuse_white_nits;
   float graphics_white_nits;
   float gamma_correction;
+  float gamma_correction_method;
   float gamma_correction_ui;
   float tone_map_hue_correction_type;
   float tone_map_hue_correction;
