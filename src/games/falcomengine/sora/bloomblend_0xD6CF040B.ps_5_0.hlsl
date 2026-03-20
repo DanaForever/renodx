@@ -43,6 +43,9 @@ float3 vanillaSdrBlend(float3 base, float3 blend) {
 
   float3 oneMinusBase = max(1 - base, 0.f);
 
+  // blend * ( 1 - base) + base
+  // = blend + base - blend * base
+
   return blend * oneMinusBase + base;
 }
 

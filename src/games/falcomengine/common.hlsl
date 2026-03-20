@@ -59,16 +59,12 @@ float3 addBloom(float3 base, float3 blend) {
   return base + addition;
 }
 
-float3 hdrScreenBlend(float3 base, float3 blend, bool encoding = true) {
-  if (encoding) {
-    base = srgbDecode(base);
-    blend = srgbDecode(blend);
-  }
-
-  base = max(0.f, base);
+float3 hdrScreenBlend(float3 base, float3 blend, float scale = 0.f) {
   blend = max(0.f, blend);
 
-  blend *= shader_injection.bloom_strength;
+  // if (shader_injection.bloom != 2.f)
+    // blend *= shader_injection.bloom_strength;
+  blend *= 4.f;
 
   float3 bloom_texture = blend;
 
@@ -82,14 +78,32 @@ float3 hdrScreenBlend(float3 base, float3 blend, bool encoding = true) {
 
   blend = bloom_texture;
 
-  blend = addBloom(base, blend);
-
-  if (encoding)
-    blend = srgbEncode(blend);
-
-  return blend;
+  return addBloom(base, blend);
 }
 
+float3 hdrScreenBlend2(float3 base, float3 blend, float scale = 0.f) {
+  blend = max(0.f, blend);
+
+  base = renodx::color::srgb::EncodeSafe(base);
+  blend = renodx::color::srgb::EncodeSafe(blend);
+
+  float3 bloom = base + blend;
+
+  return renodx::color::srgb::DecodeSafe(bloom);
+  // float3 bloom_texture = blend;
+
+  // float mid_gray_bloomed = (0.18 + renodx::color::y::from::BT709(bloom_texture)) / 0.18;
+
+  // float scene_luminance = renodx::color::y::from::BT709(base) * mid_gray_bloomed;
+  // float bloom_blend = saturate(smoothstep(0.f, 0.18f, scene_luminance));
+
+  // float3 bloom_scaled = lerp(float3(0.f, 0.f, 0.f), bloom_texture, bloom_blend);  // = bloom_blend
+  // bloom_texture = lerp(bloom_texture, bloom_scaled, 0.5f);
+
+  // blend = bloom_texture;
+
+  // return addBloom(base, blend);
+}
 
 float3 LMS_Processing(float3 color) {
   color = LMS_Vibrancy(color, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
@@ -303,20 +317,23 @@ float3 ToneMapLMS(float3 untonemapped) {
   }
 
   if (RENODX_TONE_MAP_TYPE > 0.f) {
+    float contrast_ratio = min(peak_ratio, 4.f);
+
     bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
         untonemapped_graded_dechroma,
-        peak_ratio,                           // peak
-        1.0f,                                 // exposure
-        1.0f,                                 // highlights
-        1.0f,                                 // shadows
-        1.0f,                                 // contrast
-        1.0f,                                 // purity_scale
-        1.0f,                                 // bleaching_intensity
-        100.f,                                // clip_point
-        0.5f,                                 // hue_restore
-        1.0f,                                 // adaptation_contrast
-        1,                                    // naka rushton
-        1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+        peak_ratio,  // peak
+        1.0f,        // exposure
+        1.0f,        // highlights
+        1.0f,        // shadows
+        1.0f,        // contrast
+        1.0f,        // purity_scale
+        1.0f,        // bleaching_intensity
+        100.f,       // clip_point
+        0.5f,        // hue_restore
+        1.0f,        // adaptation_contrast
+        1,           // naka rushton
+        1.0f + 0.025 * (contrast_ratio - 1.0f));  // cone_response_exponent
+        // 1.0f);  // cone_response_exponent
   }
   return bt709_tonemapped;
 }
