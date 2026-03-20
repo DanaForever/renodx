@@ -606,7 +606,8 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
       0.5f,                                 // hue_restore
       1.0f,                                 // adaptation_contrast
       1,                                    // naka rushton
-      1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+      // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+      1.0f);  // cone_response_exponent
 
   // float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, rpeak);
   // float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
