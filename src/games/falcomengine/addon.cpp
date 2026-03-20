@@ -100,7 +100,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xC79A113F), // depth3
     UpgradeRTVReplaceShader(0xCDB2A000), // godray
     UpgradeRTVReplaceShader(0x0F02FFD8), // godraygen
-    UpgradeRTVReplaceShader(0x8C8333BF), // godraygen
+    CustomShaderEntry(0x8C8333BF), // hud
 
     // Sora 
 
