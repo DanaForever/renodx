@@ -413,7 +413,8 @@ float3 ToneMapLMS(float3 untonemapped) {
         0.5f,                                 // hue_restore
         1.0f,                                 // adaptation_contrast
         1,                                    // naka rushton
-        1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+        // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+        1.0f);  // cone_response_exponent
   } else {
     bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
   }
