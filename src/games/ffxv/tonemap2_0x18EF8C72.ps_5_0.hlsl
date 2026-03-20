@@ -64,6 +64,10 @@ cbuffer COLOR_FILTER_PARMS : register(b0)
 SamplerState g_sSampler_s : register(s0);
 Texture2D<float4> g_tTex : register(t0);
 
+
+
+
+
 float3 colorGrade(float3 ungraded) {
   float4 r0, r1, r2, r3, r4, r5;
   r0.rgb = ungraded;
@@ -134,20 +138,63 @@ float3 colorGrade(float3 ungraded) {
   r0.y = dot(r1.xyz, float3(-0.0863080025, 1.10471201, -0.0184039995));
   r0.z = dot(r1.xyz, float3(-0.0281070005, -0.100798003, 1.12890506));
 
-  if (HDR != 0) {
+  if ((FFXV_HDR_GRADING == 1.f && RENODX_TONE_MAP_TYPE > 1.f) || (HDR != 0 && RENODX_TONE_MAP_TYPE == 0.f)) {
     // push colors a bit towards BT2020?
-    if (RENODX_TONE_MAP_TYPE == 0.f) {
-      r1.xyz = float3(0.329299986, 0.919499993, 0.0879999995) * r0.yyy;
-      r1.xyz = r0.xxx * float3(0.627399981, 0.0691, 0.0164000001) + r1.xyz;
-      r1.xyz = r0.zzz * float3(0.0432999991, 0.0114000002, 0.895600021) + r1.xyz;
-      r2.xyz = -r1.xyz + r0.xyz;
-      r0.xyz = HDRGamutRatio * r2.xyz + r1.xyz;
-    }
+    r1.xyz = float3(0.329299986, 0.919499993, 0.0879999995) * r0.yyy;
+    r1.xyz = r0.xxx * float3(0.627399981, 0.0691, 0.0164000001) + r1.xyz;
+    r1.xyz = r0.zzz * float3(0.0432999991, 0.0114000002, 0.895600021) + r1.xyz;
+    r2.xyz = -r1.xyz + r0.xyz;
+    r0.xyz = HDRGamutRatio * r2.xyz + r1.xyz;
   }
 
   // negate all invalid colors
   r0.rgb = renodx::color::bt709::clamp::AP1(r0.rgb);
 
+  return r0.rgb;
+}
+
+float3 toneMapLogContrastExtended(float3 color) {
+  float4 r0, r1;
+  r1.rgb = color;
+
+  // r0.xyz = r1.xyz * float3(39.8107185, 39.8107185, 39.8107185) + ZeroSlopeByTenPowDispositionPlusOne;
+  // // r0.xyz = r1.xyz * float3(39.8107185, 39.8107185, 39.8107185) + 1.5;
+
+  // // ln(color) * constant
+  // r0.xyz = log2(r0.xyz);
+  // r0.xyz = TenPowDispositionTimesTwoPowHighRange_PlusOne_Log_Inverse * r0.xyz;
+  // // r0.xyz = 0.2 * r0.xyz;
+  // r0.xyz = float3(0.693147182, 0.693147182, 0.693147182) * r0.xyz;
+
+  // r0.xyz = renodx::math::SignPow(r0.xyz, Param_n37);
+  // // r0.xyz = renodx::math::SignPow(r0.xyz, 4.5);
+
+  // r0.xyz = r0.xyz * TenPowLogHighRangePlusContrastMinusOne + float3(1, 1, 1);
+  // // r0.xyz = r0.xyz * pow(10, 1.1) + float3(1, 1, 1);
+  // r0.xyz = log2(r0.xyz);
+  // r0.xyz = Param_n46 * r0.xyz;
+  // // r0.xyz = 0.4 * r0.xyz;
+  // r0.xyz = r0.xyz * float3(0.693147182, 0.693147182, 0.693147182) + -Param_n49;
+  // r0.xyz = r0.xyz * float3(0.693147182, 0.693147182, 0.693147182) - 0;
+  // r0.xyz = max(float3(0, 0, 0), r0.xyz);
+
+  float inv = TenPowDispositionTimesTwoPowHighRange_PlusOne_Log_Inverse;
+  float Tmul = TenPowLogHighRangePlusContrastMinusOne;
+  float n46 = Param_n46;
+  float n49 = Param_n49;
+
+  float a = 39.8107185;
+  float b = ZeroSlopeByTenPowDispositionPlusOne;
+  float p = Param_n37;
+
+  float3 tonemapped = ApplyFFXVCurveLn(color, a, b, inv, p, Tmul, n46, n49);
+
+  float inflection = FindInflection_FFXV(0, 100, 64, 24, a, b, inv, p, Tmul, n46);
+
+  float3 tonemapped_extended = ApplyFFXVExtended(color, tonemapped, a, b, inv, p, Tmul, n46, n49, inflection);
+
+  r0.xyz = EnabledToneCurve ? tonemapped_extended : r1.xyz;
+  // r0.xyz = r1.xyz;
   return r0.rgb;
 }
 
@@ -164,9 +211,9 @@ void main(
   float4 r0,r1,r2,r3,r4,r5;
   uint4 bitmask, uiDest;
   float4 fDest;
+  float3 output;
 
   r0.xyzw = g_tTex.SampleLevel(g_sSampler_s, v1.xy, 0).xyzw;
-  float3 untonemapped = r0.xyz;
 
   r1.x = dot(r0.xyz, float3(0.542472005,0.439283997,0.0182429999));
   r1.y = dot(r0.xyz, float3(0.0426700003,0.941115022,0.0162140001));
@@ -191,129 +238,89 @@ void main(
   r0.xyz = max(float3(0, 0, 0), r0.xyz);
   r0.xyz = EnabledToneCurve ? r0.xyz : r1.xyz;
 
-  float3 output;
+  // float3 sdr = toneMapLogContrast(r1.rgb);
+  float3 sdr = r0.rgb;
 
+  if (shader_injection.tone_map_mode < 2.f) {
+    r0.rgb = toneMapLogContrastExtended(r1.rgb);
+  } else {
+    r0.rgb = r1.rgb;
+  }
+  float3 untonemapped = r0.rgb;
+  
   // 0 =  Vanilla (fake HDR)
   // 1 =  SDR
-  if (RENODX_TONE_MAP_TYPE == 0.f) {
+  if (shader_injection.tone_map_type == 0.f) {
     // output = graded;
-    r0.rgb = colorGrade(r0.rgb);
+    r0.rgb = colorGrade(sdr);
 
     // clamping
     r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-    // o0.xyz = Gamma ? r1.xyz : r0.xyz;
-    o0.xyz = r0.xyz;
+    r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+    o0.xyz = Gamma ? r1.xyz : r0.xyz;
+    o0.w = r0.w;
+    return;
 
   }
-  else
-  if (RENODX_TONE_MAP_TYPE == 1.f) {
-    r0.rgb = colorGrade(r0.rgb);
+  else // sdr
+  if (shader_injection.tone_map_type == 1.f) {
+    r0.rgb = colorGrade(sdr);
 
     // clamping and srgb gamma encoding
     r0.xyz = max(float3(0, 0, 0), r0.xyz);
 
-    // o0.xyz = Gamma ? r1.xyz : r0.xyz;
-    output = r0.xyz;
-
-    [branch]
-    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.2f);
-    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.4f);
-    }
-
-    output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-
-    [branch]
-    if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.2f);
-    } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.4f);
-    }
-
-    o0.rgb = output;
+    // r1.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
+    r1.rgb = PostToneMapProcess(r0.rgb);
+    o0.xyz = Gamma ? r1.xyz : r0.xyz;
+    o0.w = r0.w;
+    return;
   }
   else {
-    // float3 sdr_graded = colorGrade(r0.rgb);
+    float3 sdr_graded = colorGrade(sdr);
 
     float3 hdr_ungraded, hdr_graded;
 
-    hdr_ungraded = ToneMapPass(untonemapped,
-                               r0.rgb,
-                               renodx::tonemap::renodrt::NeutralSDR(untonemapped),
-                               0.18f,
-                               false);
+    float sdr_y = renodx::color::y::from::BT709(sdr);
+    // float sdr_m = renodx::math::Max(abs(sdr.rgb));
 
-    hdr_graded = colorGrade(hdr_ungraded);
+    [branch]
+    if (shader_injection.tone_map_mode == 0.f) {
+      float hdr_y = renodx::color::y::from::BT709(untonemapped);
+      // float hdr_m = renodx::math::Max(abs(untonemapped.rgb));
+      // float scale = renodx::math::DivideSafe(sdr_m, hdr_m, 1.f);
+      float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
 
-    if (FFXV_PER_CHANNEL_CORRECTION >= 1.f) {
-      // attempt to recover the highlight saturation from untonemapped
-      float color_y = renodx::color::y::from::BT709(hdr_graded);
+      hdr_ungraded = untonemapped;
+      hdr_graded = colorGrade(hdr_ungraded);
+      hdr_graded = ToneMapLMS(hdr_graded);
 
-      float3 hdr_saturated = renodx::draw::ApplyPerChannelCorrection(
-          ToneMapMaxCLL(untonemapped),
-          hdr_graded,
-          RENODX_PER_CHANNEL_BLOWOUT_RESTORATION,
-          RENODX_PER_CHANNEL_HUE_CORRECTION,
-          RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION,
-          shader_injection.color_grade_per_channel_hue_shift_strength);
+      float3 reference_color = hdr_graded;
 
-      float HDR_START = 1.0;
-      float HDR_PEAK = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-      float weight = smoothstep(HDR_START, HDR_PEAK, color_y);
-      // float t = saturate((x - edge0) / (edge1 - edge0));
-      // return t * t * (3 - 2 * t);
+      hdr_graded = reference_color;
 
-      if (FFXV_PER_CHANNEL_CORRECTION == 1) {  // rgb space
-        hdr_graded = lerp(hdr_graded, hdr_saturated, weight);
-      } else if (FFXV_PER_CHANNEL_CORRECTION == 2) {  // ok lab
-        float3 hdr_graded_oklab = renodx::color::oklab::from::BT709(hdr_graded);
-        float3 hdr_saturated_oklab = renodx::color::oklab::from::BT709(hdr_saturated);
-        hdr_graded_oklab = lerp(hdr_graded_oklab, hdr_saturated_oklab, weight);
+    } else {
+      hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
+      float hdr_y = renodx::color::y::from::BT709(hdr_ungraded);
+      float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
 
-        hdr_graded = renodx::color::bt709::from::OkLab(hdr_graded_oklab);
-      } else if (FFXV_PER_CHANNEL_CORRECTION == 3) {  // ok lch
-        float3 hdr_graded_oklch = renodx::color::oklch::from::BT709(hdr_graded);
-        float3 hdr_saturated_oklch = renodx::color::oklch::from::BT709(hdr_saturated);
+      hdr_graded = colorGrade(hdr_ungraded);
+    }
 
-        float L = lerp(hdr_graded_oklch.x, hdr_saturated_oklch.x, weight);
-        float C = lerp(hdr_graded_oklch.y, hdr_saturated_oklch.y, weight);
-        float H1 = hdr_graded_oklch.z;
-        float H2 = hdr_saturated_oklch.z;
-
-        // Shortest-path interpolation for hue (degrees or radians):
-        float deltaH = H2 - H1;
-        if (abs(deltaH) > 180.0) {
-          if (deltaH > 0.0) deltaH -= 360.0;
-          else deltaH += 360.0;
-        }
-
-        float H = H1 + weight * deltaH;
-        H = fmod(H + 360.0, 360.0);  // wrap to [0, 360)
-        hdr_graded = renodx::color::bt709::from::OkLCh(float3(L, C, H));
-      }
+    if (RENODX_TONE_MAP_HUE_CORRECTION > 0.f) {
+      if (RENODX_TONE_MAP_HUE_PROCESSOR < 3.f)
+        hdr_graded = renodx::color::correct::Hue(hdr_graded, sdr_graded,
+                                                 RENODX_TONE_MAP_HUE_CORRECTION,
+                                                 RENODX_TONE_MAP_HUE_PROCESSOR);
+      else
+        hdr_graded = CorrectHueAndPurity(hdr_graded, sdr_graded, RENODX_TONE_MAP_HUE_CORRECTION);
     }
 
     output = hdr_graded;
+    o0.rgb = PostToneMapProcess(output);
 
-    [branch]
-    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.2f);
-    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, false, 2.4f);
-    }
-
-    output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-
-    [branch]
-    if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.2f);
-    } else if (RENODX_SWAP_CHAIN_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-      output = renodx::color::correct::GammaSafe(output, true, 2.4f);
-    }
-
-    o0.rgb = output;
+    o0.w = r0.w;
+    return;
   }
   o0.w = r0.w;
   return;

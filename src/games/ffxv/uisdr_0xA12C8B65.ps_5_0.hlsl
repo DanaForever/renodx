@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri May 30 13:34:02 2025
-
+#include "shared.h"
 SamplerState g_samp0_s : register(s0);
 Texture2D<float4> g_samp0Texture : register(t0);
 Texture2D<float4> g_samp1Mask : register(t1);
@@ -24,6 +24,7 @@ void main(
   r1.xyzw = g_samp0Texture.Sample(g_samp0_s, v2.xy).xyzw;
   r1.w = r1.w * r0.x;
   r0.xyzw = v1.xyzw * r1.xyzw;
-  o0.xyzw = saturate(r0.xyzw * float4(2,2,2,2) + v3.xyzw);
+  o0.xyzw = (r0.xyzw * float4(2,2,2,2) + v3.xyzw);
+
   return;
 }

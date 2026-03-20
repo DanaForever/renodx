@@ -49,10 +49,10 @@ void main(
 
   r0.xyz = compo_glareSamplerTexture.SampleLevel(srcSampler_s, v1.xy, 0).xyz;
   r0.xyz = compo_glareWeights[1].xyz * r0.xyz;
-  // r0.xyz = log2(r0.xyz);
-  // r0.xyz = compo_glareGamma.xyz * r0.xyz;
-  // r0.xyz = exp2(r0.xyz);
-  r0.xyz = float3(renodx::math::SignPow(r0.x, compo_glareGamma.x), renodx::math::SignPow(r0.y, compo_glareGamma.y), renodx::math::SignPow(r0.z, compo_glareGamma.z));
+  r0.xyz = log2(r0.xyz);
+  r0.xyz = compo_glareGamma.xyz * r0.xyz;
+  r0.xyz = exp2(r0.xyz);
+  // r0.xyz = float3(renodx::math::SignPow(r0.x, compo_glareGamma.x), renodx::math::SignPow(r0.y, compo_glareGamma.y), renodx::math::SignPow(r0.z, compo_glareGamma.z));
   r0.xyz = compo_glareWeightsSumInv.xyz * r0.xyz;
   r0.w = dot(w1.xy, w1.xy);
   r0.w = r0.w * compo_vignetteParam2.y + compo_vignetteParam2.z;
@@ -60,6 +60,7 @@ void main(
   r0.w = r0.w * r0.w;
   r0.w = r0.w * compo_vignetteParam2.x + -compo_vignetteParam2.x;
   r1.xyz = r0.www * compo_vignetteParam1.xyz + float3(1,1,1);
+  // r1.xyz = r0.www * compo_vignetteParam1.xyz;
   o0.xyz = r1.xyz * r0.xyz;
   o1.xyz = compo_glareWeightsSumInv.xyz * r1.xyz;
   o0.w = 0;
