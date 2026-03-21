@@ -407,7 +407,7 @@ float3 CorrectGammaHuePreservingSRGB(float3 incorrect_color, float gamma=2.2f) {
 }
 
 
-float3 DisplayMap(float3 color, uint device = 0u) {
+float3 DisplayMap(float3 color, uint device = 0u, float gamma = 2.2f) {
   // Tonemapping
   if (RENODX_TONE_MAP_TYPE > 1.f) {
     color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
@@ -444,7 +444,8 @@ float3 DisplayMap(float3 color, uint device = 0u) {
         0.5f,                                // hue_restore
         shader_injection.psychov_adaptation_contrast,                                // adaptation_contrast
         1,                                   // naka rushton
-        1.0f + 0.025 * (peak_ratio - 1.0f)); // cone_response_exponent
+        // 1.0f + 0.025 * (peak_ratio - 1.0f)); // cone_response_exponent
+        1.0f); // cone_response_exponent
     }
 
   } else {

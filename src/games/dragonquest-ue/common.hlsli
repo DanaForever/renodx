@@ -302,93 +302,7 @@ float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast, bool tonemap_t
 
 
 
-float3 CustomSwapchainPass(float3 color, uint device = 0u)  {
-  renodx::draw::Config config = renodx::draw::BuildConfig();
 
-  [branch]
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    // color = CorrectGammaHuePreserving(color, 2.2f);
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    // color = CorrectGammaHuePreserving(color, 2.4f);
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
-  }
-
-  [branch]
-  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    color = renodx::color::bt709::from::BT709D93(color);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    color = renodx::color::bt709::from::BT601NTSCU(color);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
-    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-    color = renodx::color::bt709::from::ARIBTRB9(color);
-    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  }
-
-  // Gamut Compression
-  color = renodx::color::bt2020::from::BT709(color);
-  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
-  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
-  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
-  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
-  float encode_gamma = MID_GRAY_GAMMA;
-  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
-  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
-  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
-  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
-  color = max(0.f, color);
-  color = renodx::color::bt709::from::BT2020(color);
-
-  float swap_chain_scale_nits = RENODX_DIFFUSE_WHITE_NITS;
-
-  if (shader_injection.processing_path == 0.f)  {
-    swap_chain_scale_nits = RENODX_DIFFUSE_WHITE_NITS;
-    
-  } else {
-    // SDR path - maybe use GRAPHICS_WHITE_NITS
-    swap_chain_scale_nits = RENODX_GRAPHICS_WHITE_NITS;
-  }
-
-  // linear -> nits
-  color *= swap_chain_scale_nits;
-  float max_channel = max(max(max(color.r, color.g), color.b), config.swap_chain_clamp_nits);
-  color *= config.swap_chain_clamp_nits / max_channel;  // Clamp UI or Videos
-
-  if (shader_injection.processing_path == 0.f)  {
-    
-    if (device == 3u || device == 4u) {
-      color = renodx::color::bt2020::from::BT709(color);\
-      color = renodx::color::pq::EncodeSafe(color, 1.f);
-    } else if (device == 5u || device == 6u) {
-      color = renodx::color::ap1::from::BT709(color);
-      color = renodx::color::pq::EncodeSafe(color, 1.f);
-    } else {
-      color = renodx::color::bt2020::from::BT709(color);
-      color = renodx::color::pq::EncodeSafe(color, 1.f);
-    }
-    
-  } else {
-    // SDR path - maybe use GRAPHICS_WHITE_NITS
-    if (shader_injection.swap_chain_encoding == 5.f)  {
-      color /= 80.f;
-    } else {
-      color = renodx::color::bt2020::from::BT709(color);
-      color = renodx::color::pq::EncodeSafe(color, 1.f);
-    }
-  }
-
-  return color;
-
-}
 
 // Samsung research
 static const float3x3 XYZ_TO_LMS_PROPOSED_2023 = float3x3(
@@ -445,14 +359,21 @@ float3 NeutwoBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
 }
 
 
+float3 CorrectGammaSafe(float3 c, float input_gamma = 1.5f, float output_gamma = 2.2f) {               
 
-float3 PostToneMapProcess(float3 output, uint device = 0u) {
+    return renodx::math::CopySign(renodx::color::gamma::Decode(renodx::color::gamma::Encode(abs(c), input_gamma), output_gamma), c); 
+}
+
+
+float3 PostToneMapProcess(float3 output, uint device = 0u, float gamma = 2.2f) {
   
   [branch]
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     output = renodx::color::correct::GammaSafe(output, false, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     output = renodx::color::correct::GammaSafe(output, false, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    output = CorrectGammaSafe(output, 1.5f, 2.f);
   }
 
   output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
@@ -462,6 +383,8 @@ float3 PostToneMapProcess(float3 output, uint device = 0u) {
     output = renodx::color::correct::GammaSafe(output, true, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     output = renodx::color::correct::GammaSafe(output, true, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    output = CorrectGammaSafe(output, 2.2f, 1.5f);
   }
 
   if (device == 0u || device == 2u || device == 3u) {
@@ -706,3 +629,94 @@ float3 ReinhardBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
 
 
 
+
+
+float3 CustomSwapchainPass(float3 color, uint device = 0u)  {
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+
+  [branch]
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    // color = CorrectGammaHuePreserving(color, 2.4f);
+    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+    color = CorrectGammaSafe(color, 1.5f, 2.2f);
+  }
+
+  [branch]
+  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT709D93(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT601NTSCU(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::ARIBTRB9(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  }
+
+  // Gamut Compression
+  color = renodx::color::bt2020::from::BT709(color);
+  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+  float encode_gamma = MID_GRAY_GAMMA;
+  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
+  color = max(0.f, color);
+  color = renodx::color::bt709::from::BT2020(color);
+
+  float swap_chain_scale_nits = RENODX_DIFFUSE_WHITE_NITS;
+
+  if (shader_injection.processing_path == 0.f)  {
+    swap_chain_scale_nits = RENODX_DIFFUSE_WHITE_NITS;
+    
+  } else {
+    // SDR path - maybe use GRAPHICS_WHITE_NITS
+    swap_chain_scale_nits = RENODX_GRAPHICS_WHITE_NITS;
+  }
+
+  // linear -> nits
+  color *= swap_chain_scale_nits;
+  float max_channel = max(max(max(color.r, color.g), color.b), config.swap_chain_clamp_nits);
+  color *= config.swap_chain_clamp_nits / max_channel;  // Clamp UI or Videos
+
+  if (shader_injection.processing_path == 0.f)  {
+    
+    if (device == 3u || device == 4u) {
+      color = renodx::color::bt2020::from::BT709(color);\
+      color = renodx::color::pq::EncodeSafe(color, 1.f);
+    } else if (device == 5u || device == 6u) {
+      color = renodx::color::ap1::from::BT709(color);
+      color = renodx::color::pq::EncodeSafe(color, 1.f);
+    } else {
+      color = renodx::color::bt2020::from::BT709(color);
+      color = renodx::color::pq::EncodeSafe(color, 1.f);
+    }
+    
+  } else {
+    // SDR path - maybe use GRAPHICS_WHITE_NITS
+    if (shader_injection.swap_chain_encoding == 5.f)  {
+      color /= 80.f;
+    } else {
+      color = renodx::color::bt2020::from::BT709(color);
+      color = renodx::color::pq::EncodeSafe(color, 1.f);
+    }
+  }
+
+  return color;
+
+}

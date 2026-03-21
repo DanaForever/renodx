@@ -57,6 +57,8 @@ void main(
   r1.w = cmp(cb0[2].y != 1.000000);
   o0.xyz = r1.www ? r1.xyz : r0.xyz;
 
+  // o0.rgb  = renodx::color::bt709::from::BT2020(o0.rgb);
+
   if (shader_injection.processing_path == 0.f)
     o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   o0.w = r0.w;

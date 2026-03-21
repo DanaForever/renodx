@@ -62,9 +62,25 @@ void main(
     r1.xyz = r2.xyz * r1.www;
   }
   r1.w = 1 + -r0.w;
+
+  float3 output = r0.rgb;
+
+  [branch]
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    output = renodx::color::correct::GammaSafe(output, false, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    output = renodx::color::correct::GammaSafe(output, false, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    output = CorrectGammaSafe(output, 1.5f, 2.f);
+  }
+
+  r0.rgb = output;
+
   r0.xyz = float3(RENODX_GRAPHICS_WHITE_NITS, RENODX_GRAPHICS_WHITE_NITS, RENODX_GRAPHICS_WHITE_NITS) * r0.xyz;
   r0.xyz = r1.xyz * r1.www + r0.xyz;
   r0.xyz = float3(0.0125000002,0.0125000002,0.0125000002) * r0.xyz;
+
+  // BT2020 ?
   o0.x = dot(float3(1.66053164,-0.58764261,-0.0728400499), r0.xyz);
   o0.y = dot(float3(-0.124553561,1.1329025,-0.00834836345), r0.xyz);
   o0.z = dot(float3(-0.0181512013,-0.100579083,1.11858058), r0.xyz);

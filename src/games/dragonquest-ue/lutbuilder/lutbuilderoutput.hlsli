@@ -309,11 +309,11 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   // final output
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
-  // correct gamma - this is important for SDR
-  if (shader_injection.unreal_lut_gamma_correction == 1)  {
-    // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
-    output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
-  }
+  // correct gamma - this is important for SDR - Dragon Quest XI S
+  // if (shader_injection.unreal_lut_gamma_correction == 1 && (outputdevice == 2u))  {
+  //   // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
+  //   output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
+  // }
 
   // lut output encoding
   output.rgb = DisplayMap(output.rgb, outputdevice);
@@ -440,10 +440,10 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
   // correct gamma - this is important for SDR
-  if (shader_injection.unreal_lut_gamma_correction == 1) {
-    // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
-    output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
-  }
+  // if (shader_injection.unreal_lut_gamma_correction == 1) {
+  //   // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
+  //   output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
+  // }
 
   // lut output encoding
   output.rgb = DisplayMap(output.rgb, outputdevice);
@@ -610,10 +610,10 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
   // correct gamma - this is important for SDR
-  if (shader_injection.unreal_lut_gamma_correction == 1) {
-    // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
-    output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
-  }
+  // if (shader_injection.unreal_lut_gamma_correction == 1) {
+  //   // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
+  //   output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
+  // }
 
   // lut output encoding
   output.rgb = DisplayMap(output.rgb, outputdevice);

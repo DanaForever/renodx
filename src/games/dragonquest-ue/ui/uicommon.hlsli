@@ -15,7 +15,7 @@ float3 PQDecodeSrgbEncode(float3 color) {
   return PQDecodeSrgbEncode(color.x, color.y, color.z);
 }
 
-float3 RestoreLumiannce(float3 color) {
+float3 RestoreLuminance(float3 color) {
   if (RENODX_GAMMA_CORRECTION) {
     color = renodx::color::gamma::DecodeSafe(color);  // Decode
     color *= RENODX_GRAPHICS_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
@@ -28,3 +28,10 @@ float3 RestoreLumiannce(float3 color) {
 
   return color;
 }
+
+
+float3 CorrectGammaSafe(float3 c, float input_gamma = 1.5f, float output_gamma = 2.2f) {               
+
+    return renodx::math::CopySign(renodx::color::gamma::Decode(renodx::color::gamma::Encode(abs(c), input_gamma), output_gamma), c); 
+}
+

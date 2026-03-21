@@ -68,6 +68,7 @@ void main(
     r1.xyz = r1.xyz * r1.www;
   }
   r1.w = 1 + -r0.w;
+
   r0.xyz = RENODX_GRAPHICS_WHITE_NITS * r0.xyz;
   r0.xyz = r1.xyz * r1.www + r0.xyz;
   r0.xyz = float3(9.99999975e-005,9.99999975e-005,9.99999975e-005) * r0.xyz;

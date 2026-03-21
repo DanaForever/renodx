@@ -200,7 +200,7 @@ renodx::utils::settings::Settings settings = {
         .label = "SDR EOTF Emulation",
         .section = "Tone Mapping",
         .tooltip = "Emulates a 2.2 EOTF",
-        .labels = {"Off", "2.2", "BT.1886 (2.4)"},
+        .labels = {"Off", "2.2", "BT.1886 (2.4)", "DQ11 S (1.5)"},
     },
 
 
@@ -220,7 +220,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueShift",
         .binding = &shader_injection.tone_map_hue_shift,
-        .default_value = 0.f,
+        .default_value = 50.f,
         .label = "Filmic Hue Shift",
         .section = "Tone Mapping",
         .tooltip = "Hue-shift emulation strength (from SDR to HDR).",
@@ -591,10 +591,16 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
   if (filename == "DRAGON QUEST XI S.exe")  {
     settings[1 + n_unreal_settings]->default_value = 1;
     shader_injection.unreal_lut_gamma_correction = 1.f;
+
+    settings[1 + n_unreal_settings + 6]->default_value = 3.f; // 1.5
+    settings[1 + n_unreal_settings + 6]->can_reset = true;
   } else {
     settings[1 + n_unreal_settings]->default_value = 0;
     settings[1 + n_unreal_settings]->is_visible = []() { return false; };
     shader_injection.unreal_lut_gamma_correction = 0.f;
+
+    settings[1 + n_unreal_settings + 6]->default_value = 1.f; // 2.2
+    settings[1 + n_unreal_settings + 6]->can_reset = true;
   } 
 
   // gamut expansion and blue correction (only for DQ)
@@ -753,66 +759,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
           renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
               .old_format = reshade::api::format::b8g8r8a8_unorm,
-              .new_format = reshade::api::format::r16g16b16a16_float,
-              .use_resource_view_cloning = true,
-              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-          });
-
-        } else if (product_name == "Stellar Blade" || filename == "SB-Win64-Shipping.exe") { 
-          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::b8g8r8a8_typeless,
-              .new_format = reshade::api::format::r16g16b16a16_typeless,
-              .ignore_size = false,
-              .use_resource_view_cloning = true,
-              .aspect_ratio = static_cast<float>(renodx::mods::swapchain::SwapChainUpgradeTarget::ANY),
-              .usage_include = reshade::api::resource_usage::render_target
-                              | reshade::api::resource_usage::copy_dest
-                              | reshade::api::resource_usage::copy_source
-          });
-
-          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::b8g8r8a8_unorm,
-              .new_format = reshade::api::format::r16g16b16a16_float,
-              .ignore_size = false,
-              .use_resource_view_cloning = true,
-              .aspect_ratio = static_cast<float>(renodx::mods::swapchain::SwapChainUpgradeTarget::ANY),
-              .usage_include = reshade::api::resource_usage::render_target
-                              | reshade::api::resource_usage::copy_dest,
-          });
-
-
-          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::r10g10b10a2_unorm,
-              .new_format = reshade::api::format::r16g16b16a16_float,
-              .ignore_size = true,
-              .use_resource_view_cloning = true
-          }); 
-          
-           renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::r11g11b10_float,
-              .new_format = reshade::api::format::r16g16b16a16_float,
-              .use_resource_view_cloning = true,
-              .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-
-          });
-          
-          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::r11g11b10_float,
-              .new_format = reshade::api::format::r16g16b16a16_float,
-              .use_resource_view_cloning = true,
-              .aspect_ratio = 30.f / 17.f,
-          });
-
-          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::r8_unorm,
-              .new_format = reshade::api::format::r16_unorm,
-            //   .ignore_size = true,
-              .use_resource_view_cloning = true
-          }); 
-          
-          // maybe unsafe?
-          renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::r16g16b16a16_unorm,
               .new_format = reshade::api::format::r16g16b16a16_float,
               .use_resource_view_cloning = true,
               .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
