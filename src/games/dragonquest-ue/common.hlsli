@@ -631,7 +631,7 @@ float3 ReinhardBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
 
 
 
-float3 CustomSwapchainPass(float3 color, uint device = 0u, float gamma = 1.5f, )  {
+float3 CustomSwapchainPass(float3 color, uint device = 0u, float gamma = 1.5f)  {
   renodx::draw::Config config = renodx::draw::BuildConfig();
 
   [branch]
