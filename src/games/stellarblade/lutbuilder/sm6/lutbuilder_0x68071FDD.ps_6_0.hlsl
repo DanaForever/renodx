@@ -1,4 +1,4 @@
-#include "../lutbuilderoutput.hlsli"
+#include "../lutbuilderoutput.hlsl"
 // Found in Stellar Blade, Demo
 
 Texture2D<float4> t0 : register(t0);

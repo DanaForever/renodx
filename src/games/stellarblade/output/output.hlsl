@@ -1,4 +1,4 @@
-#include "../common.hlsli"
+#include "../common.hlsl"
 
 
 float3 PQtoLinear(float3 x) {

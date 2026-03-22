@@ -407,7 +407,7 @@ float3 CorrectGammaHuePreservingSRGB(float3 incorrect_color, float gamma=2.2f) {
 }
 
 
-float3 DisplayMap(float3 color, uint device = 0u, float gamma = 2.2f) {
+float3 DisplayMap(float3 color, uint device = 0u, float gamma = 1.5f) {
   // Tonemapping
   if (RENODX_TONE_MAP_TYPE > 1.f) {
     color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
@@ -454,12 +454,14 @@ float3 DisplayMap(float3 color, uint device = 0u, float gamma = 2.2f) {
   
   // HDR ini path
   if (shader_injection.processing_path == 0.f)  {
-    return CustomSwapchainPass(color, device);
+
+    // We pass the given gamma to the swapchain pass, so it will do correction correctly for the game at least 
+    return CustomSwapchainPass(color, device, gamma);
     
   } else {
-    // SDR path, process later
-    // maybe PostToneMapScale?
-    return PostToneMapProcess(color, device);
+
+    // for SDR pass, render intermediate pass will handle gamma correctly for the game, the UI will be handled with 1.5 
+    return PostToneMapProcess(color, device, gamma);
   }
 }
 

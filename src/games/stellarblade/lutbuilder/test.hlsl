@@ -1,4 +1,5 @@
-#include "./filmiclutbuilder.hlsli"
+#include "./filmiclutbuilder.hlsl"
+#include "./acesv2.hlsl"
 
 
 float3 PostCurveProcessingAP1toBT709(float3 tonemapped_graded_ap1, float3 untonemapped_graded_ap1, UECbufferConfig cb_config) {
@@ -133,57 +134,31 @@ LegacyTonemapResult LegacyFilmicPostProcess(float3 linear_color, LegacyFilmicCon
   return result;
 }
 
-float4 createLegacyLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
-                       UECbufferConfig cb_config, uint outputdevice) {
 
-  // float3 untonemapped_bt709 = renodx::color::bt709::from::AP1(untonemapped_ap1);
-  float4 output;
-  output.w = 0;
+float3 CreateNativeHDRLUT(float3 graded_bt709) {
 
-  LegacyFilmicConfig legacy_config = CreateLegacy(
-      cb_config.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3,  // ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3
-      cb_config.ColorCurve_Ch1_Ch2,  // ColorCurve_Ch1_Ch2
-      cb_config.ColorMatrixR_ColorCurveCd1,  // ColorMatrixR_ColorCurveCd1
-      cb_config.ColorMatrixG_ColorCurveCd3Cm3,  // ColorMatrixG_ColorCurveCd3Cm3
-      cb_config.ColorMatrixB_ColorCurveCm2,  // ColorMatrixB_ColorCurveCm2
-      cb_config.ColorShadow_Luma,  // ColorShadow_Luma,
-      cb_config.ColorShadow_Tint1,  // Tint
-      cb_config.ColorShadow_Tint2  // Tint
-  );
+  float3 output;
+  output.rgb = ApplyACESRRTAndODT(graded_bt709);
 
-  LegacyTonemapResult legacy_output = LegacyFilmicPostProcess(untonemapped_bt709, legacy_config);
-  float3 legacy_sdr = legacy_output.graded_tonemapped;
+  output.rgb = renodx::color::bt709::from::AP1(output.rgb);
+  float3 color = output.rgb;
 
-  output.rgb = PostProcess(legacy_sdr, cb_config);
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
 
-  // final output
-  float gamma = 1.f / cb_config.ue_inv_gamma;
-
-  // correct gamma - this is important for SDR
-  if (outputdevice == 0u)  {
-    output.rgb = renodx::color::srgb::EncodeSafe(output.rgb);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
   }
-  else if (outputdevice == 2u) {
-    output.rgb = renodx::color::gamma::EncodeSafe(output.rgb, gamma);
-  } 
-  // lut output encoding
+  
+  output.rgb = renodx::color::bt2020::from::BT709(color);
+
+  output.rgb = renodx::color::pq::EncodeSafe(output.rgb, RENODX_DIFFUSE_WHITE_NITS);
+
   output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
-  output.w = 0;
 
   return output;
 }
 
-
-// AP1 -> AP0 -> Blue Corrected AP0 -> AP1
-// float3 ApplyBlueCorrectionPre(float3 untonemapped_ap1, UECbufferConfig cb_config) {
-//   float r = untonemapped_ap1.r, g = untonemapped_ap1.g, b = untonemapped_ap1.b;
-
-//   float corrected_r = ((mad(0.061360642313957214f, b, mad(-4.540197551250458e-09f, g, (r * 0.9386394023895264f))) - r) * cb_config.ue_bluecorrection) + r;
-//   float corrected_g = ((mad(0.169205904006958f, b, mad(0.8307942152023315f, g, (r * 6.775371730327606e-08f))) - g) * cb_config.ue_bluecorrection) + g;
-//   float corrected_b = (mad(-2.3283064365386963e-10f, g, (r * -9.313225746154785e-10f)) * cb_config.ue_bluecorrection) + b;
-
-//   return float3(corrected_r, corrected_g, corrected_b);
-// }
 
 
 float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
@@ -216,14 +191,8 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
     if (outputdevice == 3u || outputdevice == 4u) {
       float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config);
     }
-    
-    output.rgb = ApplyACESRRTAndODT(graded_bt709);
-
-    output.rgb = renodx::color::bt2020::from::AP1(output.rgb);
-
-    output.rgb = renodx::color::pq::EncodeSafe(output.rgb, RENODX_DIFFUSE_WHITE_NITS);
-
-    output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
+   
+    output.rgb = CreateNativeHDRLUT(graded_bt709);
 
     return output;
   }
@@ -266,10 +235,21 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
 
     untonemapped_graded_ap1 = lerp(untonemapped_ap1, mul(BlueCorrectAP1, untonemapped_ap1), cb_config.ue_bluecorrection);
 
-    // float3 untonemapped_graded_rrt_ap1 = renodx::tonemap::aces::RRT(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1));
+    // Output Display Transform
+    float3 vanilla;
     float3 untonemapped_graded_rrt_ap1 = renodx::tonemap::aces::RRT(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1));
 
-    float3 vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_rrt_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    if (RENODX_TONE_MAP_TYPE == 1.f || RENODX_TONE_MAP_TYPE == 3.f) {
+      // Reference Gamma Compression    
+      untonemapped_graded_ap1 =  renodx::tonemap::aces::GamutCompress(untonemapped_graded_ap1);
+
+      // Reference Rendering Transform
+      vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_rrt_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    } else {
+
+      ODTParams p = init_ODTParams(100.f, Chromaticities_AP1);
+      vanilla = outputTransform_fwd(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1), p);
+    }
 
     if (RENODX_TONE_MAP_TYPE == 1.f) {  // SDR 
       tonemapped_graded_ap1 = vanilla;  
@@ -309,14 +289,14 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   // final output
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
-  // correct gamma - this is important for SDR - Dragon Quest XI S
-  // if (shader_injection.unreal_lut_gamma_correction == 1 && (outputdevice == 2u))  {
-  //   // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
-  //   output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
-  // }
+  // correct gamma - this is important for SDR
+  if (shader_injection.unreal_lut_gamma_correction == 1)  {
+    // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
+    output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
+  }
 
   // lut output encoding
-  output.rgb = DisplayMap(output.rgb, outputdevice, gamma);
+  output.rgb = DisplayMap(output.rgb, outputdevice);
   
   output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
   output.w = 0;
@@ -351,15 +331,13 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float3 legacy_untonemapped = legacy_output.graded_untonemapped;
 
   if (RENODX_TONE_MAP_TYPE == 4.f)  {
-    float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config, lut_sampler, lut_texture);
-    output.rgb = ApplyACESRRTAndODT(graded_bt709);
 
-    output.rgb = renodx::color::bt2020::from::AP1(output.rgb);
-    // output.rgb = renodx::color::bt2020::from::BT709(output.rgb);
-
-    output.rgb = renodx::color::pq::EncodeSafe(output.rgb, RENODX_DIFFUSE_WHITE_NITS);
-
-    output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
+    float3 graded_bt709 = untonemapped_bt709;
+    if (outputdevice == 3u || outputdevice == 4u) {
+      float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config);
+    }
+    
+    output.rgb = CreateNativeHDRLUT(graded_bt709);
 
     return output;
   }
@@ -399,15 +377,28 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
     const float3x3 BlueCorrectAP1 = mul(renodx::color::AP0_TO_AP1_MAT, mul(BlueCorrect, renodx::color::AP1_TO_AP0_MAT));
 
     untonemapped_graded_ap1 = lerp(untonemapped_ap1, mul(BlueCorrectAP1, untonemapped_ap1), cb_config.ue_bluecorrection);
-
+    
+    // Output Display Transform
+    float3 vanilla;
     float3 untonemapped_graded_rrt_ap1 = renodx::tonemap::aces::RRT(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1));
 
-    float3 vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_rrt_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    if (RENODX_TONE_MAP_TYPE == 1.f || RENODX_TONE_MAP_TYPE == 3.f) {
+      // Reference Gamma Compression    
+      untonemapped_graded_ap1 =  renodx::tonemap::aces::GamutCompress(untonemapped_graded_ap1);
+
+      // Reference Rendering Transform
+      vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_rrt_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    } else {
+
+      ODTParams p = init_ODTParams(100.f, Chromaticities_AP1);
+      vanilla = outputTransform_fwd(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1), p);
+    }
 
     if (RENODX_TONE_MAP_TYPE == 1.f) {  // SDR 
       tonemapped_graded_ap1 = vanilla;  
     } else if (RENODX_TONE_MAP_TYPE == 3.f) { // HDR
       tonemapped_graded_ap1 = ApplyToneCurveExtended(untonemapped_graded_rrt_ap1, vanilla, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+
     }
 
     float3 tonemapped_graded_bt709 = PostCurveProcessingAP1toBT709(tonemapped_graded_ap1, untonemapped_graded_ap1, cb_config);
@@ -440,10 +431,10 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
   // correct gamma - this is important for SDR
-  // if (shader_injection.unreal_lut_gamma_correction == 1) {
-  //   // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
-  //   output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
-  // }
+  if (shader_injection.unreal_lut_gamma_correction == 1) {
+    // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
+    output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
+  }
 
   // lut output encoding
   output.rgb = DisplayMap(output.rgb, outputdevice);
@@ -482,15 +473,13 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float3 legacy_untonemapped = legacy_output.graded_untonemapped;
 
   if (RENODX_TONE_MAP_TYPE == 4.f)  {
-    float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1);
-    output.rgb = ApplyACESRRTAndODT(graded_bt709);
 
-    output.rgb = renodx::color::bt2020::from::AP1(output.rgb);
-    // output.rgb = renodx::color::bt2020::from::BT709(output.rgb);
-
-    output.rgb = renodx::color::pq::EncodeSafe(output.rgb, RENODX_DIFFUSE_WHITE_NITS);
-
-    output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
+    float3 graded_bt709 = untonemapped_bt709;
+    if (outputdevice == 3u || outputdevice == 4u) {
+      float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config);
+    }
+    
+    output.rgb = CreateNativeHDRLUT(graded_bt709);
 
     return output;
   }
@@ -531,14 +520,27 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
 
     untonemapped_graded_ap1 = lerp(untonemapped_ap1, mul(BlueCorrectAP1, untonemapped_ap1), cb_config.ue_bluecorrection);
 
+    // Output Display Transform
+    float3 vanilla;
     float3 untonemapped_graded_rrt_ap1 = renodx::tonemap::aces::RRT(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1));
 
-    float3 vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_rrt_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    if (RENODX_TONE_MAP_TYPE == 1.f || RENODX_TONE_MAP_TYPE == 3.f) {
+      // Reference Gamma Compression    
+      untonemapped_graded_ap1 =  renodx::tonemap::aces::GamutCompress(untonemapped_graded_ap1);
+
+      // Reference Rendering Transform
+      vanilla = unrealengine::filmtonemap::ApplyToneCurve(untonemapped_graded_rrt_ap1, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+    } else {
+
+      ODTParams p = init_ODTParams(100.f, Chromaticities_AP1);
+      vanilla = outputTransform_fwd(mul(renodx::color::AP1_TO_AP0_MAT, untonemapped_graded_ap1), p);
+    }
 
     if (RENODX_TONE_MAP_TYPE == 1.f) {  // SDR 
       tonemapped_graded_ap1 = vanilla;  
     } else if (RENODX_TONE_MAP_TYPE == 3.f) { // HDR
       tonemapped_graded_ap1 = ApplyToneCurveExtended(untonemapped_graded_rrt_ap1, vanilla, cb_config.ue_filmslope, cb_config.ue_filmtoe, cb_config.ue_filmshoulder, cb_config.ue_filmblackclip, cb_config.ue_filmwhiteclip);
+
     }
 
     float3 tonemapped_graded_bt709 = PostCurveProcessingAP1toBT709(tonemapped_graded_ap1, untonemapped_graded_ap1, cb_config);
@@ -610,10 +612,10 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   float gamma = 1.f / cb_config.ue_inv_gamma;
 
   // correct gamma - this is important for SDR
-  // if (shader_injection.unreal_lut_gamma_correction == 1) {
-  //   // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
-  //   output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
-  // }
+  if (shader_injection.unreal_lut_gamma_correction == 1) {
+    // output.rgb = CorrectGammaHuePreservingSRGB(output.rgb, gamma);
+    output.rgb = renodx::color::correct::GammaSafe(output.rgb, true, gamma);
+  }
 
   // lut output encoding
   output.rgb = DisplayMap(output.rgb, outputdevice);

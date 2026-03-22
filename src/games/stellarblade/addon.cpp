@@ -61,7 +61,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Curve",
         .section = "Unreal Engine Settings",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"UE Legacy (Vanilla SDR)", "UE Filmic (SDR)", "UE Legacy Extended (HDR)", "UE Filmic Extended (HDR)", "UE ACES RRT-ODT (HDR)", "Native HDR (RRT-ODT without Grading)"},
+        .labels = {"UE Legacy (Vanilla SDR)", "UE Filmic (SDR)", "UE Legacy Extended (HDR)", "UE Filmic Extended (HDR)", "UE ACES RRT-ODT (HDR)", "Native HDR (RRT-ODT without Grading)", "ACES v2"},
     },
 
     new renodx::utils::settings::Setting{
@@ -215,30 +215,18 @@ renodx::utils::settings::Settings settings = {
         .is_visible = []() { return current_settings_mode >= 2; },
     },
 
-     new renodx::utils::settings::Setting{
-        .key = "ToneMapGammaCorrection",
-        .binding = &shader_injection.gamma_correction,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
-        .label = "SDR EOTF Emulation",
-        .section = "Tone Mapping",
-        .tooltip = "Emulates a 2.2 EOTF",
-        .labels = {"Off", "2.2", "BT.1886 (2.4)"},
-    },
-
-
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapHueShiftSource",
-        .binding = &shader_injection.tone_map_hue_shift_source,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .label = "Filmic Hue Shift source",
-        .section = "Tone Mapping",
-        .tooltip = "Hue-shifting source",
-        .labels = {"Filmic SDR", "Legacy HDR"},
-        .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
-        .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapHueShiftSource",
+    //     .binding = &shader_injection.tone_map_hue_shift_source,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 0.f,
+    //     .label = "Filmic Hue Shift source",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Hue-shifting source",
+    //     .labels = {"Filmic SDR", "Legacy HDR"},
+    //     .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
+    //     .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
+    // },
 
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueShift",
@@ -253,6 +241,34 @@ renodx::utils::settings::Settings settings = {
         .parse = [](float value) { return value * 0.01f; },
         .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
     },
+
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapHueShift",
+    //     .binding = &shader_injection.tone_map_chrominance_correction,
+    //     .default_value = 50.f,
+    //     .label = "Filmic Chrominance Correction",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Chrominance Restoration strength.",
+    //     .min = 0.f,
+    //     .max = 100.f,
+    //     .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
+    //     .parse = [](float value) { return value * 0.01f; },
+    //     .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
+    // },
+
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapHueShift",
+    //     .binding = &shader_injection.tone_map_chrominance_clamp_loss,
+    //     .default_value = 0.f,
+    //     .label = "Filmic Chrominance Clamp Loss",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Chrominance Restoration clamp loss.",
+    //     .min = 0.f,
+    //     .max = 100.f,
+    //     .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
+    //     .parse = [](float value) { return value * 0.01f; },
+    //     .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
+    // },
 
     new renodx::utils::settings::Setting{
         .key = "PsychoVAdaptationContrast",
@@ -740,7 +756,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .new_format = reshade::api::format::r16g16b16a16_typeless,
             .ignore_size = false,
             .use_resource_view_cloning = true,
-            .aspect_ratio = static_cast<float>(renodx::mods::swapchain::SwapChainUpgradeTarget::ANY),
+            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+            .aspect_ratio_tolerance = 0.01f,
             .usage_include = reshade::api::resource_usage::render_target
                             | reshade::api::resource_usage::copy_dest
                             | reshade::api::resource_usage::copy_source
@@ -751,7 +768,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .new_format = reshade::api::format::r16g16b16a16_float,
             .ignore_size = false,
             .use_resource_view_cloning = true,
-            .aspect_ratio = static_cast<float>(renodx::mods::swapchain::SwapChainUpgradeTarget::ANY),
+            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+            .aspect_ratio_tolerance = 0.01f,
             .usage_include = reshade::api::resource_usage::render_target
                             | reshade::api::resource_usage::copy_dest,
         });
@@ -769,6 +787,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .new_format = reshade::api::format::r16g16b16a16_float,
             .use_resource_view_cloning = true,
             .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+            .aspect_ratio_tolerance = 0.01f,
 
         });
         
@@ -781,23 +800,12 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r8_unorm,
-            .new_format = reshade::api::format::r16_unorm,
+            .new_format = reshade::api::format::r16_float,
         //   .ignore_size = true,
             .use_resource_view_cloning = true
         }); 
         
-        // maybe unsafe?
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r16g16b16a16_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
-
         // General Upgrades 
-
-        // fp11 upgrades only for nvidia
-        // reshade::register_event<reshade::addon_event::init_device>(OnInitDevice);
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r10g10b10a2_unorm,

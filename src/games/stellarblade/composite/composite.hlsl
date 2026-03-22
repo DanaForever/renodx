@@ -1,5 +1,5 @@
 #include "../shared.h"
-#include "./lilium_rcas.hlsli"
+#include "./lilium_rcas.hlsl"
 
 float4 OutputscRGB(float4 color, float scale) {
   return float4(color.rgb *= scale / 80.f, color.a);

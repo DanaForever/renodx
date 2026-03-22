@@ -365,7 +365,7 @@ float3 CorrectGammaSafe(float3 c, float input_gamma = 1.5f, float output_gamma =
 }
 
 
-float3 PostToneMapProcess(float3 output, uint device = 0u, float gamma = 2.2f) {
+float3 PostToneMapProcess(float3 output, uint device = 0u, float gamma = 1.5f) {
   
   [branch]
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
@@ -373,7 +373,7 @@ float3 PostToneMapProcess(float3 output, uint device = 0u, float gamma = 2.2f) {
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     output = renodx::color::correct::GammaSafe(output, false, 2.4f);
   } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-    output = CorrectGammaSafe(output, 1.5f, 2.f);
+    output = CorrectGammaSafe(output, gamma, 2.f);
   }
 
   output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
@@ -631,7 +631,7 @@ float3 ReinhardBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
 
 
 
-float3 CustomSwapchainPass(float3 color, uint device = 0u)  {
+float3 CustomSwapchainPass(float3 color, uint device = 0u, float gamma = 1.5f, )  {
   renodx::draw::Config config = renodx::draw::BuildConfig();
 
   [branch]
@@ -647,7 +647,7 @@ float3 CustomSwapchainPass(float3 color, uint device = 0u)  {
   } else if (RENODX_GAMMA_CORRECTION == 3.f) {
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    color = CorrectGammaSafe(color, 1.5f, 2.2f);
+    color = CorrectGammaSafe(color, gamma, 2.2f);
   }
 
   [branch]

@@ -1,8 +1,69 @@
 #ifndef INCLUDE_FILMTONEMAP
 #define INCLUDE_FILMTONEMAP
 
+#define PER_CHANNEL true
+
 #include "../shared.h"
-// #include "./lutbuildercommon.hlsli"
+#include "../macleod_boynton.hlsl"
+
+float LuminosityFromBT709(float3 bt709_linear) {
+  float3 xyz = mul(renodx::color::BT709_TO_XYZ_MAT, bt709_linear);
+  float3 lms = mul(renodx_custom::color::macleod_boynton::XYZ_TO_LMS_2006, xyz);
+  return 1.55f * lms.x + lms.y;
+}
+
+float LuminosityFromAP1(float3 ap1_linear) {
+
+  float3 bt709_linear = renodx::color::bt709::from::AP1(ap1_linear);
+  float3 xyz = mul(renodx::color::BT709_TO_XYZ_MAT, bt709_linear);
+  float3 lms = mul(renodx_custom::color::macleod_boynton::XYZ_TO_LMS_2006, xyz);
+  return 1.55f * lms.x + lms.y;
+}
+
+float3 CorrectHueAndChrominanceOKLab(
+    float3 incorrect_color, float3 reference_color,
+    float hue_correct_strength = 0.f,
+    float chrominance_correct_strength = 0.f,
+    float saturation = 1.f) {
+  if (hue_correct_strength != 0.0 || chrominance_correct_strength != 0.0 || saturation != 0.0) {
+    float3 perceptual_new = renodx::color::oklab::from::BT709(incorrect_color);
+    const float3 reference_oklab = renodx::color::oklab::from::BT709(reference_color);
+
+    float chrominance_current = length(perceptual_new.yz);
+    float chrominance_ratio = 1.0;
+
+    if (hue_correct_strength != 0.0) {
+      const float chrominance_pre = chrominance_current;
+      perceptual_new.yz = lerp(perceptual_new.yz, reference_oklab.yz, hue_correct_strength);
+      const float chrominancePost = length(perceptual_new.yz);
+      chrominance_ratio = renodx::math::SafeDivision(chrominance_pre, chrominancePost, 1);
+      chrominance_current = chrominancePost;
+    }
+
+    if (chrominance_correct_strength != 0.0) {
+      const float reference_chrominance = length(reference_oklab.yz);
+      float target_chrominance_ratio = renodx::math::SafeDivision(reference_chrominance, chrominance_current, 1);
+      chrominance_ratio = lerp(chrominance_ratio, target_chrominance_ratio, chrominance_correct_strength);
+    }
+    perceptual_new.yz *= chrominance_ratio;
+    perceptual_new.yz *= saturation;
+
+    incorrect_color = renodx::color::bt709::from::OkLab(perceptual_new);
+    incorrect_color = renodx::color::bt709::clamp::AP1(incorrect_color);
+  }
+  return incorrect_color;
+}
+
+float3 CorrectHueAndPurityGated(
+    float3 target_color_bt709,
+    float3 reference_color_bt709,
+    float strength = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f) {
+  float hue_t_ramp_start = 0.5f;
+  float hue_t_ramp_end = 1.f;
+  return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
+};
 
 struct LegacyFilmicConfig {
   float4 ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3;
@@ -135,7 +196,19 @@ float3 ApplyToneCurve(
     float3 untonemapped,
     float FilmSlope, float FilmToe, float FilmShoulder, float FilmBlackClip, float FilmWhiteClip) {
   unrealengine::filmtonemap::Config film_params = config::Create(FilmSlope, FilmToe, FilmShoulder, FilmBlackClip, FilmWhiteClip);
-  return ApplyToneCurve(untonemapped, film_params);
+
+  float y = renodx::color::y::from::AP1(untonemapped); 
+  
+  if (PER_CHANNEL)
+    return ApplyToneCurve(untonemapped, film_params);
+  else {
+    float y_new = ApplyToneCurve(y, film_params);
+
+    float3 color_output = untonemapped * (y > 0 ? (y_new / y) : 0);
+
+    return color_output;
+
+  }
 }
 
 
@@ -343,43 +416,22 @@ float3 ApplyToneCurveExtended(
   unrealengine::filmtonemap::Config film_params =
       unrealengine::filmtonemap::config::Create(FilmSlope, FilmToe, FilmShoulder, film_black_clip, FilmWhiteClip);
 
-  float3 tonemapped_ap1 =
-      unrealengine::filmtonemap::extended::ApplyToneCurveExtended(untonemapped_rrt_prebluecorrect_ap1, vanilla, film_params);
-
-  
-  #if 1
+  float3 tonemapped_ap1;
+  if (PER_CHANNEL) {
     // Blend extended with vanilla (0.2 strength) up to 0.5f
-    tonemapped_ap1 = lerp(
-        vanilla,
-        lerp(tonemapped_ap1, vanilla, 0.2f),
-        saturate(vanilla / 0.5f));
-  #endif
+    tonemapped_ap1 =
+        unrealengine::filmtonemap::extended::ApplyToneCurveExtended(untonemapped_rrt_prebluecorrect_ap1, vanilla, film_params);
+  } else {
+    float y = renodx::color::y::from::AP1(untonemapped_rrt_prebluecorrect_ap1);
+    float y_vanilla = renodx::color::y::from::AP1(vanilla);
+    float y_new = unrealengine::filmtonemap::extended::ApplyToneCurveExtended(y, y_vanilla, film_params);
 
-  // tonemapped_ap1 = CorrectHueAndPurity(renodx::color::bt709::from::AP1(tonemapped_ap1), renodx::color::bt709::from::AP1(vanilla));
-  // tonemapped_ap1 = renodx::color::ap1::from::BT709(tonemapped_ap1);
-// Correct Hue/Chroma
-  // float3 tonemapped_prebluecorrect_ap1 = tonemapped_ap1;
-  // float3 bt709_tonemapped_prebluecorrect = renodx::color::bt709::from::AP1(tonemapped_prebluecorrect_ap1);
-  // float3 bt709_vanilla = renodx::color::bt709::from::AP1(vanilla);
-
-
-  // // Reinhard Piecewise Per-Channel to variable peak (default 5) on the extended color
-  // float3 bt709_per_ch = renodx::color::bt709::from::AP1(renodx::tonemap::ReinhardPiecewise(tonemapped_prebluecorrect_ap1, RENODX_TONE_MAP_PER_CH_PEAK, 0.18f));
-
-  // float3 bt709_hue_and_chrominance_source = bt709_per_ch;
-
-  // // Only on Hue Vanilla Input Color
-
-  // float hue_shift_strength = RENODX_TONE_MAP_HUE_SHIFT;
-  // float chroma_correct_strength = RENODX_TONE_MAP_CHROMA_CORRECT_BLOWOUT;
-
-  // tonemapped_prebluecorrect_ap1 = renodx::color::ap1::from::BT709(HueAndChrominanceOKLab(bt709_tonemapped_prebluecorrect, bt709_hue_and_chrominance_source, saturate(hue_shift_strength), saturate(chroma_correct_strength), 1.0f));
-
+    tonemapped_ap1 = untonemapped_rrt_prebluecorrect_ap1 * (y > 0 ? (y_new / y) : 0);
+  }
 
   return tonemapped_ap1;
 }
-
-
+  
 #endif  // INCLUDE_FILMTONEMAP
 
 

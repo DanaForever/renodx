@@ -57,6 +57,8 @@ struct ShaderInjectData {
   float tone_map_hue_correction_type;
   float tone_map_hue_correction;
   float tone_map_hue_shift;
+  float tone_map_chrominance_correction;
+  float tone_map_chrominance_clamp_loss;
   float tone_map_hue_shift_source;
   float tone_map_chroma_correct_blowout;
   float override_black_clip;

@@ -1,8 +1,8 @@
 #ifndef INCLUDE_FILMIC_LUTBUILDER
 #define INCLUDE_FILMIC_LUTBUILDER
 
-#include "./filmtonemap.hlsli"
-#include "./lutbuildercommon.hlsli"
+#include "./filmtonemap.hlsl"
+#include "./lutbuildercommon.hlsl"
 
 // Create cbuffer struct
 
@@ -93,7 +93,7 @@ UECbufferConfig CreateCbufferConfig(
   return cb_config;
 }
 
-float3 ApplyACESRRTAndODT(float3 untonemapped_bt709) {
+float3 ApplyACESRRTAndODT(float3 untonemapped_bt709, float diffuse = 100.f, float peak = 2000.f) {
    float3 untonemapped_ap1 = renodx::color::ap1::from::BT709(untonemapped_bt709);
    // The 1.5x multiplier is a hack to make the output more closely match the reference images. It boosts the midtones which are otherwise darker than the reference. The highlights are already close to the reference without this multiplier, so it doesn't cause significant highlight clipping.
   untonemapped_ap1 *= 1.5f;
@@ -101,8 +101,8 @@ float3 ApplyACESRRTAndODT(float3 untonemapped_bt709) {
 
   const float ACES_MID = 0.1f;
   const float ACES_MIN = 0.0001f;
-  float aces_min = ACES_MIN / RENODX_DIFFUSE_WHITE_NITS;
-  float aces_max = (RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS);
+  float aces_min = ACES_MIN / diffuse;
+  float aces_max = peak / diffuse;
 
   if (RENODX_GAMMA_CORRECTION != 0.f) {
     aces_max = renodx::color::correct::Gamma(aces_max, true);

@@ -1,5 +1,5 @@
 #include "./shared.h"
-#include "macleod_boynton.hlsli"
+#include "macleod_boynton.hlsl"
 
 
 float ReinhardExtended(float x, float white_max, float x_max = 1.f, float shoulder = 0.18f) {
