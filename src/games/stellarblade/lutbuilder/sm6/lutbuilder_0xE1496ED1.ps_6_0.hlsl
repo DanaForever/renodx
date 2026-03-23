@@ -166,6 +166,9 @@ float4 main(
   float _10 = TEXCOORD.y + -0.015625f;
   float _13 = float((uint)(int)(SV_RenderTargetArrayIndex));
   bool _17 = ((uint)cb0_044y > (uint)2);
+
+  uint device = asuint(cb0_044y);
+
   float _18 = select(_17, 0.9749136567115784f, 0.613191545009613f);
   float _19 = select(_17, 0.019597629085183144f, 0.3395121395587921f);
   float _20 = select(_17, 0.005503520369529724f, 0.04736635088920593f);
@@ -306,7 +309,7 @@ float4 main(
 
   if (RENODX_TONE_MAP_TYPE == 5.f) {
     float4 output;
-    output.rgb = CreateNativeHDRLUT(color);
+    output.rgb = CreateNativeHDRLUT(color, device);
 
     SV_Target.x = (output.x);
     SV_Target.y = (output.y);
@@ -579,7 +582,7 @@ float4 main(
     cb_config.ue_filmwhiteclip = 0.035;
   }
 
-  uint device = asuint(cb0_044y);
+  
 
   float3 untonemapped_bt709 = float3(_822, _825, _828);
   float3 untonemapped_ap1 = renodx::color::ap1::from::BT709(untonemapped_bt709);

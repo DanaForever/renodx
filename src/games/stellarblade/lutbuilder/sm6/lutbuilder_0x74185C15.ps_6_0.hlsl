@@ -292,9 +292,11 @@ float4 main(
 
   float3 color = float3(_113, _114, _115);
 
+  uint device = asuint(cb0_044y);
+
   if (RENODX_TONE_MAP_TYPE == 5.f) {
     float4 output;
-    output.rgb = CreateNativeHDRLUT(color);
+    output.rgb = CreateNativeHDRLUT(color, device);
 
     SV_Target.x = (output.x);
     SV_Target.y = (output.y);
@@ -575,7 +577,7 @@ float4 main(
     cb_config.ue_filmwhiteclip = 0.035;
   }
 
-  uint device = asuint(cb0_044y);
+  
 
   
   float4 output = CreateUnrealLUT(untonemapped_ap1, untonemapped_bt709, cb_config, device);

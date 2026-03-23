@@ -318,12 +318,14 @@ float3 CustomSwapchainPass(float3 color, uint device = 0u)  {
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    color = GammaCorrection(color, 2.2f);
+    // color = GammaCorrection(color, 2.2f);
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
 
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
     config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-    color = GammaCorrection(color, 2.4f);
+    // color = GammaCorrection(color, 2.4f);
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
   }
 
   [branch]
@@ -457,9 +459,11 @@ float3 PostToneMapProcess(float3 output, uint device = 0u) {
   
   [branch]
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    output = renodx::color::correct::GammaSafe(output, false, 2.2f);
+    // output = renodx::color::correct::GammaSafe(output, false, 2.2f);
+    output = GammaCorrection(output, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    output = renodx::color::correct::GammaSafe(output, false, 2.4f);
+    // output = renodx::color::correct::GammaSafe(output, false, 2.4f);
+    output = GammaCorrection(output, 2.4f);
   }
 
   output *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;

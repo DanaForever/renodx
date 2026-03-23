@@ -2,9 +2,14 @@
 #include "./acesv2.hlsl"
 
 float3 HueCorrection(float3 graded_filmic, float3 low, float3 high_bt709) {
+  
+  if (RENODX_TONE_MAP_HUE_SHIFT > 0.f) {
 
-  // return CorrectHueAndPurityMB2References(graded_filmic, low, high_bt709, RENODX_TONE_MAP_HUE_SHIFT);
-  return CorrectLowHueThenHighHueAndPurityMB(graded_filmic, low, high_bt709, RENODX_TONE_MAP_HUE_SHIFT, 1.f, 2.f);
+    float3 corrected = CorrectHueAndPurityMBFullStrength(graded_filmic, low);
+    return corrected;
+  } else {
+    return graded_filmic;
+  }
 }
 
 
@@ -142,7 +147,7 @@ LegacyTonemapResult LegacyFilmicPostProcess(float3 linear_color, LegacyFilmicCon
 }
 
 
-float3 CreateNativeHDRLUT(float3 graded_bt709) {
+float3 CreateNativeHDRLUT(float3 graded_bt709, uint device) {
 
   float3 output;
   output.rgb = ApplyACESRRTAndODT(graded_bt709, RENODX_DIFFUSE_WHITE_NITS, RENODX_PEAK_WHITE_NITS);
@@ -150,16 +155,20 @@ float3 CreateNativeHDRLUT(float3 graded_bt709) {
   output.rgb = renodx::color::bt709::from::AP1(output.rgb);
   float3 color = output.rgb;
 
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+  if (shader_injection.processing_path == 0.f) {
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      color = renodx::color::correct::GammaSafe(color, false, 2.2f);
 
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    }
+
+    output.rgb = renodx::color::bt2020::from::BT709(color);
+
+    output.rgb = renodx::color::pq::EncodeSafe(output.rgb, RENODX_DIFFUSE_WHITE_NITS);
+  } else if (shader_injection.processing_path == 1.f) {
+    output.rgb = PostToneMapProcess(output.rgb, device);
   }
-  
-  output.rgb = renodx::color::bt2020::from::BT709(color);
-
-  output.rgb = renodx::color::pq::EncodeSafe(output.rgb, RENODX_DIFFUSE_WHITE_NITS);
 
   output.rgb = float3(0.952381015, 0.952381015, 0.952381015) * output.rgb;
 
@@ -186,12 +195,9 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       cb_config.ColorShadow_Tint2  // Tint
   );
 
-  
-
-  float3 processed_graded_bt709 = PostProcess(untonemapped_bt709, cb_config, true);
-  
-  if (RENODX_TONE_MAP_TYPE == 4.f)  {
-    output.rgb = CreateNativeHDRLUT(processed_graded_bt709);
+  if (RENODX_TONE_MAP_TYPE == 4.f) {
+    float3 processed_graded_bt709 = PostProcess(untonemapped_bt709, cb_config, true);
+    output.rgb = CreateNativeHDRLUT(processed_graded_bt709, outputdevice);
 
     return output;
   }
@@ -269,13 +275,13 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
       // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
 
-      float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
+      // float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
 
-      float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
+      // float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
 
       float3 low = hueshifted_color;
 
-      hue_shifted_graded_filmic = HueCorrection(graded_filmic, low, high_bt709);
+      hue_shifted_graded_filmic = HueCorrection(graded_filmic, low, low);
     }
     
     output.rgb = hue_shifted_graded_filmic;
@@ -321,12 +327,9 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       cb_config.ColorShadow_Tint2  // Tint
   );
 
-  
-
-  float3 processed_graded_bt709 = PostProcess(untonemapped_bt709, cb_config, true);
-
   if (RENODX_TONE_MAP_TYPE == 4.f) {
-    output.rgb = CreateNativeHDRLUT(processed_graded_bt709);
+    float3 processed_graded_bt709 = PostProcess(untonemapped_bt709, cb_config, true);
+    output.rgb = CreateNativeHDRLUT(processed_graded_bt709, outputdevice);
 
     return output;
   }
@@ -403,13 +406,13 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler, lut_texture);
       // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
 
-      float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
+      // float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
 
-      float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
+      // float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
 
       float3 low = hueshifted_color;
 
-      hue_shifted_graded_filmic = HueCorrection(graded_filmic, low, high_bt709);
+      hue_shifted_graded_filmic = HueCorrection(graded_filmic, low, low);
     }
     
     output.rgb = hue_shifted_graded_filmic;
@@ -456,10 +459,9 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       cb_config.ColorShadow_Tint2  // Tint
   );
 
-  float3 processed_graded_bt709 = PostProcess(untonemapped_bt709, cb_config, true);
-
   if (RENODX_TONE_MAP_TYPE == 4.f) {
-    output.rgb = CreateNativeHDRLUT(processed_graded_bt709);
+    float3 processed_graded_bt709 = PostProcess(untonemapped_bt709, cb_config, true);
+    output.rgb = CreateNativeHDRLUT(processed_graded_bt709, outputdevice);
 
     return output;
   }
@@ -530,13 +532,13 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       float3 hueshifted_color;
       hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1);
 
-      float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
+      // float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
 
-      float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
+      // float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
 
       float3 low = hueshifted_color;
 
-      hue_shifted_graded_filmic = HueCorrection(graded_filmic, low, high_bt709);
+      hue_shifted_graded_filmic = HueCorrection(graded_filmic, low, low);
     }
     
     output.rgb = hue_shifted_graded_filmic;

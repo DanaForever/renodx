@@ -22,7 +22,7 @@ float3 DanieleTonemap(float3 untonemapped_graded_ap1) {
 
   // ap1_tonemapped *= RENODX_DIFFUSE_WHITE_NITS / 100.f;
 
-  float3 outputColor;
+  
   renodx::tonemap::Config config = renodx::tonemap::config::Create();
 
   float midGray = 0.18f;
@@ -35,7 +35,9 @@ float3 DanieleTonemap(float3 untonemapped_graded_ap1) {
 
   config.reno_drt_tone_map_method = renodx::tonemap::renodrt::config::tone_map_method::DANIELE;
   config.reno_drt_working_color_space = 2; // AP1
-  config.reno_drt_per_channel = true;
+  config.reno_drt_per_channel = false;
+
+  float3 outputColor;
   outputColor = renodx::color::bt709::from::AP1(untonemapped_graded_ap1);
   // return renodx::tonemap::config::Apply(outputColor, config);
 
