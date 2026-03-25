@@ -99,6 +99,7 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   // t = 1.0 - (t / colorBlend.y);
 
   float3 t_lin = renodx::color::srgb::DecodeSafe(t);
+  t_lin = max(0.f, t_lin);
   float Y = renodx::color::y::from::BT709(t_lin);
 
   float bias = 1.0 - 1.0 / colorBlend.y;
@@ -111,10 +112,17 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   float t0_lin = renodx::color::srgb::DecodeSafe(float3(t0_srgb, t0_srgb, t0_srgb)).r;
 
   float m = min(t_lin.r, min(t_lin.g, t_lin.b));
+  m = max(m, 0.0);  // prevent negative
+  float m_safe = max(m, 1e-6);
+
   float eps = 1e-6;
   // k grows only when we're in the danger zone (m < t0)
   // multiplicative “make-safe” factor based on linear luma
-  float k = max(1.0, t0_lin / (m + 1e-6));
+  // float k = max(1.0, t0_lin / (m + 1e-6));
+  float k = max(1.0, t0_lin / m_safe);
+  k = min(k, 4.0);  // optional clamp (tune this)
+  k = isfinite(k) ? k : 1.0;
+  float inv_k = 1.0 / max(k, 1e-6);
 
   // apply safety lift in linear, then convert back to srgb for the game’s affine
   float3 t_safe_srgb = renodx::color::srgb::EncodeSafe(t_lin * k);
@@ -123,7 +131,7 @@ void main(float4 v0: SV_POSITION0, float2 v1: TEXCOORD0, out float4 o0: SV_TARGE
   float3 t_aff = t_safe_srgb * scale + bias;
 
   // undo the lift back in linear so HDR energy is preserved
-  float3 out_lin = renodx::color::srgb::DecodeSafe(t_aff) / k;
+  float3 out_lin = renodx::color::srgb::DecodeSafe(t_aff) * inv_k;
   
   float3 t_aff_fixed = renodx::color::srgb::EncodeSafe(out_lin);
 
