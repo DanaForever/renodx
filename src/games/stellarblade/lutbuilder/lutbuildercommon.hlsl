@@ -6,22 +6,6 @@
 #define INCLUDE_LUTBUILDER_COMMON
 
 float3 DanieleTonemap(float3 untonemapped_graded_ap1) { 
-  // This is a bit of a hacky way to get the same tonemap as the game, but it seems like the game uses a custom curve that is very close to the Daniele Tonemap, but with a custom knee that is more aggressive than the standard Daniele curve. So we can approximate it by using the Daniele Tonemap with a custom knee parameter.
-  // float aces_peak = min(RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS, 2.f);
-
-  // // renodx::tonemap::daniele::Config tonemap_config = renodx::tonemap::daniele::config::Create(100.f, 100.f * aces_peak);
-  // renodx::tonemap::daniele::Config daniele_config = renodx::tonemap::daniele::config::Create();
-
-  // daniele_config.n_r = 100.f;  // reference nits
-  // daniele_config.n = 100.f;    // peak nits
-
-  // float l = renodx::color::y::from::AP1(untonemapped_graded_ap1);
-  // float ts = renodx::tonemap::daniele::ToneMap(l, daniele_config);
-
-  // float3 ap1_tonemapped = untonemapped_graded_ap1 * (l > 0 ? (ts / l) : 0);
-
-  // ap1_tonemapped *= RENODX_DIFFUSE_WHITE_NITS / 100.f;
-
   
   renodx::tonemap::Config config = renodx::tonemap::config::Create();
 
@@ -482,7 +466,7 @@ float3 DisplayMap(float3 color, uint device = 0u) {
         1.0f,                                // purity_scale
         shader_injection.psychov_bleach,                                // bleaching_intensity
         100.f,                               // clip_point
-        0.5f,                                // hue_restore
+        0.0f,                                // hue_restore
         shader_injection.psychov_adaptation_contrast,                                // adaptation_contrast
         1,                                   // naka rushton
         // 1.0f + 0.025 * (peak_ratio - 1.0f)); // cone_response_exponent

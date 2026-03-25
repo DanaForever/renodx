@@ -268,8 +268,8 @@ float ComputeFilmicSlopeAtInput(const Config p, float x) {
 #define FILMTONECURVE_EXTENDED_GENERATOR(T)                                             \
   T ApplyToneCurveExtended(T untonemapped, T vanilla, const Config p) {                 \
     /* Evaluate Filmic at pivot */                                                      \
-    float pivot_input = 0.18f; /* tonemapper is centered around 0.18*/                  \
-    float y_offset = 0.18f;                                                             \
+    float pivot_input = exp2(p.log_shoulder_threshold / 0.30103f); ; /* tonemapper is centered around 0.18*/                                           \
+    float y_offset = ApplyToneCurve(pivot_input, p);                                                             \
     float pivot_slope = ComputeFilmicSlopeAtInput(p, pivot_input);                      \
                                                                                         \
     /* Linear HDR tail anchored at (pivot_input, pivot_output) */                       \
@@ -421,6 +421,8 @@ float3 ApplyToneCurveExtended(
     // Blend extended with vanilla (0.2 strength) up to 0.5f
     tonemapped_ap1 =
         unrealengine::filmtonemap::extended::ApplyToneCurveExtended(untonemapped_rrt_prebluecorrect_ap1, vanilla, film_params);
+
+        
   } else {
     float y = renodx::color::y::from::AP1(untonemapped_rrt_prebluecorrect_ap1);
     float y_vanilla = renodx::color::y::from::AP1(vanilla);

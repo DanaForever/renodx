@@ -2,11 +2,12 @@
 #include "./acesv2.hlsl"
 
 float3 HueCorrection(float3 graded_filmic, float3 low, float3 high_bt709) {
-  
   if (RENODX_TONE_MAP_HUE_SHIFT > 0.f) {
-
-    float3 corrected = CorrectHueAndPurityMBFullStrength(graded_filmic, low);
+    // keep the purity of graded filmic
+    float3 corrected = CorrectHueMBGated(graded_filmic, low, RENODX_TONE_MAP_HUE_SHIFT, 0.18f, 1.f);
+    // float3 corrected = renodx::color::correct::Hue(graded_filmic, low, RENODX_TONE_MAP_HUE_SHIFT);
     return corrected;
+
   } else {
     return graded_filmic;
   }
@@ -19,7 +20,7 @@ float3 PostCurveProcessingAP1toBT709(float3 tonemapped_graded_ap1, float3 untone
     float3 output;
 
     output = tonemapped_graded_ap1;
-    // PostToneMapDesaturation
+    //  Desaturation
     float grayscale = renodx::color::y::from::AP1(tonemapped_graded_ap1);
     output = max(0.f, lerp(grayscale, tonemapped_graded_ap1, 0.93f));
 
@@ -72,10 +73,12 @@ float3 PostProcess(float3 bt709_tonemapped, UECbufferConfig cb_config, bool hdr 
 float3 PostProcess(float3 bt709_tonemapped, UECbufferConfig cb_config, SamplerState lut_sampler, Texture2D<float4> lut_texture, bool hdr = false) {
 
   float scale = 1.f;
-  bt709_tonemapped *= scale;
+  
   if (hdr)  {
     scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(bt709_tonemapped);
   }
+
+  bt709_tonemapped *= scale;
   float3 lut_output;
 
   bt709_tonemapped = SampleLUTSRGBInSRGBOut(lut_texture, lut_sampler, bt709_tonemapped, cb_config);
@@ -95,10 +98,12 @@ float3 PostProcess(float3 bt709_tonemapped, UECbufferConfig cb_config, SamplerSt
 SamplerState lut_sampler_1, Texture2D<float4> lut_texture_1, bool hdr = false) {
 
   float scale = 1.f;
-  bt709_tonemapped *= scale;
+  
   if (hdr)  {
     scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(bt709_tonemapped);
   }
+
+  bt709_tonemapped *= scale;
   float3 lut_output;
 
   bt709_tonemapped = Sample2LUTSRGBInSRGBOut(lut_texture_0, lut_texture_1, lut_sampler_0, lut_sampler_1, bt709_tonemapped, cb_config);
@@ -272,13 +277,6 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       float3 hueshifted_color;
       hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config);
 
-      // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
-      // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
-
-      // float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
-
-      // float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
-
       float3 low = hueshifted_color;
 
       hue_shifted_graded_filmic = HueCorrection(graded_filmic, low, low);
@@ -404,11 +402,6 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
 
       float3 hueshifted_color;
       hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler, lut_texture);
-      // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
-
-      // float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
-
-      // float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
 
       float3 low = hueshifted_color;
 
@@ -531,10 +524,6 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
 
       float3 hueshifted_color;
       hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1);
-
-      // float3 high_ap1 = ApplyACESRRTAndODT(processed_graded_bt709);
-
-      // float3 high_bt709 = renodx::color::bt709::from::AP1(high_ap1);
 
       float3 low = hueshifted_color;
 
