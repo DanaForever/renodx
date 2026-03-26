@@ -338,6 +338,21 @@ float3 ToneMapLMS(float3 untonemapped) {
   return bt709_tonemapped;
 }
 
+float3 CorrectGammaHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
+  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
+
+  const float y_in = renodx::color::y::from::BT709(incorrect_color);
+  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
+
+  float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
+
+  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
+  // float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
+  float3 result = CorrectPurityMBBT709WithBT2020(lum, incorrect_color);
+
+  return result;
+}
+
 float3 processAndToneMap(float3 color, bool decoding = true) {
   if (decoding) {
     color = renodx::color::srgb::DecodeSafe(color);
@@ -352,11 +367,14 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
 
   [branch]
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    // color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    color = CorrectGammaHuePreserving(color, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    // color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    color = CorrectGammaHuePreserving(color, 2.4f);
   } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.3f);
+    color = CorrectGammaHuePreserving(color, 2.3f); 
+    // color = renodx::color::correct::GammaSafe(color, false, 2.3f);
   }
 
   // This is RenderIntermediatePass, simply brightness scaling and srgb encoding

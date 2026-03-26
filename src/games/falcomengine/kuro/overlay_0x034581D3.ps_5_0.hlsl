@@ -74,8 +74,11 @@ void main(
     sdr = renodx::color::srgb::DecodeSafe(sdr);
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
-    // lerp first, and then correct 
-    hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
+    // lerp first, and then correct
+    // hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
+
+    float mid = renodx::color::srgb::Decode(0.5f);
+    hdr = CorrectHueMBGated(hdr, sdr, shader_injection.bloom_hue_correction, mid);
     // hdr = CorrectPurityMBBT709WithBT2020(hdr, sdr, shader_injection.bloom_hue_correction);
     
     hdr = renodx::color::srgb::EncodeSafe(hdr);
