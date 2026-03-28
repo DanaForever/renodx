@@ -118,16 +118,18 @@ float4 main(
   SV_Target.y = max(((((Material_000[3].y) - _68) * (Material_064[2].y)) + _68), 0.0f);
   SV_Target.z = max(((((Material_000[3].z) - _73) * (Material_064[2].y)) + _73), 0.0f);
 
+  if (shader_injection.processing_path == 0.f) {
   // instead of disabling this shader, we match the luminance of the output color to the original color
-  output.rgb = PQtoSRGB(output.rgb);
+    output.rgb = PQtoSRGB(output.rgb);
 
-  SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
-  output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+    SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+    output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
 
-  SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
-  SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
-  SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
-
+    SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
+    SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
+    SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
+  }
   SV_Target.w = 1.0f;
+
   return SV_Target;
 }
