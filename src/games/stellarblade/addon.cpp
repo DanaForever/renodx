@@ -694,18 +694,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
 
-        // new renodx::utils::settings::Setting{
-        //     .key = "ToneMapUnrealIni",
-        //     .binding = &shader_injection.processing_path,
-        //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        //     .default_value = 1.f,
-        //     .can_reset = false,
-        //     .label = "Processing Path",
-        //     .section = "Unreal Engine Settings",
-        //     .tooltip = "Use Unreal Engine HDR path or Upgrade SDR path.",
-        //     .labels = {"Engine HDR", "Upgrade SDR"},
-        // },
-
         {
           auto* upgrade_setting = new renodx::utils::settings::Setting{
             .key = "ToneMapUnrealIni",
@@ -725,7 +713,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         // only use proxy for sdr path
 
           if (is_upgrading_sdr || support_frame_gen) {
-            // if (true)   {
                 renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
                 renodx::mods::swapchain::swapchain_proxy_revert_state = true;
                 

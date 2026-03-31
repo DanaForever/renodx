@@ -73,6 +73,7 @@ void main(
   // float4 outRGB = (wsum > 0.0) ? (acc / wsum) : 0.0;
   float4 outRGB = acc;
 
-  o0 = saturate(outRGB);
+  // o0 = saturate(outRGB);
+  o0 = (outRGB);
   return;
 }

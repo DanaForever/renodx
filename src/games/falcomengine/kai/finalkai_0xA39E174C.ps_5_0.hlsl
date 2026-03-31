@@ -33,21 +33,21 @@ void main(
 
       renodx::draw::Config config = renodx::draw::BuildConfig();
 
-      if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
-        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
-      } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
-        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
-      } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.3f);
-
-        // float gamma_value = gamma * 2.20000005;
-        float gamma_value = 2.3f;
-        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, gamma_value);
-      }
-
       r0.rgb = ToneMapLMS(r0.rgb);
+
+      if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+        r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+        // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
+      } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+        r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+        // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
+      } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+        float gamma_value = 2.3f;
+        r0.rgb = GammaCorrectHuePreserving(r0.rgb, gamma_value);
+
+        // float gamma_value = gamma * 2.20000005;        
+        // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, gamma_value);
+      }
 
       o0 = r0;
       float3 color = o0.rgb;

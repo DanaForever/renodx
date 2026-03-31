@@ -8,6 +8,9 @@
 
 #define DEBUG_LEVEL_0
 
+#define RENODX_MODS_SWAPCHAIN_VERSION 2
+
+
 #include <deps/imgui/imgui.h>
 #include <include/reshade.hpp>
 

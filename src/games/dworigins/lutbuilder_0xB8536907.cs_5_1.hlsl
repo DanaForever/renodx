@@ -291,7 +291,16 @@ float4 vanillaTonemapper(float3 color) {
 
     if (RENODX_TONE_MAP_TYPE > 0.f) {
       float3 extended = ApplyNiohExtended(x, base, A, B, C, D, E);
+
+
       extended = extended * W;
+      base = base * W;
+
+      extended = renodx::color::bt709::from::AP1(extended);
+      base = renodx::color::bt709::from::AP1(base);
+      extended = CorrectHueMBGated(extended, base, RENODX_TONE_MAP_HUE_CORRECTION, 0.267011f, 1.f);
+      extended = renodx::color::ap1::from::BT709(extended);
+
 
       // extended = renodx::color::bt709::from::AP1(extended);
       // extended = CastleDechroma_CVVDPStyle_NakaRushton(extended, 100, 100, lerp(1.075f, 0.8f, CUSTOM_DECHROMA));

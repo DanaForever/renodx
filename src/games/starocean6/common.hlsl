@@ -580,9 +580,7 @@ float3 LUTSampleAndToneMap(float3 lut_input_srgb, Texture3D<float4> lut, Sampler
   // linear_graded = RestoreSaturationLoss(linear_graded, untonemapped);
 
   float3 chroma = linear_graded;
-  // linear_graded = CorrectHueAndPurity(linear_graded, reference_linear);
-  // linear_graded = renodx::color::correct::Chrominance(linear_graded, chroma);
-  // linear_graded = renodx::color::correct::Hue(linear_graded, reference_linear);
+  // linear_graded = CorrectHueMBGated(linear_graded, reference_linear, 1.f);
   float3 pq_graded = LinearToPQ(linear_graded, RENODX_DIFFUSE_WHITE_NITS, true);
 
   return pq_graded;

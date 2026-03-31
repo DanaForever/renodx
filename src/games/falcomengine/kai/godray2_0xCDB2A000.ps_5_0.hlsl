@@ -63,7 +63,7 @@ void main(
     blend = renodx::color::srgb::DecodeSafe(blend);
     color = renodx::color::srgb::DecodeSafe(color);
 
-    float3 blendBloom = hdrScreenBlend(color, blend, false);
+    float3 blendBloom = hdrScreenBlend(color, blend, 1.f);
 
     sdr = renodx::color::srgb::DecodeSafe(sdr);
     float3 hdr = (blendBloom);
