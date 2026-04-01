@@ -69,7 +69,7 @@ void main(
     float3 hdr = (blendBloom);
 
     // restores the colors
-    hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
+    // hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
     hdr = renodx::color::srgb::EncodeSafe(hdr);
 
     o0.rgb = hdr;
