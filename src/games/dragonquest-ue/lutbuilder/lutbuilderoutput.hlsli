@@ -204,10 +204,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       cb_config.ColorShadow_Tint2  // Tint
   );
 
-  LegacyTonemapResult legacy_output = LegacyFilmicPostProcess(untonemapped_bt709, legacy_config);
-  float3 legacy_hdr = unrealengine::filmtonemap::extended::ApplyContrastExtended(legacy_output.graded_untonemapped, legacy_config);
-  float3 legacy_sdr = legacy_output.graded_tonemapped;
-  float3 legacy_untonemapped = legacy_output.graded_untonemapped;
+  
 
   
   if (RENODX_TONE_MAP_TYPE == 4.f)  {
@@ -230,6 +227,10 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
 
   
   if (RENODX_TONE_MAP_TYPE == 0.f || RENODX_TONE_MAP_TYPE == 2.f) {
+    LegacyTonemapResult legacy_output = LegacyFilmicPostProcess(untonemapped_bt709, legacy_config);
+    float3 legacy_hdr = unrealengine::filmtonemap::extended::ApplyContrastExtended(legacy_output.graded_untonemapped, legacy_config);
+    float3 legacy_sdr = legacy_output.graded_tonemapped;
+    float3 legacy_untonemapped = legacy_output.graded_untonemapped;
 
     if (RENODX_TONE_MAP_TYPE == 2.f) {
       
@@ -238,11 +239,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       output.rgb = PostProcess(legacy_sdr, cb_config);
     }
 
-  } else {
-  // if (true) {
-    
-    // to be used for hue-shifting
-    float3 postprocessed_legacy_sdr = PostProcess(legacy_sdr, cb_config);
+  } else {  
 
     // luma in AP1
     float y = renodx::color::y::from::AP1(untonemapped_ap1);
@@ -293,13 +290,10 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       // float3 hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config);
 
       float3 hueshifted_color;
-      if (shader_injection.tone_map_hue_shift_source == 0.f) {
-        hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config);
-      } else {
-        hueshifted_color = PostProcess(legacy_hdr, cb_config, true);
-      }
+      hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config);
 
-      hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
+      // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
+      hue_shifted_graded_filmic = CorrectHueMBGated(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT, 0.18f, 1.f);
     }
     
     output.rgb = hue_shifted_graded_filmic;
@@ -345,10 +339,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       cb_config.ColorShadow_Tint2  // Tint
   );
 
-  LegacyTonemapResult legacy_output = LegacyFilmicPostProcess(untonemapped_bt709, legacy_config);
-  float3 legacy_sdr = legacy_output.graded_tonemapped;
-  float3 legacy_hdr = unrealengine::filmtonemap::extended::ApplyContrastExtended(legacy_output.graded_untonemapped, legacy_config);
-  float3 legacy_untonemapped = legacy_output.graded_untonemapped;
+  
 
   if (RENODX_TONE_MAP_TYPE == 4.f)  {
     float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config, lut_sampler, lut_texture);
@@ -365,6 +356,10 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   }
   
   if (RENODX_TONE_MAP_TYPE == 0.f || RENODX_TONE_MAP_TYPE == 2.f) {
+    LegacyTonemapResult legacy_output = LegacyFilmicPostProcess(untonemapped_bt709, legacy_config);
+    float3 legacy_sdr = legacy_output.graded_tonemapped;
+    float3 legacy_hdr = unrealengine::filmtonemap::extended::ApplyContrastExtended(legacy_output.graded_untonemapped, legacy_config);
+    float3 legacy_untonemapped = legacy_output.graded_untonemapped;
 
     if (RENODX_TONE_MAP_TYPE == 2.f) {
       
@@ -374,10 +369,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
     }
 
   } else {
-    
-    // to be used for hue-shifting
-    float3 postprocessed_legacy_sdr = PostProcess(legacy_sdr, cb_config, lut_sampler, lut_texture);
-    
+        
     // luma in AP1
     float y = renodx::color::y::from::AP1(untonemapped_ap1);
 
@@ -424,12 +416,9 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       // float3 hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler, lut_texture);
 
       float3 hueshifted_color;
-      if (shader_injection.tone_map_hue_shift_source == 0.f) {
-        hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler, lut_texture);
-      } else {
-        hueshifted_color = PostProcess(legacy_hdr, cb_config, lut_sampler, lut_texture, true);
-      }
-      hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
+      hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler, lut_texture);
+      // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
+      hue_shifted_graded_filmic = CorrectHueMBGated(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT, 0.18f, 1.f);
     }
     
     output.rgb = hue_shifted_graded_filmic;
@@ -465,21 +454,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   output.w = 0;
   float3 org_input = untonemapped_bt709;
 
-  LegacyFilmicConfig legacy_config = CreateLegacy(
-      cb_config.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3,  // ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3
-      cb_config.ColorCurve_Ch1_Ch2,  // ColorCurve_Ch1_Ch2
-      cb_config.ColorMatrixR_ColorCurveCd1,  // ColorMatrixR_ColorCurveCd1
-      cb_config.ColorMatrixG_ColorCurveCd3Cm3,  // ColorMatrixG_ColorCurveCd3Cm3
-      cb_config.ColorMatrixB_ColorCurveCm2,  // ColorMatrixB_ColorCurveCm2
-      cb_config.ColorShadow_Luma,  // ColorShadow_Luma,
-      cb_config.ColorShadow_Tint1,  // Tint
-      cb_config.ColorShadow_Tint2  // Tint
-  );
-
-  LegacyTonemapResult legacy_output = LegacyFilmicPostProcess(untonemapped_bt709, legacy_config);
-  float3 legacy_sdr = legacy_output.graded_tonemapped;
-  float3 legacy_hdr = unrealengine::filmtonemap::extended::ApplyContrastExtended(legacy_output.graded_untonemapped, legacy_config);
-  float3 legacy_untonemapped = legacy_output.graded_untonemapped;
+  
 
   if (RENODX_TONE_MAP_TYPE == 4.f)  {
     float3 graded_bt709 = PostProcess(untonemapped_bt709, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1);
@@ -496,6 +471,21 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
   }
   
   if (RENODX_TONE_MAP_TYPE == 0.f || RENODX_TONE_MAP_TYPE == 2.f) {
+    LegacyFilmicConfig legacy_config = CreateLegacy(
+        cb_config.ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3,  // ColorCurve_Cm0Cd0_Cd2_Ch0Cm1_Ch3
+        cb_config.ColorCurve_Ch1_Ch2,                // ColorCurve_Ch1_Ch2
+        cb_config.ColorMatrixR_ColorCurveCd1,        // ColorMatrixR_ColorCurveCd1
+        cb_config.ColorMatrixG_ColorCurveCd3Cm3,     // ColorMatrixG_ColorCurveCd3Cm3
+        cb_config.ColorMatrixB_ColorCurveCm2,        // ColorMatrixB_ColorCurveCm2
+        cb_config.ColorShadow_Luma,                  // ColorShadow_Luma,
+        cb_config.ColorShadow_Tint1,                 // Tint
+        cb_config.ColorShadow_Tint2                  // Tint
+    );
+
+    LegacyTonemapResult legacy_output = LegacyFilmicPostProcess(untonemapped_bt709, legacy_config);
+    float3 legacy_sdr = legacy_output.graded_tonemapped;
+    float3 legacy_hdr = unrealengine::filmtonemap::extended::ApplyContrastExtended(legacy_output.graded_untonemapped, legacy_config);
+    float3 legacy_untonemapped = legacy_output.graded_untonemapped;
 
     if (RENODX_TONE_MAP_TYPE == 2.f) {
       
@@ -505,10 +495,7 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
     }
 
   } else {
-    
-    // to be used for hue-shifting
-    float3 postprocessed_legacy_sdr = PostProcess(legacy_sdr, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1);
-    
+        
     // luma in AP1
     float y = renodx::color::y::from::AP1(untonemapped_ap1);
 
@@ -555,13 +542,10 @@ float4 CreateUnrealLUT(float3 untonemapped_ap1, float3 untonemapped_bt709,
       // float3 hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1);
 
       float3 hueshifted_color;
-      if (shader_injection.tone_map_hue_shift_source == 0.f) {
-        hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1);
-      } else {
-        hueshifted_color = PostProcess(legacy_hdr, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1, true);
-      }
+      hueshifted_color = PostProcess(tonemapped_graded_sdr, cb_config, lut_sampler_0, lut_texture_0, lut_sampler_1, lut_texture_1);
 
-      hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
+      // hue_shifted_graded_filmic = CorrectHueAndPurity(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT);
+      hue_shifted_graded_filmic = CorrectHueMBGated(graded_filmic, hueshifted_color, RENODX_TONE_MAP_HUE_SHIFT, 0.18f, 1.f);
     }
 
     // // PostToneMapDesaturation

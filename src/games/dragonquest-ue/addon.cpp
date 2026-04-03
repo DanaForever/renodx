@@ -146,12 +146,12 @@ renodx::utils::settings::Settings settings = {
         .key = "DisplayMapType",
         .binding = &shader_injection.display_map_type,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
+        .default_value = 1.f,
         .can_reset = false,
         .label = "Display Map Type",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type for filmic",
-        .labels = {"Neutwo (Max Channel)", "PsychoTM"},
+        .labels = {"Neutwo (Max Channel)", "PsychoV"},
         .is_enabled = []() { return shader_injection.tone_map_type > 1.f; },
         .is_visible = []() { return shader_injection.tone_map_type > 1.f; },
     },
@@ -203,19 +203,18 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Off", "2.2", "BT.1886 (2.4)", "DQ11 S (1.5)"},
     },
 
-
-    new renodx::utils::settings::Setting{
-        .key = "ToneMapHueShiftSource",
-        .binding = &shader_injection.tone_map_hue_shift_source,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
-        .label = "Filmic Hue Shift source",
-        .section = "Tone Mapping",
-        .tooltip = "Hue-shifting source",
-        .labels = {"Filmic SDR", "Legacy HDR"},
-        .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
-        .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "ToneMapHueShiftSource",
+    //     .binding = &shader_injection.tone_map_hue_shift_source,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 0.f,
+    //     .label = "Filmic Hue Shift source",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Hue-shifting source",
+    //     .labels = {"Filmic SDR", "Legacy HDR"},
+    //     .is_enabled = []() { return shader_injection.tone_map_type == 3.f; },
+    //     .is_visible = []() { return shader_injection.tone_map_type == 3.f; },
+    // },
 
     new renodx::utils::settings::Setting{
         .key = "ToneMapHueShift",
@@ -661,8 +660,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   auto filename = process_path.filename().string();
   auto product_name = renodx::utils::platform::GetProductName(process_path);
 
-  bool support_frame_gen = (product_name == "Stellar Blade");
-
   switch (fdw_reason) {
     case DLL_PROCESS_ATTACH:
       if (!reshade::register_addon(h_module)) return FALSE;
@@ -683,6 +680,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_index = 13;
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
+
+        shader_injection.tone_map_hue_shift_source = 0.f;
 
         // new renodx::utils::settings::Setting{
         //     .key = "ToneMapUnrealIni",
@@ -707,6 +706,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .section = "Display Output",
             .tooltip = "Use Unreal Engine HDR path or Upgrade SDR path.",
             .labels = {"Engine HDR", "Upgrade SDR"},
+            .is_global = true,
          };
 
           renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, upgrade_setting);
@@ -714,8 +714,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           settings.push_back(upgrade_setting);
         // only use proxy for sdr path
 
-          if (is_upgrading_sdr || support_frame_gen) {
-            // if (true)   {
+          if (is_upgrading_sdr) {
                 renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
                 renodx::mods::swapchain::swapchain_proxy_revert_state = true;
                 
