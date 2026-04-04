@@ -105,7 +105,6 @@ float4 main(
   float4 _29 = t0.Sample(s0, float2(((((SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x)) * (Globals_080.x)) + (Globals_064.x)), ((((SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y)) * (Globals_080.y)) + (Globals_064.y))));
   float4 output = _29;
 
-
   _29.rgb = PQtoSRGB(_29.rgb);
   
   float _54 = (((Material_064[1].x) - (Material_000[2].x)) * (((Material_064[0].z) * _29.x) + (Material_064[0].w))) + (Material_000[2].x);
@@ -114,9 +113,12 @@ float4 main(
   float _63 = select((_54 <= 0.0f), 0.0f, exp2(log2(_54) * (Material_064[2].x)));
   float _68 = select((_55 <= 0.0f), 0.0f, exp2(log2(_55) * (Material_064[2].x)));
   float _73 = select((_56 <= 0.0f), 0.0f, exp2(log2(_56) * (Material_064[2].x)));
-  SV_Target.x = max(((((Material_000[3].x) - _63) * (Material_064[2].y)) + _63), 0.0f);
-  SV_Target.y = max(((((Material_000[3].y) - _68) * (Material_064[2].y)) + _68), 0.0f);
-  SV_Target.z = max(((((Material_000[3].z) - _73) * (Material_064[2].y)) + _73), 0.0f);
+  // SV_Target.x = max(((((Material_000[3].x) - _63) * (Material_064[2].y)) + _63), 0.0f);
+  // SV_Target.y = max(((((Material_000[3].y) - _68) * (Material_064[2].y)) + _68), 0.0f);
+  // SV_Target.z = max(((((Material_000[3].z) - _73) * (Material_064[2].y)) + _73), 0.0f);
+  SV_Target.x = ((((Material_000[3].x) - _63) * (Material_064[2].y)) + _63);
+  SV_Target.y = ((((Material_000[3].y) - _68) * (Material_064[2].y)) + _68);
+  SV_Target.z = ((((Material_000[3].z) - _73) * (Material_064[2].y)) + _73);
 
   if (shader_injection.processing_path == 0.f) {
   // instead of disabling this shader, we match the luminance of the output color to the original color

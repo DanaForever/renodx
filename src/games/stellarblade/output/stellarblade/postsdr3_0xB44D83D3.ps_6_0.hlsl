@@ -127,9 +127,12 @@ float4 main(
   float _157 = _156 + _38.x;
   float _158 = _156 + _38.y;
   float _159 = _156 + _38.z;
-  SV_Target.x = max(((((Material_000[1].x) - _157) * (Material_032[0].x)) + _157), 0.0f);
-  SV_Target.y = max(((((Material_000[1].y) - _158) * (Material_032[0].x)) + _158), 0.0f);
-  SV_Target.z = max(((((Material_000[1].z) - _159) * (Material_032[0].x)) + _159), 0.0f);
+  // SV_Target.x = max(((((Material_000[1].x) - _157) * (Material_032[0].x)) + _157), 0.0f);
+  // SV_Target.y = max(((((Material_000[1].y) - _158) * (Material_032[0].x)) + _158), 0.0f);
+  // SV_Target.z = max(((((Material_000[1].z) - _159) * (Material_032[0].x)) + _159), 0.0f);
+  SV_Target.x = ((((Material_000[1].x) - _157) * (Material_032[0].x)) + _157);
+  SV_Target.y = ((((Material_000[1].y) - _158) * (Material_032[0].x)) + _158);
+  SV_Target.z = ((((Material_000[1].z) - _159) * (Material_032[0].x)) + _159);
 
   if (shader_injection.processing_path == 0.f) {
     // instead of disabling this shader, we match the luminance of the output color to the original color
