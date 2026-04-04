@@ -477,6 +477,7 @@ float3 PostToneMapProcess(float3 output, uint device = 0u) {
 
   if (device == 0u || device == 2u || device == 3u) {
     output = renodx::color::srgb::EncodeSafe(output);
+    // output = renodx::color::pq::EncodeSafe(output, 100.f);
   }
   return output;
 

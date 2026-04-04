@@ -4,40 +4,94 @@ Texture2D<float4> t0 : register(t0);
 
 Texture2D<float4> t1 : register(t1);
 
-Texture2D<uint2> t2 : register(t2);
-
-Texture2D<float4> t3 : register(t3);
-
-Texture2D<float4> t4 : register(t4);
-
-Texture2D<float4> t5 : register(t5);
-
-Texture3D<float4> t6 : register(t6);
+Texture2D<float4> t2 : register(t2);
 
 cbuffer cb0 : register(b0) {
-  float cb0_050z : packoffset(c050.z);
-  float cb0_050w : packoffset(c050.w);
-  float cb0_051x : packoffset(c051.x);
-  float cb0_051y : packoffset(c051.y);
-  float cb0_058z : packoffset(c058.z);
-  float cb0_058w : packoffset(c058.w);
-  float cb0_059x : packoffset(c059.x);
-  float cb0_059y : packoffset(c059.y);
-  float cb0_060x : packoffset(c060.x);
-  float cb0_060y : packoffset(c060.y);
-  float cb0_060z : packoffset(c060.z);
-  float cb0_061x : packoffset(c061.x);
-  float cb0_061y : packoffset(c061.y);
-  float cb0_061z : packoffset(c061.z);
-  float cb0_064w : packoffset(c064.w);
-  int cb0_065x : packoffset(c065.x);
-  float cb0_066x : packoffset(c066.x);
-  float cb0_066y : packoffset(c066.y);
-  float cb0_066z : packoffset(c066.z);
-  float cb0_067x : packoffset(c067.x);
-  float cb0_067y : packoffset(c067.y);
-  float cb0_067z : packoffset(c067.z);
-  float cb0_067w : packoffset(c067.w);
+  float2 $Globals_000 : packoffset(c000.x);
+  float2 $Globals_008 : packoffset(c000.z);
+  float2 $Globals_016 : packoffset(c001.x);
+  float2 $Globals_024 : packoffset(c001.z);
+  int2 $Globals_032 : packoffset(c002.x);
+  int2 $Globals_040 : packoffset(c002.z);
+  float2 $Globals_048 : packoffset(c003.x);
+  float2 $Globals_056 : packoffset(c003.z);
+  float2 $Globals_064 : packoffset(c004.x);
+  float2 $Globals_072 : packoffset(c004.z);
+  float2 $Globals_080 : packoffset(c005.x);
+  float2 $Globals_088 : packoffset(c005.z);
+  float2 $Globals_096 : packoffset(c006.x);
+  float2 $Globals_104 : packoffset(c006.z);
+  float2 $Globals_112 : packoffset(c007.x);
+  float2 $Globals_120 : packoffset(c007.z);
+  float2 $Globals_128 : packoffset(c008.x);
+  float2 $Globals_136 : packoffset(c008.z);
+  int2 $Globals_144 : packoffset(c009.x);
+  int2 $Globals_152 : packoffset(c009.z);
+  float2 $Globals_160 : packoffset(c010.x);
+  float2 $Globals_168 : packoffset(c010.z);
+  float2 $Globals_176 : packoffset(c011.x);
+  float2 $Globals_184 : packoffset(c011.z);
+  float2 $Globals_192 : packoffset(c012.x);
+  float2 $Globals_200 : packoffset(c012.z);
+  float2 $Globals_208 : packoffset(c013.x);
+  float2 $Globals_216 : packoffset(c013.z);
+  float2 $Globals_224 : packoffset(c014.x);
+  float2 $Globals_232 : packoffset(c014.z);
+  float2 $Globals_240 : packoffset(c015.x);
+  float2 $Globals_248 : packoffset(c015.z);
+  int2 $Globals_256 : packoffset(c016.x);
+  int2 $Globals_264 : packoffset(c016.z);
+  float2 $Globals_272 : packoffset(c017.x);
+  float2 $Globals_280 : packoffset(c017.z);
+  float2 $Globals_288 : packoffset(c018.x);
+  float2 $Globals_296 : packoffset(c018.z);
+  float2 $Globals_304 : packoffset(c019.x);
+  float2 $Globals_312 : packoffset(c019.z);
+  float2 $Globals_320 : packoffset(c020.x);
+  float2 $Globals_328 : packoffset(c020.z);
+  float2 $Globals_336 : packoffset(c021.x);
+  float2 $Globals_344 : packoffset(c021.z);
+  float2 $Globals_352 : packoffset(c022.x);
+  float2 $Globals_360 : packoffset(c022.z);
+  int2 $Globals_368 : packoffset(c023.x);
+  int2 $Globals_376 : packoffset(c023.z);
+  float2 $Globals_384 : packoffset(c024.x);
+  float2 $Globals_392 : packoffset(c024.z);
+  float2 $Globals_400 : packoffset(c025.x);
+  float2 $Globals_408 : packoffset(c025.z);
+  float2 $Globals_416 : packoffset(c026.x);
+  float2 $Globals_424 : packoffset(c026.z);
+  float2 $Globals_432 : packoffset(c027.x);
+  float2 $Globals_440 : packoffset(c027.z);
+  float2 $Globals_448 : packoffset(c028.x);
+  float2 $Globals_456 : packoffset(c028.z);
+  float2 $Globals_464 : packoffset(c029.x);
+  float2 $Globals_472 : packoffset(c029.z);
+  int2 $Globals_480 : packoffset(c030.x);
+  int2 $Globals_488 : packoffset(c030.z);
+  float2 $Globals_496 : packoffset(c031.x);
+  float2 $Globals_504 : packoffset(c031.z);
+  float2 $Globals_512 : packoffset(c032.x);
+  float2 $Globals_520 : packoffset(c032.z);
+  float2 $Globals_528 : packoffset(c033.x);
+  float2 $Globals_536 : packoffset(c033.z);
+  float2 $Globals_544 : packoffset(c034.x);
+  float2 $Globals_552 : packoffset(c034.z);
+  float2 $Globals_560 : packoffset(c035.x);
+  float2 $Globals_568 : packoffset(c035.z);
+  float2 $Globals_576 : packoffset(c036.x);
+  float2 $Globals_584 : packoffset(c036.z);
+  int2 $Globals_592 : packoffset(c037.x);
+  int2 $Globals_600 : packoffset(c037.z);
+  float2 $Globals_608 : packoffset(c038.x);
+  float2 $Globals_616 : packoffset(c038.z);
+  float2 $Globals_624 : packoffset(c039.x);
+  float2 $Globals_632 : packoffset(c039.z);
+  float2 $Globals_640 : packoffset(c040.x);
+  float2 $Globals_648 : packoffset(c040.z);
+  float2 $Globals_656 : packoffset(c041.x);
+  float2 $Globals_664 : packoffset(c041.z);
+  float4 $Globals_672 : packoffset(c042.x);
 };
 
 cbuffer cb1 : register(b1) {
@@ -270,82 +324,51 @@ cbuffer cb1 : register(b1) {
   int View_3672 : packoffset(c229.z);
 };
 
+cbuffer cb2 : register(b2) {
+  float4 Material_000[2] : packoffset(c000.x);
+  float4 Material_032[3] : packoffset(c002.x);
+};
+
 SamplerState s0 : register(s0);
 
 SamplerState s1 : register(s1);
 
-SamplerState s2 : register(s2);
-
-SamplerState s3 : register(s3);
-
 float4 main(
-  noperspective float2 TEXCOORD : TEXCOORD,
-  noperspective float2 TEXCOORD_3 : TEXCOORD3,
-  noperspective float3 TEXCOORD_1 : TEXCOORD1,
-  noperspective float4 TEXCOORD_2 : TEXCOORD2,
-  noperspective float2 TEXCOORD_4 : TEXCOORD4,
-  noperspective float4 SV_Position : SV_Position
+  noperspective float4 SV_Position : SV_Position,
+  linear float4 TEXCOORD : TEXCOORD
 ) : SV_Target {
   float4 SV_Target;
-  uint _26 = uint(View_2112.x * TEXCOORD.x);
-  uint _27 = uint(View_2112.y * TEXCOORD.y);
-  float4 _28 = t1.Load(int3(_26, _27, 0));
-  uint2 _30 = t2.Load(int3(_26, _27, 0));
-  float4 _32 = t0.Load(int3(_26, _27, 0));
-  float4 _57 = t3.Sample(s0, float2(TEXCOORD.x, TEXCOORD.y));
-  float _249;
-  float _250;
-  float _251;
-  float _252;
-  if (!((bool)(_30.y == 200) && (bool)(abs((((((-0.0f - View_1040.y) - (View_1040.x * _32.x)) - (1.0f / ((View_1040.z * _32.x) - View_1040.w))) + View_1040.y) + (View_1040.x * _28.x)) + (1.0f / ((View_1040.z * _28.x) - View_1040.w))) < 0.009999999776482582f))) {
-    float4 _96 = t4.Sample(s1, float2(min(max(((cb0_058z * TEXCOORD.x) + cb0_059x), cb0_050z), cb0_051x), min(max(((cb0_058w * TEXCOORD.y) + cb0_059y), cb0_050w), cb0_051y)));
-    float4 _113 = t5.Sample(s2, float2(((((cb0_067z * TEXCOORD_3.x) + cb0_067x) * 0.5f) + 0.5f), (0.5f - (((cb0_067w * TEXCOORD_3.y) + cb0_067y) * 0.5f))));
-    float _137 = TEXCOORD_1.x * View_2168;
-    float4 _162 = t6.Sample(s3, float3(((saturate((log2((_137 * (((cb0_061x + (cb0_066x * _113.x)) * _96.x) + (cb0_060x * _57.x))) + 0.002667719265446067f) * 0.0714285746216774f) + 0.6107269525527954f) * 0.96875f) + 0.015625f), ((saturate((log2((_137 * (((cb0_061y + (cb0_066y * _113.y)) * _96.y) + (cb0_060y * _57.y))) + 0.002667719265446067f) * 0.0714285746216774f) + 0.6107269525527954f) * 0.96875f) + 0.015625f), ((saturate((log2((_137 * (((cb0_061z + (cb0_066z * _113.z)) * _96.z) + (cb0_060z * _57.z))) + 0.002667719265446067f) * 0.0714285746216774f) + 0.6107269525527954f) * 0.96875f) + 0.015625f)));
-    // _162.rgb = renodx::color::pq::DecodeSafe(_162.rgb, 100.f);
-    
-    float _166 = _162.x * 1.0499999523162842f;
-    float _167 = _162.y * 1.0499999523162842f;
-    float _168 = _162.z * 1.0499999523162842f;
-    float _171 = (frac(sin((TEXCOORD_2.w * 543.3099975585938f) + TEXCOORD_2.z) * 493013.0f) * 0.00390625f) + -0.001953125f;
-    float _172 = _166 + _171;
-    float _173 = _167 + _171;
-    float _174 = _168 + _171;
-    float _175 = saturate(dot(float3(_166, _167, _168), float3(0.29899999499320984f, 0.5870000123977661f, 0.11400000005960464f)));
-    [branch]
-    if (!(cb0_065x == 0)) {
-      float _186 = (pow(_172, 0.012683313339948654f));
-      float _187 = (pow(_173, 0.012683313339948654f));
-      float _188 = (pow(_174, 0.012683313339948654f));
-      float _221 = max(6.103519990574569e-05f, ((exp2(log2(max(0.0f, (_186 + -0.8359375f)) / (18.8515625f - (_186 * 18.6875f))) * 6.277394771575928f) * 10000.0f) / cb0_064w));
-      float _222 = max(6.103519990574569e-05f, ((exp2(log2(max(0.0f, (_187 + -0.8359375f)) / (18.8515625f - (_187 * 18.6875f))) * 6.277394771575928f) * 10000.0f) / cb0_064w));
-      float _223 = max(6.103519990574569e-05f, ((exp2(log2(max(0.0f, (_188 + -0.8359375f)) / (18.8515625f - (_188 * 18.6875f))) * 6.277394771575928f) * 10000.0f) / cb0_064w));
-      _249 = min((_221 * 12.920000076293945f), ((exp2(log2(max(_221, 0.0031306699384003878f)) * 0.4166666567325592f) * 1.0549999475479126f) + -0.054999999701976776f));
-      _250 = min((_222 * 12.920000076293945f), ((exp2(log2(max(_222, 0.0031306699384003878f)) * 0.4166666567325592f) * 1.0549999475479126f) + -0.054999999701976776f));
-      _251 = min((_223 * 12.920000076293945f), ((exp2(log2(max(_223, 0.0031306699384003878f)) * 0.4166666567325592f) * 1.0549999475479126f) + -0.054999999701976776f));
-      _252 = _175;
-    } else {
-      _249 = _172;
-      _250 = _173;
-      _251 = _174;
-      // _252 = _175;
+  float _21 = (SV_Position.x - float((uint)((int)($Globals_592.x)))) * ($Globals_616.x);
+  float _22 = (SV_Position.y - float((uint)((int)($Globals_592.y)))) * ($Globals_616.y);
+  float4 _33 = t2.Sample(s1, float2(((_21 * ($Globals_080.x)) + ($Globals_064.x)), ((_22 * ($Globals_080.y)) + ($Globals_064.y))));
+  float4 _45 = t1.Sample(s0, float2(((Material_032[0].x) * _21), (((Material_032[0].x) * _22) + (View_2280 * 0.05000000074505806f))));
 
-      _252 = saturate(renodx::color::y::from::BT709(renodx::color::srgb::DecodeSafe(float3(_249, _250, _251))));
-      // _252 = saturate(renodx::color::y::from::BT709(float3(_249, _250, _251)));
-    }
-  } else {
-    _249 = _57.x;
-    _250 = _57.y;
-    _251 = _57.z;
-    _252 = 0.0f;
-  }
-  SV_Target.x = _249;
-  SV_Target.y = _250;
-  SV_Target.z = _251;
+  // return _33;
+  
+  float _50 = (_45.x * 2.0f) + -1.0f;
+  float _51 = (_45.y * 2.0f) + -1.0f;
+  float4 _85 = t0.Load(int3((uint)(uint((((((SV_Position.x - float((uint)((int)($Globals_592.x)))) * ($Globals_616.x)) * View_2080.x) + View_2064.x) * View_2112.z) * View_2112.x)), (uint)(uint((((((SV_Position.y - float((uint)((int)($Globals_592.y)))) * ($Globals_616.y)) * View_2080.y) + View_2064.y) * View_2112.w) * View_2112.y)), 0));
+  float _98 = max((((View_1040.x * _85.x) + View_1040.y) + (1.0f / ((View_1040.z * _85.x) - View_1040.w))), 0.0f);
+  float _106 = (((min(_98, 50000.0f) + -10000.0f) * 2.499999936844688e-05f) * (Material_032[0].w)) + (Material_032[0].z);
+  float4 _130 = t2.Sample(s1, float2(min(max(((((_106 * _50) + _21) * ($Globals_080.x)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((((_106 * _51) + _22) * ($Globals_080.y)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  float _134 = _106 * 0.5f;
+  float4 _158 = t2.Sample(s1, float2(min(max(((($Globals_080.x) * ((_134 * _50) + _21)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * ((_134 * _51) + _22)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  float _175 = ((min(_98, (Material_032[1].x)) - (Material_032[1].y)) / (Material_032[1].z)) * 0.8999999761581421f;
+  float _181 = select((_175 <= 0.0f), 0.0f, exp2(log2(_175) * (Material_032[1].w)));
+  float _188 = (_181 * (((_158.x + _130.x) * 0.5f) - _33.x)) + _33.x;
+  float _189 = (_181 * (((_158.y + _130.y) * 0.5f) - _33.y)) + _33.y;
+  float _190 = (_181 * (((_158.z + _130.z) * 0.5f) - _33.z)) + _33.z;
+  // SV_Target.x = max(((((Material_000[1].x) - _188) * (Material_032[2].x)) + _188), 0.0f);
+  // SV_Target.y = max(((((Material_000[1].y) - _189) * (Material_032[2].x)) + _189), 0.0f);
+  // SV_Target.z = max(((((Material_000[1].z) - _190) * (Material_032[2].x)) + _190), 0.0f);
 
-  // SV_Target.rgb = renodx::color::srgb::DecodeSafe(SV_Target.rgb);
-  // SV_Target.rgb -= 0.5f;
-  // SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
-  SV_Target.w = _252;
+  // remove bt709 clamping
+  SV_Target.x = ((((Material_000[1].x) - _188) * (Material_032[2].x)) + _188);
+  SV_Target.y = ((((Material_000[1].y) - _189) * (Material_032[2].x)) + _189);
+  SV_Target.z = ((((Material_000[1].z) - _190) * (Material_032[2].x)) + _190);
+
+  // safe clamp (or maybe not necessary)
+  // SV_Target.rgb = renodx::color::bt709::clamp::BT2020(SV_Target.rgb);
+  SV_Target.w = 1.0f;
   return SV_Target;
 }
