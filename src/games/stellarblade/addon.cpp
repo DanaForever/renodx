@@ -785,12 +785,12 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .aspect_ratio = 30.f / 17.f,
         });
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r8_unorm,
-            .new_format = reshade::api::format::r16_float,
-        //   .ignore_size = true,
-            .use_resource_view_cloning = true
-        }); 
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r8_unorm,
+        //     .new_format = reshade::api::format::r16_float,
+        // //   .ignore_size = true,
+        //     .use_resource_view_cloning = true
+        // }); qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
         
         // General Upgrades 
 

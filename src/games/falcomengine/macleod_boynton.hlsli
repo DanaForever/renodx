@@ -1,5 +1,5 @@
-#ifndef SRC_SHADERS_COLOR_MACLEOD_BOYNTON_HLSL_
-#define SRC_SHADERS_COLOR_MACLEOD_BOYNTON_HLSL_
+#ifndef SRC_GAMES_CUSTOM_MACLEOD_BOYNTON_HLSLI_
+#define SRC_GAMES_CUSTOM_MACLEOD_BOYNTON_HLSLI_
 
 #include "./shared.h"
 
@@ -953,6 +953,48 @@ float3 CorrectHueMBGated(
           .rgbOut);
 }
 
+float3 CorrectPurityMBBT709WithBT2020(
+    float3 target_color_bt709,
+    float3 purity_reference_bt709,
+    float strength = 1.f,
+    float curve_gamma = 1.f,
+    float2 mb_white_override = float2(-1.f, -1.f),
+    float t_min = 1e-6f,
+    float clamp_purity_loss = 0.f) {
+  if (strength <= 0.f) return target_color_bt709;
 
+  float3 target_color_bt2020 = renodx::color::bt2020::from::BT709(target_color_bt709);
+  float3 purity_reference_bt2020 = renodx::color::bt2020::from::BT709(purity_reference_bt709);
 
-#endif  // SRC_SHADERS_COLOR_MACLEOD_BOYNTON_HLSL_
+  float reference_purity01 =
+      renodx_custom::color::macleod_boynton::ApplyBT2020(purity_reference_bt2020, 1.f, 1.f,
+                                                         mb_white_override, t_min)
+          .purityCur01;
+
+  float applied_purity01;
+  if (strength == 1.f && clamp_purity_loss <= 0.f) {
+    // Fast path: full transfer only needs donor purity.
+    applied_purity01 = reference_purity01;
+  } else {
+    float target_purity01 =
+        renodx_custom::color::macleod_boynton::ApplyBT2020(target_color_bt2020, 1.f, 1.f,
+                                                           mb_white_override, t_min)
+            .purityCur01;
+
+    applied_purity01 = lerp(target_purity01, reference_purity01, strength);
+
+    if (clamp_purity_loss > 0.f) {
+      float clamp_strength = saturate(clamp_purity_loss);
+      // Only clamp purity reductions: if applied < target, pull back toward target.
+      float t = 1.f - step(target_purity01, applied_purity01);
+      applied_purity01 = lerp(applied_purity01, target_purity01, t * clamp_strength);
+    }
+  }
+
+  return renodx::color::bt709::from::BT2020(
+      renodx_custom::color::macleod_boynton::ApplyBT2020(
+          target_color_bt2020, applied_purity01, curve_gamma, mb_white_override, t_min)
+          .rgbOut);
+}
+
+#endif  // SRC_GAMES_CUSTOM_MACLEOD_BOYNTON_HLSLI_

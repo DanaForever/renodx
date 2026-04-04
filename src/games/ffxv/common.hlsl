@@ -2,6 +2,7 @@
 #include "./shared.h"
 #include "./macleod_boynton.hlsli"
 #include "./psycho_test11.hlsl"
+#include "./psycho_test17.hlsl"
 
 
 float3 PostToneMapProcess(float3 output) {
@@ -381,7 +382,7 @@ float3 ToneMapLMS(float3 untonemapped) {
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 untonemapped_graded = untonemapped;
 
-  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+  
 
   // naka rushton
   float3 untonemapped_graded_dechroma = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded);
@@ -400,22 +401,41 @@ float3 ToneMapLMS(float3 untonemapped) {
   }
 
   if (RENODX_TONE_MAP_TYPE == 2.f) {
-    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
+    // bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
+    //     untonemapped_graded_dechroma,
+    //     peak_ratio,                           // peak
+    //     1.0f,                                 // exposure
+    //     1.0f,                                 // highlights
+    //     1.0f,                                 // shadows
+    //     1.0f,                                 // contrast
+    //     1.0f,                                 // purity_scale
+    //     1.0f,                                 // bleaching_intensity
+    //     100.f,                                // clip_point
+    //     0.5f,                                 // hue_restore
+    //     1.0f,                                 // adaptation_contrast
+    //     1,                                    // naka rushton
+    //     // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+    //     1.0f);  // cone_response_exponent
+
+    float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
+
+    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test17(
         untonemapped_graded_dechroma,
-        peak_ratio,                           // peak
-        1.0f,                                 // exposure
-        1.0f,                                 // highlights
-        1.0f,                                 // shadows
-        1.0f,                                 // contrast
-        1.0f,                                 // purity_scale
-        1.0f,                                 // bleaching_intensity
-        100.f,                                // clip_point
-        0.5f,                                 // hue_restore
-        1.0f,                                 // adaptation_contrast
-        1,                                    // naka rushton
-        // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
-        1.0f);  // cone_response_exponent
+        peak_ratio,                               // peak
+        1.0f,                                     // exposure
+        1.0f,                                     // highlights
+        1.0f,                                     // shadows
+        contrast,                                 // contrast
+        1.0f,                                     // purity_scale
+        1.0f,                                     // bleaching_intensity
+        100.f,                                    // clip_point
+        0.5f,                                     // hue_restore
+        1.0f,                                     // adaptation_contrast
+        1,                                        // naka rushton
+        shader_injection.tone_map_lms_vibrancy);  // cone_response_exponent
+
   } else {
+    untonemapped_graded_dechroma = LMS_Vibrancy(untonemapped_graded_dechroma, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
     bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
   }
   return bt709_tonemapped;

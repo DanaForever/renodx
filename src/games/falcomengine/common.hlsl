@@ -1,8 +1,11 @@
 
 #include "./shared.h"
 #include "lms_matrix.hlsl"
-#include "macleod_boynton.hlsli"
+#include "./macleod_boynton.hlsli"
+
 #include "./psycho_test11.hlsl"
+#include "./psycho_test17.hlsl"
+
 
 float3 sdrToneMap(float3 color) {
   color = renodx::color::srgb::DecodeSafe(color);
@@ -217,50 +220,6 @@ float3 ReinhardBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
   return renodx::color::bt709::from::XYZ(xyz_out);
 }
 
-float3 CorrectPurityMBBT709WithBT2020(
-    float3 target_color_bt709,
-    float3 purity_reference_bt709,
-    float strength = 1.f,
-    float curve_gamma = 1.f,
-    float2 mb_white_override = float2(-1.f, -1.f),
-    float t_min = 1e-6f,
-    float clamp_purity_loss = 0.f) {
-  if (strength <= 0.f) return target_color_bt709;
-
-  float3 target_color_bt2020 = renodx::color::bt2020::from::BT709(target_color_bt709);
-  float3 purity_reference_bt2020 = renodx::color::bt2020::from::BT709(purity_reference_bt709);
-
-  float reference_purity01 =
-      renodx_custom::color::macleod_boynton::ApplyBT2020(purity_reference_bt2020, 1.f, 1.f,
-                                                         mb_white_override, t_min)
-          .purityCur01;
-
-  float applied_purity01;
-  if (strength == 1.f && clamp_purity_loss <= 0.f) {
-    // Fast path: full transfer only needs donor purity.
-    applied_purity01 = reference_purity01;
-  } else {
-    float target_purity01 =
-        renodx_custom::color::macleod_boynton::ApplyBT2020(target_color_bt2020, 1.f, 1.f,
-                                                           mb_white_override, t_min)
-            .purityCur01;
-
-    applied_purity01 = lerp(target_purity01, reference_purity01, strength);
-
-    if (clamp_purity_loss > 0.f) {
-      float clamp_strength = saturate(clamp_purity_loss);
-      // Only clamp purity reductions: if applied < target, pull back toward target.
-      float t = 1.f - step(target_purity01, applied_purity01);
-      applied_purity01 = lerp(applied_purity01, target_purity01, t * clamp_strength);
-    }
-  }
-
-  return renodx::color::bt709::from::BT2020(
-      renodx_custom::color::macleod_boynton::ApplyBT2020(
-          target_color_bt2020, applied_purity01, curve_gamma, mb_white_override, t_min)
-          .rgbOut);
-}
-
 float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
 
@@ -279,17 +238,6 @@ float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
 
 
 
-float3 CorrectHueAndPurity(
-    float3 target_color_bt709,
-    float3 reference_color_bt709,
-    float strength = 1.f,
-    float2 mb_white_override = float2(-1.f, -1.f),
-    float t_min = 1e-6f) {
-  float hue_t_ramp_start = 0.5f;
-  float hue_t_ramp_end = 1.f;
-  return CorrectHueAndPurityMBGated(target_color_bt709, reference_color_bt709, strength, hue_t_ramp_start, hue_t_ramp_end, strength, 1.f, mb_white_override, t_min);
-};
-
 float3 ToneMapLMS(float3 untonemapped) {
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     return untonemapped;
@@ -298,14 +246,12 @@ float3 ToneMapLMS(float3 untonemapped) {
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 untonemapped_graded = untonemapped;
 
-  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+  // untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
 
   // naka rushton
   float3 untonemapped_graded_dechroma = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded);
   untonemapped_graded_dechroma = lerp(untonemapped_graded, untonemapped_graded_dechroma, shader_injection.tone_map_lms_dechroma);
 
-  // float3 bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
-  // float3 bt709_tonemapped = NeutwoBT709WhiteForEnergy(untonemapped_graded, peak_ratio);
   float3 bt709_tonemapped;
   float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
@@ -319,39 +265,44 @@ float3 ToneMapLMS(float3 untonemapped) {
   if (RENODX_TONE_MAP_TYPE > 0.f) {
     float contrast_ratio = min(peak_ratio, 4.f);
 
-    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
+  //   bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
+  //       untonemapped_graded_dechroma,
+  //       peak_ratio,  // peak
+  //       1.0f,        // exposure
+  //       1.0f,        // highlights
+  //       1.0f,        // shadows
+  //       1.0f,        // contrast
+  //       1.0f,        // purity_scale
+  //       1.0f,        // bleaching_intensity
+  //       100.f,       // clip_point
+  //       0.5f,        // hue_restore
+  //       1.0f,        // adaptation_contrast
+  //       1,           // naka rushton
+  //       // 1.0f + 0.025 * (contrast_ratio - 1.0f));  // cone_response_exponent
+  //       1.0f);  // cone_response_exponent
+  // }
+
+    float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
+
+    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test17(
         untonemapped_graded_dechroma,
         peak_ratio,  // peak
         1.0f,        // exposure
         1.0f,        // highlights
         1.0f,        // shadows
-        1.0f,        // contrast
+        contrast,    // contrast
         1.0f,        // purity_scale
         1.0f,        // bleaching_intensity
         100.f,       // clip_point
         0.5f,        // hue_restore
         1.0f,        // adaptation_contrast
         1,           // naka rushton
-        // 1.0f + 0.025 * (contrast_ratio - 1.0f));  // cone_response_exponent
-        1.0f);  // cone_response_exponent
+        shader_injection.tone_map_lms_vibrancy);  // cone_response_exponent
   }
+
   return bt709_tonemapped;
 }
 
-float3 CorrectGammaHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
-  float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
-
-  const float y_in = renodx::color::y::from::BT709(incorrect_color);
-  const float y_out = max(0, renodx::color::correct::Gamma(y_in, false, gamma));
-
-  float3 lum = incorrect_color * (y_in > 0 ? y_out / y_in : 0.f);
-
-  // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  // float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
-  float3 result = CorrectPurityMBBT709WithBT2020(lum, incorrect_color);
-
-  return result;
-}
 
 float3 processAndToneMap(float3 color, bool decoding = true) {
   if (decoding) {
@@ -368,12 +319,12 @@ float3 processAndToneMap(float3 color, bool decoding = true) {
   [branch]
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     // color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-    color = CorrectGammaHuePreserving(color, 2.2f);
+    color = GammaCorrectHuePreserving(color, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     // color = renodx::color::correct::GammaSafe(color, false, 2.4f);
-    color = CorrectGammaHuePreserving(color, 2.4f);
+    color = GammaCorrectHuePreserving(color, 2.4f);
   } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-    color = CorrectGammaHuePreserving(color, 2.3f); 
+    color = GammaCorrectHuePreserving(color, 2.3f); 
     // color = renodx::color::correct::GammaSafe(color, false, 2.3f);
   }
 

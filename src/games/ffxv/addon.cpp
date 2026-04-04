@@ -497,6 +497,32 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
                     .use_resource_view_cloning = true,
                     .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
                 });
+
+
+                renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+                    .old_format = reshade::api::format::r10g10b10a2_unorm,
+                    .new_format = reshade::api::format::r16g16b16a16_float,
+                    .use_resource_view_cloning = true,
+                    //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
+                });
+                
+                renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+                    .old_format = reshade::api::format::r11g11b10_float,
+                    .new_format = reshade::api::format::r16g16b16a16_float,
+                //   .ignore_size = true,
+                    .use_resource_view_cloning = true,
+                    .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+                    .usage_include = reshade::api::resource_usage::shader_resource
+                });
+
+                renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+                    .old_format = reshade::api::format::r11g11b10_float,
+                    .new_format = reshade::api::format::r16g16b16a16_float,
+                //   .ignore_size = true,
+                    .use_resource_view_cloning = true,
+                    .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+                    .usage_include = reshade::api::resource_usage::render_target
+                });
                 
             }
         }
@@ -509,30 +535,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         //     .aspect_ratio = 1.f
         // });
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r10g10b10a2_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER
-        });
         
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r11g11b10_float,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-        //   .ignore_size = true,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-            .usage_include = reshade::api::resource_usage::shader_resource
-        });
-
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r11g11b10_float,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-        //   .ignore_size = true,
-            .use_resource_view_cloning = true,
-            .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-            .usage_include = reshade::api::resource_usage::render_target
-        });
 
         {
             auto* setting = new renodx::utils::settings::Setting{

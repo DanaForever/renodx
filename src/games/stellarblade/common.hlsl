@@ -70,8 +70,8 @@ float3 CorrectGammaHuePreserving(float3 incorrect_color, float gamma=2.2f) {
   float3 lum = incorrect_color * (y_in > 0 ?  y_out / y_in : 0.f);
 
   // use chrominance from channel gamma correction and apply hue shifting from per channel tonemap
-  // float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
-  float3 result = CorrectPurityMBBT709WithBT2020(lum, incorrect_color);
+  float3 result = renodx::color::correct::Chrominance(lum, incorrect_color);
+  // float3 result = CorrectPurityMBBT709WithBT2020(lum, incorrect_color);
 
   return result;
 }

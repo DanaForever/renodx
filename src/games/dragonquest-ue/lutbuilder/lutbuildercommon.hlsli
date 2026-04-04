@@ -1,5 +1,6 @@
 #include "../common.hlsli"
 #include "./psycho_test11.hlsl"
+#include "./psycho_test17.hlsl"
 // #include "../macleod_boynton.hlsli"
 
 #ifndef INCLUDE_LUTBUILDER_COMMON
@@ -410,7 +411,7 @@ float3 CorrectGammaHuePreservingSRGB(float3 incorrect_color, float gamma=2.2f) {
 float3 DisplayMap(float3 color, uint device = 0u, float gamma = 1.5f) {
   // Tonemapping
   if (RENODX_TONE_MAP_TYPE > 1.f) {
-    color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
+    // color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
     // color = LMS_Vibrancy(color, shader_injection.tone_map_saturation, shader_injection.tone_map_contrast, false);
     float3 dechroma = CastleDechroma_CVVDPStyle_NakaRushton(color);
 
@@ -431,21 +432,38 @@ float3 DisplayMap(float3 color, uint device = 0u, float gamma = 1.5f) {
       color = renodx::color::bt709::from::BT2020(color);  // Back to BT709
     } else {
       
-      color = renodx::tonemap::psycho::psychotm_test11(
-        color,
-        peak_ratio,                          // peak
-        1.0f,                                // exposure
-        1.0f,                                // highlights
-        1.0f,                                // shadows
-        1.0f,                                // contrast
-        1.0f,                                // purity_scale
-        shader_injection.psychov_bleach,                                // bleaching_intensity
-        100.f,                               // clip_point
-        0.5f,                                // hue_restore
-        shader_injection.psychov_adaptation_contrast,                                // adaptation_contrast
-        1,                                   // naka rushton
-        // 1.0f + 0.025 * (peak_ratio - 1.0f)); // cone_response_exponent
-        1.0f); // cone_response_exponent
+      // color = renodx::tonemap::psycho::psychotm_test11(
+      //   color,
+      //   peak_ratio,                          // peak
+      //   1.0f,                                // exposure
+      //   1.0f,                                // highlights
+      //   1.0f,                                // shadows
+      //   1.0f,                                // contrast
+      //   1.0f,                                // purity_scale
+      //   shader_injection.psychov_bleach,                                // bleaching_intensity
+      //   100.f,                               // clip_point
+      //   0.5f,                                // hue_restore
+      //   shader_injection.psychov_adaptation_contrast,                                // adaptation_contrast
+      //   1,                                   // naka rushton
+      //   // 1.0f + 0.025 * (peak_ratio - 1.0f)); // cone_response_exponent
+      //   1.0f); // cone_response_exponent
+
+      float contrast = shader_injection.tone_map_contrast / shader_injection.tone_map_saturation;
+
+      color = renodx::tonemap::psycho::psychotm_test17(
+          color,
+          peak_ratio,                             // peak
+          1.0f,                                   // exposure
+          1.0f,                                   // highlights
+          1.0f,                                   // shadows
+          contrast,                               // contrast
+          1.0f,                                   // purity_scale
+          1.0f,                                   // bleaching_intensity
+          100.f,                                  // clip_point
+          0.5f,                                   // hue_restore
+          1.0f,                                   // adaptation_contrast
+          1,                                      // naka rushton
+          shader_injection.tone_map_saturation);  // cone_response_exponent
     }
 
   } else {
