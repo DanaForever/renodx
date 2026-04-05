@@ -99,6 +99,9 @@ struct ShaderInjectData {
   float tone_map_lms_contrast;
   float tone_map_lms_vibrancy;
   float tone_map_lms_dechroma;
+
+  float upgrade_8bit;
+  float upgrade_10bit;
 };
 
 #ifndef __cplusplus

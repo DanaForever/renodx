@@ -1,3 +1,5 @@
+#include "../output.hlsl"
+
 Texture2D<float4> t0 : register(t0);
 
 cbuffer cb0 : register(b0) {
@@ -100,12 +102,27 @@ float4 main(
 ) : SV_Target {
   float4 SV_Target;
   float4 _29 = t0.Sample(s0, float2(((((SV_Position.x - float((uint)((int)($Globals_592.x)))) * ($Globals_616.x)) * ($Globals_080.x)) + ($Globals_064.x)), ((((SV_Position.y - float((uint)((int)($Globals_592.y)))) * ($Globals_616.y)) * ($Globals_080.y)) + ($Globals_064.y))));
-  // SV_Target.x = max(((((Material_000[1].x) - _29.x) * (Material_032[0].x)) + _29.x), 0.0f);
-  // SV_Target.y = max(((((Material_000[1].y) - _29.y) * (Material_032[0].x)) + _29.y), 0.0f);
-  // SV_Target.z = max(((((Material_000[1].z) - _29.z) * (Material_032[0].x)) + _29.z), 0.0f);
+  float4 output = _29;
+
+  _29.rgb = PQtoSRGB(_29.rgb);
+
   SV_Target.x = ((((Material_000[1].x) - _29.x) * (Material_032[0].x)) + _29.x);
   SV_Target.y = ((((Material_000[1].y) - _29.y) * (Material_032[0].x)) + _29.y);
   SV_Target.z = ((((Material_000[1].z) - _29.z) * (Material_032[0].x)) + _29.z);
+
+  if (shader_injection.processing_path == 0.f) {
+    // instead of disabling this shader, we match the luminance of the output color to the original color
+    float4 output_pq = output;
+    output.rgb = PQtoSRGB(output.rgb);
+
+    SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+    output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+
+    SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
+    SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
+    SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
+  }
+
   SV_Target.w = 1.0f;
   return SV_Target;
 }

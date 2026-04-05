@@ -178,7 +178,12 @@ void main(
 
     // hue and chrominance correction if desaturation is desired
     // hdr = HueAndChrominanceOKLab(hdr, sdr_color, sdr_color, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
-    hdr = CorrectPurityMBBT709WithBT2020(hdr, sdr_color, shader_injection.bloom_hue_correction);
+    // hdr = CorrectPurityMBBT709WithBT2020(hdr, sdr_color, shader_injection.bloom_hue_correction);
+    // hdr = CorrectHueMBGated(hdr, sdr_color, shader_injection.bloom_hue_correction, 0.18f, 1.f);
+
+    float strength = shader_injection.bloom_hue_correction;
+    // hdr = CorrectHueAndPurityMBGated(hdr, sdr_color, strength, 0.18f, 0.5f, strength);
+    hdr = lerp(hdr, CorrectHueAndPurityMB(hdr, sdr_color), saturate(strength));
 
     o0.rgb = hdr.rgb;
 

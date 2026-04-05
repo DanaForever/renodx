@@ -457,25 +457,70 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r8g8b8a8_unorm,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,
-          .use_resource_view_cloning = true,
-          .use_resource_view_hot_swap = true,          
-        //   .aspect_ratio = renodx:mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
-        });
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r11g11b10_float,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,
-        //   .use_resource_view_cloning = true,
-          .use_resource_view_hot_swap = true,          
-        //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+        auto* upgrade_setting = new renodx::utils::settings::Setting{
+            .key = "UnsafeUpgrade8bit",
+            .binding = &shader_injection.upgrade_8bit,
+            .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+            .default_value = 0.f,
+            .label = "Upgrade 8-bit Render Targets",
+            .section = "Display Output",
+            .tooltip = "Upgrade Unsafe render targets (untested)",
+            .labels = {"Off", "On"},
+            .is_enabled = []() { return true; },
+            .is_global = true,
+            .is_visible = []() { return current_settings_mode >= 2; },
+        }; 
+
+        renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, upgrade_setting);
+        bool unsafe_upgrade_8bit = upgrade_setting->GetValue() > 0;
+        settings.push_back(upgrade_setting);
+
+        if (unsafe_upgrade_8bit)   {
+            renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+                .old_format = reshade::api::format::r8g8b8a8_unorm,
+                .new_format = reshade::api::format::r16g16b16a16_float,
+                .ignore_size = true,
+                .use_resource_view_cloning = true,
+                .use_resource_view_hot_swap = true,          
+                //   .aspect_ratio = renodx:mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
+            });
+        }
+
+
+        auto* upgrade_setting_2 = new renodx::utils::settings::Setting{
+            .key = "UnsafeUpgrade10bit",
+            .binding = &shader_injection.upgrade_10bit,
+            .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+            .default_value = 0.f,
+            .label = "Upgrade 10-bit Render Targets",
+            .section = "Display Output",
+            .tooltip = "Upgrade Unsafe render targets (untested)",
+            .labels = {"Off", "On"},
+            .is_enabled = []() { return true; },
+            .is_global = true,
+            .is_visible = []() { return current_settings_mode >= 2; },
+        }; 
+
+        renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, upgrade_setting_2);
+        bool unsafe_upgrade_10bit = upgrade_setting_2->GetValue() > 0;
+        settings.push_back(upgrade_setting_2);
+
+        if (unsafe_upgrade_10bit)   {
+            renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+            .old_format = reshade::api::format::r11g11b10_float,
+            .new_format = reshade::api::format::r16g16b16a16_float,
+            .ignore_size = true,
+            //   .use_resource_view_cloning = true,
+            .use_resource_view_hot_swap = true,          
+            //   .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
         });
+        }
+
 
         
+        
+
         bool is_hdr10 = false;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);
         renodx::mods::swapchain::use_resize_buffer = false;

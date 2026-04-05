@@ -85,27 +85,8 @@ float3 hdrScreenBlend(float3 base, float3 blend, float scale = 0.f) {
 }
 
 float3 hdrScreenBlend2(float3 base, float3 blend, float scale = 0.f) {
-  blend = max(0.f, blend);
-
-  base = renodx::color::srgb::EncodeSafe(base);
-  blend = renodx::color::srgb::EncodeSafe(blend);
-
-  float3 bloom = base + blend;
-
-  return renodx::color::srgb::DecodeSafe(bloom);
-  // float3 bloom_texture = blend;
-
-  // float mid_gray_bloomed = (0.18 + renodx::color::y::from::BT709(bloom_texture)) / 0.18;
-
-  // float scene_luminance = renodx::color::y::from::BT709(base) * mid_gray_bloomed;
-  // float bloom_blend = saturate(smoothstep(0.f, 0.18f, scene_luminance));
-
-  // float3 bloom_scaled = lerp(float3(0.f, 0.f, 0.f), bloom_texture, bloom_blend);  // = bloom_blend
-  // bloom_texture = lerp(bloom_texture, bloom_scaled, 0.5f);
-
-  // blend = bloom_texture;
-
-  // return addBloom(base, blend);
+  
+  
 }
 
 float3 LMS_Processing(float3 color) {

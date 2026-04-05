@@ -6,92 +6,94 @@ Texture2D<float4> t1 : register(t1);
 
 Texture2D<float4> t2 : register(t2);
 
+Texture2D<float4> t3 : register(t3);
+
 cbuffer cb0 : register(b0) {
-  float2 Globals_000 : packoffset(c000.x);
-  float2 Globals_008 : packoffset(c000.z);
-  float2 Globals_016 : packoffset(c001.x);
-  float2 Globals_024 : packoffset(c001.z);
-  int2 Globals_032 : packoffset(c002.x);
-  int2 Globals_040 : packoffset(c002.z);
-  float2 Globals_048 : packoffset(c003.x);
-  float2 Globals_056 : packoffset(c003.z);
-  float2 Globals_064 : packoffset(c004.x);
-  float2 Globals_072 : packoffset(c004.z);
-  float2 Globals_080 : packoffset(c005.x);
-  float2 Globals_088 : packoffset(c005.z);
-  float2 Globals_096 : packoffset(c006.x);
-  float2 Globals_104 : packoffset(c006.z);
-  float2 Globals_112 : packoffset(c007.x);
-  float2 Globals_120 : packoffset(c007.z);
-  float2 Globals_128 : packoffset(c008.x);
-  float2 Globals_136 : packoffset(c008.z);
-  int2 Globals_144 : packoffset(c009.x);
-  int2 Globals_152 : packoffset(c009.z);
-  float2 Globals_160 : packoffset(c010.x);
-  float2 Globals_168 : packoffset(c010.z);
-  float2 Globals_176 : packoffset(c011.x);
-  float2 Globals_184 : packoffset(c011.z);
-  float2 Globals_192 : packoffset(c012.x);
-  float2 Globals_200 : packoffset(c012.z);
-  float2 Globals_208 : packoffset(c013.x);
-  float2 Globals_216 : packoffset(c013.z);
-  float2 Globals_224 : packoffset(c014.x);
-  float2 Globals_232 : packoffset(c014.z);
-  float2 Globals_240 : packoffset(c015.x);
-  float2 Globals_248 : packoffset(c015.z);
-  int2 Globals_256 : packoffset(c016.x);
-  int2 Globals_264 : packoffset(c016.z);
-  float2 Globals_272 : packoffset(c017.x);
-  float2 Globals_280 : packoffset(c017.z);
-  float2 Globals_288 : packoffset(c018.x);
-  float2 Globals_296 : packoffset(c018.z);
-  float2 Globals_304 : packoffset(c019.x);
-  float2 Globals_312 : packoffset(c019.z);
-  float2 Globals_320 : packoffset(c020.x);
-  float2 Globals_328 : packoffset(c020.z);
-  float2 Globals_336 : packoffset(c021.x);
-  float2 Globals_344 : packoffset(c021.z);
-  float2 Globals_352 : packoffset(c022.x);
-  float2 Globals_360 : packoffset(c022.z);
-  int2 Globals_368 : packoffset(c023.x);
-  int2 Globals_376 : packoffset(c023.z);
-  float2 Globals_384 : packoffset(c024.x);
-  float2 Globals_392 : packoffset(c024.z);
-  float2 Globals_400 : packoffset(c025.x);
-  float2 Globals_408 : packoffset(c025.z);
-  float2 Globals_416 : packoffset(c026.x);
-  float2 Globals_424 : packoffset(c026.z);
-  float2 Globals_432 : packoffset(c027.x);
-  float2 Globals_440 : packoffset(c027.z);
-  float2 Globals_448 : packoffset(c028.x);
-  float2 Globals_456 : packoffset(c028.z);
-  float2 Globals_464 : packoffset(c029.x);
-  float2 Globals_472 : packoffset(c029.z);
-  int2 Globals_480 : packoffset(c030.x);
-  int2 Globals_488 : packoffset(c030.z);
-  float2 Globals_496 : packoffset(c031.x);
-  float2 Globals_504 : packoffset(c031.z);
-  float2 Globals_512 : packoffset(c032.x);
-  float2 Globals_520 : packoffset(c032.z);
-  float2 Globals_528 : packoffset(c033.x);
-  float2 Globals_536 : packoffset(c033.z);
-  float2 Globals_544 : packoffset(c034.x);
-  float2 Globals_552 : packoffset(c034.z);
-  float2 Globals_560 : packoffset(c035.x);
-  float2 Globals_568 : packoffset(c035.z);
-  float2 Globals_576 : packoffset(c036.x);
-  float2 Globals_584 : packoffset(c036.z);
-  int2 Globals_592 : packoffset(c037.x);
-  int2 Globals_600 : packoffset(c037.z);
-  float2 Globals_608 : packoffset(c038.x);
-  float2 Globals_616 : packoffset(c038.z);
-  float2 Globals_624 : packoffset(c039.x);
-  float2 Globals_632 : packoffset(c039.z);
-  float2 Globals_640 : packoffset(c040.x);
-  float2 Globals_648 : packoffset(c040.z);
-  float2 Globals_656 : packoffset(c041.x);
-  float2 Globals_664 : packoffset(c041.z);
-  float4 Globals_672 : packoffset(c042.x);
+  float2 $Globals_000 : packoffset(c000.x);
+  float2 $Globals_008 : packoffset(c000.z);
+  float2 $Globals_016 : packoffset(c001.x);
+  float2 $Globals_024 : packoffset(c001.z);
+  int2 $Globals_032 : packoffset(c002.x);
+  int2 $Globals_040 : packoffset(c002.z);
+  float2 $Globals_048 : packoffset(c003.x);
+  float2 $Globals_056 : packoffset(c003.z);
+  float2 $Globals_064 : packoffset(c004.x);
+  float2 $Globals_072 : packoffset(c004.z);
+  float2 $Globals_080 : packoffset(c005.x);
+  float2 $Globals_088 : packoffset(c005.z);
+  float2 $Globals_096 : packoffset(c006.x);
+  float2 $Globals_104 : packoffset(c006.z);
+  float2 $Globals_112 : packoffset(c007.x);
+  float2 $Globals_120 : packoffset(c007.z);
+  float2 $Globals_128 : packoffset(c008.x);
+  float2 $Globals_136 : packoffset(c008.z);
+  int2 $Globals_144 : packoffset(c009.x);
+  int2 $Globals_152 : packoffset(c009.z);
+  float2 $Globals_160 : packoffset(c010.x);
+  float2 $Globals_168 : packoffset(c010.z);
+  float2 $Globals_176 : packoffset(c011.x);
+  float2 $Globals_184 : packoffset(c011.z);
+  float2 $Globals_192 : packoffset(c012.x);
+  float2 $Globals_200 : packoffset(c012.z);
+  float2 $Globals_208 : packoffset(c013.x);
+  float2 $Globals_216 : packoffset(c013.z);
+  float2 $Globals_224 : packoffset(c014.x);
+  float2 $Globals_232 : packoffset(c014.z);
+  float2 $Globals_240 : packoffset(c015.x);
+  float2 $Globals_248 : packoffset(c015.z);
+  int2 $Globals_256 : packoffset(c016.x);
+  int2 $Globals_264 : packoffset(c016.z);
+  float2 $Globals_272 : packoffset(c017.x);
+  float2 $Globals_280 : packoffset(c017.z);
+  float2 $Globals_288 : packoffset(c018.x);
+  float2 $Globals_296 : packoffset(c018.z);
+  float2 $Globals_304 : packoffset(c019.x);
+  float2 $Globals_312 : packoffset(c019.z);
+  float2 $Globals_320 : packoffset(c020.x);
+  float2 $Globals_328 : packoffset(c020.z);
+  float2 $Globals_336 : packoffset(c021.x);
+  float2 $Globals_344 : packoffset(c021.z);
+  float2 $Globals_352 : packoffset(c022.x);
+  float2 $Globals_360 : packoffset(c022.z);
+  int2 $Globals_368 : packoffset(c023.x);
+  int2 $Globals_376 : packoffset(c023.z);
+  float2 $Globals_384 : packoffset(c024.x);
+  float2 $Globals_392 : packoffset(c024.z);
+  float2 $Globals_400 : packoffset(c025.x);
+  float2 $Globals_408 : packoffset(c025.z);
+  float2 $Globals_416 : packoffset(c026.x);
+  float2 $Globals_424 : packoffset(c026.z);
+  float2 $Globals_432 : packoffset(c027.x);
+  float2 $Globals_440 : packoffset(c027.z);
+  float2 $Globals_448 : packoffset(c028.x);
+  float2 $Globals_456 : packoffset(c028.z);
+  float2 $Globals_464 : packoffset(c029.x);
+  float2 $Globals_472 : packoffset(c029.z);
+  int2 $Globals_480 : packoffset(c030.x);
+  int2 $Globals_488 : packoffset(c030.z);
+  float2 $Globals_496 : packoffset(c031.x);
+  float2 $Globals_504 : packoffset(c031.z);
+  float2 $Globals_512 : packoffset(c032.x);
+  float2 $Globals_520 : packoffset(c032.z);
+  float2 $Globals_528 : packoffset(c033.x);
+  float2 $Globals_536 : packoffset(c033.z);
+  float2 $Globals_544 : packoffset(c034.x);
+  float2 $Globals_552 : packoffset(c034.z);
+  float2 $Globals_560 : packoffset(c035.x);
+  float2 $Globals_568 : packoffset(c035.z);
+  float2 $Globals_576 : packoffset(c036.x);
+  float2 $Globals_584 : packoffset(c036.z);
+  int2 $Globals_592 : packoffset(c037.x);
+  int2 $Globals_600 : packoffset(c037.z);
+  float2 $Globals_608 : packoffset(c038.x);
+  float2 $Globals_616 : packoffset(c038.z);
+  float2 $Globals_624 : packoffset(c039.x);
+  float2 $Globals_632 : packoffset(c039.z);
+  float2 $Globals_640 : packoffset(c040.x);
+  float2 $Globals_648 : packoffset(c040.z);
+  float2 $Globals_656 : packoffset(c041.x);
+  float2 $Globals_664 : packoffset(c041.z);
+  float4 $Globals_672 : packoffset(c042.x);
 };
 
 cbuffer cb1 : register(b1) {
@@ -325,60 +327,92 @@ cbuffer cb1 : register(b1) {
 };
 
 cbuffer cb2 : register(b2) {
-  float4 Material_000[3] : packoffset(c000.x);
-  float4 Material_048[4] : packoffset(c003.x);
+  float4 Material_000[4] : packoffset(c000.x);
+  float4 Material_064[3] : packoffset(c004.x);
 };
 
 SamplerState s0 : register(s0);
 
 SamplerState s1 : register(s1);
 
+SamplerState s2 : register(s2);
+
+SamplerState s3 : register(s3);
+
 float4 main(
   noperspective float4 SV_Position : SV_Position,
   linear float4 TEXCOORD : TEXCOORD
 ) : SV_Target {
   float4 SV_Target;
-  float _21 = (SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x);
-  float _22 = (SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y);
+  float _20 = (SV_Position.x - float((uint)((int)($Globals_592.x)))) * ($Globals_616.x);
+  float _25 = (SV_Position.y - float((uint)((int)($Globals_592.y)))) * ($Globals_616.y);
+  float _30 = _20 * (View_2080.x / View_2080.y);
+  float4 _44 = t0.Sample(s0, float2(((View_2280 * (Material_000[1].x)) + (_30 * (Material_064[0].x))), ((View_2280 * (Material_000[1].y)) + ((Material_064[0].x) * _25))));
+  float4 output = _44;
+  _44.rgb = PQtoSRGB(_44.rgb);
 
-  
+  float _53 = ((_44.x * 2.0f) + -1.0f) * (Material_064[0].z);
+  float _54 = ((_44.y * 2.0f) + -1.0f) * (Material_064[0].z);
+  float _73;
+  float _74;
+  float _75;
+  float _76;
+  float _77;
+  int _78;
+  _73 = 0.0f;
+  _74 = 0.0f;
+  _75 = 0.0f;
+  _76 = ((((_53 * (Material_064[0].w)) + _20) * ($Globals_080.x)) + ($Globals_064.x));
+  _77 = ((((_54 * (Material_064[0].w)) + _25) * ($Globals_080.y)) + ($Globals_064.y));
+  _78 = 0;
+  while(true) {
+    float4 _79 = t3.Sample(s3, float2(_76, _77));
+    float _83 = _79.x + _73;
+    float _84 = _79.y + _74;
+    float _85 = _79.z + _75;
+    float _88 = ((Material_064[1].x) * 0.010000000707805157f) * float((int)(_78));
+    int _93 = _78 + 1;
+    if (!(_93 == 10)) {
+      _73 = _83;
+      _74 = _84;
+      _75 = _85;
+      _76 = ((_88 * _53) + _76);
+      _77 = ((_88 * _54) + _77);
+      _78 = _93;
+      continue;
+    }
+    float4 _103 = t1.Sample(s1, float2(_20, _25));
+    float4 _128 = t2.Sample(s2, float2((((((_103.x * 2.0f) + -1.0f) * (Material_064[1].z)) + ((Material_064[1].w) * _30)) + (View_2280 * (Material_000[2].x))), (((((_103.y * 2.0f) + -1.0f) * (Material_064[1].z)) + ((Material_064[1].w) * _25)) + (View_2280 * (Material_000[2].y)))));
+    float _130 = _20 + -0.5f;
+    float _131 = _25 + -0.5f;
+    float _138 = 1.0f - min(max((1.0f - (sqrt(dot(float2(_130, _131), float2(_130, _131))) * 2.0f)), 0.0f), 1.0f);
+    float _145 = ((Material_064[2].y) * _128.x) * select((_138 <= 0.0f), 0.0f, (_138 * _138));
+    float _146 = _145 + ((_83 * 0.10000000149011612f) * (Material_064[1].y));
+    float _147 = _145 + ((_84 * 0.10000000149011612f) * (Material_064[1].y));
+    float _148 = _145 + ((_85 * 0.10000000149011612f) * (Material_064[1].y));
+    // SV_Target.x = max(((((Material_000[3].x) - _146) * (Material_064[2].z)) + _146), 0.0f);
+    // SV_Target.y = max(((((Material_000[3].y) - _147) * (Material_064[2].z)) + _147), 0.0f);
+    // SV_Target.z = max(((((Material_000[3].z) - _148) * (Material_064[2].z)) + _148), 0.0f);
+    SV_Target.x = ((((Material_000[3].x) - _146) * (Material_064[2].z)) + _146);
+    SV_Target.y = ((((Material_000[3].y) - _147) * (Material_064[2].z)) + _147);
+    SV_Target.z = ((((Material_000[3].z) - _148) * (Material_064[2].z)) + _148);
 
-  float4 _33 = t2.Sample(s1, float2(((_21 * (Globals_080.x)) + (Globals_064.x)), ((_22 * (Globals_080.y)) + (Globals_064.y))));
-  _33.rgb = PQtoSRGB(_33.rgb);
+    if (shader_injection.processing_path == 0.f) {
+      // instead of disabling this shader, we match the luminance of the output color to the original color
+      // float4 output = t0.Sample(s0, float2(_21, _22));
+      float4 output_pq = output;
+      output.rgb = PQtoSRGB(output.rgb);
 
-  float4 _50 = t1.Sample(s0, float2((((Material_048[1].x) * _21) + ((Material_048[0].z) * View_2280)), (((Material_048[1].x) * _22) + ((Material_048[0].w) * View_2280))));
-  float _53 = (_50.x * 0.019999999552965164f) + -0.009999999776482582f;
-  float4 _75 = t2.Sample(s1, float2(min(max((((_53 + _21) * (Globals_080.x)) + (Globals_064.x)), (Globals_096.x)), (Globals_104.x)), min(max((((_53 + _22) * (Globals_080.y)) + (Globals_064.y)), (Globals_096.y)), (Globals_104.y))));
-  _75.rgb = PQtoSRGB(_75.rgb);
+      SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+      output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
 
-  float4 _112 = t0.Load(int3((uint)(uint((((((SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x)) * View_2080.x) + View_2064.x) * View_2112.z) * View_2112.x)), (uint)(uint((((((SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y)) * View_2080.y) + View_2064.y) * View_2112.w) * View_2112.y)), 0));
-  float _137 = ((Material_048[2].z) * ((min(max((((View_1040.x * _112.x) + View_1040.y) + (1.0f / ((View_1040.z * _112.x) - View_1040.w))), 0.0f), (Material_048[1].y)) - (Material_048[1].z)) / (Material_048[1].w))) + (Material_048[2].y);
-  float _143 = select((_137 <= 0.0f), 0.0f, exp2(log2(_137) * (Material_048[2].w)));
-  float _150 = (_143 * (_75.x - _33.x)) + _33.x;
-  float _151 = (_143 * (_75.y - _33.y)) + _33.y;
-  float _152 = (_143 * (_75.z - _33.z)) + _33.z;
-  // SV_Target.x = max(((((Material_000[2].x) - _150) * (Material_048[3].x)) + _150), 0.0f);
-  // SV_Target.y = max(((((Material_000[2].y) - _151) * (Material_048[3].x)) + _151), 0.0f);
-  // SV_Target.z = max(((((Material_000[2].z) - _152) * (Material_048[3].x)) + _152), 0.0f);
-  
-  SV_Target.x = ((((Material_000[2].x) - _150) * (Material_048[3].x)) + _150);
-  SV_Target.y = ((((Material_000[2].y) - _151) * (Material_048[3].x)) + _151);
-  SV_Target.z = ((((Material_000[2].z) - _152) * (Material_048[3].x)) + _152);
+      SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
+      SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
+      SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
+    }
 
-  if (shader_injection.processing_path == 0.f) {
-    // instead of disabling this shader, we match the luminance of the output color to the original color
-    float4 output = t0.Sample(s0, float2(_21, _22));
-    float4 output_pq = output;
-    output.rgb = PQtoSRGB(output.rgb);
-
-    SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
-    output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
-
-    SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
-    SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
-    SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
+    SV_Target.w = 1.0f;
+    break;
   }
-
-  SV_Target.w = 1.0f;
   return SV_Target;
 }

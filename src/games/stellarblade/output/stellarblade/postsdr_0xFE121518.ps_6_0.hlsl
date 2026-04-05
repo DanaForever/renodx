@@ -7,91 +7,91 @@ Texture2D<float4> t1 : register(t1);
 Texture2D<float4> t2 : register(t2);
 
 cbuffer cb0 : register(b0) {
-  float2 $Globals_000 : packoffset(c000.x);
-  float2 $Globals_008 : packoffset(c000.z);
-  float2 $Globals_016 : packoffset(c001.x);
-  float2 $Globals_024 : packoffset(c001.z);
-  int2 $Globals_032 : packoffset(c002.x);
-  int2 $Globals_040 : packoffset(c002.z);
-  float2 $Globals_048 : packoffset(c003.x);
-  float2 $Globals_056 : packoffset(c003.z);
-  float2 $Globals_064 : packoffset(c004.x);
-  float2 $Globals_072 : packoffset(c004.z);
-  float2 $Globals_080 : packoffset(c005.x);
-  float2 $Globals_088 : packoffset(c005.z);
-  float2 $Globals_096 : packoffset(c006.x);
-  float2 $Globals_104 : packoffset(c006.z);
-  float2 $Globals_112 : packoffset(c007.x);
-  float2 $Globals_120 : packoffset(c007.z);
-  float2 $Globals_128 : packoffset(c008.x);
-  float2 $Globals_136 : packoffset(c008.z);
-  int2 $Globals_144 : packoffset(c009.x);
-  int2 $Globals_152 : packoffset(c009.z);
-  float2 $Globals_160 : packoffset(c010.x);
-  float2 $Globals_168 : packoffset(c010.z);
-  float2 $Globals_176 : packoffset(c011.x);
-  float2 $Globals_184 : packoffset(c011.z);
-  float2 $Globals_192 : packoffset(c012.x);
-  float2 $Globals_200 : packoffset(c012.z);
-  float2 $Globals_208 : packoffset(c013.x);
-  float2 $Globals_216 : packoffset(c013.z);
-  float2 $Globals_224 : packoffset(c014.x);
-  float2 $Globals_232 : packoffset(c014.z);
-  float2 $Globals_240 : packoffset(c015.x);
-  float2 $Globals_248 : packoffset(c015.z);
-  int2 $Globals_256 : packoffset(c016.x);
-  int2 $Globals_264 : packoffset(c016.z);
-  float2 $Globals_272 : packoffset(c017.x);
-  float2 $Globals_280 : packoffset(c017.z);
-  float2 $Globals_288 : packoffset(c018.x);
-  float2 $Globals_296 : packoffset(c018.z);
-  float2 $Globals_304 : packoffset(c019.x);
-  float2 $Globals_312 : packoffset(c019.z);
-  float2 $Globals_320 : packoffset(c020.x);
-  float2 $Globals_328 : packoffset(c020.z);
-  float2 $Globals_336 : packoffset(c021.x);
-  float2 $Globals_344 : packoffset(c021.z);
-  float2 $Globals_352 : packoffset(c022.x);
-  float2 $Globals_360 : packoffset(c022.z);
-  int2 $Globals_368 : packoffset(c023.x);
-  int2 $Globals_376 : packoffset(c023.z);
-  float2 $Globals_384 : packoffset(c024.x);
-  float2 $Globals_392 : packoffset(c024.z);
-  float2 $Globals_400 : packoffset(c025.x);
-  float2 $Globals_408 : packoffset(c025.z);
-  float2 $Globals_416 : packoffset(c026.x);
-  float2 $Globals_424 : packoffset(c026.z);
-  float2 $Globals_432 : packoffset(c027.x);
-  float2 $Globals_440 : packoffset(c027.z);
-  float2 $Globals_448 : packoffset(c028.x);
-  float2 $Globals_456 : packoffset(c028.z);
-  float2 $Globals_464 : packoffset(c029.x);
-  float2 $Globals_472 : packoffset(c029.z);
-  int2 $Globals_480 : packoffset(c030.x);
-  int2 $Globals_488 : packoffset(c030.z);
-  float2 $Globals_496 : packoffset(c031.x);
-  float2 $Globals_504 : packoffset(c031.z);
-  float2 $Globals_512 : packoffset(c032.x);
-  float2 $Globals_520 : packoffset(c032.z);
-  float2 $Globals_528 : packoffset(c033.x);
-  float2 $Globals_536 : packoffset(c033.z);
-  float2 $Globals_544 : packoffset(c034.x);
-  float2 $Globals_552 : packoffset(c034.z);
-  float2 $Globals_560 : packoffset(c035.x);
-  float2 $Globals_568 : packoffset(c035.z);
-  float2 $Globals_576 : packoffset(c036.x);
-  float2 $Globals_584 : packoffset(c036.z);
-  int2 $Globals_592 : packoffset(c037.x);
-  int2 $Globals_600 : packoffset(c037.z);
-  float2 $Globals_608 : packoffset(c038.x);
-  float2 $Globals_616 : packoffset(c038.z);
-  float2 $Globals_624 : packoffset(c039.x);
-  float2 $Globals_632 : packoffset(c039.z);
-  float2 $Globals_640 : packoffset(c040.x);
-  float2 $Globals_648 : packoffset(c040.z);
-  float2 $Globals_656 : packoffset(c041.x);
-  float2 $Globals_664 : packoffset(c041.z);
-  float4 $Globals_672 : packoffset(c042.x);
+  float2 Globals_000 : packoffset(c000.x);
+  float2 Globals_008 : packoffset(c000.z);
+  float2 Globals_016 : packoffset(c001.x);
+  float2 Globals_024 : packoffset(c001.z);
+  int2 Globals_032 : packoffset(c002.x);
+  int2 Globals_040 : packoffset(c002.z);
+  float2 Globals_048 : packoffset(c003.x);
+  float2 Globals_056 : packoffset(c003.z);
+  float2 Globals_064 : packoffset(c004.x);
+  float2 Globals_072 : packoffset(c004.z);
+  float2 Globals_080 : packoffset(c005.x);
+  float2 Globals_088 : packoffset(c005.z);
+  float2 Globals_096 : packoffset(c006.x);
+  float2 Globals_104 : packoffset(c006.z);
+  float2 Globals_112 : packoffset(c007.x);
+  float2 Globals_120 : packoffset(c007.z);
+  float2 Globals_128 : packoffset(c008.x);
+  float2 Globals_136 : packoffset(c008.z);
+  int2 Globals_144 : packoffset(c009.x);
+  int2 Globals_152 : packoffset(c009.z);
+  float2 Globals_160 : packoffset(c010.x);
+  float2 Globals_168 : packoffset(c010.z);
+  float2 Globals_176 : packoffset(c011.x);
+  float2 Globals_184 : packoffset(c011.z);
+  float2 Globals_192 : packoffset(c012.x);
+  float2 Globals_200 : packoffset(c012.z);
+  float2 Globals_208 : packoffset(c013.x);
+  float2 Globals_216 : packoffset(c013.z);
+  float2 Globals_224 : packoffset(c014.x);
+  float2 Globals_232 : packoffset(c014.z);
+  float2 Globals_240 : packoffset(c015.x);
+  float2 Globals_248 : packoffset(c015.z);
+  int2 Globals_256 : packoffset(c016.x);
+  int2 Globals_264 : packoffset(c016.z);
+  float2 Globals_272 : packoffset(c017.x);
+  float2 Globals_280 : packoffset(c017.z);
+  float2 Globals_288 : packoffset(c018.x);
+  float2 Globals_296 : packoffset(c018.z);
+  float2 Globals_304 : packoffset(c019.x);
+  float2 Globals_312 : packoffset(c019.z);
+  float2 Globals_320 : packoffset(c020.x);
+  float2 Globals_328 : packoffset(c020.z);
+  float2 Globals_336 : packoffset(c021.x);
+  float2 Globals_344 : packoffset(c021.z);
+  float2 Globals_352 : packoffset(c022.x);
+  float2 Globals_360 : packoffset(c022.z);
+  int2 Globals_368 : packoffset(c023.x);
+  int2 Globals_376 : packoffset(c023.z);
+  float2 Globals_384 : packoffset(c024.x);
+  float2 Globals_392 : packoffset(c024.z);
+  float2 Globals_400 : packoffset(c025.x);
+  float2 Globals_408 : packoffset(c025.z);
+  float2 Globals_416 : packoffset(c026.x);
+  float2 Globals_424 : packoffset(c026.z);
+  float2 Globals_432 : packoffset(c027.x);
+  float2 Globals_440 : packoffset(c027.z);
+  float2 Globals_448 : packoffset(c028.x);
+  float2 Globals_456 : packoffset(c028.z);
+  float2 Globals_464 : packoffset(c029.x);
+  float2 Globals_472 : packoffset(c029.z);
+  int2 Globals_480 : packoffset(c030.x);
+  int2 Globals_488 : packoffset(c030.z);
+  float2 Globals_496 : packoffset(c031.x);
+  float2 Globals_504 : packoffset(c031.z);
+  float2 Globals_512 : packoffset(c032.x);
+  float2 Globals_520 : packoffset(c032.z);
+  float2 Globals_528 : packoffset(c033.x);
+  float2 Globals_536 : packoffset(c033.z);
+  float2 Globals_544 : packoffset(c034.x);
+  float2 Globals_552 : packoffset(c034.z);
+  float2 Globals_560 : packoffset(c035.x);
+  float2 Globals_568 : packoffset(c035.z);
+  float2 Globals_576 : packoffset(c036.x);
+  float2 Globals_584 : packoffset(c036.z);
+  int2 Globals_592 : packoffset(c037.x);
+  int2 Globals_600 : packoffset(c037.z);
+  float2 Globals_608 : packoffset(c038.x);
+  float2 Globals_616 : packoffset(c038.z);
+  float2 Globals_624 : packoffset(c039.x);
+  float2 Globals_632 : packoffset(c039.z);
+  float2 Globals_640 : packoffset(c040.x);
+  float2 Globals_648 : packoffset(c040.z);
+  float2 Globals_656 : packoffset(c041.x);
+  float2 Globals_664 : packoffset(c041.z);
+  float4 Globals_672 : packoffset(c042.x);
 };
 
 cbuffer cb1 : register(b1) {
@@ -338,37 +338,55 @@ float4 main(
   linear float4 TEXCOORD : TEXCOORD
 ) : SV_Target {
   float4 SV_Target;
-  float _21 = (SV_Position.x - float((uint)((int)($Globals_592.x)))) * ($Globals_616.x);
-  float _22 = (SV_Position.y - float((uint)((int)($Globals_592.y)))) * ($Globals_616.y);
-  float4 _33 = t2.Sample(s1, float2(((_21 * ($Globals_080.x)) + ($Globals_064.x)), ((_22 * ($Globals_080.y)) + ($Globals_064.y))));
+  float _21 = (SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x);
+  float _22 = (SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y);
+  
+
+  float4 _33 = t2.Sample(s1, float2(((_21 * (Globals_080.x)) + (Globals_064.x)), ((_22 * (Globals_080.y)) + (Globals_064.y))));
+  _33.rgb = PQtoSRGB(_33.rgb);
+
   float4 _45 = t1.Sample(s0, float2(((Material_032[0].x) * _21), (((Material_032[0].x) * _22) + (View_2280 * 0.05000000074505806f))));
 
   // return _33;
   
   float _50 = (_45.x * 2.0f) + -1.0f;
   float _51 = (_45.y * 2.0f) + -1.0f;
-  float4 _85 = t0.Load(int3((uint)(uint((((((SV_Position.x - float((uint)((int)($Globals_592.x)))) * ($Globals_616.x)) * View_2080.x) + View_2064.x) * View_2112.z) * View_2112.x)), (uint)(uint((((((SV_Position.y - float((uint)((int)($Globals_592.y)))) * ($Globals_616.y)) * View_2080.y) + View_2064.y) * View_2112.w) * View_2112.y)), 0));
+  float4 _85 = t0.Load(int3((uint)(uint((((((SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x)) * View_2080.x) + View_2064.x) * View_2112.z) * View_2112.x)), (uint)(uint((((((SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y)) * View_2080.y) + View_2064.y) * View_2112.w) * View_2112.y)), 0));
   float _98 = max((((View_1040.x * _85.x) + View_1040.y) + (1.0f / ((View_1040.z * _85.x) - View_1040.w))), 0.0f);
   float _106 = (((min(_98, 50000.0f) + -10000.0f) * 2.499999936844688e-05f) * (Material_032[0].w)) + (Material_032[0].z);
-  float4 _130 = t2.Sample(s1, float2(min(max(((((_106 * _50) + _21) * ($Globals_080.x)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((((_106 * _51) + _22) * ($Globals_080.y)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  float4 _130 = t2.Sample(s1, float2(min(max(((((_106 * _50) + _21) * (Globals_080.x)) + (Globals_064.x)), (Globals_096.x)), (Globals_104.x)), min(max(((((_106 * _51) + _22) * (Globals_080.y)) + (Globals_064.y)), (Globals_096.y)), (Globals_104.y))));
+  _130.rgb = PQtoSRGB(_130.rgb);
+  
   float _134 = _106 * 0.5f;
-  float4 _158 = t2.Sample(s1, float2(min(max(((($Globals_080.x) * ((_134 * _50) + _21)) + ($Globals_064.x)), ($Globals_096.x)), ($Globals_104.x)), min(max(((($Globals_080.y) * ((_134 * _51) + _22)) + ($Globals_064.y)), ($Globals_096.y)), ($Globals_104.y))));
+  float4 _158 = t2.Sample(s1, float2(min(max((((Globals_080.x) * ((_134 * _50) + _21)) + (Globals_064.x)), (Globals_096.x)), (Globals_104.x)), min(max((((Globals_080.y) * ((_134 * _51) + _22)) + (Globals_064.y)), (Globals_096.y)), (Globals_104.y))));
+  _158.rgb = PQtoSRGB(_158.rgb);
+
   float _175 = ((min(_98, (Material_032[1].x)) - (Material_032[1].y)) / (Material_032[1].z)) * 0.8999999761581421f;
   float _181 = select((_175 <= 0.0f), 0.0f, exp2(log2(_175) * (Material_032[1].w)));
   float _188 = (_181 * (((_158.x + _130.x) * 0.5f) - _33.x)) + _33.x;
   float _189 = (_181 * (((_158.y + _130.y) * 0.5f) - _33.y)) + _33.y;
   float _190 = (_181 * (((_158.z + _130.z) * 0.5f) - _33.z)) + _33.z;
-  // SV_Target.x = max(((((Material_000[1].x) - _188) * (Material_032[2].x)) + _188), 0.0f);
-  // SV_Target.y = max(((((Material_000[1].y) - _189) * (Material_032[2].x)) + _189), 0.0f);
-  // SV_Target.z = max(((((Material_000[1].z) - _190) * (Material_032[2].x)) + _190), 0.0f);
+
 
   // remove bt709 clamping
   SV_Target.x = ((((Material_000[1].x) - _188) * (Material_032[2].x)) + _188);
   SV_Target.y = ((((Material_000[1].y) - _189) * (Material_032[2].x)) + _189);
   SV_Target.z = ((((Material_000[1].z) - _190) * (Material_032[2].x)) + _190);
 
-  // safe clamp (or maybe not necessary)
-  // SV_Target.rgb = renodx::color::bt709::clamp::BT2020(SV_Target.rgb);
+  if (shader_injection.processing_path == 0.f) {
+    // instead of disabling this shader, we match the luminance of the output color to the original color
+    // float4 output = t0.Sample(s0, float2(_21, _22));
+    // float4 output_pq = output;
+    // output.rgb = PQtoSRGB(output.rgb);
+
+    // SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+    // output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+
+    // SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
+    // SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
+    SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
+  }
+
   SV_Target.w = 1.0f;
   return SV_Target;
 }

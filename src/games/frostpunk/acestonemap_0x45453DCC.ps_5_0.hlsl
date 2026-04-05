@@ -1,6 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Thu Jun 12 18:29:54 2025
 #include "common.hlsl"
-#include "psycho_test11.hlsl"
+#include "psycho_test17.hlsl"
 
 
 Texture2D<float4> t11 : register(t11);
@@ -105,12 +105,12 @@ void main(
   if (RENODX_TONE_MAP_TYPE > 0.f) {
     sdr = lerp(sdr1, sdr0, cb2[6].z);
 
-    r0.rgb = CorrectHueAndPurity(r0.rgb, sdr, RENODX_TONE_MAP_HUE_CORRECTION);
+    r0.rgb = CorrectHueAndPurityMBGated(r0.rgb, sdr, RENODX_TONE_MAP_HUE_CORRECTION, 0.18f, 1.f, 0.f);
   }
 
   float3 sdr_ungraded = r0.xyz;
   float3 color_lut_input = r0.rgb;
-  if (RENODX_TONE_MAP_TYPE == 2) {
+  if (RENODX_TONE_MAP_TYPE > 0.f) {
 
     float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(color_lut_input);
     float3 color_lut_input_tonemapped = (color_lut_input * scale);  // Tonemap MaxCh to 1
@@ -178,7 +178,7 @@ void main(
   } else if (RENODX_TONE_MAP_TYPE == 2.f) {
     float peak_value = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
-    o0.rgb = renodx::tonemap::psycho::psychotm_test11(
+    o0.rgb = renodx::tonemap::psycho::psychotm_test17(
         o0.rgb,
         peak_value,
         RENODX_TONE_MAP_EXPOSURE,

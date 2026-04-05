@@ -2,10 +2,6 @@
 
 Texture2D<float4> t0 : register(t0);
 
-Texture2D<float4> t1 : register(t1);
-
-Texture2D<float4> t2 : register(t2);
-
 cbuffer cb0 : register(b0) {
   float2 Globals_000 : packoffset(c000.x);
   float2 Globals_008 : packoffset(c000.z);
@@ -325,49 +321,26 @@ cbuffer cb1 : register(b1) {
 };
 
 cbuffer cb2 : register(b2) {
-  float4 Material_000[3] : packoffset(c000.x);
-  float4 Material_048[4] : packoffset(c003.x);
+  float4 Material_000[2] : packoffset(c000.x);
+  float4 Material_032[1] : packoffset(c002.x);
 };
 
-SamplerState s0 : register(s0);
-
-SamplerState s1 : register(s1);
-
 float4 main(
-  noperspective float4 SV_Position : SV_Position,
-  linear float4 TEXCOORD : TEXCOORD
+  noperspective float4 SV_Position : SV_Position
 ) : SV_Target {
   float4 SV_Target;
-  float _21 = (SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x);
-  float _22 = (SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y);
-
+  float4 _50 = t0.Load(int3((uint)(uint(View_2112.x * min(max((((((SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x)) * View_2080.x) + View_2064.x) * View_2112.z), View_2128.x), View_2128.z))), (uint)(uint(View_2112.y * min(max((((((SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y)) * View_2080.y) + View_2064.y) * View_2112.w), View_2128.y), View_2128.w))), 0));
+  float4 output = _50;
+  _50.rgb = PQtoSRGB(_50.rgb);
   
-
-  float4 _33 = t2.Sample(s1, float2(((_21 * (Globals_080.x)) + (Globals_064.x)), ((_22 * (Globals_080.y)) + (Globals_064.y))));
-  _33.rgb = PQtoSRGB(_33.rgb);
-
-  float4 _50 = t1.Sample(s0, float2((((Material_048[1].x) * _21) + ((Material_048[0].z) * View_2280)), (((Material_048[1].x) * _22) + ((Material_048[0].w) * View_2280))));
-  float _53 = (_50.x * 0.019999999552965164f) + -0.009999999776482582f;
-  float4 _75 = t2.Sample(s1, float2(min(max((((_53 + _21) * (Globals_080.x)) + (Globals_064.x)), (Globals_096.x)), (Globals_104.x)), min(max((((_53 + _22) * (Globals_080.y)) + (Globals_064.y)), (Globals_096.y)), (Globals_104.y))));
-  _75.rgb = PQtoSRGB(_75.rgb);
-
-  float4 _112 = t0.Load(int3((uint)(uint((((((SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x)) * View_2080.x) + View_2064.x) * View_2112.z) * View_2112.x)), (uint)(uint((((((SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y)) * View_2080.y) + View_2064.y) * View_2112.w) * View_2112.y)), 0));
-  float _137 = ((Material_048[2].z) * ((min(max((((View_1040.x * _112.x) + View_1040.y) + (1.0f / ((View_1040.z * _112.x) - View_1040.w))), 0.0f), (Material_048[1].y)) - (Material_048[1].z)) / (Material_048[1].w))) + (Material_048[2].y);
-  float _143 = select((_137 <= 0.0f), 0.0f, exp2(log2(_137) * (Material_048[2].w)));
-  float _150 = (_143 * (_75.x - _33.x)) + _33.x;
-  float _151 = (_143 * (_75.y - _33.y)) + _33.y;
-  float _152 = (_143 * (_75.z - _33.z)) + _33.z;
-  // SV_Target.x = max(((((Material_000[2].x) - _150) * (Material_048[3].x)) + _150), 0.0f);
-  // SV_Target.y = max(((((Material_000[2].y) - _151) * (Material_048[3].x)) + _151), 0.0f);
-  // SV_Target.z = max(((((Material_000[2].z) - _152) * (Material_048[3].x)) + _152), 0.0f);
-  
-  SV_Target.x = ((((Material_000[2].x) - _150) * (Material_048[3].x)) + _150);
-  SV_Target.y = ((((Material_000[2].y) - _151) * (Material_048[3].x)) + _151);
-  SV_Target.z = ((((Material_000[2].z) - _152) * (Material_048[3].x)) + _152);
+  float _66 = saturate((((View_1040.x * _50.x) + View_1040.y) + (1.0f / ((View_1040.z * _50.x) - View_1040.w))) / (Material_032[0].z));
+  SV_Target.x = ((((Material_000[1].x) - _66) * (Material_032[0].w)) + _66);
+  SV_Target.y = ((((Material_000[1].y) - _66) * (Material_032[0].w)) + _66);
+  SV_Target.z = ((((Material_000[1].z) - _66) * (Material_032[0].w)) + _66);
 
   if (shader_injection.processing_path == 0.f) {
     // instead of disabling this shader, we match the luminance of the output color to the original color
-    float4 output = t0.Sample(s0, float2(_21, _22));
+    // float4 output = t0.Sample(s0, float2(_21, _22));
     float4 output_pq = output;
     output.rgb = PQtoSRGB(output.rgb);
 

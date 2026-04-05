@@ -6,6 +6,16 @@ Texture2D<float4> t1 : register(t1);
 
 Texture2D<float4> t2 : register(t2);
 
+Texture2D<float4> t3 : register(t3);
+
+Texture2D<float4> t4 : register(t4);
+
+Texture2D<float4> t5 : register(t5);
+
+TextureCube<float4> t6 : register(t6);
+
+Texture2D<float4> t7 : register(t7);
+
 cbuffer cb0 : register(b0) {
   float2 Globals_000 : packoffset(c000.x);
   float2 Globals_008 : packoffset(c000.z);
@@ -325,60 +335,138 @@ cbuffer cb1 : register(b1) {
 };
 
 cbuffer cb2 : register(b2) {
-  float4 Material_000[3] : packoffset(c000.x);
-  float4 Material_048[4] : packoffset(c003.x);
+  float4 Material_000[12] : packoffset(c000.x);
+  float4 Material_192[10] : packoffset(c012.x);
 };
 
 SamplerState s0 : register(s0);
 
 SamplerState s1 : register(s1);
 
+SamplerState s2 : register(s2);
+
+SamplerState s3 : register(s3);
+
+SamplerState s4 : register(s4);
+
+SamplerState s5 : register(s5);
+
+SamplerState s6 : register(s6);
+
+SamplerState s7 : register(s7);
+
 float4 main(
   noperspective float4 SV_Position : SV_Position,
   linear float4 TEXCOORD : TEXCOORD
 ) : SV_Target {
   float4 SV_Target;
-  float _21 = (SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x);
-  float _22 = (SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y);
+  float _32 = (SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x);
+  float _33 = (SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y);
+  float4 _34 = t0.Sample(s0, float2(_32, _33));
 
-  
+  float4 output = _34;
+  _34.rgb = PQtoSRGB(_34.rgb);
 
-  float4 _33 = t2.Sample(s1, float2(((_21 * (Globals_080.x)) + (Globals_064.x)), ((_22 * (Globals_080.y)) + (Globals_064.y))));
-  _33.rgb = PQtoSRGB(_33.rgb);
+  float _39 = (_34.x * 2.0f) + -1.0f;
+  float _40 = (_34.y * 2.0f) + -1.0f;
+  float _54 = (View_2080.x / View_2080.y) * _32;
+  float4 _61 = t1.Sample(s1, float2((_32 * 6.0f), ((_33 * 6.0f) - (View_2280 * 1.2000000476837158f))));
+  float _67 = (_54 + -0.004999999888241291f) + (_61.x * 0.009999999776482582f);
+  float _69 = (_33 + -0.004999999888241291f) + (_61.y * 0.009999999776482582f);
+  float4 _70 = t2.Sample(s2, float2(_67, _69));
+  float _75 = (_70.x * 2.0f) + -1.0f;
+  float _76 = (_70.y * 2.0f) + -1.0f;
+  float4 _85 = t3.Sample(s3, float2(_67, (_69 - (View_2280 * 0.25f))));
+  float _89 = (Material_192[0].y) * _85.x;
+  float4 _92 = t1.Sample(s1, float2(_32, _33));
+  float _103 = (((_92.x * 2.0f) + -1.0f) * (Material_192[0].z)) + _54;
+  float _104 = (((_92.y * 2.0f) + -1.0f) * (Material_192[0].z)) + _33;
+  float4 _115 = t4.Sample(s6, float2(((_103 * (Material_000[1].x)) + (Material_000[3].x)), ((_104 * (Material_000[1].y)) + (Material_000[3].y))));
+  float _120 = (_115.x * 2.0f) + -1.0f;
+  float _121 = (_115.y * 2.0f) + -1.0f;
+  float4 _136 = t4.Sample(s6, float2((((Material_000[4].x) * _103) + (Material_000[5].x)), (((Material_000[4].y) * _104) + (Material_000[5].y))));
+  float _141 = (_136.x * 2.0f) + -1.0f;
+  float _142 = (_136.y * 2.0f) + -1.0f;
+  float4 _160 = t4.Sample(s6, float2((((Material_000[6].x) * _103) + (Material_000[8].x)), (((Material_000[6].y) * _104) + (Material_000[8].y))));
+  float _165 = (_160.x * 2.0f) + -1.0f;
+  float _166 = (_160.y * 2.0f) + -1.0f;
+  float4 _184 = t4.Sample(s6, float2((((Material_000[9].x) * _103) + (Material_000[10].x)), (((Material_000[9].y) * _104) + (Material_000[10].y))));
+  float _189 = (_184.x * 2.0f) + -1.0f;
+  float _190 = (_184.y * 2.0f) + -1.0f;
+  float _195 = ((_141 + _120) + _165) + _189;
+  float _196 = ((_142 + _121) + _166) + _190;
+  float _197 = ((sqrt(saturate(1.0f - dot(float2(_141, _142), float2(_141, _142)))) + sqrt(saturate(1.0f - dot(float2(_120, _121), float2(_120, _121))))) + sqrt(saturate(1.0f - dot(float2(_165, _166), float2(_165, _166))))) + sqrt(saturate(1.0f - dot(float2(_189, _190), float2(_189, _190))));
+  float _199 = sqrt(dot(float3(_195, _196, _197), float3(_195, _196, _197)));
+  float _208 = ((_89 * _75) + ((Material_192[0].x) * _39)) + ((Material_192[8].z) * (_195 / _199));
+  float _210 = ((_89 * _76) + ((Material_192[0].x) * _40)) + ((Material_192[8].z) * (_196 / _199));
+  float _212 = (sqrt(saturate(1.0f - dot(float2(_75, _76), float2(_75, _76)))) + ((Material_192[0].x) * sqrt(saturate(1.0f - dot(float2(_39, _40), float2(_39, _40)))))) + (_197 / _199);
+  float _214 = sqrt(dot(float3(_208, _210, _212), float3(_208, _210, _212)));
+  float _215 = _208 / _214;
+  float _216 = _210 / _214;
+  float _220 = (Material_192[8].w) * _215;
+  float _221 = (Material_192[8].w) * _216;
+  float _235 = SV_Position.x - float((uint)((int)(Globals_592.x)));
+  float _236 = SV_Position.y - float((uint)((int)(Globals_592.y)));
+  float4 _249 = t5.Sample(s4, float2((_235 * 0.015625f), (_236 * 0.015625f)));
+  float _255 = ((_249.x + float((uint)(((uint)(((uint)(uint(_236 + View_2432.x)) << 1) + uint(_235 + View_2432.x))) % 5))) * 0.1666666716337204f) * (Material_192[9].y);
+  float _264 = ((Globals_080.x) * (_220 + _32)) + (Globals_064.x);
+  float _265 = ((Globals_080.y) * (_221 + _33)) + (Globals_064.y);
+  float _267;
+  float _268;
+  float _269;
+  float _270;
+  float _271;
+  float _272;
+  int _273;
+  _267 = 0.0f;
+  _268 = 0.0f;
+  _269 = 0.0f;
+  _270 = _264;
+  _271 = _265;
+  _272 = 0.0f;
+  _273 = 0;
+  while(true) {
+    float _274 = _272 * 0.31415924429893494f;
+    float4 _277 = t7.Sample(s7, float2(_270, _271));
+    float _281 = _277.x + _267;
+    float _282 = _277.y + _268;
+    float _283 = _277.z + _269;
+    int _291 = _273 + 1;
+    if (!(_291 == 20)) {
+      _267 = _281;
+      _268 = _282;
+      _269 = _283;
+      _270 = (_264 + (cos(_274) * (_255 + ((_220 * 0.10000000149011612f) * (Material_192[9].x)))));
+      _271 = (_265 + (sin(_274) * (_255 + ((_221 * 0.10000000149011612f) * (Material_192[9].x)))));
+      _272 = (_272 + 1.0f);
+      _273 = _291;
+      continue;
+    }
+    float4 _301 = t6.Sample(s5, float3(_215, _216, (_212 / _214)));
+    float _303 = _301.x * 2.0f;
+    float _304 = _303 + ((_281 * 0.05000000074505806f) * (Material_192[9].z));
+    float _305 = _303 + ((_282 * 0.05000000074505806f) * (Material_192[9].z));
+    float _306 = _303 + ((_283 * 0.05000000074505806f) * (Material_192[9].z));
+    SV_Target.x = ((((Material_000[11].x) - _304) * (Material_192[9].w)) + _304);
+    SV_Target.y = ((((Material_000[11].y) - _305) * (Material_192[9].w)) + _305);
+    SV_Target.z = ((((Material_000[11].z) - _306) * (Material_192[9].w)) + _306);
 
-  float4 _50 = t1.Sample(s0, float2((((Material_048[1].x) * _21) + ((Material_048[0].z) * View_2280)), (((Material_048[1].x) * _22) + ((Material_048[0].w) * View_2280))));
-  float _53 = (_50.x * 0.019999999552965164f) + -0.009999999776482582f;
-  float4 _75 = t2.Sample(s1, float2(min(max((((_53 + _21) * (Globals_080.x)) + (Globals_064.x)), (Globals_096.x)), (Globals_104.x)), min(max((((_53 + _22) * (Globals_080.y)) + (Globals_064.y)), (Globals_096.y)), (Globals_104.y))));
-  _75.rgb = PQtoSRGB(_75.rgb);
+    if (shader_injection.processing_path == 0.f) {
+      // instead of disabling this shader, we match the luminance of the output color to the original color
+      // float4 output = t0.Sample(s0, float2(_21, _22));
+      float4 output_pq = output;
+      output.rgb = PQtoSRGB(output.rgb);
 
-  float4 _112 = t0.Load(int3((uint)(uint((((((SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x)) * View_2080.x) + View_2064.x) * View_2112.z) * View_2112.x)), (uint)(uint((((((SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y)) * View_2080.y) + View_2064.y) * View_2112.w) * View_2112.y)), 0));
-  float _137 = ((Material_048[2].z) * ((min(max((((View_1040.x * _112.x) + View_1040.y) + (1.0f / ((View_1040.z * _112.x) - View_1040.w))), 0.0f), (Material_048[1].y)) - (Material_048[1].z)) / (Material_048[1].w))) + (Material_048[2].y);
-  float _143 = select((_137 <= 0.0f), 0.0f, exp2(log2(_137) * (Material_048[2].w)));
-  float _150 = (_143 * (_75.x - _33.x)) + _33.x;
-  float _151 = (_143 * (_75.y - _33.y)) + _33.y;
-  float _152 = (_143 * (_75.z - _33.z)) + _33.z;
-  // SV_Target.x = max(((((Material_000[2].x) - _150) * (Material_048[3].x)) + _150), 0.0f);
-  // SV_Target.y = max(((((Material_000[2].y) - _151) * (Material_048[3].x)) + _151), 0.0f);
-  // SV_Target.z = max(((((Material_000[2].z) - _152) * (Material_048[3].x)) + _152), 0.0f);
-  
-  SV_Target.x = ((((Material_000[2].x) - _150) * (Material_048[3].x)) + _150);
-  SV_Target.y = ((((Material_000[2].y) - _151) * (Material_048[3].x)) + _151);
-  SV_Target.z = ((((Material_000[2].z) - _152) * (Material_048[3].x)) + _152);
+      SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+      output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
 
-  if (shader_injection.processing_path == 0.f) {
-    // instead of disabling this shader, we match the luminance of the output color to the original color
-    float4 output = t0.Sample(s0, float2(_21, _22));
-    float4 output_pq = output;
-    output.rgb = PQtoSRGB(output.rgb);
+      SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
+      SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
+      SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
+    }
 
-    SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
-    output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
-
-    SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
-    SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
-    SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
+    SV_Target.w = 1.0f;
+    break;
   }
-
-  SV_Target.w = 1.0f;
   return SV_Target;
 }

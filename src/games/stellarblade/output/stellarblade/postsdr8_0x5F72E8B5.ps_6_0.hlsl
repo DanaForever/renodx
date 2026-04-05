@@ -1,6 +1,5 @@
 #include "../output.hlsl"
 
-
 Texture2D<float4> t0 : register(t0);
 
 cbuffer cb0 : register(b0) {
@@ -92,8 +91,8 @@ cbuffer cb0 : register(b0) {
 };
 
 cbuffer cb1 : register(b1) {
-  float4 Material_000[4] : packoffset(c000.x);
-  float4 Material_064[3] : packoffset(c004.x);
+  float4 Material_000[2] : packoffset(c000.x);
+  float4 Material_032[1] : packoffset(c002.x);
 };
 
 SamplerState s0 : register(s0);
@@ -104,34 +103,34 @@ float4 main(
   float4 SV_Target;
   float4 _29 = t0.Sample(s0, float2(((((SV_Position.x - float((uint)((int)(Globals_592.x)))) * (Globals_616.x)) * (Globals_080.x)) + (Globals_064.x)), ((((SV_Position.y - float((uint)((int)(Globals_592.y)))) * (Globals_616.y)) * (Globals_080.y)) + (Globals_064.y))));
   float4 output = _29;
-
   _29.rgb = PQtoSRGB(_29.rgb);
   
-  float _54 = (((Material_064[1].x) - (Material_000[2].x)) * (((Material_064[0].z) * _29.x) + (Material_064[0].w))) + (Material_000[2].x);
-  float _55 = (((Material_064[1].x) - (Material_000[2].y)) * (((Material_064[0].z) * _29.y) + (Material_064[0].w))) + (Material_000[2].y);
-  float _56 = (((Material_064[1].x) - (Material_000[2].z)) * (((Material_064[0].z) * _29.z) + (Material_064[0].w))) + (Material_000[2].z);
-  float _63 = select((_54 <= 0.0f), 0.0f, exp2(log2(_54) * (Material_064[2].x)));
-  float _68 = select((_55 <= 0.0f), 0.0f, exp2(log2(_55) * (Material_064[2].x)));
-  float _73 = select((_56 <= 0.0f), 0.0f, exp2(log2(_56) * (Material_064[2].x)));
-  // SV_Target.x = max(((((Material_000[3].x) - _63) * (Material_064[2].y)) + _63), 0.0f);
-  // SV_Target.y = max(((((Material_000[3].y) - _68) * (Material_064[2].y)) + _68), 0.0f);
-  // SV_Target.z = max(((((Material_000[3].z) - _73) * (Material_064[2].y)) + _73), 0.0f);
-  SV_Target.x = ((((Material_000[3].x) - _63) * (Material_064[2].y)) + _63);
-  SV_Target.y = ((((Material_000[3].y) - _68) * (Material_064[2].y)) + _68);
-  SV_Target.z = ((((Material_000[3].z) - _73) * (Material_064[2].y)) + _73);
+  float _36 = dot(float3(0.5773502588272095f, 0.5773502588272095f, 0.5773502588272095f), float3(_29.x, _29.y, _29.z)) * 0.5773502588272095f;
+  float _44 = cos(Material_032[0].y);
+  float _48 = sin(Material_032[0].y) * 0.5773502588272095f;
+  float _65 = ((((_36 - _29.x) + ((_29.x - _36) * _44)) + (_48 * (_29.z - _29.y))) * (Material_032[0].z)) + _29.x;
+  float _66 = ((((_36 - _29.y) + ((_29.y - _36) * _44)) + (_48 * (_29.x - _29.z))) * (Material_032[0].z)) + _29.y;
+  float _67 = ((((_36 - _29.z) + ((_29.z - _36) * _44)) + (_48 * (_29.y - _29.x))) * (Material_032[0].z)) + _29.z;
+  // SV_Target.x = max(((((Material_000[1].x) - _65) * (Material_032[0].w)) + _65), 0.0f);
+  // SV_Target.y = max(((((Material_000[1].y) - _66) * (Material_032[0].w)) + _66), 0.0f);
+  // SV_Target.z = max(((((Material_000[1].z) - _67) * (Material_032[0].w)) + _67), 0.0f);
+  SV_Target.x = ((((Material_000[1].x) - _65) * (Material_032[0].w)) + _65);
+  SV_Target.y = ((((Material_000[1].y) - _66) * (Material_032[0].w)) + _66);
+  SV_Target.z = ((((Material_000[1].z) - _67) * (Material_032[0].w)) + _67);
 
   if (shader_injection.processing_path == 0.f) {
-  // instead of disabling this shader, we match the luminance of the output color to the original color
-    // output.rgb = PQtoSRGB(output.rgb);
+    // instead of disabling this shader, we match the luminance of the output color to the original color
+    // float4 output = t0.Sample(s0, float2(_21, _22));
+    float4 output_pq = output;
+    output.rgb = PQtoSRGB(output.rgb);
 
-    // SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
-    // output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+    SV_Target.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
+    output.rgb = renodx::color::srgb::DecodeSafe(output.rgb);
 
-    // SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
-    // SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
+    SV_Target.rgb = renodx::color::correct::Luminance(SV_Target.rgb, output.rgb);
+    SV_Target.rgb = renodx::color::srgb::EncodeSafe(SV_Target.rgb);
     SV_Target.rgb = SRGBtoPQ(SV_Target.rgb);
   }
   SV_Target.w = 1.0f;
-
   return SV_Target;
 }

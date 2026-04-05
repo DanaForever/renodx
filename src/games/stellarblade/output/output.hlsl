@@ -17,6 +17,15 @@ float3 PQtoSRGB(float3 x) {
     return x;
 }
 
+float4 PQtoSRGB(float4 x) {
+  if (shader_injection.processing_path == 0.f) {
+    x.rgb = renodx::color::pq::DecodeSafe(x.rgb, RENODX_DIFFUSE_WHITE_NITS);
+    x.rgb = renodx::color::bt709::from::BT2020(x.rgb);
+    x.rgb = renodx::color::srgb::EncodeSafe(x.rgb);
+  }
+  return x;
+}
+
 
 float3 LinearToPQ(float3 x) {
 
