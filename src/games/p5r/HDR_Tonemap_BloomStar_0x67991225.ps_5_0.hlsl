@@ -69,7 +69,6 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
   } else {
     float3 base = HejlDawson::Apply(output);
 
-    // float x = renodx::color::gamma::EncodeSafe(0.18f, 2.2f);
     float pivot_x = HejlDawson::FindOutputPivot(0.7f);
     float3 tonemapped = HejlDawson::ApplyExtended(output, base, pivot_x);
 
