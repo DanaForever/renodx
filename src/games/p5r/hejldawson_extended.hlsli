@@ -1,44 +1,40 @@
 // HDR extension of the Hejl-Dawson filmic tonemapper (GDC 2010).
 //
-// Curve:  u = max(0, x - 0.004)
-//         f(x) = u*(6.2*u + 0.5) / (u*(6.2*u + 1.7) + 0.06)
+// Raw curve (sRGB-encoded output):
+//   f(u) = u*(6.2*u + 0.5) / (u*(6.2*u + 1.7) + 0.06)
 //
-// Unlike Uncharted2/Hable, this curve:
-//   - Has fixed constants (no configurable A,B,...,F)
-//   - Is self-normalizing (no white-point division needed)
-//   - Is purely concave everywhere: f''(u) < 0 for all u >= 0
-//   - f'''(u) > 0 for all u >= 0
+// The raw curve f(u) is purely concave (f'' < 0 everywhere) with no inflection.
+// But f(u) has a built-in ~2.2 gamma encoding. The TRUE linear-to-linear curve is:
 //
-// Because the curve has no inflection point, the derivative-root pivot methods
-// from uncharted2extended.hlsli (FindSecondDerivativeRoot, FindThirdDerivativeRoot)
-// have no solution here. The sign changes that make those roots possible in UC2
-// come from the E/F toe and the C shoulder parameters — Hejl-Dawson has neither.
+//   g(u) = f(u)^gamma
 //
-// Alternative pivot: solve f(x) = target_output analytically.
-// Setting f(u) = t gives the quadratic:
-//   A*(1-t)*u^2 + (C - B*t)*u - DF*t = 0
-// whose discriminant is always positive for t in (0,1), giving a clean closed form.
+// This composite curve DOES have an S-curve shape:
+//   - Near u=0: g(u) ~ (8.33u)^gamma = C*u^gamma, which is convex for gamma > 1
+//   - For large u: g(u) -> 1, concave (decelerating)
+//   - g''(u) changes sign => inflection point exists (at u ~ 0.081 for gamma=2.2)
 //
-// This is more intuitive than a slope threshold:
-// "preserve the curve up to output t, then extend highlights linearly into HDR."
+// The inflection is the natural pivot for HDR extension — same concept as UC2's
+// FindSecondDerivativeRoot. Below the pivot: preserve the filmic toe. Above: extend
+// linearly into HDR with slope-matched C1 continuity.
 //
-// Example values (a=6.2, b=1.7, c=0.5, df=0.06, offset=0.004):
-//   t=0.50  →  x_pivot ≈ 0.178,  slope ≈ 2.04
-//   t=0.65  →  x_pivot ≈ 0.322,  slope ≈ 0.73
-//   t=0.75  →  x_pivot ≈ 0.557,  slope ≈ 0.32
-//   t=0.80  →  x_pivot ≈ 0.812,  slope ≈ 0.19
+// Finding the inflection: g''(u) = 0 reduces to
+//   (gamma-1)*(f')^2 + f*f'' = 0
+// which is a quintic in u (no closed form). We solve via bisection.
+
+#include "./shared.h"
 
 namespace HejlDawson {
 
-static const float HD_A      = 6.2f;
-static const float HD_B      = 1.7f;
-static const float HD_C      = 0.5f;   // numerator linear coefficient
-static const float HD_DF     = 0.06f;  // denominator constant (analogous to D*F)
-static const float HD_OFFSET = 0.00f;    // original was 0.004 (film black crush), zeroed for HDR to preserve shadow detail
+// --- Constants ---
+static const float HD_A  = 6.2f;
+static const float HD_B  = 1.7f;
+static const float HD_C  = 0.5f;
+static const float HD_DF = 0.06f;
 
-// Core Hejl-Dawson curve.
+// --- Raw curve f(u): sRGB-encoded output ---
+
 float Apply(float x) {
-  float u = max(0.f, x - HD_OFFSET);
+  float u = max(0.f, x);
   return (u * (HD_A * u + HD_C))
        / (u * (HD_A * u + HD_B) + HD_DF);
 }
@@ -47,14 +43,11 @@ float3 Apply(float3 x) {
   return float3(Apply(x.r), Apply(x.g), Apply(x.b));
 }
 
-// First derivative df/dx (equals df/du for x > HD_OFFSET since du/dx = 1).
-//
-// f'(u) = [A*(B-C)*u^2 + 2*A*DF*u + C*DF] / [A*u^2 + B*u + DF]^2
-//
-// The numerator has all-positive coefficients, so f'(u) > 0 everywhere.
-// There is no root — the curve is monotonically increasing.
+// --- First derivative f'(u) ---
+// f'(u) = [A(B-C)u^2 + 2A*DF*u + C*DF] / D(u)^2
+
 float Derivative(float x) {
-  float u = max(0.f, x - HD_OFFSET);
+  float u = max(0.f, x);
   float D = u * (HD_A * u + HD_B) + HD_DF;
   float num = HD_A * (HD_B - HD_C) * u * u
             + 2.f * HD_A * HD_DF * u
@@ -62,56 +55,95 @@ float Derivative(float x) {
   return num / (D * D);
 }
 
-// Find the input x_pivot where f(x_pivot) = target_output.
-//
-// Setting f(u) = t and rearranging gives the quadratic:
-//   A*(1-t)*u^2 + (C - B*t)*u - DF*t = 0
-//
-// Discriminant = (C - B*t)^2 + 4*A*(1-t)*DF*t > 0 for all t in (0,1),
-// so the positive root always exists analytically.
-float FindOutputPivot(float target_output) {
-  float t  = target_output;
-  float Aq = HD_A * (1.f - t);
-  float Bq = HD_C - HD_B * t;
-  float Cq = -HD_DF * t;
+// --- Second derivative f''(u) ---
+// f''(u) = [-2a^2(b-c)u^3 - 6a^2*df*u^2 - 6ac*df*u + 2df(a*df-bc)] / D(u)^3
 
-  float disc = Bq * Bq - 4.f * Aq * Cq;
-  disc = max(disc, 0.f);
+float SecondDerivative(float x) {
+  float u = max(0.f, x);
+  float D = u * (HD_A * u + HD_B) + HD_DF;
 
-  float u = (-Bq + sqrt(disc)) / (2.f * Aq);
-  return max(u, 0.f) + HD_OFFSET;
+  float num = -2.f * HD_A * HD_A * (HD_B - HD_C) * u * u * u
+            - 6.f * HD_A * HD_A * HD_DF * u * u
+            - 6.f * HD_A * HD_C * HD_DF * u
+            + 2.f * HD_DF * (HD_A * HD_DF - HD_B * HD_C);
+
+  return num / (D * D * D);
 }
 
-// Apply with linear HDR extension beyond a pivot specified by output value.
-//
-//   pivot_output: curve output value at which to branch off (e.g. 0.75).
-//                 Below: normal Hejl-Dawson.
-//                 Above: pivot_output + f'(pivot_x) * (x - pivot_x).
-//
-// The join is C1-continuous (slope matches at the pivot).
+// --- Composite curve g(u) = f(u)^gamma: linear-to-linear ---
 
-#define HD_APPLY_EXTENDED_GENERATOR(T)                          \
-  T ApplyExtended(T x, T base, float pivot_x) {                \
-    float pivot_y = Apply(pivot_x);                            \
-    float slope   = Derivative(pivot_x);                       \
-    T extended    = pivot_y + slope * (x - pivot_x);           \
-    return lerp(base, extended, step(pivot_x, x));             \
+float ApplyLinear(float x, float gamma) {
+  return pow(max(Apply(x), 0.f), gamma);
+}
+
+float3 ApplyLinear(float3 x, float gamma) {
+  return float3(ApplyLinear(x.r, gamma),
+                ApplyLinear(x.g, gamma),
+                ApplyLinear(x.b, gamma));
+}
+
+// --- Derivative of composite g'(u) = gamma * f^(gamma-1) * f' ---
+
+float DerivativeLinear(float x, float gamma) {
+  float f = max(Apply(x), 1e-6f);
+  return gamma * pow(f, gamma - 1.f) * Derivative(x);
+}
+
+// --- Find inflection point of g(u) = f(u)^gamma ---
+// Solves: (gamma-1)*(f')^2 + f*f'' = 0
+// h(u) > 0 near u=0 (convex region), h(u) < 0 for larger u (concave region).
+// 16 bisection steps on [1e-4, 0.5] gives ~1e-5 precision.
+
+float FindInflectionPoint(float gamma) {
+  float lo = 1e-4f;
+  float hi = 0.5f;
+
+  [unroll]
+  for (int i = 0; i < 16; i++) {
+    float mid = (lo + hi) * 0.5f;
+    float f_val = Apply(mid);
+    float fp    = Derivative(mid);
+    float fpp   = SecondDerivative(mid);
+    float h     = (gamma - 1.f) * fp * fp + f_val * fpp;
+
+    if (h > 0.f) lo = mid;
+    else         hi = mid;
+  }
+
+  return (lo + hi) * 0.5f;
+}
+
+// --- Extended curve ---
+// Below pivot: g(u) = f(u)^gamma (original composite).
+// Above pivot: linear extension with matched slope (C1 continuous).
+
+#define HD_APPLY_EXTENDED_GENERATOR(T)                                 \
+  T ApplyExtended(T x, T base_linear, float pivot_x, float gamma) {   \
+    float pivot_y = ApplyLinear(pivot_x, gamma);                       \
+    float slope   = DerivativeLinear(pivot_x, gamma);                  \
+    T extended    = pivot_y + slope * (x - pivot_x);                   \
+    return lerp(base_linear, extended, step(pivot_x, x));              \
   }
 
 HD_APPLY_EXTENDED_GENERATOR(float)
 HD_APPLY_EXTENDED_GENERATOR(float3)
 #undef HD_APPLY_EXTENDED_GENERATOR
 
-float ApplyExtended(float x, float pivot_output) {
-  float base    = Apply(x);
-  float pivot_x = FindOutputPivot(pivot_output);
-  return ApplyExtended(x, base, pivot_x);
+float ApplyExtended(float x, float gamma) {
+  float pivot_x     = FindInflectionPoint(gamma);
+  float base_linear = ApplyLinear(x, gamma);
+  return ApplyExtended(x, base_linear, pivot_x, gamma);
 }
 
-float3 ApplyExtended(float3 x, float pivot_output) {
-  float3 base    = Apply(x);
-  float  pivot_x = FindOutputPivot(pivot_output);
-  return ApplyExtended(x, base, pivot_x);
+float3 ApplyExtended(float3 x, float gamma) {
+  float  pivot_x     = FindInflectionPoint(gamma);
+  float3 base_linear = ApplyLinear(x, gamma);
+  return ApplyExtended(x, base_linear, pivot_x, gamma);
+}
+
+float3 ApplyExtended(float3 x, float3 base_linear, float gamma) {
+  float pivot_x = FindInflectionPoint(gamma);
+  return ApplyExtended(x, base_linear, pivot_x, gamma);
 }
 
 }  // namespace HejlDawson

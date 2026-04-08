@@ -33,6 +33,10 @@
 #include <embed/0xE126DD24.h>
 #include <embed/0xEBBDB212.h>
 #include <embed/0x2FC8F3F8.h>
+#include <embed/0x67991225.h>
+#include <embed/0xE75890F6.h>
+#include <embed/0xC7690164.h>
+#include <embed/0xFC676683.h>
 
 #include "../../mods/shader.hpp"
 #include "../../mods/swapchain.hpp"
@@ -40,27 +44,6 @@
 #include "./shared.h"
 
 namespace {
-
-#define UpgradeRTVReplaceShader(value)       \
-  {                                          \
-      value,                                 \
-      {                                      \
-          .crc32 = value,                    \
-          .code = __##value,                 \
-          .on_draw = [](auto* cmd_list) {                                                             \
-            auto rtvs = renodx::utils::swapchain::GetRenderTargets(cmd_list);                         \
-            bool changed = false;                                                                     \
-            for (auto rtv : rtvs) {                                                                   \
-              changed = renodx::mods::swapchain::ActivateCloneHotSwap(cmd_list->get_device(), rtv);   \
-            }                                                                                         \
-            if (changed) {                                                                            \
-              renodx::mods::swapchain::FlushDescriptors(cmd_list);                                    \
-              renodx::mods::swapchain::RewriteRenderTargets(cmd_list, rtvs.size(), rtvs.data(), {0}); \
-            }                                                                                         \
-            return true; }, \
-      },                                     \
-  }
-
 
 renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xB6E26AC7),
@@ -84,6 +67,10 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xD434C03A),
     CustomShaderEntry(0xE126DD24),
     CustomShaderEntry(0xEBBDB212),
+    CustomShaderEntry(0xC7690164),
+    CustomShaderEntry(0x67991225),
+    CustomShaderEntry(0xE75890F6),
+    CustomShaderEntry(0xFC676683),
 };
 
 ShaderInjectData shader_injection;
@@ -517,11 +504,11 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .resource_tag = 1.f,
       });
 
-      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-          .old_format = reshade::api::format::r11g11b10_float,
-          .new_format = reshade::api::format::r16g16b16a16_float,
-          .ignore_size = true,     
-      });
+      // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+      //     .old_format = reshade::api::format::r11g11b10_float,
+      //     .new_format = reshade::api::format::r16g16b16a16_float,
+      //     .ignore_size = true,     
+      // });
       {
         bool is_hdr10 = true;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);

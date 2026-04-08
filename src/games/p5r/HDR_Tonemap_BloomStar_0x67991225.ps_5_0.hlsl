@@ -1,5 +1,6 @@
 #include "./shared.h"
 #include "hejldawson_extended.hlsli"
+#include "macleod_boynton.hlsli"
 
 cbuffer GFD_PSCONST_HDR : register(b11) {
   float middleGray : packoffset(c0);
@@ -67,13 +68,13 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
   if (injectedData.toneMapType == 0.f) {
     r3.rgb = renodx::tonemap::HejlDawson(output);
   } else {
-    float3 base = HejlDawson::Apply(output);
+    // float3 base = HejlDawson::Apply(output);
+    float3 base = HejlDawson::ApplyLinear(output, 2.2f);
 
-    float pivot_x = HejlDawson::FindOutputPivot(0.7f);
-    float3 tonemapped = HejlDawson::ApplyExtended(output, base, pivot_x);
+    float3 tonemapped = HejlDawson::ApplyExtended(output, base, 2.2f);
 
+    // tonemapped = CorrectHueAndPurityMBFullStrength(tonemapped, base);
     r3.rgb = tonemapped;
-    r3.rgb = renodx::color::gamma::DecodeSafe(r3.rgb, 2.2f);
   }
   r5.xyz = -r2.xyz;
   r3.xyz = r5.xyz + r3.xyz;
