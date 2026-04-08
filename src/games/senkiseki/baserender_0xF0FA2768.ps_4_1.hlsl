@@ -16,5 +16,8 @@ void main(
 {
   o0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
   o0.rgb = clamp(o0.rgb, 0.f, shader_injection.safe_clamp);
+
+  // o0.rgb = renodx::tonemap::ReinhardPiecewiseExtended(o0.rgb, 100.f, shader_injection.safe_clamp);
+  // o0.rgb = renodx::tonemap::HermiteSplinePerChannelRolloff(o0.rgb, shader_injection.safe_clamp, 100.f);
   return;
 }

@@ -1,4 +1,5 @@
-#include "./p5r.h"
+#include "./shared.h"
+#include "uncharted2extended.hlsli"
 
 cbuffer GFD_PSCONST_HDR : register(b11) {
   float middleGray : packoffset(c0);
@@ -46,7 +47,6 @@ void main(
   r4.w = 1;
 
   hdrColor = r2.xyz;
-  sdrColor = saturate(hdrColor);
 
   r3.xyz = gradeColor.xyz * r2.xyz;
   r3.xyz = exposure2 * r3.xyz;
@@ -62,8 +62,25 @@ void main(
   r5.xyz = -paramEperF;
   r3.xyz = r5.xyz + r3.xyz;
   r3.xyz = r3.xyz / paramF_White;
-  r3.xyz = max(float3(0, 0, 0), r3.xyz);
-  r3.xyz = min(float3(1, 1, 1), r3.xyz);
+  // r3.xyz = max(float3(0, 0, 0), r3.xyz);
+  // r3.xyz = min(float3(1, 1, 1), r3.xyz);
+
+  if (injectedData.toneMapType > 0.f) {
+    float precompute_white = 1.f / paramF_White;
+
+    const float A = 0.22, B = 0.30, C = 0.10, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
+    // const float A = cb0[4].w, B = cb0[5].z, C = cb0[5].x / cb0[5].z, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
+
+    float coeffs[6] = { A, B, C, D, E, F };
+    // float white_precompute = 1.f / renodx::tonemap::ApplyCurve(W, A, B, C, D, E, F);
+    Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfig(coeffs, precompute_white);
+
+    float3 base = r3.xyz;
+    float3 extended = Uncharted2::ApplyExtended(hdrColor, base, uc2_config);
+
+    r3.rgb = extended;
+  }
+
   r5.xyz = -r2.xyz;
   r3.xyz = r5.xyz + r3.xyz;
   r3.xyz = interpolate * r3.xyz;
@@ -74,10 +91,6 @@ void main(
   r0.xyz = bloomScale * r0.xyz;
   r4.xyz = r1.xyz + r0.xyz;
   o0.xyzw = r4.xyzw;
-
-  float3 lutColor = r4.xyz;
-  o0.xyz = renodx::tonemap::UpgradeToneMap(hdrColor, sdrColor, lutColor, 1.f);
-  o0.rgb = max(0, o0.rgb);
 
   return;
 }

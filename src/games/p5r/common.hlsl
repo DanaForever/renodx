@@ -1,7 +1,7 @@
 
 #include "./shared.h"
 #include "./macleod_boynton.hlsli"
-#include "./psycho_test11.hlsl"
+#include "./psycho_test17.hlsl"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -586,37 +586,38 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
   
   float3 originalColor = color;
 
-  color = LMS_Vibrancy(color, injectedData.colorGradeSaturation, injectedData.colorGradeContrast);
-  color = lerp(color, CastleDechroma_CVVDPStyle_NakaRushton(color), injectedData.colorGradeDechroma);
+  if (injectedData.toneMapType > 0.f) {
+  
+    color = lerp(color, CastleDechroma_CVVDPStyle_NakaRushton(color), injectedData.colorGradeDechroma);
 
+    float peak_ratio = peak / paperwhite;
+    if (injectedData.toneMapType == 2.f) {
+      
+      float contrast = injectedData.colorGradeContrast / injectedData.colorGradeSaturation;
 
-  // color = renodx::draw::ToneMapPass(color, config);
-  float peak_ratio = peak / paperwhite;
+      color = renodx::tonemap::psycho::psychotm_test17(
+          color,
+          peak_ratio,  // peak
+          1.0f,        // exposure
+          1.0f,        // highlights
+          1.0f,        // shadows
+          contrast,    // contrast
+          1.0f,        // purity_scale
+          1.0f,        // bleaching_intensity
+          100.f,       // clip_point
+          0.5f,        // hue_restore
+          1.0f,        // adaptation_contrast
+          1,           // naka rushton
+          // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+          injectedData.colorGradeSaturation);  // cone_response_exponent
+    } else if (injectedData.toneMapType == 3.f) {
+      
+      color = LMS_Vibrancy(color, injectedData.colorGradeSaturation, injectedData.colorGradeContrast);
 
-  color = renodx::tonemap::psycho::psychotm_test11(
-      color,
-      peak_ratio,                           // peak
-      1.0f,                                 // exposure
-      1.0f,                                 // highlights
-      1.0f,                                 // shadows
-      1.0f,                                 // contrast
-      1.0f,                                 // purity_scale
-      1.0f,                                 // bleaching_intensity
-      100.f,                                // clip_point
-      0.5f,                                 // hue_restore
-      1.0f,                                 // adaptation_contrast
-      1,                                    // naka rushton
-      // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
-      1.0f);  // cone_response_exponent
+      color = renodx::tonemap::ReinhardPiecewiseExtended(color, 20.f, peak_ratio);
+    }
+  }  
 
-  // float3 lum_color = renodx::tonemap::HermiteSplineLuminanceRolloff(color, rpeak);
-  // float3 perch_color = renodx::tonemap::HermiteSplinePerChannelRolloff(color, peak);
-
-  // color = renodx::color::correct::Chrominance(lum_color, perch_color, RENODX_TONE_MAP_HUE_CORRECTION);
-  // color = lum_color;
-  // color = renodx::color::bt2020::from::BT709(color);
-  // color = renodx::tonemap::neutwo::MaxChannel(color, rpeak, 100.f);
-  // color = renodx::color::bt709::from::BT2020(color);
 
   return color;
 }
@@ -734,4 +735,43 @@ float4 sample_bicubic(Texture2D tex, SamplerState smp, float2 texcoord) {
 
   // weigh along the x-direction
   return float4(lerp(tex10, tex00, g0.x), 1.0);
+}
+
+// Linear or Gamma in/out
+// Modernizes old school grading that either clips or raises blacks, not really suitable for modern OLEDs.
+// Perceptually raises shadow without raising the black floor.
+float3 EmulateShadowOffset(float3 Color, float3 Offset, bool LinearInOut = true, bool SmoothOutLargeOffsets = true)
+{
+  // Whether the offset was removing color (causing clipping in SDR, and expanding the color range in HDR), or adding to color (raising blacks),
+  // for a range matching double of its abs offset, don't fully apply the offset.
+  // This means 0 will stay 0, while most of the image will still be affected.
+  // This will also prevent levels from accidentally generating invalid negative values in HDR,
+  // that would sometimes expand the gamut, but more often simply generate weird or broken colors.
+  float range = LinearInOut ? 3.0 : 2.0;       // Arbitrary but decent // TODO: try range... Also possibly expand it even more, with little effect beyond *1.5, but at least we'd avoid broken gradients
+  float center = LinearInOut ? 0.18f : 0.5;  // A bit random but should be fine
+  float3 alpha = saturate(Color / abs(Offset * range));
+
+  // Another approximation
+  // For the positive case, we do a sqrt to shift the intensity and make it look nicer.
+  // For the negative case, we might do a sqr, otherwise the result would flatten itself to 0 for the whole range if range was 1,
+  // and even if it wasn't, it'd generate negative values for an input of >= 0. Update: somehow doing "sqr" there breaks, so leave it "linear" (it doesn't seem to flatten either, likely because of the "range" making alpha smaller).
+  if (!LinearInOut)
+    alpha = Offset >= 0.0 ? sqrt(alpha) : alpha;
+
+  // If levels go too high, force apply them anyway
+  if (SmoothOutLargeOffsets)
+    alpha = lerp(alpha, 1.0, saturate((abs(Offset) - center) * range));
+
+  Color += Offset * alpha;
+  return Color;
+}
+
+float3 gammaDecode(float3 c) {
+  return renodx::color::gamma::DecodeSafe(c, 2.2f);
+  // return renodx::color::srgb::DecodeSafe(c);
+}
+
+float3 gammaEncode(float3 c) {
+  return renodx::color::gamma::EncodeSafe(c, 2.2f);
+  // return renodx::color::srgb::EncodeSafe(c);
 }

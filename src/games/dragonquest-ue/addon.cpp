@@ -804,7 +804,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         // General Upgrades 
 
         // fp11 upgrades only for nvidia
-        // reshade::register_event<reshade::addon_event::init_device>(OnInitDevice);
+        reshade::register_event<reshade::addon_event::init_device>(OnInitDevice);
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r10g10b10a2_unorm,
@@ -857,7 +857,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
     //   renodx::utils::resource::Use(fdw_reason);
       reshade::unregister_event<reshade::addon_event::init_swapchain>(OnInitSwapchain);
 
-    //   reshade::unregister_event<reshade::addon_event::init_device>(OnInitDevice);
+      reshade::unregister_event<reshade::addon_event::init_device>(OnInitDevice);
       reshade::unregister_addon(h_module);
       break;
   }

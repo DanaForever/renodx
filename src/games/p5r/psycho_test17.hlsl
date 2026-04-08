@@ -1,7 +1,7 @@
 #ifndef RENODX_SHADERS_TONEMAP_PSYCHO_TEST17_HLSL_
 #define RENODX_SHADERS_TONEMAP_PSYCHO_TEST17_HLSL_
 
-#include "./shared.h"
+#include "shared.h"
 
 // #include "../color.hlsl"
 // #include "../colorgrade.hlsl"

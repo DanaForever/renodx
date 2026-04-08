@@ -288,21 +288,18 @@ void main(
   // o0.xyzw = r1.xyzw;
   o0.rgb = inputColor.rgb;
   o0.a = saturate(inputColor.a);
-  o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-  
-  if (injectedData.colorGradeColorSpace == 1.f)
-    o0.rgb = renodx::color::bt709::clamp::BT709(o0.rgb);
-  else if (injectedData.colorGradeColorSpace == 2.f)
-    o0.rgb = renodx::color::bt709::clamp::BT2020(o0.rgb);
-  else 
-    o0.rgb = renodx::color::bt709::clamp::AP1(o0.rgb);
+
+  o0.rgb = gammaDecode(o0.rgb);
+    
   o0.rgb = ToneMap(o0.rgb, injectedData.toneMapPeakNits, injectedData.toneMapGameNits);
 
-  if (injectedData.toneMapGammaCorrection == 1.f) {
-    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
-  } else if (injectedData.toneMapGammaCorrection == 2.f) {
-    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
-  }
+  // if (injectedData.toneMapGammaCorrection == 1.f) {
+  //   // o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
+  //   o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.2f);
+  // } else if (injectedData.toneMapGammaCorrection == 2.f) {
+  //   // o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
+  //   o0.rgb = renodx::color::correct::GammaSafe(o0.rgb, false, 2.4f);
+  // }
 
   float3 color = o0.rgb;
 
@@ -319,11 +316,8 @@ void main(
   color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
 
   color = max(0.f, color);
-  // color = renodx::color::bt709::from::BT2020(color);
 
   o0.rgb = color;
   o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, injectedData.toneMapGameNits);
-
-  // o0.rgb *= injectedData.toneMapGameNits / 80.f;
   return;
 }

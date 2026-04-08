@@ -1,7 +1,7 @@
 
 #include "./shared.h"
 #include "./macleod_boynton.hlsli"
-#include "./psycho_test11.hlsl"
+#include "./psycho_test17.hlsl"
 #include "so6utils.hlsl"
 
 float3 PostToneMapProcess(float3 output) {
@@ -531,7 +531,7 @@ float3 lutEncode(float3 inputColor, float4 cvConst) {
 
 float3 LUTSampleAndToneMap(float3 lut_input_srgb, Texture3D<float4> lut, SamplerState lut_sampler, float4 cvConst) {
   // untonemapped in PQ
-  float white = 203.f;
+  float white = 250.f;
 
   float3 untonemapped = renodx::color::srgb::DecodeSafe(lut_input_srgb);
 
@@ -539,6 +539,7 @@ float3 LUTSampleAndToneMap(float3 lut_input_srgb, Texture3D<float4> lut, Sampler
 
   float scale = renodx::tonemap::neutwo::ComputeMaxChannelScale(untonemapped);
   float3 sdr = untonemapped * scale;
+  // float3 sdr = renodx::tonemap::renodrt::NeutralSDR(untonemapped);
 
   float3 lut_input = lutEncode(sdr, cvConst);
 
@@ -547,39 +548,46 @@ float3 LUTSampleAndToneMap(float3 lut_input_srgb, Texture3D<float4> lut, Sampler
   // float3 lut_output = SampleLUT(lut, lut_config, untonemapped); // in linear
   float3 lut_output = renodx::lut::SampleTetrahedral(lut, lut_input, 32u);
   float3 linear_graded = PQtoLinear(lut_output);
-  
-  linear_graded /= scale;
 
-  
+  linear_graded /= scale;
+  // linear_graded = renodx::tonemap::UpgradeToneMap(untonemapped, sdr, linear_graded);
+
+  float3 reference_pq = renodx::lut::SampleTetrahedral(lut, lutEncode(untonemapped, cvConst), 32u);
+  float3 reference_linear = PQtoLinear(reference_pq, white, true);
+  // linear_graded = CorrectHueAndPurityMB(linear_graded, reference_linear);
+  // linear_graded = CorrectHueMBGated(linear_graded, reference_linear, 0.5f, 0.f, 0.f);
 
   linear_graded = lerp(untonemapped, linear_graded, shader_injection.lut_scaling);
 
   float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+  peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
 
   float3 bt709_tonemapped;
-  peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
-  linear_graded = renodx::tonemap::psycho::psychotm_test11(
-      linear_graded,
-      peak_ratio,                           // peak
-      1.0f,                                 // exposure
-      1.0f,                                 // highlights
-      1.0f,                                 // shadows
-      1.0f,                                 // contrast
-      1.0f,                                 // purity_scale
-      1.0f,                                 // bleaching_intensity
-      100.f,                                // clip_point
-      0.5f,                                 // hue_restore
-      1.0f,                                 // adaptation_contrast
-      1,                                    // naka rushton
-      1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
 
-  // Hue Correction
-  float3 reference_pq = renodx::lut::SampleTetrahedral(lut, lutEncode(untonemapped, cvConst), 32u);
-  float3 reference_linear = PQtoLinear(reference_pq, white, true);
-  // linear_graded = renodx::color::correct::Hue(linear_graded, reference_linear);
-  // linear_graded = RestoreSaturationLoss(linear_graded, untonemapped);
+  if (RENODX_TONE_MAP_TYPE == 2.f) {
+    linear_graded = renodx::tonemap::psycho::psychotm_test17(
+        linear_graded,
+        peak_ratio,  // peak
+        1.0f,        // exposure
+        1.0f,        // highlights
+        1.0f,        // shadows
+        1.0f,        // contrast
+        1.0f,        // purity_scale
+        1.0f,        // bleaching_intensity
+        100.f,       // clip_point
+        0.0f,        // hue_restore
+        1.0f,        // adaptation_contrast
+        1,           // naka rushton
+        1.f);        // cone_response_exponent
+  } else if (RENODX_TONE_MAP_TYPE == 3.f) {
+    // linear_graded = renodx::tonemap::HermiteSplinePerChannelRolloff(linear_graded, peak_ratio);
+    // linear_graded = renodx::tonemap::neutwo::PerChannel(linear_graded, peak_ratio);
+    linear_graded = NeutwoBT709WhiteForEnergy(linear_graded, peak_ratio);
+  }
 
   float3 chroma = linear_graded;
+
+  // linear_graded = CorrectHueAndPurityMB(linear_graded, reference_linear);
   // linear_graded = CorrectHueMBGated(linear_graded, reference_linear, 1.f);
   float3 pq_graded = LinearToPQ(linear_graded, RENODX_DIFFUSE_WHITE_NITS, true);
 

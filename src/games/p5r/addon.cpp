@@ -89,17 +89,17 @@ renodx::mods::shader::CustomShaders custom_shaders = {
 ShaderInjectData shader_injection;
 
 renodx::utils::settings::Settings settings = {
-    // new renodx::utils::settings::Setting{
-    //     .key = "toneMapType",
-    //     .binding = &shader_injection.toneMapType,
-    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-    //     .default_value = 3.f,
-    //     .can_reset = false,
-    //     .label = "Tone Mapper",
-    //     .section = "Tone Mapping",
-    //     .tooltip = "Sets the tone mapper type",
-    //     .labels = {"Vanilla", "None", "ACES", "RenoDRT"},
-    // },
+    new renodx::utils::settings::Setting{
+        .key = "toneMapType",
+        .binding = &shader_injection.toneMapType,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 3.f,
+        .can_reset = true,
+        .label = "Tone Mapper",
+        .section = "Tone Mapping",
+        .tooltip = "Sets the tone mapper type",
+        .labels = {"Vanilla", "None", "PsychoV", "RenoDRT"},
+    },
     new renodx::utils::settings::Setting{
         .key = "toneMapPeakNits",
         .binding = &shader_injection.toneMapPeakNits,
@@ -133,17 +133,17 @@ renodx::utils::settings::Settings settings = {
     //     .min = 48.f,
     //     .max = 500.f,
     // },
-    new renodx::utils::settings::Setting{
-        .key = "toneMapGammaCorrection",
-        .binding = &shader_injection.toneMapGammaCorrection,
-        // .value_type = renodx::utils::settings::SettingValueType::BOOLEAN,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 1.f,
-        .label = "Gamma Correction",
-        .section = "Tone Mapping",
-        .tooltip = "Emulates a 2.2 EOTF (use with HDR or sRGB)",
-        .labels = {"None", "2.2", "BT.1886"},
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "toneMapGammaCorrection",
+    //     .binding = &shader_injection.toneMapGammaCorrection,
+    //     // .value_type = renodx::utils::settings::SettingValueType::BOOLEAN,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 1.f,
+    //     .label = "Gamma Correction",
+    //     .section = "Tone Mapping",
+    //     .tooltip = "Emulates a 2.2 EOTF (use with HDR or sRGB)",
+    //     .labels = {"None", "2.2", "BT.1886"},
+    // },
     new renodx::utils::settings::Setting{
         .key = "toneMapBlackCorrection",
         .binding = &shader_injection.toneMapBlackCorrection,
@@ -151,8 +151,8 @@ renodx::utils::settings::Settings settings = {
         .default_value = 1.f,
         .label = "Black Correction",
         .section = "Tone Mapping",
-        .tooltip = "Only grades the high luminance pixels for highlight, to prevent black crush after grading.",
-        .labels = {"None", "SRGB"},
+        .tooltip = "Correct the black levels in the image after color grading.",
+        .labels = {"Off", "On"},
     },
     // new renodx::utils::settings::Setting{
     //     .key = "colorGradeExposure",
@@ -216,6 +216,7 @@ renodx::utils::settings::Settings settings = {
         .section = "Color Grading",
         .max = 100.f,
         .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return false; },
     },
     new renodx::utils::settings::Setting{
         .key = "colorGradeLUTScaling",
@@ -226,44 +227,45 @@ renodx::utils::settings::Settings settings = {
         .tooltip = "Scales the color grade LUT to full range when size is clamped.",
         .max = 100.f,
         .parse = [](float value) { return value * 0.01f; },
+        .is_visible = []() { return false; }
     },
-    new renodx::utils::settings::Setting{
-        .key = "colorGradeColorSpace",
-        .binding = &shader_injection.colorGradeColorSpace,
-        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 3.f,
-        .can_reset = false,
-        .label = "Color Space",
-        .section = "Color Grading",
-        .tooltip = "Selects color space gamut when clamping",
-        .labels = {"AP1", "BT709", "BT2020"},
-    },
-    new renodx::utils::settings::Setting{
-        .key = "fxBloom",
-        .binding = &shader_injection.fxBloom,
-        .default_value = 100.f,
-        .label = "Bloom",
-        .section = "Effects",
-        .max = 200.f,
-        .parse = [](float value) { return value * 0.01f; },
-    },
+    // new renodx::utils::settings::Setting{
+    //     .key = "colorGradeColorSpace",
+    //     .binding = &shader_injection.colorGradeColorSpace,
+    //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+    //     .default_value = 3.f,
+    //     .can_reset = false,
+    //     .label = "Color Space",
+    //     .section = "Color Grading",
+    //     .tooltip = "Selects color space gamut when clamping",
+    //     .labels = {"AP1", "BT709", "BT2020"},
+    // },
+    // new renodx::utils::settings::Setting{
+    //     .key = "fxBloom",
+    //     .binding = &shader_injection.fxBloom,
+    //     .default_value = 100.f,
+    //     .label = "Bloom",
+    //     .section = "Effects",
+    //     .max = 200.f,
+    //     .parse = [](float value) { return value * 0.01f; },
+    // },
 };
 
 void OnPresetOff() {
   renodx::utils::settings::UpdateSetting("toneMapType", 0.f);
   renodx::utils::settings::UpdateSetting("toneMapPeakNits", 203.f);
   renodx::utils::settings::UpdateSetting("toneMapGameNits", 203.f);
-  renodx::utils::settings::UpdateSetting("toneMapUINits", 203.f);
-  renodx::utils::settings::UpdateSetting("toneMapGammaCorrection", 0);
-  renodx::utils::settings::UpdateSetting("colorGradeExposure", 1.f);
-  renodx::utils::settings::UpdateSetting("colorGradeHighlights", 50.f);
-  renodx::utils::settings::UpdateSetting("colorGradeShadows", 50.f);
-  renodx::utils::settings::UpdateSetting("colorGradeContrast", 50.f);
-  renodx::utils::settings::UpdateSetting("colorGradeSaturation", 50.f);
+  // renodx::utils::settings::UpdateSetting("toneMapUINits", 203.f);
+  // renodx::utils::settings::UpdateSetting("toneMapGammaCorrection", 0);
+  // renodx::utils::settings::UpdateSetting("colorGradeExposure", 1.f);
+  // renodx::utils::settings::UpdateSetting("colorGradeHighlights", 50.f);
+  // renodx::utils::settings::UpdateSetting("colorGradeShadows", 50.f);
+  // renodx::utils::settings::UpdateSetting("colorGradeContrast", 50.f);
+  // renodx::utils::settings::UpdateSetting("colorGradeSaturation", 50.f);
   renodx::utils::settings::UpdateSetting("colorGradeLUTStrength", 100.f);
-  renodx::utils::settings::UpdateSetting("colorGradeLUTScaling", 0.f);
-  renodx::utils::settings::UpdateSetting("colorGradeColorSpace", 1.f);
-  renodx::utils::settings::UpdateSetting("fxBloom", 50.f);
+  renodx::utils::settings::UpdateSetting("colorGradeLUTScaling", 100.f);
+  // renodx::utils::settings::UpdateSetting("colorGradeColorSpace", 1.f);
+  // renodx::utils::settings::UpdateSetting("fxBloom", 50.f);
 }
 
 struct __declspec(uuid("5958c7c4-19b2-4300-af4d-c6802d6c7635")) DeviceData {

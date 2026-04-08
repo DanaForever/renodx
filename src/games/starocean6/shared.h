@@ -125,7 +125,7 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE    shader_injection.swap_chain_clamp_color_space
 #define RENODX_SWAP_CHAIN_ENCODING             4.f //
 #define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE 0.f // shader_injection.swap_chain_encoding_color_space
-#define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::REINHARD
+#define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::HERMITE_SPLINE
 
 
 #define CUSTOM_LUT_SCALING                 shader_injection.lut_scaling

@@ -577,9 +577,11 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
         {
       
-            bool is_hdr10 = false;
+            bool is_hdr10 = true;
             renodx::mods::swapchain::SetUseHDR10(is_hdr10);
             renodx::mods::swapchain::use_resize_buffer = false;
+            shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
+            shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
         }
 
         initialized = true;
