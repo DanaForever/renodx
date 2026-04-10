@@ -95,7 +95,7 @@ renodx::utils::settings::Settings settings = {
         .can_reset = true,
         .label = "Extending Precision",
         .section = "Tone Mapping",
-        .tooltip = "Precision extension for HDR.",
+        .tooltip = "Precision extension for HDR",
         .labels = {"Simple (0.18)", "High (Second Derivative)", "Very High (Third Derivative)"},
         .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_mode == 0; },
     },

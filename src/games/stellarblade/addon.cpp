@@ -737,6 +737,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
                 reshade::log::message(reshade::log::level::info, std::format("[DEBUGGING] NOT Applying Swapchain Proxy ...").c_str());
             }
         }
+
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+            .old_format = reshade::api::format::r10g10b10a2_unorm,
+            .new_format = reshade::api::format::r16g16b16a16_float,
+            .use_resource_view_cloning = true,
+            .dimensions = {.width = 32, .height = 32, .depth = 32},
+        });
         
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::b8g8r8a8_typeless,
@@ -762,12 +769,18 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         });
 
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r10g10b10a2_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .ignore_size = true,
-            .use_resource_view_cloning = true
-        }); 
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //     .old_format = reshade::api::format::r10g10b10a2_unorm,
+        //     .new_format = reshade::api::format::r16g16b16a16_float,
+        //     // .ignore_size = true,
+        //     .use_resource_view_cloning = true
+        // }); 
+
+        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+        //         .old_format = reshade::api::format::r10g10b10a2_typeless,
+        //         .new_format = reshade::api::format::r16g16b16a16_typeless,
+        //         .use_resource_view_cloning = true,
+        // });
         
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r11g11b10_float,
@@ -785,6 +798,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .aspect_ratio = 30.f / 17.f,
         });
 
+        
+
         // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
         //     .old_format = reshade::api::format::r8_unorm,
         //     .new_format = reshade::api::format::r16_float,
@@ -794,44 +809,15 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         
         // General Upgrades 
 
-        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-            .old_format = reshade::api::format::r10g10b10a2_unorm,
-            .new_format = reshade::api::format::r16g16b16a16_float,
-            .use_resource_view_cloning = true,
-            .dimensions = {.width = 32, .height = 32, .depth = 32},
-        });
+        
 
         
         {
-          auto* setting = new renodx::utils::settings::Setting{
-              .key = "SwapChainEncoding",
-              .binding = &shader_injection.hdr_format,
-              .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-              .default_value = 0.f,
-              .label = "HDR Format",
-              .section = "Display Output",
-              .tooltip = "Sets the HDR format (HDR10 is compatible with Smooth Motion)",
-              .labels = {"HDR10", "scRGB (default)"},
-              .is_enabled = []() { return true; },
-              .is_global = true,
-              .is_visible = []() { return current_settings_mode >= 2; },
-          };
-
-          renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-          bool is_hdr10 = setting->GetValue() == 0;
-          renodx::mods::swapchain::SetUseHDR10(is_hdr10);
-          renodx::mods::swapchain::use_resize_buffer = false;
-          shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
-          shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
-          settings.push_back(setting);
-
-          if (is_hdr10)   {
-              renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::r10g10b10a2_typeless,
-              .new_format = reshade::api::format::r16g16b16a16_typeless,
-              .use_resource_view_cloning = true,
-              });
-          }
+           bool is_hdr10 = true;
+           renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+           renodx::mods::swapchain::use_resize_buffer = false;
+           shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
+           shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
         }
           
         initialized = true;
