@@ -1,7 +1,7 @@
 
 #include "./shared.h"
 #include "./macleod_boynton.hlsli"
-#include "./psycho_test11.hlsl"
+// #include "./psycho_test11.hlsl"
 #include "./psycho_test17.hlsl"
 
 
@@ -446,7 +446,7 @@ float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw
 
   float3 untonemapped_graded = renodx::draw::UpgradeToneMapByLuminance(untonemapped, neutral_sdr, graded_sdr_color, 1.f);
 
-  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+  
 
   // this dechromas too much
   float3 untonemapped_graded_dechroma = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded);
@@ -465,21 +465,24 @@ float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw
   }
 
   if (RENODX_TONE_MAP_TYPE == 2.f) {
-    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
+    float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
+
+    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test17(
         untonemapped_graded_dechroma,
-        peak_ratio,                           // peak
-        1.0f,                                 // exposure
-        1.0f,                                 // highlights
-        1.0f,                                 // shadows
-        1.0f,                                 // contrast
-        1.0f,                                 // purity_scale
-        1.0f,                                 // bleaching_intensity
-        100.f,                                // clip_point
-        0.5f,                                 // hue_restore
-        1.0f,                                 // adaptation_contrast
-        1,                                    // naka rushton
-        1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
+        peak_ratio,                               // peak
+        1.0f,                                     // exposure
+        1.0f,                                     // highlights
+        1.0f,                                     // shadows
+        contrast,                                 // contrast
+        1.0f,                                     // purity_scale
+        1.0f,                                     // bleaching_intensity
+        100.f,                                    // clip_point
+        0.5f,                                     // hue_restore
+        1.0f,                                     // adaptation_contrast
+        1,                                        // naka rushton
+        shader_injection.tone_map_lms_vibrancy);  // cone_response_exponent
   } else {
+    untonemapped_graded_dechroma = LMS_Vibrancy(untonemapped_graded_dechroma, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
     bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, renodx::draw::BuildConfig());
   }
 
@@ -551,12 +554,70 @@ float FFXV_ypp(
   // (u^p)' = p*u^(p-1) * inv*a/(ax+b)
   float up_p = p * pow(u, p - 1.0) * (inv * a / axb);
 
-  // (u^p)'' = p*inv*a^2/(ax+b)^2 * u^(p-2) * ((p-1) - g)
-  float up_pp = p * inv * (a * a) / (axb * axb) * pow(u, p - 2.0) * ((p - 1.0) - gSafe);
+  // (u^p)'' = p*inv^2*a^2/(ax+b)^2 * u^(p-2) * ((p-1) - g)
+  float up_pp = p * inv * inv * (a * a) / (axb * axb) * pow(u, p - 2.0) * ((p - 1.0) - gSafe);
 
   float denom = 1.0 + Tmul * up;
 
   return n46 * ((Tmul * up_pp) / denom - (Tmul * Tmul * up_p * up_p) / (denom * denom));
+}
+
+// Numerical y''' via central differences of y''
+float FFXV_yppp(
+    float x, float a, float b, float inv, float p, float Tmul, float n46)
+{
+  float eps = max(x * 1e-4, 1e-8);
+  return (FFXV_ypp(x + eps, a, b, inv, p, Tmul, n46)
+          - FFXV_ypp(x - eps, a, b, inv, p, Tmul, n46))
+         / (2.0 * eps);
+}
+
+float FindThirdDerivativeRoot_FFXV(
+    float xmin, float xmax,
+    int scanSteps, int bisectIters,
+    float a, float b, float inv, float p, float Tmul, float n46)
+{
+  float logMin = log(xmin + 1e-6);
+  float logMax = log(xmax);
+
+  float xPrev = exp(logMin);
+  float fPrev = FFXV_yppp(xPrev, a, b, inv, p, Tmul, n46);
+
+  float xl = xPrev, fl = fPrev;
+  float xr = xPrev, fr = fPrev;
+  bool found = false;
+
+  [loop]
+  for (int i = 1; i <= scanSteps; i++) {
+    float x = exp(lerp(logMin, logMax, (float)i / (float)scanSteps));
+    float f = FFXV_yppp(x, a, b, inv, p, Tmul, n46);
+
+    if ((fl <= 0 && f >= 0) || (fl >= 0 && f <= 0)) {
+      xl = xPrev; fl = fPrev;
+      xr = x; fr = f;
+      found = true;
+      break;
+    }
+
+    xPrev = x;
+    fPrev = f;
+  }
+
+  if (!found) return -1.0;
+
+  [loop]
+  for (int it = 0; it < bisectIters; it++) {
+    float xm = sqrt(xl * xr);
+    float fm = FFXV_yppp(xm, a, b, inv, p, Tmul, n46);
+
+    if ((fl <= 0 && fm >= 0) || (fl >= 0 && fm <= 0)) {
+      xr = xm; fr = fm;
+    } else {
+      xl = xm; fl = fm;
+    }
+  }
+
+  return sqrt(xl * xr);
 }
 
 float FindInflection_FFXV(
@@ -564,6 +625,9 @@ float FindInflection_FFXV(
     int scanSteps, int bisectIters,
     float a, float b, float inv, float p, float Tmul, float n46)
 {
+  if (FFXV_EXTEND_PRECISION == 0.f) {
+    return 0.18f;
+  }
   float logMin = log(xmin + 1e-6);
   float logMax = log(xmax);
 
@@ -612,8 +676,18 @@ float FindInflection_FFXV(
     }
   }
 
-  return sqrt(xl * xr);
+  float inflection = sqrt(xl * xr);
+
+  if (FFXV_EXTEND_PRECISION == 1.f) {
+    return inflection;
+  }
+  
+  // Try third derivative root for a better pivot; fall back to inflection
+  float thirdRoot = FindThirdDerivativeRoot_FFXV(inflection, xmax, scanSteps, bisectIters, a, b, inv, p, Tmul, n46);
+  return (thirdRoot > 0) ? thirdRoot : inflection;
 }
+
+
 
 #define APPLYFFXVEXTENDED_GENERATOR(T)                                                                 \
   T ApplyFFXVExtended(                                                                                 \

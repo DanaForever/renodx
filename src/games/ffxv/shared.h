@@ -86,12 +86,8 @@ struct ShaderInjectData {
   // float color_grade_per_channel_chrominance_correction;
   // float color_grade_per_channel_blowout_restoration;
 
-  float custom_display_map_type;
-  float custom_tonemap_upgrade_type;
-  float custom_tonemap_upgrade_huecorr;
-  float custom_tonemap_upgrade_strength;
-
   float upgrade;
+  float extend_precision;
 
   // float color_grade_hue_shift;
 };
@@ -148,11 +144,6 @@ cbuffer shader_injection : register(b13) {
 // #define RENODX_PER_CHANNEL_HUE_CORRECTION  shader_injection.color_grade_per_channel_hue_correction
 // #define RENODX_PER_CHANNEL_CHROMINANCE_CORRECTION  shader_injection.color_grade_per_channel_chrominance_correction
 
-#define CUSTOM_DISPLAY_MAP_TYPE                   shader_injection.custom_display_map_type
-#define CUSTOM_TONEMAP_UPGRADE_TYPE               shader_injection.custom_tonemap_upgrade_type
-#define CUSTOM_TONEMAP_UPGRADE_HUECORR            shader_injection.custom_tonemap_upgrade_huecorr
-#define CUSTOM_TONEMAP_UPGRADE_STRENGTH           shader_injection.custom_tonemap_upgrade_strength
-
 // #define DISPLAY_MAP_TYPE                     shader_injection.displayMapType
 // #define DISPLAY_MAP_PEAK                     shader_injection.displayMapPeak
 // #define DISPLAY_MAP_SHOULDER                 shader_injection.displayMapShoulder
@@ -160,6 +151,7 @@ cbuffer shader_injection : register(b13) {
 // #define FFXV_EXPAND_GAMUT                shader_injection.expand_gamut
 
 #define FFXV_HDR_GRADING                 shader_injection.hdr_grading
+#define FFXV_EXTEND_PRECISION                 shader_injection.extend_precision
 
 #include "../../shaders/renodx.hlsl"
 

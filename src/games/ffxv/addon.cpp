@@ -86,6 +86,19 @@ renodx::utils::settings::Settings settings = {
         .labels = {"Extended HDR", "Upgraded SDR"},
         .is_visible = []() { return current_settings_mode >= 2; },
     },
+
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapMode",
+        .binding = &shader_injection.extend_precision,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 0.f,
+        .can_reset = true,
+        .label = "Extending Precision",
+        .section = "Tone Mapping",
+        .tooltip = "Precision extension for HDR.",
+        .labels = {"Simple (0.18)", "High (Second Derivative)", "Very High (Third Derivative)"},
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_mode == 0; },
+    },
     
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",
@@ -425,8 +438,8 @@ void OnInitSwapchain(reshade::api::swapchain* swapchain, bool resize) {
   if (fired_on_init_swapchain) return;
   auto peak = renodx::utils::swapchain::GetPeakNits(swapchain);
   if (peak.has_value()) {
-    settings[3]->default_value = peak.value();
-    settings[3]->can_reset = true;
+    settings[4]->default_value = peak.value();
+    settings[4]->can_reset = true;
     fired_on_init_swapchain = true;
   }
 
