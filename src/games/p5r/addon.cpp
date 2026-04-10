@@ -1,42 +1,17 @@
 /*
- * Copyright (C) 2023 Carlos Lopez
+ * Copyright (C) 2024 Carlos Lopez
  * SPDX-License-Identifier: MIT
  */
 
+#include <include/reshade_api_format.hpp>
 #define ImTextureID ImU64
 
-// #define DEBUG_LEVEL_0
-// #define DEBUG_LEVEL_1
-// #define DEBUG_LEVEL_2
+#define DEBUG_LEVEL_0
 
 #include <deps/imgui/imgui.h>
 #include <include/reshade.hpp>
 
-#include <embed/0xB6E26AC7.h>
-#include <embed/0xDE5120BF.h>
-
-#include <embed/0x0D85D1F6.h>
-#include <embed/0xC6D14699.h>
-
-#include <embed/0x060C3E22.h>
-#include <embed/0x23A501DC.h>
-#include <embed/0x2944B564.h>
-#include <embed/0x3C2773E3.h>
-#include <embed/0x4016ED43.h>
-#include <embed/0x5C4DD977.h>
-#include <embed/0x7C0751EF.h>
-#include <embed/0x960502CC.h>
-#include <embed/0xAB823647.h>
-#include <embed/0xCC71BBE3.h>
-#include <embed/0xCF70BF33.h>
-#include <embed/0xD434C03A.h>
-#include <embed/0xE126DD24.h>
-#include <embed/0xEBBDB212.h>
-#include <embed/0x2FC8F3F8.h>
-#include <embed/0x67991225.h>
-#include <embed/0xE75890F6.h>
-#include <embed/0xC7690164.h>
-#include <embed/0xFC676683.h>
+#include <embed/shaders.h>
 
 #include "../../mods/shader.hpp"
 #include "../../mods/swapchain.hpp"
@@ -45,7 +20,11 @@
 
 namespace {
 
+
+
+
 renodx::mods::shader::CustomShaders custom_shaders = {
+    
     CustomShaderEntry(0xB6E26AC7),
     CustomShaderEntry(0xDE5120BF),
 
@@ -74,6 +53,9 @@ renodx::mods::shader::CustomShaders custom_shaders = {
 };
 
 ShaderInjectData shader_injection;
+const std::string build_date = __DATE__;
+const std::string build_time = __TIME__;
+
 
 renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
@@ -154,10 +136,10 @@ renodx::utils::settings::Settings settings = {
     //     .key = "colorGradeHighlights",
     //     .binding = &shader_injection.colorGradeHighlights,
     //     .default_value = 50.f,
-    //     .label = "Highlights",
+    //     .label = "Highlight Saturation",
     //     .section = "Color Grading",
     //     .max = 100.f,
-    //     .parse = [](float value) { return value * 0.02f; },
+    //     .parse = [](float value) { return value * 0.01f; },
     // },
     // new renodx::utils::settings::Setting{
     //     .key = "colorGradeShadows",
@@ -254,6 +236,10 @@ void OnPresetOff() {
   // renodx::utils::settings::UpdateSetting("colorGradeColorSpace", 1.f);
   // renodx::utils::settings::UpdateSetting("fxBloom", 50.f);
 }
+
+
+
+bool initialized = false;
 
 struct __declspec(uuid("5958c7c4-19b2-4300-af4d-c6802d6c7635")) DeviceData {
   std::shared_mutex mutex;
@@ -477,7 +463,9 @@ extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   switch (fdw_reason) {
     case DLL_PROCESS_ATTACH:
+      if (!reshade::register_addon(h_module)) return FALSE;
 
+        
       renodx::mods::shader::expected_constant_buffer_index = 7u;
       renodx::mods::swapchain::use_resource_cloning = true;
 
@@ -504,11 +492,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .resource_tag = 1.f,
       });
 
-      // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-      //     .old_format = reshade::api::format::r11g11b10_float,
-      //     .new_format = reshade::api::format::r16g16b16a16_float,
-      //     .ignore_size = true,     
-      // });
       {
         bool is_hdr10 = true;
         renodx::mods::swapchain::SetUseHDR10(is_hdr10);
@@ -516,7 +499,6 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       }
       shader_injection.clampState = CLAMP_STATE__NONE;
 
-      if (!reshade::register_addon(h_module)) return FALSE;
       reshade::register_event<reshade::addon_event::init_device>(OnInitDevice);
       reshade::register_event<reshade::addon_event::destroy_device>(OnDestroyDevice);
       reshade::register_event<reshade::addon_event::init_command_list>(OnInitCommandList);
@@ -530,18 +512,24 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       reshade::unregister_event<reshade::addon_event::init_device>(OnInitDevice);
       reshade::unregister_event<reshade::addon_event::destroy_device>(OnDestroyDevice);
       reshade::unregister_addon(h_module);
+      
       break;
   }
 
-  renodx::utils::resource::Use(fdw_reason);
-  renodx::utils::shader::Use(fdw_reason);  // First to trace
-  renodx::utils::settings::Use(fdw_reason, &settings, &OnPresetOff);
-  renodx::mods::swapchain::Use(fdw_reason);
-  renodx::mods::shader::Use(fdw_reason, custom_shaders, &shader_injection);
+//   renodx::utils::settings::Use(fdw_reason, &settings, &OnPresetOff);
+//   renodx::mods::swapchain::Use(fdw_reason, &shader_injection);
+//   renodx::mods::shader::Use(fdw_reason, custom_shaders, &shader_injection);
 
-  if (fdw_reason == DLL_PROCESS_ATTACH) {
-    reshade::register_event<reshade::addon_event::draw_indexed>(OnDrawIndexed);
-    reshade::register_event<reshade::addon_event::present>(OnPresent);
-  }
-  return TRUE;
+    renodx::utils::resource::Use(fdw_reason);
+    renodx::utils::shader::Use(fdw_reason);  // First to trace
+    renodx::utils::settings::Use(fdw_reason, &settings, &OnPresetOff);
+    renodx::mods::swapchain::Use(fdw_reason);
+    renodx::mods::shader::Use(fdw_reason, custom_shaders, &shader_injection);
+
+    if (fdw_reason == DLL_PROCESS_ATTACH) {
+        reshade::register_event<reshade::addon_event::draw_indexed>(OnDrawIndexed);
+        reshade::register_event<reshade::addon_event::present>(OnPresent);
+    }
+
+    return TRUE;
 }

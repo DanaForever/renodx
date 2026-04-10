@@ -581,6 +581,60 @@ float3 LMS_Vibrancy(float3 color, float vibrancy, float contrast) {
   return color;
 }
 
+// Samsung research
+static const float3x3 XYZ_TO_LMS_PROPOSED_2023 = float3x3(
+    0.185083290265044, 0.584080232530060, -0.0240724126371618,
+    -0.134432464433222, 0.405751419882862, 0.0358251078084051,
+    0.000789395399878065, -0.000912213029667692, 0.0198489810108856);
+
+float3 NeutwoBT709WhiteForEnergy(float3 bt709_linear, float peak = 1.f) {
+  float peak_ref = max(peak, 1e-6f);
+
+  float3x3 xyz_to_lms = renodx::color::XYZ_TO_STOCKMAN_SHARP_LMS_MAT;
+  // float3x3 xyz_to_lms = XYZ_TO_LMS_PROPOSED_2023;
+  float3x3 lms_to_xyz = renodx::math::Invert3x3(xyz_to_lms);
+  float3 xyz = renodx::color::xyz::from::BT709(bt709_linear);
+  float3 lms = mul(xyz_to_lms, xyz);
+
+  float3 d65_xyz = renodx::color::xyz::from::xyY(float3(renodx::color::WHITE_POINT_D65, 1.f));
+  float3 lms_white = mul(xyz_to_lms, d65_xyz);
+
+  float3 lms_norm_input = lms / lms_white;
+  float scalar_raw_input = lms_norm_input.x + lms_norm_input.y + lms_norm_input.z;
+
+  const float units = 1.f;  // Use 3.f for broken values
+  float scalar_input = scalar_raw_input / units;
+
+  float3 lms_peak = lms_white * peak_ref;
+  float3 lms_norm_peak = lms_peak / lms_white;
+  float scalar_raw_peak = lms_norm_peak.x + lms_norm_peak.y + lms_norm_peak.z;
+  float scalar_peak = scalar_raw_peak / units;
+
+  float scalar_output = renodx::tonemap::Neutwo(scalar_input, scalar_peak);
+
+  float scalar_input_raw = scalar_input * units;
+  float scalar_output_raw = scalar_output * units;
+
+  float d65_gray = 0.18f;
+  float3 gray_xyz = renodx::color::xyz::from::xyY(float3(renodx::color::WHITE_POINT_D65, d65_gray));
+  float3 lms_gray = mul(xyz_to_lms, gray_xyz);
+  float3 lms_gray_in = lms_gray * (scalar_input_raw / units);
+  float3 lms_gray_out = lms_gray * (scalar_output_raw / units);
+  float3 lms_chroma = lms - lms_gray_in;
+  float available_white = saturate(renodx::math::DivideSafe(
+      scalar_peak - scalar_output,
+      scalar_peak,
+      0.f));
+  float3 lms_out = lms_gray_out + lms_chroma * available_white;
+
+  float3 lms_norm_out = lms_out / lms_white;
+  float scalar_out_raw = lms_norm_out.x + lms_norm_out.y + lms_norm_out.z;
+  lms_out *= renodx::math::DivideSafe(scalar_output_raw, scalar_out_raw, 0.f);
+
+  float3 xyz_out = mul(lms_to_xyz, lms_out);
+  return renodx::color::bt709::from::XYZ(xyz_out);
+}
+
 
 float3 ToneMap(float3 color, float peak, float paperwhite) {
   
@@ -592,9 +646,11 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
 
     float peak_ratio = peak / paperwhite;
     if (injectedData.toneMapType == 2.f) {
-      
       float contrast = injectedData.colorGradeContrast / injectedData.colorGradeSaturation;
 
+      float3 hue = LMS_Vibrancy(color, injectedData.colorGradeSaturation, injectedData.colorGradeContrast);
+      hue = renodx::tonemap::neutwo::MaxChannel(hue, peak_ratio);
+      // hue = NeutwoBT709WhiteForEnergy(hue, peak_ratio);
       color = renodx::tonemap::psycho::psychotm_test17(
           color,
           peak_ratio,  // peak
@@ -605,16 +661,23 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
           1.0f,        // purity_scale
           1.0f,        // bleaching_intensity
           100.f,       // clip_point
-          0.5f,        // hue_restore
+          1.f,        // hue_restore
           1.0f,        // adaptation_contrast
           1,           // naka rushton
           // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
           injectedData.colorGradeSaturation);  // cone_response_exponent
+
+      // float strength = injectedData.colorGradeHighlights;
+      // color = CorrectHueAndPurityMBGated(color, hue, strength, 0.5f, 1.f, strength);
+      
     } else if (injectedData.toneMapType == 3.f) {
       
       color = LMS_Vibrancy(color, injectedData.colorGradeSaturation, injectedData.colorGradeContrast);
 
       color = renodx::tonemap::ReinhardPiecewiseExtended(color, 20.f, peak_ratio);
+      // color = renodx::draw::ToneMapPass(color);
+      // color = renodx::tonemap::neutwo::MaxChannel(color, peak_ratio);
+
     }
   }  
 

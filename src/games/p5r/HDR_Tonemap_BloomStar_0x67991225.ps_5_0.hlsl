@@ -72,9 +72,9 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
     float3 base = HejlDawson::ApplyLinear(output, 2.2f);
 
     float3 tonemapped = HejlDawson::ApplyExtended(output, base, 2.2f);
-
-    // tonemapped = CorrectHueAndPurityMBFullStrength(tonemapped, base);
     r3.rgb = tonemapped;
+
+    // r3.rgb = renodx::color::correct::Hue(r3.rgb, base, 1.f);
   }
   r5.xyz = -r2.xyz;
   r3.xyz = r5.xyz + r3.xyz;
