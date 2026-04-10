@@ -650,6 +650,7 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
 
       float3 hue = LMS_Vibrancy(color, injectedData.colorGradeSaturation, injectedData.colorGradeContrast);
       hue = renodx::tonemap::neutwo::MaxChannel(hue, peak_ratio);
+      // hue = saturate(hue);
       // hue = NeutwoBT709WhiteForEnergy(hue, peak_ratio);
       color = renodx::tonemap::psycho::psychotm_test17(
           color,
@@ -668,18 +669,21 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
           injectedData.colorGradeSaturation);  // cone_response_exponent
 
       // float strength = injectedData.colorGradeHighlights;
-      // color = CorrectHueAndPurityMBGated(color, hue, strength, 0.5f, 1.f, strength);
+      float strength = 0.5f;
+      color = CorrectHueAndPurityMBGated(color, hue, strength, 0.5f, 1.f, strength);
       
     } else if (injectedData.toneMapType == 3.f) {
       
       color = LMS_Vibrancy(color, injectedData.colorGradeSaturation, injectedData.colorGradeContrast);
-
-      color = renodx::tonemap::ReinhardPiecewiseExtended(color, 20.f, peak_ratio);
-      // color = renodx::draw::ToneMapPass(color);
-      // color = renodx::tonemap::neutwo::MaxChannel(color, peak_ratio);
-
+      
+      // empirically found from inflection 
+      float shoulder = 0.228f;
+      color = renodx::tonemap::ReinhardPiecewiseExtended(color, 20.f, peak_ratio, shoulder);
     }
-  }  
+  } else  {
+    // Hue clip like SDR
+    color = saturate(color);
+  }
 
 
   return color;

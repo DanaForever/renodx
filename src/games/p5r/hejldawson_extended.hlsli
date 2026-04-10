@@ -130,19 +130,19 @@ HD_APPLY_EXTENDED_GENERATOR(float3)
 #undef HD_APPLY_EXTENDED_GENERATOR
 
 float ApplyExtended(float x, float gamma) {
-  float pivot_x     = FindInflectionPoint(gamma);
+  float pivot_x     = 0.18f;  // g'''=0 root for gamma=2.2 (23% SDR peak)
   float base_linear = ApplyLinear(x, gamma);
   return ApplyExtended(x, base_linear, pivot_x, gamma);
 }
 
 float3 ApplyExtended(float3 x, float gamma) {
-  float  pivot_x     = FindInflectionPoint(gamma);
+  float  pivot_x     = 0.18f;
   float3 base_linear = ApplyLinear(x, gamma);
   return ApplyExtended(x, base_linear, pivot_x, gamma);
 }
 
 float3 ApplyExtended(float3 x, float3 base_linear, float gamma) {
-  float pivot_x = FindInflectionPoint(gamma);
+  float pivot_x = 0.18f;
   return ApplyExtended(x, base_linear, pivot_x, gamma);
 }
 
