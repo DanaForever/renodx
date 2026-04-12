@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: MIT
  */
 
+#define RENODX_MODS_SWAPCHAIN_VERSION 2
+
 #include <include/reshade_api_format.hpp>
 #define ImTextureID ImU64
 
@@ -50,6 +52,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x67991225),
     CustomShaderEntry(0xE75890F6),
     CustomShaderEntry(0xFC676683),
+    CustomShaderEntry(0xCD84F54A)
 };
 
 ShaderInjectData shader_injection;
