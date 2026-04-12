@@ -197,6 +197,8 @@ float SecondDerivative(
   return num / den;
 }
 
+
+
 float FindSecondDerivativeRoot(float a, float b, float c, float d, float e, float f) {
   // Coefficients of the numerator of f''(x):
   // num(x) = A3 x^3 + A2 x^2 + A1 x + A0
@@ -383,7 +385,10 @@ Uncharted2ExtendedConfig CreateUncharted2ExtendedConfig(
 Uncharted2ExtendedConfig CreateUncharted2ExtendedConfig(float coeffs[6], float white_precompute) {
   float pivot_point = FindThirdDerivativeRoot(coeffs[0], coeffs[1], coeffs[2], coeffs[3], coeffs[4], coeffs[5]);
   // pivot_point = (pivot_point + FindSecondDerivativeRoot(coeffs[0], coeffs[1], coeffs[2], coeffs[3], coeffs[4], coeffs[5])) / 2.f;
+  return CreateUncharted2ExtendedConfig(pivot_point, coeffs, white_precompute);
+}
 
+Uncharted2ExtendedConfig CreateUncharted2ExtendedConfigWithPivotPoint(float coeffs[6], float pivot_point,float white_precompute) {
   return CreateUncharted2ExtendedConfig(pivot_point, coeffs, white_precompute);
 }
 
@@ -440,4 +445,7 @@ float3 ApplyExtended(float3 x, Config::Uncharted2ExtendedConfig uc2_config) {
       * uc2_config.white_precompute;
   return ApplyExtended(x, base, uc2_config);
 }
+
+/// when we know partial values
+
 }  // Uncharted2

@@ -1,5 +1,6 @@
 #include "./shared.h"
 #include "uncharted2extended.hlsli"
+#include "uncharted2extendedreduced.hlsli"
 
 cbuffer GFD_PSCONST_HDR : register(b11) {
   float middleGray : packoffset(c0);
@@ -50,34 +51,53 @@ void main(
 
   r3.xyz = gradeColor.xyz * r2.xyz;
   r3.xyz = exposure2 * r3.xyz;
-  r5.xyz = paramA * r3.xyz;
-  r5.xyz = paramCB + r5.xyz;
-  r5.xyz = r5.xyz * r3.xyz;
-  r5.xyz = paramDE + r5.xyz;
-  r6.xyz = paramA * r3.xyz;
-  r6.xyz = paramB + r6.xyz;
-  r3.xyz = r6.xyz * r3.xyz;
-  r3.xyz = paramDF + r3.xyz;
-  r3.xyz = r5.xyz / r3.xyz;
-  r5.xyz = -paramEperF;
-  r3.xyz = r5.xyz + r3.xyz;
-  r3.xyz = r3.xyz / paramF_White;
+  
+  r5.xyz = paramA * r3.xyz;  // ax
+  r5.xyz = paramCB + r5.xyz;  // ax + cb
+  r5.xyz = r5.xyz * r3.xyz; // (ax + cb) * x
+  r5.xyz = paramDE + r5.xyz; // (ax + cb) * x + de
+  r6.xyz = paramA * r3.xyz; // ax 
+  r6.xyz = paramB + r6.xyz; // ax + b
+  r3.xyz = r6.xyz * r3.xyz; // (ax + b) * x
+  r3.xyz = paramDF + r3.xyz; // (ax + b) * x + df
+  r3.xyz = r5.xyz / r3.xyz; // ((ax + cb) * x + de) / ((ax + b) * x + df)
+  r5.xyz = -paramEperF; 
+  r3.xyz = r5.xyz + r3.xyz; // ((ax + cb) * x + de) / ((ax + b) * x + df) - eperF
+  r3.xyz = r3.xyz / paramF_White; // (((ax + cb) * x + de) / ((ax + b) * x + df) - eperF) / fWhite
   // r3.xyz = max(float3(0, 0, 0), r3.xyz);
   // r3.xyz = min(float3(1, 1, 1), r3.xyz);
 
   if (injectedData.toneMapType > 0.f) {
-    float precompute_white = 1.f / paramF_White;
+    
+    float A = 0.22, B = 0.30, C = 0.10, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
+    float pivot_point = Uncharted2::FindThirdDerivativeRoot(A, B, C, D, E, F);
+ 
+    // A = paramA;
+    // B = paramB;
+    // C = paramCB / paramB;
+    // float DE = paramDE;
+    // float DF = paramDF;
+    // float EperF = paramEperF;
 
-    const float A = 0.22, B = 0.30, C = 0.10, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
-    // const float A = cb0[4].w, B = cb0[5].z, C = cb0[5].x / cb0[5].z, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
+    // float coeffs[6] = { A, B, C, DE, DF, EperF };
+    // float white_precompute = 1.f / paramF_White;
+    // // Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfigWithPivotPoint(coeffs, pivot_point, white_precompute);
+    // Uncharted2::Reduce::Config::ReduceConfig uc2_config = Uncharted2::Reduce::Config::CreateWithPivotPoint(A, B, C, DE, DF, EperF, pivot_point, white_precompute);
 
+    // // float3 base = r3.xyz;
+    // float3 extended = Uncharted2::Reduce::ApplyExtended(hdrColor, uc2_config);
+    // r3.rgb = extended;
+
+
+    A = paramA;
+    B = paramB;
+    C = paramCB / paramB;
     float coeffs[6] = { A, B, C, D, E, F };
-    // float white_precompute = 1.f / renodx::tonemap::ApplyCurve(W, A, B, C, D, E, F);
-    Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfig(coeffs, precompute_white);
+    float white_precompute = 1.f / paramF_White;
+    Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfigWithPivotPoint(coeffs, pivot_point, white_precompute);
 
     float3 base = r3.xyz;
     float3 extended = Uncharted2::ApplyExtended(hdrColor, base, uc2_config);
-
     r3.rgb = extended;
   }
 

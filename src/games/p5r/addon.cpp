@@ -6,54 +6,62 @@
 #define RENODX_MODS_SWAPCHAIN_VERSION 2
 
 #include <include/reshade_api_format.hpp>
-#define ImTextureID ImU64
-
-#define DEBUG_LEVEL_0
+#include <include/reshade_api_resource.hpp>
 
 #include <deps/imgui/imgui.h>
-#include <include/reshade.hpp>
-
 #include <embed/shaders.h>
+#include <include/reshade.hpp>
 
 #include "../../mods/shader.hpp"
 #include "../../mods/swapchain.hpp"
+#include "../../utils/date.hpp"
+#include "../../utils/path.hpp"
+#include "../../utils/platform.hpp"
+#include "../../utils/random.hpp"
 #include "../../utils/settings.hpp"
+#include "../../utils/shader.hpp"
+#include "../../utils/shader_dump.hpp"
+#include "../../utils/swapchain.hpp"
 #include "./shared.h"
+
 
 namespace {
 
 
 
 
-renodx::mods::shader::CustomShaders custom_shaders = {
+// renodx::mods::shader::CustomShaders custom_shaders = {
     
-    CustomShaderEntry(0xB6E26AC7),
-    CustomShaderEntry(0xDE5120BF),
+//     CustomShaderEntry(0xB6E26AC7),
+//     CustomShaderEntry(0xDE5120BF),
 
-    CustomShaderEntry(0x0D85D1F6),
-    CustomShaderEntry(0x2FC8F3F8),
-    CustomShaderEntry(0xC6D14699),
+//     CustomShaderEntry(0x0D85D1F6),
+//     CustomShaderEntry(0x2FC8F3F8),
+//     CustomShaderEntry(0xCD84F54A),
+//     CustomShaderEntry(0xC6D14699),
 
-    CustomShaderEntry(0x060C3E22),
-    CustomShaderEntry(0x23A501DC),
-    CustomShaderEntry(0x2944B564),
-    CustomShaderEntry(0x3C2773E3),
-    CustomShaderEntry(0x4016ED43),
-    CustomShaderEntry(0x5C4DD977),
-    CustomShaderEntry(0x7C0751EF),
-    CustomShaderEntry(0x960502CC),
-    CustomShaderEntry(0xAB823647),
-    CustomShaderEntry(0xCC71BBE3),
-    CustomShaderEntry(0xCF70BF33),
-    CustomShaderEntry(0xD434C03A),
-    CustomShaderEntry(0xE126DD24),
-    CustomShaderEntry(0xEBBDB212),
-    CustomShaderEntry(0xC7690164),
-    CustomShaderEntry(0x67991225),
-    CustomShaderEntry(0xE75890F6),
-    CustomShaderEntry(0xFC676683),
-    CustomShaderEntry(0xCD84F54A)
-};
+//     CustomShaderEntry(0x060C3E22),
+//     CustomShaderEntry(0x23A501DC),
+//     CustomShaderEntry(0x2944B564),
+//     CustomShaderEntry(0x3C2773E3),
+//     CustomShaderEntry(0x4016ED43),
+//     CustomShaderEntry(0x5C4DD977),
+//     CustomShaderEntry(0x7C0751EF),
+//     CustomShaderEntry(0x960502CC),
+//     CustomShaderEntry(0xAB823647),
+//     CustomShaderEntry(0xCC71BBE3),
+//     CustomShaderEntry(0xCF70BF33),
+//     CustomShaderEntry(0xD434C03A),
+//     CustomShaderEntry(0xE126DD24),
+//     CustomShaderEntry(0xEBBDB212),
+//     CustomShaderEntry(0xC7690164),
+//     CustomShaderEntry(0x67991225),
+//     CustomShaderEntry(0xE75890F6),
+//     CustomShaderEntry(0xFC676683),
+    
+// };
+
+renodx::mods::shader::CustomShaders custom_shaders = {__ALL_CUSTOM_SHADERS};
 
 ShaderInjectData shader_injection;
 const std::string build_date = __DATE__;
