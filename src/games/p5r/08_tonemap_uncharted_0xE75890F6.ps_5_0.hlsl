@@ -47,10 +47,12 @@ void main(
   r2.xyz = opaueTexture.Sample(opaueSampler_s, v1.xy).xyz;
   r4.w = 1;
 
-  hdrColor = r2.xyz;
+  
 
   r3.xyz = gradeColor.xyz * r2.xyz;
   r3.xyz = exposure2 * r3.xyz;
+
+  hdrColor = r3.xyz;
   
   r5.xyz = paramA * r3.xyz;  // ax
   r5.xyz = paramCB + r5.xyz;  // ax + cb
@@ -72,33 +74,34 @@ void main(
     float A = 0.22, B = 0.30, C = 0.10, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
     float pivot_point = Uncharted2::FindThirdDerivativeRoot(A, B, C, D, E, F);
  
-    // A = paramA;
-    // B = paramB;
-    // C = paramCB / paramB;
-    // float DE = paramDE;
-    // float DF = paramDF;
-    // float EperF = paramEperF;
-
-    // float coeffs[6] = { A, B, C, DE, DF, EperF };
-    // float white_precompute = 1.f / paramF_White;
-    // // Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfigWithPivotPoint(coeffs, pivot_point, white_precompute);
-    // Uncharted2::Reduce::Config::ReduceConfig uc2_config = Uncharted2::Reduce::Config::CreateWithPivotPoint(A, B, C, DE, DF, EperF, pivot_point, white_precompute);
-
-    // // float3 base = r3.xyz;
-    // float3 extended = Uncharted2::Reduce::ApplyExtended(hdrColor, uc2_config);
-    // r3.rgb = extended;
-
-
     A = paramA;
     B = paramB;
     C = paramCB / paramB;
-    float coeffs[6] = { A, B, C, D, E, F };
+    float DE = paramDE;
+    float DF = paramDF;
+    float EperF = paramEperF;
+
+    float coeffs[6] = { A, B, C, DE, DF, EperF };
     float white_precompute = 1.f / paramF_White;
-    Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfigWithPivotPoint(coeffs, pivot_point, white_precompute);
+    // Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfigWithPivotPoint(coeffs, pivot_point, white_precompute);
+    Uncharted2::Reduce::Config::ReduceConfig uc2_config = Uncharted2::Reduce::Config::CreateWithPivotPoint(A, B, C, DE, DF, EperF, pivot_point, white_precompute);
 
     float3 base = r3.xyz;
-    float3 extended = Uncharted2::ApplyExtended(hdrColor, base, uc2_config);
+    // base = ApplyCurveReduced(r)
+    float3 extended = Uncharted2::Reduce::ApplyExtended(hdrColor, base, uc2_config);
     r3.rgb = extended;
+
+
+    // A = paramA;
+    // B = paramB;
+    // C = paramCB / paramB;
+    // float coeffs[6] = { A, B, C, D, E, F };
+    // float white_precompute = 1.f / paramF_White;
+    // Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfigWithPivotPoint(coeffs, pivot_point, white_precompute);
+
+    // float3 base = r3.xyz;
+    // float3 extended = Uncharted2::ApplyExtended(hdrColor, base, uc2_config);
+    // r3.rgb = extended;
   }
 
   r5.xyz = -r2.xyz;

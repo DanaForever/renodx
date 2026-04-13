@@ -235,16 +235,18 @@ void main(
   // r1.w = r1.w;
   // o0.xyzw = r1.xyzw;
 
-
   float3 t_lin = gammaDecode(t);
   t_lin = max(0.f, t_lin);
-  float Y = renodx::color::y::from::BT709(t_lin);
 
   float bias = 1.0 - 1.0 / colorBlend.y;
   float scale = 1.0 / (colorBlend.x * colorBlend.y);
   float cutoff = colorBlend.x * (1 - colorBlend.y);
 
-  float min_value = gammaEncode(0.01 / 100);
+  float min_ap1 = 0.f;
+  float min_bt709 = renodx::color::bt709::from::AP1(float3(min_ap1, min_ap1, min_ap1)).r;
+  float min_value = gammaEncode(min_bt709);
+
+  min_value = 0.01 / 100.f;
   // compute the danger threshold in *linear*
   float t0_srgb = (min_value - bias) / scale;  // where srgb affine crosses 0
   float t0_lin = gammaDecode(float3(t0_srgb, t0_srgb, t0_srgb)).r;
@@ -271,16 +273,17 @@ void main(
   // undo the lift back in linear so HDR energy is preserved
   float3 out_lin = gammaDecode(t_aff) * inv_k;
 
-  float3 t_aff_fixed = gammaEncode(out_lin);
+  // float3 t_aff_fixed = gammaEncode(out_lin);
 
   if (injectedData.toneMapBlackCorrection > 0.f && injectedData.toneMapType != 0.f) {
     //   t = lerp(t, t_aff, w);
+    float3 t_aff_fixed = gammaEncode(out_lin);
     t = t_aff_fixed;
     // optional: blend only when needed (k>1)
     // float w = saturate((k - 1.0) / (k));  // 0 when k=1, ->1 as k grows
     // t = lerp(t_aff, t_aff_fixed, 1.0);  // usually just use fixed version
   } else {
-    t = t * scale + bias;
+    t = ungraded * scale + bias;
   }
 
 
