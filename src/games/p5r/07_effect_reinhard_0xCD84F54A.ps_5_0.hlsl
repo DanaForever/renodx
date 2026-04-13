@@ -38,13 +38,13 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     r0.rgb = renodx::tonemap::Reinhard(r0.rgb);
   } else {
-
-    const float pivot_x = 0.18f;
-    const float pivot_y = pivot_x / (1.f + pivot_x);          // Reinhard at pivot
-    const float slope   = 1.f / ((1.f + pivot_x) * (1.f + pivot_x));  // dReinhard/dx at pivot
-    float3 base     = renodx::tonemap::Reinhard(r0.rgb);
-    float3 extended = pivot_y + slope * (r0.rgb - pivot_x);
-    r0.rgb = lerp(base, extended, step(pivot_x, r0.rgb));
+    r0.rgb = renodx::tonemap::Reinhard(r0.rgb);
+    // const float pivot_x = 0.18f;
+    // const float pivot_y = pivot_x / (1.f + pivot_x);          // Reinhard at pivot
+    // const float slope   = 1.f / ((1.f + pivot_x) * (1.f + pivot_x));  // dReinhard/dx at pivot
+    // float3 base     = renodx::tonemap::Reinhard(r0.rgb);
+    // float3 extended = pivot_y + slope * (r0.rgb - pivot_x);
+    // r0.rgb = lerp(base, extended, step(pivot_x, r0.rgb));
   }
   
   o0.xyz = r0.xyz;

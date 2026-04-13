@@ -842,3 +842,13 @@ float3 gammaEncode(float3 c) {
   return renodx::color::gamma::EncodeSafe(c, 2.2f);
   // return renodx::color::srgb::EncodeSafe(c);
 }
+
+float gammaDecode(float c) {
+  return renodx::color::gamma::DecodeSafe(c, 2.2f);
+  // return renodx::color::srgb::DecodeSafe(c);
+}
+
+float gammaEncode(float c) {
+  return renodx::color::gamma::EncodeSafe(c, 2.2f);
+  // return renodx::color::srgb::EncodeSafe(c);
+}
