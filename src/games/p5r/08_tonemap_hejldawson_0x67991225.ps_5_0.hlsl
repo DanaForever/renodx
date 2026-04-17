@@ -71,7 +71,7 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
     // float3 base = HejlDawson::Apply(output);
     float3 base = HejlDawson::ApplyLinear(output, 2.2f);
 
-    float3 tonemapped = HejlDawson::ApplyExtended(output, base, 2.2f);
+    float3 tonemapped = HejlDawson::ApplyExtendedWithMidgray(output, base, middleGray, 2.2f);
     r3.rgb = tonemapped;
 
   }

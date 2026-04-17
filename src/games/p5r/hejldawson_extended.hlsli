@@ -146,4 +146,9 @@ float3 ApplyExtended(float3 x, float3 base_linear, float gamma) {
   return ApplyExtended(x, base_linear, pivot_x, gamma);
 }
 
+float3 ApplyExtendedWithMidgray(float3 x, float3 base_linear, float middleGray, float gamma) {
+  float pivot_x = middleGray;
+  return ApplyExtended(x, base_linear, pivot_x, gamma);
+}
+
 }  // namespace HejlDawson

@@ -72,8 +72,8 @@ void main(
   if (injectedData.toneMapType > 0.f) {
     
     float A = 0.22, B = 0.30, C = 0.10, D = 0.20, E = 0.01, F = 0.30, W = 2.2;
-    float pivot_point = Uncharted2::FindThirdDerivativeRoot(A, B, C, D, E, F);
- 
+    // float pivot_point = Uncharted2::FindThirdDerivativeRoot(A, B, C, D, E, F);
+    
     A = paramA;
     B = paramB;
     C = paramCB / paramB;
@@ -84,7 +84,7 @@ void main(
     float coeffs[6] = { A, B, C, DE, DF, EperF };
     float white_precompute = 1.f / paramF_White;
     // Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfigWithPivotPoint(coeffs, pivot_point, white_precompute);
-    Uncharted2::Reduce::Config::ReduceConfig uc2_config = Uncharted2::Reduce::Config::CreateWithPivotPoint(A, B, C, DE, DF, EperF, pivot_point, white_precompute);
+    Uncharted2::Reduce::Config::ReduceConfig uc2_config = Uncharted2::Reduce::Config::CreateWithPivotPoint(A, B, C, DE, DF, EperF, middleGray, white_precompute);
 
     float3 base = r3.xyz;
     // base = ApplyCurveReduced(r)
