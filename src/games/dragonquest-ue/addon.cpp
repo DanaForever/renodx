@@ -94,7 +94,7 @@ renodx::utils::settings::Settings settings = {
     new renodx::utils::settings::Setting{
         .key = "UnrealBlueCorrection",
         .binding = &shader_injection.unreal_blue_correction,
-        .default_value = 0.f,
+        .default_value = 100.f,
         .can_reset = false,
         .label = "Blue Correction",
         .section = "Unreal Engine Settings",
@@ -110,7 +110,7 @@ renodx::utils::settings::Settings settings = {
         .key = "UnrealOverrideBlackClip",
         .binding = &shader_injection.override_black_clip,
         .value_type = renodx::utils::settings::SettingValueType::BOOLEAN,
-        .default_value = 0.f,
+        .default_value = 1.f,
         .label = "Override Black Clip",
         .section = "Unreal Engine Settings",
         .tooltip = "Disables black clip in the tonemapper. Prevents crushing when the black clip parameter is used",

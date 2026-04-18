@@ -243,7 +243,7 @@ float3 ToneMapLMS(float3 untonemapped) {
     peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
   }
 
-  if (RENODX_TONE_MAP_TYPE > 0.f) {
+  if (RENODX_TONE_MAP_TYPE == 1.f) {
     float contrast_ratio = min(peak_ratio, 4.f);
 
   //   bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
@@ -267,18 +267,42 @@ float3 ToneMapLMS(float3 untonemapped) {
 
     bt709_tonemapped = renodx::tonemap::psycho::psychotm_test17(
         untonemapped_graded_dechroma,
-        peak_ratio,  // peak
-        1.0f,        // exposure
-        1.0f,        // highlights
-        1.0f,        // shadows
-        contrast,    // contrast
-        1.0f,        // purity_scale
-        1.0f,        // bleaching_intensity
-        100.f,       // clip_point
-        0.5f,        // hue_restore
-        1.0f,        // adaptation_contrast
-        1,           // naka rushton
+        peak_ratio,                               // peak
+        1.0f,                                     // exposure
+        1.0f,                                     // highlights
+        1.0f,                                     // shadows
+        contrast,                                 // contrast
+        1.0f,                                     // purity_scale
+        1.0f,                                     // bleaching_intensity
+        100.f,                                    // clip_point
+        0.5f,                                     // hue_restore
+        1.0f,                                     // adaptation_contrast
+        1,                                        // naka rushton
         shader_injection.tone_map_lms_vibrancy);  // cone_response_exponent
+  } else {
+    untonemapped_graded_dechroma = LMS_Vibrancy(untonemapped_graded_dechroma, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+
+    renodx::draw::Config config = renodx::draw::BuildConfig();
+    config.tone_map_hue_correction = 0.f;
+    config.tone_map_hue_shift = 0.f;
+    config.tone_map_type = 3.f;  // RenoDRT otherwise its ACES
+    config.tone_map_per_channel = 1.f;
+    config.reno_drt_tone_map_method = shader_injection.renodrt_tone_map_type;
+
+    float3 bt709_tonemapped_per_channel = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, config);
+
+    config = renodx::draw::BuildConfig();
+    config.tone_map_hue_correction = 0.f;
+    config.tone_map_hue_shift = 0.f;
+    config.tone_map_type = 3.f;  // RenoDRT otherwise its ACES
+    config.tone_map_per_channel = 0.f;
+    config.reno_drt_tone_map_method = shader_injection.renodrt_tone_map_type;
+
+    bt709_tonemapped = renodx::draw::ToneMapPass(untonemapped_graded_dechroma, config);
+
+    bt709_tonemapped = CorrectHueAndPurityMBFullStrength(bt709_tonemapped, bt709_tonemapped_per_channel);
+
+    // renodx::tonemap::renodrt::config::tone_map_method
   }
 
   return bt709_tonemapped;

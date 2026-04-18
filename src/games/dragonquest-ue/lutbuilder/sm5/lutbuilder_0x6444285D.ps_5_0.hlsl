@@ -378,6 +378,13 @@ void main(
     cb_config.ue_filmblackclip = 0.f;
     cb_config.ue_filmwhiteclip = 0.035;
   }
+
+  if (shader_injection.override_black_clip == 1.f) {
+    cb_config.ue_filmblackclip = 0.f;
+  }
+
+  cb_config.ue_bluecorrection = shader_injection.unreal_blue_correction;
+  
   // Mapping polynomial (this one matches the “cb0[17].xyz” pattern exactly)
   cb_config.ue_mappingpolynomial = asfloat(cb0[17].xyz);
 
