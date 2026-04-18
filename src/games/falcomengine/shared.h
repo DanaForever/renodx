@@ -103,6 +103,7 @@ struct ShaderInjectData {
 
   float upgrade_8bit;
   float upgrade_10bit;
+  float hdr_format;
 };
 
 #ifndef __cplusplus

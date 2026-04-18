@@ -51,6 +51,7 @@ void main(
     float3 color = r1.xyz;
 
     o0.rgb = addBloom(srgbDecode(color), srgbDecode(godray));
+    // o0.rgb = hdrScreenBlend(srgbDecode(color), srgbDecode(godray), 1.f);
 
     o0.rgb = srgbEncode(o0.rgb);
     o0.w = r1.w;

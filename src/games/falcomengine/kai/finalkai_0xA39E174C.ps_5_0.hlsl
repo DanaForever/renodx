@@ -44,9 +44,6 @@ void main(
       } else if (RENODX_GAMMA_CORRECTION == 3.f) {
         float gamma_value = gamma * 2.20000005;
         r0.rgb = GammaCorrectHuePreserving(r0.rgb, gamma_value);
-
-        // float gamma_value = gamma * 2.20000005;        
-        // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, gamma_value);
       }
 
       o0 = r0;
@@ -83,7 +80,12 @@ void main(
 
       o0.rgb = color;
 
-      o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
+      if (shader_injection.hdr_format == 1.f) {
+        o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
+      } else {
+        o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
+        o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, RENODX_DIFFUSE_WHITE_NITS);
+      }
 
       o0.w = 1;
     }
@@ -92,10 +94,22 @@ void main(
       r0.rgb = renodx::math::SafePow(r0.rgb, r0.w);
       // r0.xyz = log2(r0.xyz);
       // r0.xyz = r0.www * r0.xyz;
-      // r0.xyz = exp2(r0.xyz);
-      r0.xyz = hdr_peak_brightness * r0.xyz;
-      r0.xyz = max(float3(0,0,0), r0.xyz);
-      o0.xyz = min(float3(200,200,200), r0.xyz);
+      // r0.xyz = exp2(r0.xyz);]
+
+      if (shader_injection.hdr_format == 1.f) {
+        // o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
+        r0.xyz = hdr_peak_brightness * r0.xyz;
+        r0.xyz = max(float3(0, 0, 0), r0.xyz);
+        o0.xyz = min(float3(200, 200, 200), r0.xyz);
+      } else {
+
+        float diffuse_white = hdr_peak_brightness * 80.f;
+        o0.rgb = r0.rgb;
+        o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
+        o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, diffuse_white);
+      }
+
+      
       o0.w = 1;
     }
     return;
@@ -121,11 +135,8 @@ void main(
         r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
         // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
       } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-        float gamma_value = 2.3f;
+        float gamma_value = gamma * 2.20000005;
         r0.rgb = GammaCorrectHuePreserving(r0.rgb, gamma_value);
-
-        // float gamma_value = gamma * 2.20000005;
-        // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, gamma_value);
       }
 
       o0 = r0;
@@ -162,7 +173,12 @@ void main(
 
       o0.rgb = color;
 
-      o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
+      if (shader_injection.hdr_format == 1.f) {
+        o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
+      } else {
+        o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
+        o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, RENODX_DIFFUSE_WHITE_NITS);
+      }
 
       o0.w = 1;
     }
