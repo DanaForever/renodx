@@ -117,7 +117,6 @@ void main(
       float  w  = offsetsAndWeights[i].z;
       float4 c = colorTexture.SampleLevel(samLinear_s, uv, 0);
 
-      c.rgb = sdrToneMap(c.rgb);
       c.w = saturate(c.w);
 
       acc  += c * w;
@@ -130,7 +129,7 @@ void main(
     // o0 = saturate(outRGB);
     o0 = outRGB;
 
-    o0.rgb = sdrToneMap(o0.rgb);
+    o0.rgb = saturate(o0.rgb);
   }
 
   return;

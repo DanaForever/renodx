@@ -59,7 +59,7 @@ void main(
     r1.rgb = compress(r1.rgb);
     o0.xyzw = r1.xyzw * offsetsAndWeights[6].zzzz + r0.xyzw;
 
-    o0 = compress(o0);
+    o0.rgb = compress(o0.rgb);
   } else {
     float4 acc = 0;
     float wsum = 0;

@@ -43,28 +43,14 @@ void main(
     r2.xyz = max(float3(0,0,0), r2.xyz);
     o0.xyz = r0.xyz * r2.xyz + r1.xyz;
   } else {
-    float3 blend = r0.rgb * godrayColor_g.xyz;
-    r0.xyz = godrayColor_g.xyz * saturate(r0.xyz);
-    r2.xyz = float3(1, 1, 1) + -(r1.xyz);
-    r2.xyz = max(float3(0, 0, 0), r2.xyz);
-    float3 sdr = r0.xyz * r2.xyz + r1.xyz;
-    
-    float3 color = r1.rgb;
-    // blend = saturate(blend);
+    float3 godray = godrayColor_g.xyz * r0.xyz;
 
-    blend = renodx::color::srgb::DecodeSafe(blend);
-    color = renodx::color::srgb::DecodeSafe(color);
+    float3 color = r1.xyz;
 
-    float3 blendBloom = hdrScreenBlend(color, blend, false);
+    o0.rgb = addBloom(srgbDecode(color), srgbDecode(godray));
 
-    sdr = renodx::color::srgb::DecodeSafe(sdr);
-    float3 hdr = (blendBloom);
-
-    // restores the colors
-    // hdr = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.bloom_hue_correction, shader_injection.bloom_hue_correction);
-    hdr = renodx::color::srgb::EncodeSafe(hdr);
-
-    o0.rgb = hdr;
+    o0.rgb = srgbEncode(o0.rgb);
+    o0.w = r1.w;
   }
   o0.w = r1.w;
   return;

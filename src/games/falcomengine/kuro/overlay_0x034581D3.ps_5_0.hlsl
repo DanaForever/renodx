@@ -48,7 +48,9 @@ void main(
   // r3.xyz = cmp(float3(0.5,0.5,0.5) >= r2.xyz);
   // r3.xyz = r3.xyz ? float3(1,1,1) : 0;
   float3 Dark  = 2.0 * C * B;
-  float3 Light = 1.0 - 2.0 * (1.0 - C) * (1.0 - sdrToneMap(B));
+
+  // bloom is 8-bit clamped in vanilla
+  float3 Light = 1.0 - 2.0 * (1.0 - C) * (1.0 - saturate(B));
   float3 oldLight = Light;
 
   // per-channel mask: 1 when C <= 0.5, else 0
@@ -57,11 +59,14 @@ void main(
   // overlay result (per channel)
   float3 Overlay = lerp(Light, Dark, M);
   float3 sdr = Overlay;
-  if (shader_injection.bloom == 1.f && RENODX_TONE_MAP_TYPE > 0.f) {
+  if (shader_injection.bloom > 0.f && RENODX_TONE_MAP_TYPE > 0.f) {
     Overlay = Dark;
-  } else if (shader_injection.bloom == 2.f && RENODX_TONE_MAP_TYPE > 0.f) {
-    Overlay = hdrScreenBlend(C, B, true);
-  }
+    // float o_y = calculateLuminanceSRGB(Overlay);
+    // float d_y = calculateLuminanceSRGB(Dark);
+
+    // Overlay = (o_y > d_y) ? Overlay : Dark;
+
+  } 
 
   [branch]
   if (shader_injection.bloom >= 1.f && RENODX_TONE_MAP_TYPE > 0.f)  {
@@ -74,16 +79,10 @@ void main(
     sdr = renodx::color::srgb::DecodeSafe(sdr);
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
-    // lerp first, and then correct
-    // hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
-
-    // float mid = renodx::color::srgb::Decode(0.5f);
-    // hdr = CorrectHueMBGated(hdr, sdr, shader_injection.bloom_hue_correction, mid);
-    // hdr = CorrectPurityMBBT709WithBT2020(hdr, sdr, shader_injection.bloom_hue_correction);
-
     float strength = shader_injection.bloom_hue_correction;
     // hdr = CorrectHueAndPurityMBGated(hdr, sdr_color, strength, 0.18f, 0.5f, strength);
-    hdr = lerp(hdr, CorrectHueAndPurityMB(hdr, sdr), saturate(strength));
+    // hdr = lerp(hdr, CorrectHueAndPurityMBFullStrength(hdr, sdr), saturate(strength));
+    hdr = CorrectHueMB(hdr, sdr, strength);
     
     hdr = renodx::color::srgb::EncodeSafe(hdr);
     o0.rgb = hdr;

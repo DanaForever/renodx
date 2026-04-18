@@ -42,7 +42,7 @@ void main(
         r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
         // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
       } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-        float gamma_value = 2.3f;
+        float gamma_value = gamma * 2.20000005;
         r0.rgb = GammaCorrectHuePreserving(r0.rgb, gamma_value);
 
         // float gamma_value = gamma * 2.20000005;        
@@ -88,11 +88,11 @@ void main(
       o0.w = 1;
     }
     else {
-      
       r0.w = gamma * 2.20000005;
-      r0.xyz = log2(r0.xyz);
-      r0.xyz = r0.www * r0.xyz;
-      r0.xyz = exp2(r0.xyz);
+      r0.rgb = renodx::math::SafePow(r0.rgb, r0.w);
+      // r0.xyz = log2(r0.xyz);
+      // r0.xyz = r0.www * r0.xyz;
+      // r0.xyz = exp2(r0.xyz);
       r0.xyz = hdr_peak_brightness * r0.xyz;
       r0.xyz = max(float3(0,0,0), r0.xyz);
       o0.xyz = min(float3(200,200,200), r0.xyz);
