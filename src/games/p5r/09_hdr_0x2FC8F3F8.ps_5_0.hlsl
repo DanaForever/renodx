@@ -122,5 +122,11 @@ void main(float4 v0 : SV_POSITION0, float2 v1 : TEXCOORD0, out float4 o0 : SV_TA
   o0 = float4(t, 1.0);
   o0.w = r1.w;
 
+  o0.rgb = gammaDecode(o0.rgb);
+
+  o0.rgb = ToneMap(o0.rgb, injectedData.toneMapPeakNits, injectedData.toneMapGameNits);
+
+  o0.rgb = gammaEncode(o0.rgb);
+
   return;
 }

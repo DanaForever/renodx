@@ -92,6 +92,9 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xA1DEB90B), // exposure 
     UpgradeRTVReplaceShader(0x16371E61), // neon
     UpgradeRTVReplaceShader(0xB38A8D5E), // proxy
+    CustomShaderEntry(0x21990235), // hud
+
+    // Kai
 
     CustomSwapchainShader(0xA39E174C), // Kai final
     UpgradeRTVReplaceShader(0xD606E924), // neon
@@ -101,6 +104,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xCDB2A000), // godray
     UpgradeRTVReplaceShader(0x0F02FFD8), // godraygen
     CustomShaderEntry(0x8C8333BF), // hud
+    
 
     // Sora 
 

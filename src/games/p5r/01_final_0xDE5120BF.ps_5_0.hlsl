@@ -291,7 +291,7 @@ void main(
 
   o0.rgb = gammaDecode(o0.rgb);
     
-  o0.rgb = ToneMap(o0.rgb, injectedData.toneMapPeakNits, injectedData.toneMapGameNits);
+  // o0.rgb = ToneMap(o0.rgb, injectedData.toneMapPeakNits, injectedData.toneMapGameNits);
 
   // if (injectedData.toneMapGammaCorrection == 1.f) {
   //   // o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);

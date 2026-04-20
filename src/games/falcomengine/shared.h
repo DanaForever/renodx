@@ -81,22 +81,7 @@ struct ShaderInjectData {
   float swap_chain_clamp_color_space;
   float swap_chain_encoding;
   float swap_chain_encoding_color_space;
-
-  // float color_grade_hue_correction;
-  // float color_grade_saturation_correction;
-  // float color_grade_hue_shift;
-  // float color_grade_blowout_restoration;
-
-  // float custom_display_map_type;
-  // float custom_tonemap_upgrade_type;
-  // float custom_tonemap_upgrade_huecorr;
-  // float custom_tonemap_upgrade_strength;
-
-  // float dice_tone_map_type;
-  // float dice_shoulder_start;
-  // float dice_desaturation;
-  // float dice_darkening;
-
+  
   float tone_map_lms_contrast;
   float tone_map_lms_vibrancy;
   float tone_map_lms_dechroma;

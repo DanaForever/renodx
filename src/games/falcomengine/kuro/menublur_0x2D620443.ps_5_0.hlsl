@@ -33,6 +33,16 @@ void main(
   r1.xyz = r1.xyz + -r0.xyz;
   o0.xyz = intensity_g * r1.xyz + r0.xyz;
 
+  // o0.rgb *= 2;
+
+  // o0.rgb = srgbDecode(o0.rgb);
+
+  // o0.rgb = ToneMapLMS(o0.rgb);
+
+  // o0.rgb = srgbEncode(o0.rgb);
+
+  // apparently this shader might also be unused in some scenes
+
   o0.w = alpha_g;
   return;
 }

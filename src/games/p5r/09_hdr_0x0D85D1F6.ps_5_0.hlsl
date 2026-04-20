@@ -290,5 +290,11 @@ void main(
   o0 = float4(t, 1.0);
   o0.w = r1.w;
 
+  o0.rgb = gammaDecode(o0.rgb);
+
+  o0.rgb = ToneMap(o0.rgb, injectedData.toneMapPeakNits, injectedData.toneMapGameNits);
+
+  o0.rgb = gammaEncode(o0.rgb);
+
   return;
 }
