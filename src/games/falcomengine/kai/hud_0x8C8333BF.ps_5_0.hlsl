@@ -119,12 +119,16 @@ void main(
   r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
   r0.xyz = hdr_ui_brightness_g * r0.xyz;
-  // r0.rgb *= RENODX_GRAPHICS_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
 
   r0.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
   r1.x = v2.w * r0.w;
   r0.xyz = r0.xyz * v2.xyz + v3.xyz;
-  r0.xyz = min(float3(1,1,1), r0.xyz);
+
+  if (RENODX_TONE_MAP_TYPE > 0.f) {
+  } else {
+    r0.xyz = min(float3(1, 1, 1), r0.xyz);
+  }
+
   r0.w = r0.w * v2.w + -1;
   r0.w = v1.z * r0.w + 1;
   o0.xyz = r0.xyz * r0.www;

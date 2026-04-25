@@ -28,18 +28,18 @@ void main(
   // note: this shader is also used in "memorized" scenes, not just menu
 
   r0.xyz = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyz;
-  r0.w = calculateLuminanceSRGB(r0.rgb);
+
+  if (RENODX_TONE_MAP_TYPE == 0.f) {
+    r0.xyz = saturate(r0.xyz);
+    r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
+  } else {
+    r0.w = calculateLuminanceSRGB(r0.rgb);
+  }
   r1.xyz = r0.www * mulColor_g.xyz + addColor_g.xyz;
-  r1.xyz = r1.xyz + -r0.xyz;
-  o0.xyz = intensity_g * r1.xyz + r0.xyz;
+  // r1.xyz = r1.xyz + -r0.xyz;
+  // o0.xyz = intensity_g * r1.xyz + r0.xyz;
 
-  // o0.rgb *= 2;
-
-  // o0.rgb = srgbDecode(o0.rgb);
-
-  // o0.rgb = ToneMapLMS(o0.rgb);
-
-  // o0.rgb = srgbEncode(o0.rgb);
+  o0.rgb = lerp(r0.xyz, r1.xyz, intensity_g);
 
   // apparently this shader might also be unused in some scenes
 
