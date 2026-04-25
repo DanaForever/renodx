@@ -1,7 +1,7 @@
 #ifndef INCLUDE_FILMTONEMAP
 #define INCLUDE_FILMTONEMAP
 
-#define PER_CHANNEL true
+#define APPLY_CURVE_PER_CHANNEL true
 
 #include "../shared.h"
 #include "../macleod_boynton.hlsl"
@@ -199,7 +199,7 @@ float3 ApplyToneCurve(
 
   float y = renodx::color::y::from::AP1(untonemapped); 
   
-  if (PER_CHANNEL)
+  if (APPLY_CURVE_PER_CHANNEL)
     return ApplyToneCurve(untonemapped, film_params);
   else {
     float y_new = ApplyToneCurve(y, film_params);
@@ -417,7 +417,7 @@ float3 ApplyToneCurveExtended(
       unrealengine::filmtonemap::config::Create(FilmSlope, FilmToe, FilmShoulder, film_black_clip, FilmWhiteClip);
 
   float3 tonemapped_ap1;
-  if (PER_CHANNEL) {
+  if (APPLY_CURVE_PER_CHANNEL) {
     // Blend extended with vanilla (0.2 strength) up to 0.5f
     tonemapped_ap1 =
         unrealengine::filmtonemap::extended::ApplyToneCurveExtended(untonemapped_rrt_prebluecorrect_ap1, vanilla, film_params);
