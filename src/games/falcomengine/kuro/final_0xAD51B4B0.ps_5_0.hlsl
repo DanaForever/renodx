@@ -127,6 +127,7 @@ void main(
 
       renodx::draw::Config config = renodx::draw::BuildConfig();
 
+      // Apply tone mapping here if both overlay and godray are not applied
       r0.rgb = ToneMapLMS(r0.rgb);
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {

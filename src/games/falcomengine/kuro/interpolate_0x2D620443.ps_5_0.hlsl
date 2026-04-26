@@ -41,7 +41,7 @@ void main(
 
   o0.rgb = lerp(r0.xyz, r1.xyz, intensity_g);
 
-  // apparently this shader might also be unused in some scenes
+  // Apply tone mapping here if godray is not applied 
 
   o0.w = alpha_g;
   return;

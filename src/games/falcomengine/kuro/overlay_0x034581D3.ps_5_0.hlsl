@@ -83,6 +83,8 @@ void main(
     // hdr = CorrectHueAndPurityMBGated(hdr, sdr_color, strength, 0.18f, 0.5f, strength);
     // hdr = lerp(hdr, CorrectHueAndPurityMBFullStrength(hdr, sdr), saturate(strength));
     hdr = CorrectHueMB(hdr, sdr, strength);
+
+    
     
     hdr = renodx::color::srgb::EncodeSafe(hdr);
     o0.rgb = hdr;
