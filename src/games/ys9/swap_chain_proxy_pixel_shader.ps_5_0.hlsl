@@ -11,11 +11,6 @@ float4 main(float4 vpos: SV_POSITION, float2 uv: TEXCOORD0)
 
   r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
-  // todo: tonemap with Hermite Spline
-  // r0.rgb = expandGamut(r0.rgb, shader_injection.inverse_tonemap_extra_hdr_saturation);
-
-  // r0.rgb = ToneMap(r0.rgb);
-
   // Swapchain Pass
 
   renodx::draw::Config config = renodx::draw::BuildConfig();
@@ -32,9 +27,7 @@ float4 main(float4 vpos: SV_POSITION, float2 uv: TEXCOORD0)
   }
 
   float4 o0 = r0;
-
   float3 color = o0.rgb;
-  color = expandGamut(color, shader_injection.inverse_tonemap_extra_hdr_saturation);
 
   [branch]
   if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
@@ -59,12 +52,13 @@ float4 main(float4 vpos: SV_POSITION, float2 uv: TEXCOORD0)
   color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
   color = max(0.f, color);
   color = renodx::color::bt709::from::BT2020(color);
+
+
   if (shader_injection.hdr_format == 0.f) {
     color = renodx::color::bt2020::from::BT709(color);
-    color = renodx::color::pq::EncodeSafe(o0.rgb, shader_injection.graphics_white_nits);
+    color = renodx::color::pq::EncodeSafe(color, shader_injection.graphics_white_nits);
   }
   else {
-    
     color *= shader_injection.graphics_white_nits / 80.f;
   }
 

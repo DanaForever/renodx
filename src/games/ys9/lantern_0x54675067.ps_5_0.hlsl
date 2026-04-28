@@ -101,7 +101,7 @@ void main(
   r0.y = rsqrt(r0.y);
   r2.xyz = v1.xyz * r0.yyy;
   r3.xyzw = tex_tex.Sample(tex_samp_s, v0.xy).xyzw;
-  r3.rgb = renodx::color::srgb::DecodeSafe(r3.rgb);
+  // r3.rgb = renodx::color::srgb::DecodeSafe(r3.rgb);
   r1.yzw = v3.xyz;
   r4.xyzw = r3.xyzw * r1.yzwx;
   r0.z = cmp(0 != shdBasicParam.m_param[0].w);
@@ -222,9 +222,9 @@ void main(
   r0.xyz = r1.xyz + r0.xyz;
   r0.xyz = min(float3(1,1,1), r0.xyz);
   // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.x = calculateLuminance(r0.rgb);
+  r1.x = calculateLuminanceSRGB(r0.rgb);
   // r1.y = dot(v5.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.y = calculateLuminance(v5.rgb);
+  r1.y = calculateLuminanceSRGB(v5.rgb);
   r1.x = -r1.y * 0.5 + r1.x;
   r1.x = max(0, r1.x);
   r1.y = 1 + -v5.w;
@@ -242,7 +242,7 @@ void main(
   r0.x = cmp(0 < shdBasicParam.m_scrEfxData.fGrimwardColor.w);
   if (r0.x != 0) {
     // r0.x = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
-    r0.x = calculateLuminance(r2.rgb);
+    r0.x = calculateLuminanceSRGB(r2.rgb);
     r0.y = cmp(0 < r0.x);
     r0.z = dot(r2.xyz, r2.xyz);
     r0.z = rsqrt(r0.z);
@@ -278,7 +278,7 @@ void main(
   r0.w = exp2(r0.w);
   r0.y = r0.z ? r0.w : r0.y;
   // r0.z = dot(r2.xyz, float3(0.298999995,0.587000012,0.114));
-  r0.z = calculateLuminance(r2.rgb);
+  r0.z = calculateLuminanceSRGB(r2.rgb);
   r0.w = cmp(0 < r0.z);
   r0.z = sqrt(r0.z);
   r1.xyz = r0.zzz * shdBasicParam.m_scrEfxData.fOtherParam.zzz + -r2.xyz;
@@ -294,7 +294,7 @@ void main(
   r0.y = shdBasicParam.m_scrEfxData.isInsightMode.y * r0.y + r0.w;
   r1.w = r0.z ? r0.y : r2.w;
   o0.xyzw = r0.xxxx ? r1.xyzw : r2.xyzw;
-  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   r0.x = cmp(0 < shdBasicParam.m_param[1].z);
   r0.y = cmp(shdBasicParam.m_param[1].z == 8.000000);
   r1.xyz = v2.xyz * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);

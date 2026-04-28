@@ -90,23 +90,6 @@ struct ShaderInjectData {
   float swap_chain_encoding;
   float swap_chain_encoding_color_space;
 
-  // float inverse_tonemap_white_level;
-  // float inverse_tonemap_color_conservation;
-  // float inverse_tonemap_highlight_saturation;
-  float inverse_tonemap_extra_hdr_saturation;
-
-  // float color_grade_per_channel_hue_correction;
-  // float color_grade_per_channel_chrominance_correction;
-  // float color_grade_per_channel_blowout_restoration;
-
-  // float bloom;
-  // float bloom_approx_method;
-  // float fxaa;
-
-  float dice_tone_map_type;
-  float dice_shoulder_start;
-  float dice_desaturation;
-  float dice_darkening;
 
   float hdr_format;
 };

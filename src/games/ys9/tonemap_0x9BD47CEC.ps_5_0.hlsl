@@ -148,26 +148,20 @@ void main(
   if (RENODX_TONE_MAP_TYPE > 0.f) {
     sdr = renodx::color::srgb::DecodeSafe(sdr);
     hdr = renodx::color::srgb::DecodeSafe(hdr);
-    // float3 neutral_sdr = renodx::tonemap::renodrt::NeutralSDR(hdr);
-    // sdr = saturate(sdr);
-
-    // hdr = renodx::tonemap::UpgradeToneMap(hdr, neutral_sdr, sdr, shader_injection.color_grade_strength);
-    // o0.rgb = HueAndChrominanceOKLab(hdr, sdr, sdr, shader_injection.color_grade_strength, shader_injection.color_grade_strength);
-    o0.rgb = CorrectPurityMB(hdr, sdr, shader_injection.color_grade_strength);
-    // o0.rgb = hdr;
+    
+    o0.rgb = CorrectHueMB(hdr, sdr, shader_injection.color_grade_strength);
 
     o0.rgb = ToneMap(o0.rgb);
   } else {
     o0.xyz = sdr;
     o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
-    // o0.rgb = saturate(o0.rgb);
   }
 
   float3 color = o0.rgb;
   if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    color = GammaCorrectHuePreserving(color, 2.2f);
   } else if (shader_injection.gamma_correction == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+    color = GammaCorrectHuePreserving(color, 2.4f);
   }
 
   color *= shader_injection.diffuse_white_nits / shader_injection.graphics_white_nits;
