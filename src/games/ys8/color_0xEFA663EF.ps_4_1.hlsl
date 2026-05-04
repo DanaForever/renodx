@@ -148,55 +148,55 @@ void main(
     o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
   }
 
-  // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-  //   o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
-  //   // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
-  // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-  //   o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
-  //   // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
-  // } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-  //   o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.3f);
-  //   // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.3f);
-  // }
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.2f);
+    // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.4f);
+    // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    o0.rgb = GammaCorrectHuePreserving(o0.rgb, 2.3f);
+    // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.3f);
+  }
 
-  // float3 color = o0.rgb;
-  // renodx::draw::Config config = renodx::draw::BuildConfig();
-  // [branch]
-  // if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
-  //   color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-  //   color = renodx::color::bt709::from::BT709D93(color);
-  //   config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  // } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
-  //   color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-  //   color = renodx::color::bt709::from::BT601NTSCU(color);
-  //   config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  // } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
-  //   color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
-  //   color = renodx::color::bt709::from::ARIBTRB9(color);
-  //   config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
-  // }
+  float3 color = o0.rgb;
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+  [branch]
+  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT709D93(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT601NTSCU(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::ARIBTRB9(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  }
 
-  // // Gamut Compression
-  // color = renodx::color::bt2020::from::BT709(color);
-  // float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
-  // const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
-  // const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
-  // const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
-  // float encode_gamma = MID_GRAY_GAMMA;
-  // float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
-  // float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
-  // float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
-  // color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
+  // Gamut Compression
+  color = renodx::color::bt2020::from::BT709(color);
+  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+  float encode_gamma = MID_GRAY_GAMMA;
+  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
 
-  // color = max(0.f, color);
-  // color = renodx::color::bt709::from::BT2020(color);
+  color = max(0.f, color);
+  color = renodx::color::bt709::from::BT2020(color);
 
-  // // srgb encoding to match the UI decoding (later)
-  // color = renodx::color::srgb::EncodeSafe(color);
-  // o0.rgb = color;
-  // o0.w = 1;
+  // srgb encoding to match the UI decoding (later)
+  color = renodx::color::srgb::EncodeSafe(color);
+  o0.rgb = color;
+  o0.w = 1;
   
-  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  // o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   
   // o0.rgb = PostProcessFinal(o0.rgb);
 

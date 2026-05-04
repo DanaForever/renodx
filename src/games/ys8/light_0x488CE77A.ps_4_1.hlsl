@@ -1,5 +1,6 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jul 18 15:52:21 2025
-#include "shared.h"
+#include "./common.hlsl"
+
 Texture2D<float4> t1 : register(t1);
 
 Texture2D<float4> t0 : register(t0);
@@ -232,22 +233,39 @@ void main(
   r1.xyz = r2.xyz + r1.xyz;
   r0.xyz = r1.xyz + r0.xyz;
   r0.xyz = min(float3(1,1,1), r0.xyz);
-  r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.y = dot(v8.xyz, float3(0.298999995,0.587000012,0.114));
+  // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  // r1.y = dot(v8.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = calculateLuminanceSRGB(r0.rgb);
+  r1.y = calculateLuminanceSRGB(v8.rgb);
   r1.x = -r1.y * 0.5 + r1.x;
   r1.x = max(0, r1.x);
   r1.y = 1 + -v8.w;
   r1.y = v7.w * r1.y;
   r1.x = r1.x * r1.y;
   r1.yzw = r0.xyz * v8.www + v8.xyz;
-  r2.xyz = r1.xxx * r0.xyz;
-  r0.xyz = r0.xyz * r1.xxx + r1.yzw;
-  r0.xyz = -r1.yzw * r2.xyz + r0.xyz;
+
+  float3 base = r1.x * r0.rgb;
+  float3 base1 = r1.yzw;
+
+  // r2.xyz = r1.xxx * r0.xyz;
+  // r0.xyz = r0.xyz * r1.xxx + r1.yzw;
+  // r0.xyz = -r1.yzw * r2.xyz + r0.xyz;
+
+  // r0.rgb = base + base1 - base * base1;
+  r0.rgb = base + base1;
+  
+
   r1.x = cmp(0 != cb0[0].z);
   r1.y = -r0.w * v8.w + 1;
-  r2.xyz = float3(1,1,1) + -r0.xyz;
-  r1.yzw = r1.yyy * r2.xyz + r0.xyz;
-  o0.xyz = r1.xxx ? r1.yzw : r0.xyz;
+  // r2.xyz = float3(1,1,1) + -r0.xyz;
+  // r1.yzw = r1.yyy * r2.xyz + r0.xyz;
+  // o0.xyz = r1.xxx ? r1.yzw : r0.xyz;
+
+  float3 lerp = r1.y * (1 - r0.rgb) + r0.rgb;
+
+  // o0.rgb = r1.x ? lerp : r0.rgb;
+  o0.rgb = r0.rgb;
+
   r0.x = cmp(0 < cb0[1].z);
   r0.y = cmp(8.000000 == cb0[1].z);
   r1.xyz = r3.xyw * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);

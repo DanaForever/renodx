@@ -55,8 +55,9 @@ void main(
   r0.y = (int)r0.y;
   if (r0.y == 0) {
     r2.xyz = tex_tex.Sample(tex_samp_s, v0.xy).xyz;
-    r3.xyz = -r2.xyz + r1.xyz;
-    r2.xyz = r0.xxx * r3.xyz + r2.xyz;
+    // r3.xyz = -r2.xyz + r1.xyz;
+    // r2.xyz = r0.xxx * r3.xyz + r2.xyz;
+    r2.rgb = (r0.x * r1.rgb + r2.rgb);
   } else {
     r0.z = cmp((int)r0.y == 1);
     if (r0.z != 0) {
@@ -95,8 +96,9 @@ void main(
         }
       }
     }
-    r0.yzw = r3.xyz + -r1.xyz;
-    r2.xyz = r0.xxx * r0.yzw + r1.xyz;
+    // r0.yzw = r3.xyz + -r1.xyz;
+    // r2.xyz = r0.xxx * r0.yzw + r1.xyz;
+    r2.rgb = (r0.x * r3.rgb + r1.rgb);  
   }
   o0.xyz = r2.xyz;
   o0.w = 1;

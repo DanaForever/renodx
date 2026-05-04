@@ -36,8 +36,10 @@ void main(
   if (r1.y != 0) discard;
   r0.xyz = r0.xyz * v1.xyz + v2.xyz;
   r0.xyz = min(float3(1,1,1), r0.xyz);
-  r1.y = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
-  r1.z = dot(v3.xyz, float3(0.298999995,0.587000012,0.114));
+  // r1.y = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  // r1.z = dot(v3.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.y = calculateLuminanceSRGB(r0.rgb);
+  r1.z = calculateLuminanceSRGB(v3.xyz);
   r1.y = -r1.z * 0.5 + r1.y;
   r1.y = max(0, r1.y);
   r1.z = 1 + -v3.w;
@@ -51,6 +53,8 @@ void main(
   r1.z = -r0.w * v3.w + 1;
   r2.xyz = float3(1,1,1) + -r0.xyz;
   r2.xyz = r1.zzz * r2.xyz + r0.xyz;
+
+  // r2.rgb = r1.z * r0.rgb;
   o0.xyz = r1.yyy ? r2.xyz : r0.xyz;
   o0.w = r1.x ? 1 : r0.w;
 

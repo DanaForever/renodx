@@ -26,24 +26,34 @@ void main(
   float4 fDest;
 
   r0.xyzw = tex.Sample(samp_s, v0.xy).xyzw;
-  
+
   r1.x = r0.w * v1.w + -altest;
   r1.x = cmp(r1.x < 0);
   if (r1.x != 0) discard;
   r1.x = cmp(v2.w == 100.000000);
+
+  float4 base4 = r0.xyzw * v1.xyzw;
+  float3 base = base4.rgb + v2.rgb;
+
+
   r2.xyzw = -r0.xyzw * v1.xyzw + float4(1,1,1,1);
   r3.xyzw = v1.xyzw * r0.xyzw;
-  r0.xyz = r0.xyz * v1.xyz + v2.xyz;
-  r1.yzw = v2.xyz * r2.xyz + r3.xyz;
-  r0.xyz = r1.xxx ? r1.yzw : r0.xyz;
+  r0.xyz = r0.xyz * v1.xyz + v2.xyz; 
+
+  // r1.yzw = v2.xyz * r2.xyz + r3.xyz;
+
+  float3 base2 = base4.rgb + v1.rgb;
+  r0.xyz = r1.x ? base2 : base;
   r1.xyz = r0.xyz * r3.www + r2.www;
+
   r2.xy = cmp(float2(0,0) != mulblend);
+
   o0.xyz = r2.xxx ? r1.xyz : r0.xyz;
 
   o0.w = r2.y ? 1 : r3.w;
   o0.w = r3.w;
-  
-  // o0.rgb = PostProcessFinal(o0.rgb);
-  
+
+  o0.w = saturate(o0.w);
+
   return;
 }

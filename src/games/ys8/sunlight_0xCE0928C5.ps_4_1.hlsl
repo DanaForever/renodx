@@ -30,12 +30,20 @@ void main(
   r0.xy = float2(1,1) + -r1.xy;
   r0.xy = max(float2(0,0), r0.xy);
   r1.xyz = sunpos.www * encolor.xyz;
-  // r0.yzw = -r1.xyz * r0.yyy + float3(1,1,1);
-  // r1.xyz = -tatecolor.xyz * r0.xxx + float3(1,1,1);
-  // o0.xyz = -r1.xyz * r0.yzw + float3(1,1,1);
-  o0.rgb = r1.rgb * r0.y + tatecolor.xyz * r0.x;
+  // Original was a screen blend of the two layers:
+  //   sunDisc  = (encolor * sunpos.w) * radial_falloff(r0.y)
+  //   atmoBand = tatecolor * vertical_falloff(r0.x)
+  //   o0 = 1 - (1 - sunDisc)(1 - atmoBand) = sunDisc + atmoBand - sunDisc*atmoBand
+  // For HDR we drop the screen cap and boost the disc only — keeps the horizon
+  // glow tasteful while letting the sun itself punch past paper-white.
+  const float kSunDiscBoost = 1.0;
+
+  float3 base = r1.rgb * r0.y;
+  base = renodx::color::srgb::DecodeSafe(base) * kSunDiscBoost;
+  base = renodx::color::srgb::EncodeSafe(base);
+
+  o0.rgb = base + tatecolor.xyz * r0.x;
   o0.w = 1;
 
-  // o0.rgb *=
   return;
 }

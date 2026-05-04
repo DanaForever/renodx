@@ -23,15 +23,38 @@
 
 namespace {
 
+#define UpgradeRTVReplaceShader(value)       \
+  {                                          \
+      value,                                 \
+      {                                      \
+          .crc32 = value,                    \
+          .code = __##value,                 \
+          .on_draw = [](auto* cmd_list) {                                                             \
+            auto rtvs = renodx::utils::swapchain::GetRenderTargets(cmd_list);                         \
+            bool changed = false;                                                                     \
+            for (auto rtv : rtvs) {                                                                   \
+              changed = renodx::mods::swapchain::ActivateCloneHotSwap(cmd_list->get_device(), rtv);   \
+            }                                                                                         \
+            if (changed) {                                                                            \
+              renodx::mods::swapchain::FlushDescriptors(cmd_list);                                    \
+              renodx::mods::swapchain::RewriteRenderTargets(cmd_list, rtvs.size(), rtvs.data(), {0}); \
+            }                                                                                         \
+            return true; }, \
+      },                                     \
+  }
+
 renodx::mods::shader::CustomShaders custom_shaders = {
     // Uber_Post
-    CustomShaderEntry(0xEFA663EF),  // color
-    CustomShaderEntry(0x488CE77A),  // color
-    CustomShaderEntry(0x5957375C),  // color
-    CustomShaderEntry(0xA7CEF703),  // light2
-    CustomShaderEntry(0x2E081582),  // ui
-    CustomShaderEntry(0x05F21D2B),  // ui2
-    CustomShaderEntry(0x3934D0EB),  // ui
+    UpgradeRTVReplaceShader(0xEFA663EF),  // color
+    UpgradeRTVReplaceShader(0x488CE77A),  // light
+    UpgradeRTVReplaceShader(0x5957375C),  // light1
+    UpgradeRTVReplaceShader(0xA7CEF703),  // light2
+    UpgradeRTVReplaceShader(0x2E081582),  // ui
+    UpgradeRTVReplaceShader(0x05F21D2B),  // ui2
+    UpgradeRTVReplaceShader(0x3934D0EB),  // ui3
+    UpgradeRTVReplaceShader(0xCE0928C5),  // sunlight
+    UpgradeRTVReplaceShader(0x7CF33DD3), // blend                                                   
+    // CustomShaderEntry(0x7CF33DD3), // blend                                                   
     
    
 };
@@ -335,7 +358,7 @@ void OnPresetOff() {
 
 extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX YS8";
 extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for YS8";
-bool use_resource_view_cloning = true;
+bool use_resource_view_cloning = false;
 
 // NOLINTEND(readability-identifier-naming)
 float screen_width = GetSystemMetrics(SM_CXSCREEN);
@@ -353,10 +376,10 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
       renodx::mods::swapchain::prevent_full_screen = false;
       renodx::mods::shader::allow_multiple_push_constants = true;
       renodx::mods::swapchain::use_resource_cloning = true;
-      renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
-      renodx::mods::swapchain::swapchain_proxy_revert_state = true;
-      renodx::mods::swapchain::swap_chain_proxy_vertex_shader = __swap_chain_proxy_vertex_shader;
-      renodx::mods::swapchain::swap_chain_proxy_pixel_shader = __swap_chain_proxy_pixel_shader;
+    //   renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
+    //   renodx::mods::swapchain::swapchain_proxy_revert_state = true;
+    //   renodx::mods::swapchain::swap_chain_proxy_vertex_shader = __swap_chain_proxy_vertex_shader;
+    //   renodx::mods::swapchain::swap_chain_proxy_pixel_shader = __swap_chain_proxy_pixel_shader;
       
 
       renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
@@ -364,6 +387,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .new_format = reshade::api::format::r16g16b16a16_float,
         //   .ignore_size = true,
           .use_resource_view_cloning = use_resource_view_cloning,
+          .use_resource_view_hot_swap = true,   
           .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
           .usage_include = reshade::api::resource_usage::render_target,
 
@@ -375,6 +399,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .new_format = reshade::api::format::r16g16b16a16_float,
           //   .ignore_size = true,
           .use_resource_view_cloning = use_resource_view_cloning,
+          .use_resource_view_hot_swap = true,   
           .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
           .usage_include = reshade::api::resource_usage::render_target,
       });
@@ -384,9 +409,22 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
           .new_format = reshade::api::format::r16g16b16a16_float,
         //   .ignore_size = true,
           .use_resource_view_cloning = use_resource_view_cloning,
+          .use_resource_view_hot_swap = true,   
           .aspect_ratio = renodx::mods::swapchain::SwapChainUpgradeTarget::BACK_BUFFER,
           .usage_include = reshade::api::resource_usage::render_target,
       });
+
+      renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+          .old_format = reshade::api::format::b8g8r8x8_unorm,
+          .new_format = reshade::api::format::r16g16b16a16_float,
+        //   .ignore_size = true,
+          .use_resource_view_cloning = use_resource_view_cloning,
+          .use_resource_view_hot_swap = true,   
+          .aspect_ratio = 8.f / 9.f,
+          .usage_include = reshade::api::resource_usage::render_target,
+      });
+
+      
 
 
     //   renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
@@ -415,32 +453,13 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
     //       .ignore_size = true,
     //       .use_resource_view_cloning = use_resource_view_cloning,
     //   });
-
-    {
-            auto* setting = new renodx::utils::settings::Setting{
-                .key = "SwapChainEncoding",
-                .binding = &shader_injection.hdr_format,
-                .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-                .default_value = 0.f,
-                .label = "HDR Format",
-                .section = "Display Output",
-                .tooltip = "Sets the HDR format (HDR10 is compatible with Smooth Motion)",
-                .labels = {"HDR10", "scRGB (default)"},
-                .is_enabled = []() { return true; },
-                .is_global = true,
-                .is_visible = []() { return current_settings_mode >= 2; },
-            };
-
-            renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-            bool is_hdr10 = setting->GetValue() == 0;
-            is_hdr10 = false; // force scRGB for now, since HDR10 seems to cause issues with swap chain resizing in this game
-            renodx::mods::swapchain::SetUseHDR10(is_hdr10);
-            renodx::mods::swapchain::use_resize_buffer = false;
-            shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
-            shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
-            settings.push_back(setting);
-        }
-      
+      {
+        bool is_hdr10 = false; // force scRGB for now, since HDR10 seems to cause issues with swap chain resizing in this game
+        renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        renodx::mods::swapchain::use_resize_buffer = false;
+        shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
+        shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
+      }
       break;
       
     case DLL_PROCESS_DETACH:

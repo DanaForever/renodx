@@ -176,8 +176,21 @@ void main(
   r0.w = r1.x * r0.w;
   r1.xyz = r0.xyz * v5.www + v5.xyz;
   r2.xyz = r0.xyz * r0.www;
-  r0.xyz = r0.xyz * r0.www + r1.xyz;
-  r0.xyz = -r1.xyz * r2.xyz + r0.xyz;
+
+  float3 base = r1.rgb;
+  float3 base2 = r2.rgb;
+
+  // r0.xyz = r0.xyz * r0.www + r1.xyz;
+  // r0.xyz = -r1.xyz * r2.xyz + r0.xyz;
+  // o0.rgb = base + base2;
+  base = renodx::color::srgb::DecodeSafe(base);
+  base2 = renodx::color::srgb::DecodeSafe(base2);
+
+  o0.rgb = base + base2;
+  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+
+  // o0.rgb *= 5;
+
   r0.w = cmp(0 != cb0[0].z);
   r1.x = -r3.w * v5.w + 1;
   r1.yzw = float3(1,1,1) + -r0.xyz;
@@ -193,11 +206,5 @@ void main(
   o1.xyzw = r0.xxxx ? r1.xyzw : 0;
   o0.xyzw = r3.xyzw;
 
-  // o0 = saturate(o0);
-  // o1 = saturate(o1);
-  // o1 *= 2;
-  // o0 *= 2;
-  // o0 = 0;
-  // o0.w = 0;
   return;
 }

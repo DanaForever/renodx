@@ -202,7 +202,7 @@ void main(
   r0.w = dot(v6.xyz, float3(0.298999995,0.587000012,0.114));
   r0.y = -r0.w * 0.5 + r0.y;
   r0.y = max(0, r0.y);
-  r0.w = 1 + -v6.w;
+  r0.w = 1 + -v6.w; 
   r0.w = w1.x * r0.w;
   r0.y = r0.y * r0.w;
   r2.xyz = r1.xyz * v6.www + v6.xyz;
@@ -216,6 +216,8 @@ void main(
   r1.yzw = float3(1,1,1) + -r0.xyw;
   r1.xyz = r1.xxx * r1.yzw + r0.xyw;
   o0.xyz = r0.zzz ? r1.xyz : r0.xyw;
+
+  o0.rgb *= 10;
   r0.x = cmp(0 < zwrite);
   r0.y = cmp(8.000000 == zwrite);
   r1.xyz = v3.xyz * float3(0.5,0.5,0.5) + float3(0.5,0.5,0.5);

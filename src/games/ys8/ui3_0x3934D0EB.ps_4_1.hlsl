@@ -25,13 +25,16 @@ void main(
   if (r0.x != 0) discard;
   r0.xy = cmp(float2(0,0) != mulblend);
   r1.xyzw = float4(1,1,1,1) + -v0.wxyz;
-  r1.xyz = r1.xxx * r1.yzw + v0.xyz;
-  o0.xyz = r0.xxx ? r1.xyz : v0.xyz;
+  // r1.x = 1 - v0.w;
+  // r1.xyz = r1.xxx * r1.yzw + v0.xyz;
+  // o0.xyz = r0.xxx ? r1.xyz : v0.xyz;
+  float3 base = r1.x * r1.yzw + v0.rgb;
 
-  // o0.rgb *= 
+  o0.rgb = r0.x ? base : v0.rgb;
+
   o0.w = r0.y ? 1 : v0.w;
 
-  // o0.rgb = PostProcessFinal(o0.rgb);
+  o0.w = saturate(o0.w);  
 
   return;
 }
