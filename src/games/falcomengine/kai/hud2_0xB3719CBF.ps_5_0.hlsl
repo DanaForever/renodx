@@ -1,4 +1,4 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Mar 14 15:19:14 2026
+// ---- Created with 3Dmigoto v1.3.16 on Sun Apr 26 21:57:01 2026
 #include "../common.hlsl"
 cbuffer cb_ui_hdr_cbuffer : register(b9)
 {
@@ -16,7 +16,8 @@ Texture2D<float4> colorTexture : register(t0);
 
 void main(
   float4 v0 : SV_Position0,
-  float4 v1 : TEXCOORD0,
+  float3 v1 : TEXCOORD0,
+  float w1 : TEXCOORD4,
   float4 v2 : TEXCOORD1,
   float4 v3 : TEXCOORD2,
   nointerpolation int v4 : TEXCOORD3,
@@ -85,7 +86,6 @@ void main(
       r4.xyzw = colorTexture.SampleLevel(samLinear_s, r4.zw, 0).xyzw;
       r3.xyzw = r4.xyzw * float4(-0.124875657,-0.124875657,-0.124875657,-0.124875657) + r3.xyzw;
       r2.xyzw = max(float4(0,0,0,0), r3.xyzw);
-
     }
   } else {
     r3.xyzw = r0.zwzw * float4(-0.378885776,-0.378885776,0.378885776,-0.378885776) + v1.xyxy;
@@ -116,6 +116,10 @@ void main(
     r0.w = dot(r0.xyzw, icb[r1.x+0].xyzw);
     r0.xyz = float3(1,1,1);
   }
+  // r1.x = dot(r0.xyz, float3(0.298999995,0.587000012,0.114));
+  r1.x = calculateLuminanceSRGB(r0.rgb);
+  r1.xyz = r1.xxx + -r0.xyz;
+  r0.xyz = w1.x * r1.xyz + r0.xyz;
 
   r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
@@ -124,18 +128,12 @@ void main(
   r0.rgb = renodx::color::srgb::EncodeSafe(r0.rgb);
   r1.x = v2.w * r0.w;
   r0.xyz = r0.xyz * v2.xyz + v3.xyz;
-
-  if (RENODX_TONE_MAP_TYPE > 0.f) {
-  } else {
-    r0.xyz = min(float3(1, 1, 1), r0.xyz);
-  }
-
+  r0.xyz = min(float3(1,1,1), r0.xyz);
   r0.w = r0.w * v2.w + -1;
   r0.w = v1.z * r0.w + 1;
   o0.xyz = r0.xyz * r0.www;
 
   o0.rgb = processUI(o0.rgb, true);
-  
   o0.w = r1.x;
   return;
 }

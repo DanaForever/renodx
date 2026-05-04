@@ -89,10 +89,7 @@ struct ShaderInjectData {
   float fxaa;
   float bloom_strength;
 
-  float dice_tone_map_type;
-  float dice_shoulder_start;
-  float dice_desaturation;
-  float dice_darkening;
+  float hdr_format;
 };
 
 #ifndef __cplusplus

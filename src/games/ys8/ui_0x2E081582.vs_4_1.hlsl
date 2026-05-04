@@ -25,5 +25,6 @@ void main(
   o2.xyzw = uColor[1].xyzw;
   o3.xyz = v2.xyz;
   o3.w = 1;
+  
   return;
 }

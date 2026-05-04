@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <include/reshade_api_resource.hpp>
-#include <iostream>
-#define ImTextureID ImU64
-
 #define DEBUG_LEVEL_0
 
 #define RENODX_MODS_SWAPCHAIN_VERSION 2
 
+#include <include/reshade_api_resource.hpp>
+#include <iostream>
+#define ImTextureID ImU64
 
 #include <deps/imgui/imgui.h>
 #include <include/reshade.hpp>
@@ -23,7 +22,6 @@
 #include <filesystem>
 #include <regex>
 #include "./shared.h"
-// #include "artifact_shaders.h"
 
 namespace fs = std::filesystem;
 
@@ -541,7 +539,6 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-    //    .labels = {"Vanilla", "Frostbite", "DICE", "Hermite", "Mass Effect", "Neutwo"},
        .labels = {"Vanilla (Hue clipped)", "PsychoV"},
         .is_visible = []() { return current_settings_mode >= 1; },
     },
@@ -760,24 +757,11 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         renodx::mods::swapchain::expected_constant_buffer_space = 50;
         renodx::mods::swapchain::use_resource_cloning = true;
         
-        // Note: using proxy shaders break CS4's HUD
-        
-        // renodx::mods::swapchain::swap_chain_proxy_shaders = {
-        //     {
-        //         reshade::api::device_api::d3d11,
-        //         {
-        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
-        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
-        //         },
-        //     },
-        //     {
-        //         reshade::api::device_api::d3d12,
-        //         {
-        //             .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
-        //             .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
-        //         },
-        //     },
-        // };
+        renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
+        renodx::mods::swapchain::swapchain_proxy_revert_state = true;
+        renodx::mods::swapchain::swap_chain_proxy_vertex_shader = __swap_chain_proxy_vertex_shader;
+        renodx::mods::swapchain::swap_chain_proxy_pixel_shader = __swap_chain_proxy_pixel_shader;
+
 
 
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
@@ -789,12 +773,35 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
             .usage_include = reshade::api::resource_usage::render_target
         });
     
-        bool is_hdr10 = false;
-        renodx::mods::swapchain::SetUseHDR10(is_hdr10);
-        renodx::mods::swapchain::use_resize_buffer = false;
-        shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
-        shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.0f : 0.f;
+        // bool is_hdr10 = true;
+        // renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+        // renodx::mods::swapchain::use_resize_buffer = false;
+        // shader_injection.swap_chain_encoding = is_hdr10 ? 4.f : 5.f;
+        // shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.0f : 0.f;
         
+        {
+            auto* setting = new renodx::utils::settings::Setting{
+                .key = "SwapChainEncoding",
+                .binding = &shader_injection.hdr_format,
+                .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+                .default_value = 0.f,
+                .label = "HDR Format",
+                .section = "Display Output",
+                .tooltip = "Sets the HDR format (HDR10 is compatible with Smooth Motion)",
+                .labels = {"HDR10", "scRGB (default)"},
+                .is_enabled = []() { return true; },
+                .is_global = true,
+                .is_visible = []() { return current_settings_mode >= 2; },
+            };
+
+            renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
+            bool is_hdr10 = setting->GetValue() == 0;
+            renodx::mods::swapchain::SetUseHDR10(is_hdr10);
+            renodx::mods::swapchain::use_resize_buffer = false;
+            shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
+            shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
+            settings.push_back(setting);
+        }
 
         initialized = true;
       }

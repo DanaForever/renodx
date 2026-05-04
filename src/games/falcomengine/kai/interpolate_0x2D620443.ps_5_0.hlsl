@@ -29,10 +29,13 @@ void main(
 
   r0.xyz = colorTexture.SampleLevel(samPoint_s, v1.xy, 0).xyz;
 
+  float3 sdr = renodx::tonemap::neutwo::BT709(srgbDecode(r0.rgb));
+
   if (RENODX_TONE_MAP_TYPE == 0.f) {
     r0.xyz = saturate(r0.xyz);
     r0.w = dot(r0.xyz, float3(0.298999995, 0.587000012, 0.114));
   } else {
+
     r0.w = calculateLuminanceSRGB(r0.rgb);
   }
   r1.xyz = r0.www * mulColor_g.xyz + addColor_g.xyz;
@@ -41,7 +44,27 @@ void main(
 
   o0.rgb = lerp(r0.xyz, r1.xyz, intensity_g);
 
-  // Apply tone mapping here if godray is not applied 
+  sdr = lerp(sdr, r1.rgb, intensity_g);
+
+  // Lazy scene tonemap.
+  //
+  // Output stays linear-light, sRGB-encoded with no display gamma applied so
+  // the existing UI compositing path keeps working unchanged. final/finalkai
+  // checks scene_already_tonemapped and skips its own ToneMapLMS this frame
+  // (the addon flips that flag in interpolate's on_drawn callback).
+  //
+  // When godray runs after interpolate, godray will operate on a tonemapped
+  // base — bloom math is slightly off in that path but acceptable.
+  if (RENODX_TONE_MAP_TYPE > 0.f) {
+    o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
+
+    o0.rgb = ToneMapLMSHueShift(o0.rgb);
+
+    // float strength = saturate(shader_injection.bloom_hue_correction);
+
+    // o0.rgb = lerp(o0.rgb, CorrectHueAndPurityMBFullStrength(o0.rgb, sdr), strength);
+    o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+  }
 
   o0.w = alpha_g;
   return;

@@ -89,6 +89,13 @@ struct ShaderInjectData {
   float upgrade_8bit;
   float upgrade_10bit;
   float hdr_format;
+
+  // Lazy scene tonemap state.
+  // 0 at frame start; flipped to 1 by the first registered HUD shader's on_draw
+  // after it dispatches a fullscreen tonemap pass on the bound scene RT. The
+  // final shader skips its own tonemap when this is 1 (scene was already
+  // tonemapped before UI was composited).
+  float scene_already_tonemapped;
 };
 
 #ifndef __cplusplus
@@ -135,6 +142,8 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE    1.f // shader_injection.swap_chain_clamp_color_space
 #define RENODX_SWAP_CHAIN_ENCODING             shader_injection.swap_chain_encoding
 #define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE shader_injection.swap_chain_encoding_color_space
+
+#define RENODX_SCENE_ALREADY_TONEMAPPED      shader_injection.scene_already_tonemapped
 
 #define RENODX_RENO_DRT_TONE_MAP_METHOD               renodx::tonemap::renodrt::config::tone_map_method::REINHARD
 #define RENODX_RENO_DRT_NEUTRAL_SDR_TONE_MAP_METHOD   renodx::tonemap::renodrt::config::tone_map_method::REINHARD

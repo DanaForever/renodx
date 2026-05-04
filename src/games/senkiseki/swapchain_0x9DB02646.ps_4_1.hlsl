@@ -86,11 +86,16 @@ void main(
   float4 fDest;
 
   r0.xyzw = ColorBuffer.SampleLevel(LinearClampSamplerState_s, v1.xy, 0).xyzw;
+  // o0 = r0;
+
   o0.w = r0.w;
 
   // game brightness?
   o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);
 
+  return;
+
+  
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 color = o0.rgb;
 
@@ -98,13 +103,10 @@ void main(
 
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-    // color = GammaCorrectHuePreserving(color, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
     color = renodx::color::correct::GammaSafe(color, false, 2.4f);
-    // color = GammaCorrectHuePreserving(color, 2.4f);
   } else if (RENODX_GAMMA_CORRECTION == 3.f) {
     color = renodx::color::correct::GammaSafe(color, false, 2.3f);
-    // color = GammaCorrectHuePreserving(color, 2.3f);
   }
 
 

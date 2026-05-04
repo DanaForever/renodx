@@ -17,9 +17,12 @@
 #include "../../mods/shader.hpp"
 #include "../../mods/swapchain.hpp"
 #include "../../utils/settings.hpp"
+#include "../../utils/swapchain.hpp"
 #include "./shared.h"
 
 namespace {
+
+ShaderInjectData shader_injection;
 
 
 #define UpgradeRTVShader(value)              \
@@ -61,7 +64,6 @@ namespace {
       },                                     \
   }
 
-
 renodx::mods::shader::CustomShaders custom_shaders = {
     
 
@@ -74,10 +76,31 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xCE7C6E9D), // depth
     UpgradeRTVReplaceShader(0x0A0B2E57), // depth
     UpgradeRTVReplaceShader(0x43E0BB74), // blur
-    UpgradeRTVReplaceShader(0x2D620443), // blur
+    // Kuro/Kuro2 interpolate (also runs as menublur on the same CRC).
+    // The HLSL replacement applies tonemap inline; on_drawn flips the
+    // scene_already_tonemapped flag so final/finalkai skip their own tonemap.
+    {0x2D620443,
+     {
+         .crc32 = 0x2D620443,
+         .code = __0x2D620443,
+         .on_draw = [](reshade::api::command_list* cmd_list) {
+           auto rtvs = renodx::utils::swapchain::GetRenderTargets(cmd_list);
+           bool changed = false;
+           for (auto rtv : rtvs) {
+             changed = renodx::mods::swapchain::ActivateCloneHotSwap(cmd_list->get_device(), rtv);
+           }
+           if (changed) {
+             renodx::mods::swapchain::FlushDescriptors(cmd_list);
+             renodx::mods::swapchain::RewriteRenderTargets(cmd_list, rtvs.size(), rtvs.data(), {0});
+           }
+           return true;
+         },
+         .on_drawn = [](reshade::api::command_list* /*cmd_list*/) {
+           shader_injection.scene_already_tonemapped = 1.f;
+         },
+     }},
     UpgradeRTVReplaceShader(0xAF7B0499), // refraction
     UpgradeRTVReplaceShader(0xFA1A3F24), // atmosphere
-    UpgradeRTVReplaceShader(0x2D620443), // menublu
 
     // Kuro 2
     
@@ -104,6 +127,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xCDB2A000), // godray
     UpgradeRTVReplaceShader(0x0F02FFD8), // godraygen
     CustomShaderEntry(0x8C8333BF), // hud
+    CustomShaderEntry(0xB3719CBF), // hud2
     // UpgradeRTVReplaceShader(0x8C8333BF), // hud
     
 
@@ -131,8 +155,6 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     // CustomSwapchainShader(0x00000000),
     // BypassShaderEntry(0x00000000)
 };
-
-ShaderInjectData shader_injection;
 
 float current_settings_mode = 0;
 
@@ -392,6 +414,19 @@ const auto UPGRADE_TYPE_ANY = 3.f;
 
 bool initialized = false;
 
+// Reset the lazy-tonemap latch each frame. The first registered HUD shader
+// drawn in the next frame will dispatch the tonemap pass and flip this back
+// to 1; final reads it to decide whether to tonemap itself.
+void OnPresent(
+    reshade::api::command_queue* /*queue*/,
+    reshade::api::swapchain* /*swapchain*/,
+    const reshade::api::rect* /*source_rect*/,
+    const reshade::api::rect* /*dest_rect*/,
+    uint32_t /*dirty_rect_count*/,
+    const reshade::api::rect* /*dirty_rects*/) {
+  shader_injection.scene_already_tonemapped = 0.f;
+}
+
 }  // namespace
 
 extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX";
@@ -401,6 +436,8 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   switch (fdw_reason) {
     case DLL_PROCESS_ATTACH:
       if (!reshade::register_addon(h_module)) return FALSE;
+
+      reshade::register_event<reshade::addon_event::present>(OnPresent);
 
       if (!initialized) {
         renodx::mods::shader::force_pipeline_cloning = true;
@@ -510,6 +547,7 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
       break;
     case DLL_PROCESS_DETACH:
+      reshade::unregister_event<reshade::addon_event::present>(OnPresent);
       reshade::unregister_addon(h_module);
       break;
   }

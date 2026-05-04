@@ -61,11 +61,6 @@ void main(
   float3 sdr = Overlay;
   if (shader_injection.bloom > 0.f && RENODX_TONE_MAP_TYPE > 0.f) {
     Overlay = Dark;
-    // float o_y = calculateLuminanceSRGB(Overlay);
-    // float d_y = calculateLuminanceSRGB(Dark);
-
-    // Overlay = (o_y > d_y) ? Overlay : Dark;
-
   } 
 
   [branch]
@@ -80,12 +75,8 @@ void main(
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
     float strength = shader_injection.bloom_hue_correction;
-    // hdr = CorrectHueAndPurityMBGated(hdr, sdr_color, strength, 0.18f, 0.5f, strength);
-    // hdr = lerp(hdr, CorrectHueAndPurityMBFullStrength(hdr, sdr), saturate(strength));
     hdr = CorrectHueMB(hdr, sdr, strength);
 
-    
-    
     hdr = renodx::color::srgb::EncodeSafe(hdr);
     o0.rgb = hdr;
 

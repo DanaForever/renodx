@@ -42,5 +42,8 @@ void main(
 
   o0.w = r2.y ? 1 : r3.w;
   o0.w = r3.w;
+  
+  // o0.rgb = PostProcessFinal(o0.rgb);
+  
   return;
 }

@@ -31,7 +31,12 @@ void main(
 
       r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
-      r0.rgb = ToneMapLMS(r0.rgb);
+      // Scene is tonemapped lazily by the first registered HUD shader before
+      // UI is composited. When that already happened this frame, skip the
+      // tonemap here to avoid double-tonemapping the scene + UI buffer.
+      if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
+        r0.rgb = ToneMapLMS(r0.rgb);
+      }
 
       o0 = r0;
 
@@ -127,8 +132,10 @@ void main(
 
       renodx::draw::Config config = renodx::draw::BuildConfig();
 
-      // Apply tone mapping here if both overlay and godray are not applied
-      r0.rgb = ToneMapLMS(r0.rgb);
+      // Lazy tonemap: skip if HUD trigger already applied it this frame.
+      if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
+        r0.rgb = ToneMapLMS(r0.rgb);
+      }
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
         r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);

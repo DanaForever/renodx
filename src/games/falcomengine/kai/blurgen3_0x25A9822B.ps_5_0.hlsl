@@ -63,17 +63,24 @@ void main(
     float w = offsetsAndWeights[i].z;
     float4 c = colorTexture.SampleLevel(samLinear_s, uv, 0);
 
-    c = saturate(c);
+    if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f) {
+      c = saturate(c);
+    } else {
+      c = saturate(c);
+    }
 
     acc += c * w;
     wsum += w;
   }
 
   // If weights are pre-normalized, accW≈1 and this is a no-op; otherwise it keeps brightness consistent.
-  // float4 outRGB = (wsum > 0.0) ? (acc / wsum) : 0.0;
-  float4 outRGB = acc;
+  float4 outRGB = (wsum > 0.0) ? (acc / wsum) : 0.0;
+  // float4 outRGB = acc;
 
-  // o0 = saturate(outRGB);
-  o0 = (outRGB);
+  if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f) {
+    o0 = saturate(outRGB);
+  } else {
+    o0 = saturate(outRGB);
+  }
   return;
 }

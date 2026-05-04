@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jul 18 01:35:19 2025
-
+#include "common.hlsl"
 cbuffer CAlTest : register(b0)
 {
   float altest : packoffset(c0);
@@ -30,6 +30,8 @@ void main(
 
   // o0.rgb *= 
   o0.w = r0.y ? 1 : v0.w;
+
+  // o0.rgb = PostProcessFinal(o0.rgb);
 
   return;
 }

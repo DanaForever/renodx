@@ -33,7 +33,9 @@ void main(
 
       renodx::draw::Config config = renodx::draw::BuildConfig();
 
-      r0.rgb = ToneMapLMS(r0.rgb);
+      if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
+        r0.rgb = ToneMapLMS(r0.rgb); // LMS or hue-shift? 
+      }
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
         r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
@@ -126,7 +128,9 @@ void main(
 
       renodx::draw::Config config = renodx::draw::BuildConfig();
 
-      r0.rgb = ToneMapLMS(r0.rgb);
+      if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
+        r0.rgb = ToneMapLMS(r0.rgb);
+      }
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
         r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);

@@ -1,5 +1,5 @@
 // ---- Created with 3Dmigoto v1.3.16 on Fri Jul 18 21:44:46 2025
-
+#include "common.hlsl"
 cbuffer CB0 : register(b0)
 {
   float altest : packoffset(c0);
@@ -318,6 +318,8 @@ void main(
   r2.z = v8.w;
   r1.xyzw = r0.yyyy ? r1.xyzw : r2.xyzw;
   o1.xyzw = r0.xxxx ? r1.xyzw : 0;
+
+  // o0.rgb = PostProcessFinal(o0.rgb);
   o0.w = r0.w;
   return;
 }
