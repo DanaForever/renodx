@@ -62,6 +62,29 @@ float3 hdrScreenBlend(float3 base, float3 blend, float scale = 0.f) {
   return addBloom(base, blend);
 }
 
+float3 hdrScreenBlend3(float3 base, float3 blend, float scale = 0.f) {
+  blend = max(0.f, blend);
+
+  base = renodx::color::srgb::EncodeSafe(base);
+  blend = renodx::color::srgb::EncodeSafe(blend);
+
+  float3 bloom = base * blend;
+
+  float3 sdr = blend * (max(1 - base, 0.f)) + base;
+
+  bloom = renodx::color::srgb::DecodeSafe(bloom); 
+  sdr = renodx::color::srgb::DecodeSafe(sdr);
+
+  float strength = shader_injection.bloom_hue_correction;
+  // bloom = CorrectHueMB(bloom, sdr, saturate(strength));
+
+  // bloom = lerp(bloom, CorrectHueAndPurityMBFullStrength(bloom, sdr), saturate(strength));
+
+  return bloom;
+  
+  // return addBloom(base, blend);
+}
+
 
 float3 LMS_Processing(float3 color) {
   color = LMS_Vibrancy(color, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
@@ -336,4 +359,67 @@ float3 processUI(float3 color, bool decoding = true) {
 
   color = renodx::color::srgb::EncodeSafe(color);
   return color;
+}
+
+float3 ToneMapAndSwapchainPass(float3 r0) {
+  // Swapchain Pass
+
+  float3 o0;
+
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.3f);
+  }
+
+  // Lazy tonemap: skip if HUD trigger already applied it this frame.
+  if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
+    r0.rgb = ToneMapLMS(r0.rgb);
+  }
+
+  float3 color = r0.rgb;
+
+  [branch]
+  if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT709D93(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCU) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::BT601NTSCU(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  } else if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_NTSCJ) {
+    color = renodx::color::convert::ColorSpaces(color, config.swap_chain_decoding_color_space, renodx::color::convert::COLOR_SPACE_BT709);
+    color = renodx::color::bt709::from::ARIBTRB9(color);
+    config.swap_chain_decoding_color_space = renodx::color::convert::COLOR_SPACE_BT709;
+  }
+
+  // Gamut Compression
+  color = renodx::color::bt2020::from::BT709(color);
+  float grayscale = renodx::color::convert::Luminance(color, renodx::color::convert::COLOR_SPACE_BT2020);
+  const float MID_GRAY_LINEAR = 1 / (pow(10, 0.75));                          // ~0.18f
+  const float MID_GRAY_PERCENT = 0.5f;                                        // 50%
+  const float MID_GRAY_GAMMA = log(MID_GRAY_LINEAR) / log(MID_GRAY_PERCENT);  // ~2.49f
+  float encode_gamma = MID_GRAY_GAMMA;
+  float3 encoded = renodx::color::gamma::EncodeSafe(color, encode_gamma);
+  float encoded_gray = renodx::color::gamma::Encode(grayscale, encode_gamma);
+  float3 compressed = renodx::color::correct::GamutCompress(encoded, encoded_gray);
+  color = renodx::color::gamma::DecodeSafe(compressed, encode_gamma);
+  color = max(0.f, color);
+  color = renodx::color::bt709::from::BT2020(color);
+
+  o0.rgb = color;
+
+  if (shader_injection.hdr_format == 1.f) {
+    o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
+  } else {
+    o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
+    o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, RENODX_DIFFUSE_WHITE_NITS);
+  }
+
+  return o0.rgb;
 }

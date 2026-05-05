@@ -183,7 +183,7 @@ void main(
 
     float strength = shader_injection.bloom_hue_correction;
     // hdr = CorrectHueAndPurityMBGated(hdr, sdr_color, strength, 0.18f, 0.5f, strength);
-    hdr = lerp(hdr, CorrectHueAndPurityMB(hdr, sdr_color), saturate(strength));
+    hdr = lerp(hdr, CorrectHueAndPurityMBFullStrength(hdr, sdr_color), saturate(strength));
 
     o0.rgb = hdr.rgb;
 

@@ -147,7 +147,29 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0x2026566A), // smoke
     CustomShaderEntry(0xFA37EA04), // taa
     CustomShaderEntry(0x31FE6C05), // hud
-    CustomShaderEntry(0xDCC360B5) // hud
+    CustomShaderEntry(0xDCC360B5), // hud
+
+    // YS X
+    {0x2EB53B7A,
+     {
+         .crc32 = 0x2EB53B7A,
+         .code = __0x2EB53B7A,
+         .on_draw = [](reshade::api::command_list* cmd_list) {
+           auto rtvs = renodx::utils::swapchain::GetRenderTargets(cmd_list);
+           bool changed = false;
+           for (auto rtv : rtvs) {
+             changed = renodx::mods::swapchain::ActivateCloneHotSwap(cmd_list->get_device(), rtv);
+           }
+           if (changed) {
+             renodx::mods::swapchain::FlushDescriptors(cmd_list);
+             renodx::mods::swapchain::RewriteRenderTargets(cmd_list, rtvs.size(), rtvs.data(), {0});
+           }
+           return true;
+         },
+         .on_drawn = [](reshade::api::command_list* /*cmd_list*/) {
+           shader_injection.scene_already_tonemapped = 1.f;
+         },
+     }},
 
     // UpgradeRTVShader(0x1336F6F8),
     // UpgradeRTVShader(0xEF0CAEEA),
