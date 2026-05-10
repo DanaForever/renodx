@@ -258,7 +258,9 @@ float3 colorGrade(float3 color) {
   //   }
   // }
 
-  if (FFXV_HDR_GRADING == 1.f) {
+  bool vanilla = (RENODX_TONE_MAP_TYPE == 0.f) && (HDR != 0);
+
+  if (FFXV_HDR_GRADING == 1.f || vanilla) {
     r1.xyz = float3(0.329299986, 0.919499993, 0.0879999995) * r0.yyy;
     r1.xyz = r0.xxx * float3(0.627399981, 0.0691, 0.0164000001) + r1.xyz;
     r1.xyz = r0.zzz * float3(0.0432999991, 0.0114000002, 0.895600021) + r1.xyz;
@@ -337,18 +339,19 @@ void main(
 
     float3 hdr_ungraded, hdr_graded;
 
-    // float sdr_y = renodx::color::y::from::BT709(sdr);
+    float sdr_y = renodx::color::y::from::BT709(sdr);
     // float sdr_m = renodx::math::Max(abs(sdr.rgb));
     float sdr_l = CalculateLuminosity(sdr);
     
     [branch]
     if (shader_injection.tone_map_mode == 0.f) {
-      // float hdr_y = renodx::color::y::from::BT709(untonemapped);
-      float hdr_l = CalculateLuminosity(untonemapped);
+      float hdr_y = renodx::color::y::from::BT709(untonemapped);
+      // float hdr_l = CalculateLuminosity(untonemapped);
       // float hdr_m = renodx::math::Max(abs(untonemapped.rgb));
       // float scale = renodx::math::DivideSafe(sdr_m, hdr_m, 1.f);
-      // float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
-      float scale = renodx::math::DivideSafe(sdr_l, hdr_l, 1.f);
+      float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
+      // float scale = renodx::math::DivideSafe(sdr_l, hdr_l, 1.f);
+      scale = 1.f;
 
       hdr_ungraded = untonemapped;
       hdr_graded = colorGrade(hdr_ungraded * scale) / scale;
@@ -362,8 +365,8 @@ void main(
     } else {
       hdr_ungraded = ToneMapPassLMS(untonemapped, sdr);
       float hdr_y = renodx::color::y::from::BT709(hdr_ungraded);
-      float hdr_l = CalculateLuminosity(untonemapped);
-      float scale = renodx::math::DivideSafe(sdr_l, hdr_l, 1.f);
+      // float hdr_l = CalculateLuminosity(untonemapped);
+      float scale = renodx::math::DivideSafe(sdr_y, hdr_y, 1.f);
 
       // hdr_graded = colorGrade(hdr_ungraded * scale) / scale;
       hdr_graded = colorGrade(hdr_ungraded);
@@ -375,7 +378,7 @@ void main(
                                                  RENODX_TONE_MAP_HUE_CORRECTION,
                                                  RENODX_TONE_MAP_HUE_PROCESSOR);
       else
-        hdr_graded = CorrectHueAndPurity(hdr_graded, sdr_graded, RENODX_TONE_MAP_HUE_CORRECTION);
+        hdr_graded = CorrectHueMB(hdr_graded, sdr_graded, RENODX_TONE_MAP_HUE_CORRECTION);
     }
 
     output = hdr_graded;

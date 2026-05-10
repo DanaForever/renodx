@@ -663,7 +663,7 @@ bool initialized = false;
 }  // namespace
 
 extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX";
-extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for Dragon Quest XI: Echoes of an Elusive Age";
+extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX for Stellar";
 
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
@@ -769,18 +769,18 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         });
 
 
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //     .old_format = reshade::api::format::r10g10b10a2_unorm,
-        //     .new_format = reshade::api::format::r16g16b16a16_float,
-        //     // .ignore_size = true,
-        //     .use_resource_view_cloning = true
-        // }); 
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+            .old_format = reshade::api::format::r10g10b10a2_unorm,
+            .new_format = reshade::api::format::r16g16b16a16_float,
+            // .ignore_size = true,
+            .use_resource_view_cloning = true
+        }); 
 
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //         .old_format = reshade::api::format::r10g10b10a2_typeless,
-        //         .new_format = reshade::api::format::r16g16b16a16_typeless,
-        //         .use_resource_view_cloning = true,
-        // });
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+                .old_format = reshade::api::format::r10g10b10a2_typeless,
+                .new_format = reshade::api::format::r16g16b16a16_typeless,
+                .use_resource_view_cloning = true,
+        });
         
         renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
             .old_format = reshade::api::format::r11g11b10_float,
@@ -800,17 +800,16 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
         
 
-        // renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-        //     .old_format = reshade::api::format::r8_unorm,
-        //     .new_format = reshade::api::format::r16_float,
-        // //   .ignore_size = true,
-        //     .use_resource_view_cloning = true
-        // }); qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
+        renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+            .old_format = reshade::api::format::r8_unorm,
+            .new_format = reshade::api::format::r32_float,
+        //   .ignore_size = true,
+            .use_resource_view_cloning = true
+        }); 
         
         // General Upgrades 
 
-        
-
+    
         
         {
            bool is_hdr10 = true;
@@ -826,9 +825,9 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
       break;
     case DLL_PROCESS_DETACH:
-    //   renodx::utils::shader::Use(fdw_reason);
-    //   renodx::utils::swapchain::Use(fdw_reason);
-    //   renodx::utils::resource::Use(fdw_reason);
+      renodx::utils::shader::Use(fdw_reason);
+      renodx::utils::swapchain::Use(fdw_reason);
+      renodx::utils::resource::Use(fdw_reason);
       reshade::unregister_event<reshade::addon_event::init_swapchain>(OnInitSwapchain);
 
     //   reshade::unregister_event<reshade::addon_event::init_device>(OnInitDevice);

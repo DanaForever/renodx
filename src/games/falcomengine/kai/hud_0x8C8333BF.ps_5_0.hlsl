@@ -134,7 +134,8 @@ void main(
   r0.w = v1.z * r0.w + 1;
   o0.xyz = r0.xyz * r0.www;
 
-  o0.rgb = processUI(o0.rgb, true);
+  if (RENODX_SCENE_ALREADY_TONEMAPPED != 0.f) 
+    o0.rgb = processUI(o0.rgb, true);
   
   o0.w = r1.x;
   return;

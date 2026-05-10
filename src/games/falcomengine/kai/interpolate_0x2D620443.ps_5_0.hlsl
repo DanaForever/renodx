@@ -60,9 +60,34 @@ void main(
 
     o0.rgb = ToneMapLMSHueShift(o0.rgb);
 
-    // float strength = saturate(shader_injection.bloom_hue_correction);
+    float3 color = o0.rgb;
 
-    // o0.rgb = lerp(o0.rgb, CorrectHueAndPurityMBFullStrength(o0.rgb, sdr), strength);
+    [branch]
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+      // color = GammaCorrectHuePreserving(color, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+      // color = GammaCorrectHuePreserving(color, 2.4f);
+    } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+      // color = GammaCorrectHuePreserving(color, 2.2f);
+      color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+    }
+
+    // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
+    color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
+
+    [branch]
+    if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+      color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+    } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+      color = renodx::color::correct::GammaSafe(color, true, 2.4f);
+    } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+      color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+    }
+
+    o0.rgb = color;
+
     o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   }
 

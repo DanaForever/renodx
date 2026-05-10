@@ -228,7 +228,7 @@ renodx::utils::settings::Settings settings = {
     },
 
     new renodx::utils::settings::Setting{
-        .key = "ColorGradeVibrancy",
+        .key = "ColorGradeDechroma",
         .binding = &shader_injection.tone_map_lms_dechroma,
         .default_value = 0.f,
         .label = "Dechroma",

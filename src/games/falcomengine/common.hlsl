@@ -335,6 +335,52 @@ float3 processUI(float3 color, bool decoding = true) {
     color = renodx::color::srgb::DecodeSafe(color);
   }
 
+  // [branch]
+  // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+  //   color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+  // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+  //   color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  // } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+  //   color = renodx::color::correct::GammaSafe(color, false, 2.3f);
+  // }
+
+  // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
+  // color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
+  color *= RENODX_GRAPHICS_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+
+  // [branch]
+  // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+  //   color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+  // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+  //   color = renodx::color::correct::GammaSafe(color, true, 2.4f);
+  // } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+  //   color = renodx::color::correct::GammaSafe(color, true, 2.3f);
+  // }
+
+  color = renodx::color::srgb::EncodeSafe(color); 
+  return color;
+}
+
+float3 ToneMapAndSwapchainPass(float3 r0) {
+  // Swapchain Pass
+
+  float3 o0;
+  float3 color = r0.rgb;
+  renodx::draw::Config config = renodx::draw::BuildConfig();
+
+  // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+  //   r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+  // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+  //   r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+  // } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+  //   r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.3f);
+  // }
+
+  // Lazy tonemap: skip if HUD trigger already applied it this frame.
+  if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
+    color = ToneMapLMS(color);
+  }
+
   [branch]
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
     color = renodx::color::correct::GammaSafe(color, false, 2.2f);
@@ -344,44 +390,7 @@ float3 processUI(float3 color, bool decoding = true) {
     color = renodx::color::correct::GammaSafe(color, false, 2.3f);
   }
 
-  // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
-  // color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
-  color *= RENODX_GRAPHICS_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-
-  [branch]
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = renodx::color::correct::GammaSafe(color, true, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = renodx::color::correct::GammaSafe(color, true, 2.4f);
-  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-    color = renodx::color::correct::GammaSafe(color, true, 2.3f);
-  }
-
-  color = renodx::color::srgb::EncodeSafe(color);
-  return color;
-}
-
-float3 ToneMapAndSwapchainPass(float3 r0) {
-  // Swapchain Pass
-
-  float3 o0;
-
-  renodx::draw::Config config = renodx::draw::BuildConfig();
-
-  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
-  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
-  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-    r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.3f);
-  }
-
-  // Lazy tonemap: skip if HUD trigger already applied it this frame.
-  if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
-    r0.rgb = ToneMapLMS(r0.rgb);
-  }
-
-  float3 color = r0.rgb;
+  
 
   [branch]
   if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {
@@ -414,11 +423,17 @@ float3 ToneMapAndSwapchainPass(float3 r0) {
 
   o0.rgb = color;
 
+  float scale_value = RENODX_DIFFUSE_WHITE_NITS;
+
+  if (RENODX_SCENE_ALREADY_TONEMAPPED) {
+    scale_value = RENODX_GRAPHICS_WHITE_NITS;
+  }
+
   if (shader_injection.hdr_format == 1.f) {
-    o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
+    o0.rgb *= scale_value / 80.f;
   } else {
     o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
-    o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, RENODX_DIFFUSE_WHITE_NITS);
+    o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, scale_value);
   }
 
   return o0.rgb;

@@ -150,6 +150,8 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xDCC360B5), // hud
 
     // YS X
+    CustomShaderEntry(0xC8EBAB1E), // hud
+    CustomShaderEntry(0xAA5313D9), // hud
     {0x2EB53B7A,
      {
          .crc32 = 0x2EB53B7A,
@@ -170,6 +172,11 @@ renodx::mods::shader::CustomShaders custom_shaders = {
            shader_injection.scene_already_tonemapped = 1.f;
          },
      }},
+
+     CustomShaderEntry(0x2388DAAC), // final ys proud nordic
+     CustomShaderEntry(0x557E2C4E), // ys overlay
+     CustomShaderEntry(0x36B738AD), // ui
+     CustomShaderEntry(0x44DFE546), // ui
 
     // UpgradeRTVShader(0x1336F6F8),
     // UpgradeRTVShader(0xEF0CAEEA),

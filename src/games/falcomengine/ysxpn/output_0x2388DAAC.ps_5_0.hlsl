@@ -1,5 +1,6 @@
-// ---- Created with 3Dmigoto v1.3.16 on Fri Dec 19 22:54:35 2025
+// ---- Created with 3Dmigoto v1.3.16 on Sat May 09 23:09:23 2026
 #include "../common.hlsl"
+
 cbuffer Constants : register(b0)
 {
   float gamma : packoffset(c0);
@@ -28,13 +29,12 @@ void main(
     r0.xyz = tex.SampleLevel(smpl_s, v1.xy, 0).xyz;
 
     if (RENODX_TONE_MAP_TYPE > 0) {
-
       r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
 
       renodx::draw::Config config = renodx::draw::BuildConfig();
 
       if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
-        r0.rgb = ToneMapLMS(r0.rgb); // LMS or hue-shift? 
+        r0.rgb = ToneMapLMS(r0.rgb);  // LMS or hue-shift?
       }
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
@@ -83,51 +83,36 @@ void main(
 
       o0.rgb = color;
 
-      float scale_value = RENODX_DIFFUSE_WHITE_NITS;
-
-      if (RENODX_SCENE_ALREADY_TONEMAPPED) {
-        scale_value = RENODX_GRAPHICS_WHITE_NITS;
-      }
-
       if (shader_injection.hdr_format == 1.f) {
-        o0.rgb *= scale_value / 80.f;
+        o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
       } else {
         o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
-        o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, scale_value);
+        o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, RENODX_DIFFUSE_WHITE_NITS);
       }
 
       o0.w = 1;
     }
     else {
+
       r0.w = gamma * 2.20000005;
-      r0.rgb = renodx::math::SafePow(r0.rgb, r0.w);
-      // r0.xyz = log2(r0.xyz);
-      // r0.xyz = r0.www * r0.xyz;
-      // r0.xyz = exp2(r0.xyz);]
-
-      if (shader_injection.hdr_format == 1.f) {
-        // o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
-        r0.xyz = hdr_peak_brightness * r0.xyz;
-        r0.xyz = max(float3(0, 0, 0), r0.xyz);
-        o0.xyz = min(float3(200, 200, 200), r0.xyz);
-      } else {
-
-        float diffuse_white = hdr_peak_brightness * 80.f;
-        o0.rgb = r0.rgb;
-        o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
-        o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, diffuse_white);
-      }
-
-      
+      r0.xyz = log2(r0.xyz);
+      r0.xyz = r0.www * r0.xyz;
+      r0.xyz = exp2(r0.xyz);
+      r0.xyz = hdr_peak_brightness * r0.xyz;
+      r0.xyz = max(float3(0,0,0), r0.xyz);
+      o0.xyz = min(float3(200,200,200), r0.xyz);
       o0.w = 1;
+      return;
     }
-    return;
   } else {
     r0.xyz = tex.SampleLevel(smpl_s, v1.xy, 0).xyz;
     // r0.xyz = saturate(r0.xyz);
     // r0.xyz = log2(r0.xyz);
     // r0.xyz = gamma * r0.xyz;
     // o0.xyz = exp2(r0.xyz);
+    // o0.w = 1;
+    // return;
+
     r0.rgb = renodx::math::SafePow(r0.rgb, gamma);
 
     if (RENODX_TONE_MAP_TYPE > 0) {
@@ -140,15 +125,14 @@ void main(
       }
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
-        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
+        r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
+        // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
       } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
-        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
+        r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
+        // r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
       } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-        // float gamma_value = gamma * 2.20000005;
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, gamma_value);
-        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
+        float gamma_value = gamma * 2.20000005;
+        r0.rgb = GammaCorrectHuePreserving(r0.rgb, gamma_value);
       }
 
       o0 = r0;
@@ -185,17 +169,11 @@ void main(
 
       o0.rgb = color;
 
-      float scale_value = RENODX_DIFFUSE_WHITE_NITS;
-
-      if (RENODX_SCENE_ALREADY_TONEMAPPED) {
-        scale_value = RENODX_GRAPHICS_WHITE_NITS;
-      }
-
       if (shader_injection.hdr_format == 1.f) {
-        o0.rgb *= scale_value / 80.f;
+        o0.rgb *= RENODX_DIFFUSE_WHITE_NITS / 80.f;
       } else {
         o0.rgb = renodx::color::bt2020::from::BT709(o0.rgb);
-        o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, scale_value);
+        o0.rgb = renodx::color::pq::EncodeSafe(o0.rgb, RENODX_DIFFUSE_WHITE_NITS);
       }
 
       o0.w = 1;
