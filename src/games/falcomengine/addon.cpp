@@ -225,29 +225,17 @@ renodx::utils::settings::Settings settings = {
         .is_visible = []() { return current_settings_mode >= 1; },
     },
 
-    // new renodx::utils::settings::Setting{
-    //     .key = "fxPauseBrightness",
-    //     .binding = &shader_injection.pause_brightness,
-    //     .default_value = 100.f,
-    //     .label = "Pause-Menu Brightness",
-    //     .section = "Game Settings",
-    //     .tooltip = "Controls the game brightness during the",
-    //     .max = 100.f,
-    //     .parse = [](float value) { return value * 0.01f; },
-    //     .is_visible = []() { return current_settings_mode >= 1; },
-    // },
-
     new renodx::utils::settings::Setting{
         .key = "fxBloom",
         .binding = &shader_injection.bloom_strength,
-        .default_value = 100.f,
+        .default_value = 50.f,
         .label = "Bloom Strength",
         .section = "Game Settings",
         .tooltip = "Controls Bloom Strength",
-        .max = 500.f,
-        .parse = [](float value) { return value * 0.01f; },
-        // .is_visible = []() { return shader_injection.bloom >= 1.f; },
-        .is_visible = []() { return false; },
+        .max = 100.f,
+        .parse = [](float value) { return value * 0.1f; },
+        .is_visible = []() { return shader_injection.bloom >= 1.f; },
+        // .is_visible = []() { return false; },
     },
 
     new renodx::utils::settings::Setting{
@@ -262,7 +250,7 @@ renodx::utils::settings::Settings settings = {
         .is_enabled = []() { return shader_injection.tone_map_type >= 1; },
         .parse = [](float value) { return value * 0.01f; },
         // .is_visible = []() { return false; },
-        .is_visible = []() { return current_settings_mode >= 2; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.bloom >= 1.f; },
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapType",

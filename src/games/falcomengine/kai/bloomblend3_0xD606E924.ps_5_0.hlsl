@@ -128,9 +128,6 @@ void main(
 
     sdr = renodx::color::srgb::DecodeSafe(sdr);
 
-    // hdr = renodx::color::srgb::DecodeSafe(hdr);
-
-    // hdr = CorrectHueAndPurity(hdr, sdr, shader_injection.bloom_hue_correction);
     o0.rgb = hdr;
 
     o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);

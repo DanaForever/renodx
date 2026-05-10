@@ -43,9 +43,8 @@ float3 addBloom(float3 base, float3 blend) {
 float3 hdrScreenBlend(float3 base, float3 blend, float scale = 0.f) {
   blend = max(0.f, blend);
 
-  // if (shader_injection.bloom != 2.f)
-    // blend *= shader_injection.bloom_strength;
-  blend *= 4.f;
+  blend *= shader_injection.bloom_strength;
+  // blend *= 8.f;
 
   float3 bloom_texture = blend;
 

@@ -42,7 +42,7 @@ void main(
 
   float3 sdr = vanillaBlend(blur, color);
 
-  float3 hdr = color + blur * 5.f;
+  float3 hdr = color + blur * shader_injection.bloom_strength;
 
   if (shader_injection.bloom == 0.f) {
     o0.rgb = sdr;
