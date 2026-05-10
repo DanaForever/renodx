@@ -38,15 +38,12 @@ void main(
       }
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
         r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
       } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
         r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
       } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-        // float gamma_value = gamma * 2.20000005;
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, gamma_value);
-        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
+        float gamma_value = 2.20000005;
+        r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, gamma_value);
       }
 
       o0 = r0;
@@ -140,14 +137,10 @@ void main(
       }
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.2f);
         r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
       } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, 2.4f);
         r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.4f);
       } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-        // float gamma_value = gamma * 2.20000005;
-        // r0.rgb = GammaCorrectHuePreserving(r0.rgb, gamma_value);
         r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, false, 2.2f);
       }
 

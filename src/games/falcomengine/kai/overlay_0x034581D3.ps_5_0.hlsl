@@ -75,8 +75,7 @@ void main(
     hdr = renodx::color::srgb::DecodeSafe(hdr);
 
     float strength = shader_injection.bloom_hue_correction;
-    hdr = CorrectHueMB(hdr, sdr, strength);
-    // hdr *= 2;
+    hdr = lerp(hdr, CorrectHueAndPurityMBFullStrength(hdr, sdr), shader_injection.bloom_hue_correction);
     
 
     hdr = renodx::color::srgb::EncodeSafe(hdr);
