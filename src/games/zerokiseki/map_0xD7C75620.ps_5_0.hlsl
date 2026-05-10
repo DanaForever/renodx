@@ -1,5 +1,5 @@
-// ---- Created with 3Dmigoto v1.3.16 on Sat Jan 31 10:42:05 2026
-
+// ---- Created with 3Dmigoto v1.3.16 on Sun May 10 22:40:06 2026
+#include "shared.h"
 cbuffer CAlTest : register(b0)
 {
   float altest : packoffset(c0);
@@ -30,8 +30,7 @@ void main(
   float4 v4 : TEXCOORD2,
   float4 v5 : TEXCOORD3,
   float4 v6 : TEXCOORD4,
-  float4 v7 : TEXCOORD5,
-  float4 v8 : SV_Position0,
+  float4 v7 : SV_Position0,
   out float4 o0 : SV_Target0)
 {
   float4 r0,r1,r2;
@@ -39,6 +38,7 @@ void main(
   float4 fDest;
 
   r0.xyzw = tex.Sample(samp_s, v0.xy).xyzw;
+  r0.rgb = renodx::color::srgb::DecodeSafe(r0.rgb);
   r1.x = v1.w * r0.w;
   r1.y = cmp(0 != noalpha);
   r1.y = ~(int)r1.y;
@@ -46,16 +46,18 @@ void main(
   r1.y = r1.z ? r1.y : 0;
   if (r1.y != 0) discard;
   r0.xyz = r0.xyz * v1.xyz + v2.xyz;
-  r1.y = max(0, v2.w);
+  r1.y = saturate(v2.w);
   r2.xyz = float3(-1,-1,-1) + shadowcolor.xyz;
   r1.yzw = r1.yyy * r2.xyz + float3(1,1,1);
-  r0.xyz = r1.yzw * r0.xyz;
-  r0.xyz = r0.xyz * v3.www + v3.xyz;
-  r1.y = cmp(0 != mulblend);
+  r2.xyz = r1.yzw * r0.xyz;
+  r2.w = cmp(0 != mulblend);
   r0.w = -r0.w * v1.w + 1;
-  r2.xyz = float3(1,1,1) + -r0.xyz;
-  r2.xyz = r0.www * r2.xyz + r0.xyz;
-  o0.xyz = r1.yyy ? r2.xyz : r0.xyz;
+  r0.xyz = -r0.xyz * r1.yzw + float3(1,1,1);
+  r0.xyz = r0.www * r0.xyz + r2.xyz;
+  o0.xyz = r2.www ? r0.xyz : r2.xyz;
+
+  o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
+
   o0.w = r1.x;
   return;
 }

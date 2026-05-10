@@ -36,6 +36,15 @@ void main(
 
   o0.rgb = renodx::color::srgb::DecodeSafe(o0.rgb);
   o0.rgb *= RENODX_GRAPHICS_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, true, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, true, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    r0.rgb = renodx::color::correct::GammaSafe(r0.rgb, true, 2.3f);
+  }
+
   o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   return;
 }
