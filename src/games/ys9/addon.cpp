@@ -71,7 +71,6 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xE21199AD),  // sky
     CustomShaderEntry(0x54675067),  // lantern
     CustomShaderEntry(0xE7351DD7),  // lantern
-    CustomShaderEntry(0xB8404769),  // lantern
 };
 
 ShaderInjectData shader_injection;
