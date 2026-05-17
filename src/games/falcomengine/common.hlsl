@@ -334,27 +334,27 @@ float3 processUI(float3 color, bool decoding = true) {
     color = renodx::color::srgb::DecodeSafe(color);
   }
 
-  // [branch]
-  // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-  //   color = renodx::color::correct::GammaSafe(color, false, 2.2f);
-  // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-  //   color = renodx::color::correct::GammaSafe(color, false, 2.4f);
-  // } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-  //   color = renodx::color::correct::GammaSafe(color, false, 2.3f);
-  // }
+  [branch]
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    color = renodx::color::correct::GammaSafe(color, false, 2.3f);
+  }
 
   // This is RenderIntermediatePass, simply brightness scaling and srgb encoding
   // color *= RENODX_DIFFUSE_WHITE_NITS / RENODX_GRAPHICS_WHITE_NITS;
   color *= RENODX_GRAPHICS_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
-
-  // [branch]
-  // if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-  //   color = renodx::color::correct::GammaSafe(color, true, 2.2f);
-  // } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-  //   color = renodx::color::correct::GammaSafe(color, true, 2.4f);
-  // } else if (RENODX_GAMMA_CORRECTION == 3.f) {
-  //   color = renodx::color::correct::GammaSafe(color, true, 2.3f);
-  // }
+   
+  [branch]
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.2f);
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.4f);
+  } else if (RENODX_GAMMA_CORRECTION == 3.f) {
+    color = renodx::color::correct::GammaSafe(color, true, 2.3f);
+  }
 
   color = renodx::color::srgb::EncodeSafe(color); 
   return color;
@@ -436,4 +436,22 @@ float3 ToneMapAndSwapchainPass(float3 r0) {
   }
 
   return o0.rgb;
+}
+
+float3 SE_Saturation(float3 color) {
+  float4 r1;
+  float4 r0;
+
+  r0.rgb = color;
+
+  r0.w = 0.587700009 * r0.y;
+  r0.w = r0.x * 1.66050005 + -r0.w;
+  r1.x = -r0.z * 0.072800003 + r0.w;
+  r0.w = 0.100599997 * r0.y;
+  r0.w = r0.x * -0.0182000007 + -r0.w;
+  r1.z = r0.z * 1.11870003 + r0.w;
+  r0.x = dot(r0.xy, float2(-0.124600001, 1.13300002));
+  r1.y = -r0.z * 0.0083999997 + r0.x;
+
+  return r1.rgb;
 }

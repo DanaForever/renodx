@@ -76,29 +76,31 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     UpgradeRTVReplaceShader(0xCE7C6E9D), // depth
     UpgradeRTVReplaceShader(0x0A0B2E57), // depth
     UpgradeRTVReplaceShader(0x43E0BB74), // blur
+    UpgradeRTVReplaceShader(0xB38A8D5E), // proxy
+    UpgradeRTVReplaceShader(0x2D620443), // proxy
     // Kuro/Kuro2 interpolate (also runs as menublur on the same CRC).
     // The HLSL replacement applies tonemap inline; on_drawn flips the
     // scene_already_tonemapped flag so final/finalkai skip their own tonemap.
-    {0x2D620443,
-     {
-         .crc32 = 0x2D620443,
-         .code = __0x2D620443,
-         .on_draw = [](reshade::api::command_list* cmd_list) {
-           auto rtvs = renodx::utils::swapchain::GetRenderTargets(cmd_list);
-           bool changed = false;
-           for (auto rtv : rtvs) {
-             changed = renodx::mods::swapchain::ActivateCloneHotSwap(cmd_list->get_device(), rtv);
-           }
-           if (changed) {
-             renodx::mods::swapchain::FlushDescriptors(cmd_list);
-             renodx::mods::swapchain::RewriteRenderTargets(cmd_list, rtvs.size(), rtvs.data(), {0});
-           }
-           return true;
-         },
-         .on_drawn = [](reshade::api::command_list* /*cmd_list*/) {
-           shader_injection.scene_already_tonemapped = 1.f;
-         },
-     }},
+    // {0x2D620443,
+    //  {
+    //      .crc32 = 0x2D620443,
+    //      .code = __0x2D620443,
+    //      .on_draw = [](reshade::api::command_list* cmd_list) {
+    //        auto rtvs = renodx::utils::swapchain::GetRenderTargets(cmd_list);
+    //        bool changed = false;
+    //        for (auto rtv : rtvs) {
+    //          changed = renodx::mods::swapchain::ActivateCloneHotSwap(cmd_list->get_device(), rtv);
+    //        }
+    //        if (changed) {
+    //          renodx::mods::swapchain::FlushDescriptors(cmd_list);
+    //          renodx::mods::swapchain::RewriteRenderTargets(cmd_list, rtvs.size(), rtvs.data(), {0});
+    //        }
+    //        return true;
+    //      },
+    //      .on_drawn = [](reshade::api::command_list* /*cmd_list*/) {
+    //        shader_injection.scene_already_tonemapped = 1.f;
+    //      },
+    //  }},
     UpgradeRTVReplaceShader(0xAF7B0499), // refraction
     UpgradeRTVReplaceShader(0xFA1A3F24), // atmosphere
 

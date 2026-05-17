@@ -15,6 +15,7 @@ Texture2D<float4> tex : register(t0);
 #define cmp -
 
 
+
 void main(
   float4 v0 : SV_Position0,
   float2 v1 : TEXCOORD0,
@@ -34,7 +35,7 @@ void main(
       renodx::draw::Config config = renodx::draw::BuildConfig();
 
       if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f) {
-        r0.rgb = ToneMapLMS(r0.rgb); // LMS or hue-shift? 
+        r0.rgb = ToneMapLMSHueShift(r0.rgb); // LMS or hue-shift? 
       }
 
       if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
@@ -48,6 +49,8 @@ void main(
 
       o0 = r0;
       float3 color = o0.rgb;
+
+      // color = SE_Saturation(color);
 
       [branch]
       if (config.swap_chain_custom_color_space == renodx::draw::COLOR_SPACE_CUSTOM_BT709D93) {

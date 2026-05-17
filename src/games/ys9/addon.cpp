@@ -71,6 +71,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     CustomShaderEntry(0xE21199AD),  // sky
     CustomShaderEntry(0x54675067),  // lantern
     CustomShaderEntry(0xE7351DD7),  // lantern
+    CustomShaderEntry(0xB8404769),  // lantern
 };
 
 ShaderInjectData shader_injection;
@@ -373,7 +374,7 @@ bool initialized = false;
 }  // namespace
 
 extern "C" __declspec(dllexport) constexpr const char* NAME = "RenoDX";
-extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX (Generic)";
+extern "C" __declspec(dllexport) constexpr const char* DESCRIPTION = "RenoDX (YS9)";
 
 BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
   switch (fdw_reason) {

@@ -14,6 +14,5 @@ void main(
   out float4 o0 : SV_Target0)
 {
   o0.xyzw = colorMap.SampleLevel(samDefault_s, v1.xy, 0).xyzw;
-
   return;
 }

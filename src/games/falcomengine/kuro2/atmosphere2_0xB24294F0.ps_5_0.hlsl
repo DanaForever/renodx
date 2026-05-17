@@ -40,9 +40,9 @@ void main(
   // color = hdrScreenBlend(color, atomosphere);
   color = addBloom(color, atomosphere);
   sdr = renodx::color::srgb::DecodeSafe(sdr);
-  
+
   // saturation correction
-  o0.rgb = renodx::color::correct::Chrominance(color, sdr);
+  o0.rgb = color;
   o0.rgb = renodx::color::srgb::EncodeSafe(o0.rgb);
   o0.w = r1.w;
 

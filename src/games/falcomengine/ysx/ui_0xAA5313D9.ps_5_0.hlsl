@@ -201,7 +201,8 @@ void main(
   r1.x = v1.z * r1.x + 1;
   o0.xyz = r1.xxx * r0.xyz;
 
-  // o0.rgb = processUI(o0.rgb, true);
+  if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f)
+    o0.rgb = processUI(o0.rgb, true);
   o0.w = r0.w;
   return;
 }

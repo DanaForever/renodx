@@ -203,7 +203,8 @@ void main(
 
   o0.xyz = ui_brightness * r0.yzw;
 
-  o0.rgb = processUI(o0.rgb, false);
+  if (RENODX_SCENE_ALREADY_TONEMAPPED == 0.f)
+    o0.rgb = processUI(o0.rgb, false);
 
   o0.w = r0.x;
   return;
