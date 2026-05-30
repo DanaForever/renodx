@@ -780,27 +780,28 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
         // shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.0f : 0.f;
         
         {
-            auto* setting = new renodx::utils::settings::Setting{
-                .key = "SwapChainEncoding",
-                .binding = &shader_injection.hdr_format,
-                .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-                .default_value = 0.f,
-                .label = "HDR Format",
-                .section = "Display Output",
-                .tooltip = "Sets the HDR format (HDR10 is compatible with Smooth Motion)",
-                .labels = {"HDR10", "scRGB (default)"},
-                .is_enabled = []() { return true; },
-                .is_global = true,
-                .is_visible = []() { return current_settings_mode >= 2; },
-            };
+            // auto* setting = new renodx::utils::settings::Setting{
+            //     .key = "SwapChainEncoding",
+            //     .binding = &shader_injection.hdr_format,
+            //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+            //     .default_value = 0.f,
+            //     .label = "HDR Format",
+            //     .section = "Display Output",
+            //     .tooltip = "Sets the HDR format (HDR10 is compatible with Smooth Motion)",
+            //     .labels = {"HDR10", "scRGB (default)"},
+            //     .is_enabled = []() { return true; },
+            //     .is_global = true,
+            //     .is_visible = []() { return current_settings_mode >= 2; },
+            // };
 
-            renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-            bool is_hdr10 = setting->GetValue() == 0;
+            // renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
+            shader_injection.hdr_format = 0.f;
+            bool is_hdr10 = true;
             renodx::mods::swapchain::SetUseHDR10(is_hdr10);
             renodx::mods::swapchain::use_resize_buffer = false;
             shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
             shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
-            settings.push_back(setting);
+            // settings.push_back(setting);
         }
 
         initialized = true;

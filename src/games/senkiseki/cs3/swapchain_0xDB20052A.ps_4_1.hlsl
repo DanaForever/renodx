@@ -88,6 +88,8 @@ void main(
   o0.w = r0.w;
   o0.rgb = renodx::math::SignPow(r0.rgb, GammaParameters.x);
 
+  return;
+
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 color = o0.rgb;
 
