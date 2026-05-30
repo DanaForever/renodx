@@ -26,9 +26,9 @@ float4 SwapChainPass(float4 inputColor) {
   // color = renodx::color::srgb::DecodeSafe(color);
 
   if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
-    color = GammaCorrectHuePreserving(color, 2.2f);
+    color = renodx::color::correct::GammaSafe(color, false, 2.2f);
   } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
-    color = GammaCorrectHuePreserving(color, 2.4f);
+    color = renodx::color::correct::GammaSafe(color, false, 2.4f);
   }
 
   

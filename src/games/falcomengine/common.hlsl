@@ -3,8 +3,6 @@
 #include "lms_matrix.hlsl"
 #include "./macleod_boynton.hlsli"
 
-#include "./psychov_17.hlsl"
-
 float3 srgbDecode(float3 color) {
   if (RENODX_TONE_MAP_TYPE == 0 || shader_injection.bloom == 0.f) {
     return color;
@@ -156,7 +154,7 @@ float3 ToneMapLMS(float3 untonemapped) {
 
     float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
 
-    bt709_tonemapped = renodx::tonemap::psycho::psychov_17(
+    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test17(
         untonemapped_graded_dechroma,
         peak_ratio,                               // peak
         1.0f,                                     // exposure
@@ -242,7 +240,7 @@ float3 ToneMapLMSHueShift(float3 untonemapped) {
     float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
     float cone_response = 1.0f;
 
-    bt709_tonemapped = renodx::tonemap::psycho::psychov_17(
+    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test17(
         untonemapped_graded_dechroma,
         peak_ratio,                               // peak
         1.0f,                                     // exposure

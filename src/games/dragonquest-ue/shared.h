@@ -34,13 +34,8 @@
 
 // #define FIX_POST_PROCESS                     shader_injection.fix_post_process     // 0 - BT.2020 PQ, 1 - BT.709 piecewise sRGB, 2 - BT.2020 piecewise sRGB
 #define OVERRIDE_BLACK_CLIP shader_injection.override_black_clip   // 0 - Off, 1 - 0.0001 nits
-#define PROCESSING_PATH     shader_injection.processing_path       // 0 hdr, 1 sdr // temp name
-#define SWAP_CHAIN_ENCODING shader_injection.processing_use_scrgb  // 0 HDR10, 1 scRGB
-#define UNREAL_HDR_SETTING shader_injection.unreal_hdr_setting  // 0 HDR10, 1 scRGB
 
 #define RENODX_SWAP_CHAIN_CUSTOM_COLOR_SPACE shader_injection.swap_chain_custom_color_space
-#define RENODX_SWAP_CHAIN_ENCODING             shader_injection.swap_chain_encoding // 5.f
-#define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE shader_injection.swap_chain_encoding_color_space
 
 // Must be 32bit aligned
 // Should be 4x32

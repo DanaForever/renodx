@@ -709,12 +709,8 @@ float3 CustomSwapchainPass(float3 color, uint device = 0u, float gamma = 1.5f)  
     
   } else {
     // SDR path - maybe use GRAPHICS_WHITE_NITS
-    if (shader_injection.swap_chain_encoding == 5.f)  {
-      color /= 80.f;
-    } else {
-      color = renodx::color::bt2020::from::BT709(color);
-      color = renodx::color::pq::EncodeSafe(color, 1.f);
-    }
+    color = renodx::color::bt2020::from::BT709(color);
+    color = renodx::color::pq::EncodeSafe(color, 1.f);
   }
 
   return color;

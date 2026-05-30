@@ -68,8 +68,8 @@ renodx::utils::settings::Settings settings = {
         .key = "ToneMapBase",
         .binding = &shader_injection.filmic_curve,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        .default_value = 0.f,
-        .can_reset = false,
+        .default_value = 4.f,
+        .can_reset = true,
         .label = "Filmic Tonemapping Curve",
         .section = "Unreal Engine Settings",
         .tooltip = "Sets the tone mapper type for filmic",
@@ -683,17 +683,10 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
         shader_injection.tone_map_hue_shift_source = 0.f;
 
-        // new renodx::utils::settings::Setting{
-        //     .key = "ToneMapUnrealIni",
-        //     .binding = &shader_injection.processing_path,
-        //     .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-        //     .default_value = 1.f,
-        //     .can_reset = false,
-        //     .label = "Processing Path",
-        //     .section = "Unreal Engine Settings",
-        //     .tooltip = "Use Unreal Engine HDR path or Upgrade SDR path.",
-        //     .labels = {"Engine HDR", "Upgrade SDR"},
-        // },
+        // DQ7R can't run the swapchain proxy, so it must output scRGB directly
+        // (its own shaders do the encoding). Every other supported game uses the
+        // proxy to convert the upgraded scRGB buffer to HDR10.
+        const bool use_swapchain_proxy = (filename != "DQ7R-Win64-Shipping.exe");
 
         {
           auto* upgrade_setting = new renodx::utils::settings::Setting{
@@ -710,34 +703,39 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
          };
 
           renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, upgrade_setting);
-          bool is_upgrading_sdr = upgrade_setting->GetValue() > 0;
           settings.push_back(upgrade_setting);
-        // only use proxy for sdr path
 
-          if (is_upgrading_sdr) {
-                renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
-                renodx::mods::swapchain::swapchain_proxy_revert_state = true;
-                
-                renodx::mods::swapchain::swap_chain_proxy_shaders = {
+          if (use_swapchain_proxy) {
+            // The proxy converts the upgraded scRGB buffer to HDR10 - the only
+            // output format. Because HDR10 output keeps target_format
+            // (r10g10b10a2) != swap_chain_proxy_format (fp16), compatibility mode
+            // never actually engages, so the proxy renders for both processing
+            // paths.
+
+            // we need both of these lines to fix UI bugs
+            renodx::mods::swapchain::swapchain_proxy_compatibility_mode = true;
+            renodx::mods::swapchain::swapchain_proxy_revert_state = true;
+
+            renodx::mods::swapchain::swap_chain_proxy_shaders = {
+                {
+                    reshade::api::device_api::d3d11,
                     {
-                        reshade::api::device_api::d3d11,
-                        {
-                            .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
-                            .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
-                        },
+                        .vertex_shader = __swap_chain_proxy_vertex_shader_dx11,
+                        .pixel_shader = __swap_chain_proxy_pixel_shader_dx11,
                     },
+                },
+                {
+                    reshade::api::device_api::d3d12,
                     {
-                        reshade::api::device_api::d3d12,
-                        {
-                            .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
-                            .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
-                        },
+                        .vertex_shader = __swap_chain_proxy_vertex_shader_dx12,
+                        .pixel_shader = __swap_chain_proxy_pixel_shader_dx12,
                     },
-                };
-                reshade::log::message(reshade::log::level::info, std::format("[DEBUGGING] Applying Swapchain Proxy ...").c_str());
-            } else {
-                reshade::log::message(reshade::log::level::info, std::format("[DEBUGGING] NOT Applying Swapchain Proxy ...").c_str());
-            }
+                },
+            };
+            reshade::log::message(reshade::log::level::info, std::format("[DEBUGGING] Applying Swapchain Proxy ...").c_str());
+          } else {
+            reshade::log::message(reshade::log::level::info, std::format("[DEBUGGING] NOT Applying Swapchain Proxy (DQ7R: scRGB direct) ...").c_str());
+          }
         }
         
         if (filename == "DQ7R-Win64-Shipping.exe")  {
@@ -815,34 +813,30 @@ BOOL APIENTRY DllMain(HMODULE h_module, DWORD fdw_reason, LPVOID lpv_reserved) {
 
         
         {
-          auto* setting = new renodx::utils::settings::Setting{
-              .key = "SwapChainEncoding",
-              .binding = &shader_injection.hdr_format,
-              .value_type = renodx::utils::settings::SettingValueType::INTEGER,
-              .default_value = 1.f,
-              .label = "HDR Format",
-              .section = "Display Output",
-              .tooltip = "Sets the HDR format (HDR10 is compatible with Smooth Motion)",
-              .labels = {"HDR10", "scRGB (default)"},
-              .is_enabled = []() { return true; },
-              .is_global = true,
-              .is_visible = []() { return current_settings_mode >= 2; },
-          };
-
-          renodx::utils::settings::LoadSetting(renodx::utils::settings::global_name, setting);
-          bool is_hdr10 = setting->GetValue() == 0;
-          renodx::mods::swapchain::SetUseHDR10(is_hdr10);
           renodx::mods::swapchain::use_resize_buffer = false;
-          shader_injection.swap_chain_encoding = (is_hdr10 ? 4.f : 5.f);
-          shader_injection.swap_chain_encoding_color_space = is_hdr10 ? 1.f : 0.f;
-          settings.push_back(setting);
 
-          if (is_hdr10)   {
-              renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
-              .old_format = reshade::api::format::r10g10b10a2_typeless,
-              .new_format = reshade::api::format::r16g16b16a16_typeless,
-              .use_resource_view_cloning = true,
-              });
+          if (use_swapchain_proxy) {
+            // HDR10 is the output format (compatible with Smooth Motion and
+            // overall better). No user-facing toggle. hdr_format = 0 selects
+            // HDR10 in both the proxy shader's Engine HDR branch and
+            // CustomSwapchainPass's SDR upgrade tail.
+            shader_injection.hdr_format = 0.f;
+            renodx::mods::swapchain::SetUseHDR10(true);
+            shader_injection.swap_chain_encoding = 4.f;              // HDR10 PQ
+            shader_injection.swap_chain_encoding_color_space = 1.f;  // BT.2020
+
+            renodx::mods::swapchain::swap_chain_upgrade_targets.push_back({
+                .old_format = reshade::api::format::r10g10b10a2_typeless,
+                .new_format = reshade::api::format::r16g16b16a16_typeless,
+                .use_resource_view_cloning = true,
+            });
+          } else {
+            // DQ7R: no proxy, so the game's own shaders output scRGB directly.
+            // hdr_format = 1 selects scRGB encoding.
+            shader_injection.hdr_format = 1.f;
+            renodx::mods::swapchain::SetUseHDR10(false);
+            shader_injection.swap_chain_encoding = 5.f;              // scRGB
+            shader_injection.swap_chain_encoding_color_space = 0.f;  // BT.709 linear
           }
         }
           
