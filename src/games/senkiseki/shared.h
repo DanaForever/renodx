@@ -42,6 +42,7 @@ struct ShaderInjectData {
   float graphics_white_nits;
   float color_grade_strength;
   float tone_map_type;
+  float renodrt_tone_map_type;
   float tone_map_exposure;
   float tone_map_highlights;
   float tone_map_shadows;
@@ -129,7 +130,7 @@ cbuffer shader_injection : register(b13) {
 #define RENODX_SWAP_CHAIN_CLAMP_COLOR_SPACE    shader_injection.swap_chain_clamp_color_space
 #define RENODX_SWAP_CHAIN_ENCODING             shader_injection.swap_chain_encoding
 #define RENODX_SWAP_CHAIN_ENCODING_COLOR_SPACE shader_injection.swap_chain_encoding_color_space
-#define RENODX_RENO_DRT_TONE_MAP_METHOD        renodx::tonemap::renodrt::config::tone_map_method::HERMITE_SPLINE
+#define RENODX_RENO_DRT_TONE_MAP_METHOD        shader_injection.renodrt_tone_map_type
 
 #define INVERSE_TONEMAP_EXTRA_HDR_SATURATION shader_injection.inverse_tonemap_extra_hdr_saturation
 

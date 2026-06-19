@@ -539,8 +539,22 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-       .labels = {"Vanilla (Hue clipped)", "PsychoV"},
+       .labels = {"Vanilla (Hue clipped)", "PsychoV", "RenoDRT"},
         .is_visible = []() { return current_settings_mode >= 1; },
+    },
+    new renodx::utils::settings::Setting{
+        .key = "ToneMapRenoDRTType",
+        .binding = &shader_injection.renodrt_tone_map_type,
+        .value_type = renodx::utils::settings::SettingValueType::INTEGER,
+        .default_value = 1.f,
+        .can_reset = true,
+        .label = "RenoDRT Algorithm",
+        .section = "Tone Mapping",
+        .tooltip = "Sets the tone mapper type",
+        .labels = {"Reinhard", "Hermite Spline", "Neutwo"},
+        .is_enabled = []() { return shader_injection.tone_map_type == 2; },
+        .is_visible = []() { return current_settings_mode >= 2 && shader_injection.tone_map_type == 2; },
+        
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",
