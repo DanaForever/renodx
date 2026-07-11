@@ -84,7 +84,9 @@ void main(
     float coeffs[6] = { A, B, C, DE, DF, EperF };
     float white_precompute = 1.f / paramF_White;
     // Uncharted2::Config::Uncharted2ExtendedConfig uc2_config = Uncharted2::Config::CreateUncharted2ExtendedConfigWithPivotPoint(coeffs, pivot_point, white_precompute);
-    Uncharted2::Reduce::Config::ReduceConfig uc2_config = Uncharted2::Reduce::Config::CreateWithPivotPoint(A, B, C, DE, DF, EperF, middleGray, white_precompute);
+
+    float midgray = middleGray > 0.f ? middleGray : 0.18f;
+    Uncharted2::Reduce::Config::ReduceConfig uc2_config = Uncharted2::Reduce::Config::CreateWithPivotPoint(A, B, C, DE, DF, EperF, midgray, white_precompute);
 
     float3 base = r3.xyz;
     // base = ApplyCurveReduced(r)
