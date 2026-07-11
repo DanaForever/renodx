@@ -1,8 +1,6 @@
 
 #include "./shared.h"
 #include "./macleod_boynton.hlsli"
-// #include "./psycho_test11.hlsl"
-#include "./psycho_test17.hlsl"
 
 
 float3 PostToneMapProcess(float3 output) {
@@ -458,7 +456,7 @@ float3 ToneMapLMS(float3 untonemapped) {
 
     float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
 
-    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test17(
+    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test22(
         untonemapped_graded_dechroma,
         peak_ratio,                               // peak
         1.0f,                                     // exposure
@@ -509,7 +507,7 @@ float3 ToneMapPassLMS(float3 untonemapped, float3 graded_sdr_color, renodx::draw
   if (RENODX_TONE_MAP_TYPE == 2.f) {
     float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
 
-    bt709_tonemapped = renodx::tonemap::psycho::psychotm_test17(
+    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test17(
         untonemapped_graded_dechroma,
         peak_ratio,                               // peak
         1.0f,                                     // exposure

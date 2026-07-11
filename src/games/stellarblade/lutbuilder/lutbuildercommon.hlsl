@@ -1,6 +1,6 @@
 #include "../common.hlsl"
-#include "./psycho_test11.hlsl"
-#include "./psycho_test17.hlsl"
+// #include "./psycho_test11.hlsl"
+// #include "./psycho_test17.hlsl"
 // #include "../macleod_boynton.hlsl"
 
 #ifndef INCLUDE_LUTBUILDER_COMMON
@@ -475,7 +475,7 @@ float3 DisplayMap(float3 color, uint device = 0u) {
 
       float contrast = shader_injection.tone_map_contrast / shader_injection.tone_map_saturation;
 
-      color = renodx::tonemap::psycho::psychotm_test17(
+      color = renodx::tonemap::psychov::psychotm_test22(
           color,
           peak_ratio,                               // peak
           1.0f,                                     // exposure

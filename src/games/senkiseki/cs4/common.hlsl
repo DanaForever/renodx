@@ -1,5 +1,4 @@
 #include "../shared.h"
-#include "../psycho_test17.hlsl"
 #include "../macleod_boynton.hlsli"
 #include "../lms_matrix.hlsl"
 
@@ -81,7 +80,7 @@ float3 ToneMap(float3 color) {
     if (RENODX_TONE_MAP_TYPE == 1.f) {
       float contrast = shader_injection.tone_map_contrast / shader_injection.tone_map_saturation;
 
-      color = renodx::tonemap::psycho::psychotm_test17(
+      color = renodx::tonemap::psychov::psychotm_test22(
           color,
           peak_ratio,                             // peak
           1.0f,                                   // exposure

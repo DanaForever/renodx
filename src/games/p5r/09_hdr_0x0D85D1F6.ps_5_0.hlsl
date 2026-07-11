@@ -289,6 +289,8 @@ void main(
 
   o0 = float4(t, 1.0);
   o0.w = r1.w;
+  
+  o0.w = saturate(o0.w);
 
   o0.rgb = gammaDecode(o0.rgb);
 

@@ -652,7 +652,7 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
       hue = renodx::tonemap::neutwo::MaxChannel(hue, peak_ratio);
       // hue = saturate(hue);
       // hue = NeutwoBT709WhiteForEnergy(hue, peak_ratio);
-      color = renodx::tonemap::psycho::psychotm_test17(
+      color = renodx::tonemap::psychov::psychotm_test22(
           color,
           peak_ratio,  // peak
           1.0f,        // exposure
@@ -667,10 +667,6 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
           1,           // naka rushton
           // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
           injectedData.colorGradeSaturation);  // cone_response_exponent
-
-      // float strength = injectedData.colorGradeHighlights;
-      float strength = 0.5f;
-      color = CorrectHueAndPurityMBGated(color, hue, strength, 0.5f, 1.f, strength);
       
     } else if (injectedData.toneMapType == 3.f) {
       
