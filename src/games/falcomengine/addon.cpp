@@ -154,6 +154,7 @@ renodx::mods::shader::CustomShaders custom_shaders = {
     // YS X
     CustomShaderEntry(0xC8EBAB1E), // hud
     CustomShaderEntry(0xAA5313D9), // hud
+
     {0x2EB53B7A,
      {
          .crc32 = 0x2EB53B7A,
@@ -179,6 +180,14 @@ renodx::mods::shader::CustomShaders custom_shaders = {
      CustomShaderEntry(0x557E2C4E), // ys overlay
      CustomShaderEntry(0x36B738AD), // ui
      CustomShaderEntry(0x44DFE546), // ui
+
+    // Kyoto Xanadu
+     UpgradeRTVReplaceShader(0x197BCB74), // bloomblend
+     UpgradeRTVReplaceShader(0xB879528D), // bloomfinal
+     UpgradeRTVReplaceShader(0x5AFABB1C), // bloomgodray
+     CustomShaderEntry(0x9C84A630), // hud
+     CustomShaderEntry(0xDF53C75B), // hud
+
 
     // UpgradeRTVShader(0x1336F6F8),
     // UpgradeRTVShader(0xEF0CAEEA),
