@@ -154,7 +154,7 @@ float3 ToneMapLMS(float3 untonemapped) {
 
     float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
 
-    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test17(
+    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test30(
         untonemapped_graded_dechroma,
         peak_ratio,                               // peak
         1.0f,                                     // exposure
@@ -240,7 +240,7 @@ float3 ToneMapLMSHueShift(float3 untonemapped) {
     float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
     float cone_response = 1.0f;
 
-    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test17(
+    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test30(
         untonemapped_graded_dechroma,
         peak_ratio,                               // peak
         1.0f,                                     // exposure

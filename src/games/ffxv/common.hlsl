@@ -438,25 +438,10 @@ float3 ToneMapLMS(float3 untonemapped) {
   }
 
   if (RENODX_TONE_MAP_TYPE == 2.f) {
-    // bt709_tonemapped = renodx::tonemap::psycho::psychotm_test11(
-    //     untonemapped_graded_dechroma,
-    //     peak_ratio,                           // peak
-    //     1.0f,                                 // exposure
-    //     1.0f,                                 // highlights
-    //     1.0f,                                 // shadows
-    //     1.0f,                                 // contrast
-    //     1.0f,                                 // purity_scale
-    //     1.0f,                                 // bleaching_intensity
-    //     100.f,                                // clip_point
-    //     0.5f,                                 // hue_restore
-    //     1.0f,                                 // adaptation_contrast
-    //     1,                                    // naka rushton
-    //     // 1.0f + 0.025 * (peak_ratio - 1.0f));  // cone_response_exponent
-    //     1.0f);  // cone_response_exponent
 
     float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
 
-    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test22(
+    bt709_tonemapped = renodx::tonemap::psychov::psychotm_test30(
         untonemapped_graded_dechroma,
         peak_ratio,                               // peak
         1.0f,                                     // exposure

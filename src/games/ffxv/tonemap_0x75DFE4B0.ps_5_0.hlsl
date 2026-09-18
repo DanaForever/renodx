@@ -378,7 +378,8 @@ void main(
                                                  RENODX_TONE_MAP_HUE_CORRECTION,
                                                  RENODX_TONE_MAP_HUE_PROCESSOR);
       else
-        hdr_graded = CorrectHueMB(hdr_graded, sdr_graded, RENODX_TONE_MAP_HUE_CORRECTION);
+
+        hdr_graded = CorrectHueAndPurityMBGated(hdr_graded, sdr_graded, RENODX_TONE_MAP_HUE_CORRECTION);
     }
 
     output = hdr_graded;

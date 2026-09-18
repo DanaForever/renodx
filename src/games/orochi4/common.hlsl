@@ -1,6 +1,7 @@
 
 #include "./shared.h"
 
+
 float3 GammaCorrectHuePreserving(float3 incorrect_color, float gamma = 2.2f) {
   float3 ch = renodx::color::correct::GammaSafe(incorrect_color, false, gamma);
 
@@ -303,17 +304,39 @@ float3 ToneMapLMS(float3 untonemapped) {
   renodx::draw::Config config = renodx::draw::BuildConfig();
   float3 untonemapped_graded = untonemapped;
 
-  untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+  float contrast = shader_injection.tone_map_lms_contrast / shader_injection.tone_map_lms_vibrancy;
 
   // naka rushton
   untonemapped_graded = CastleDechroma_CVVDPStyle_NakaRushton(untonemapped_graded, RENODX_DIFFUSE_WHITE_NITS);
 
   float3 output = untonemapped_graded;
-  float peak = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+  float peak_ratio = RENODX_PEAK_WHITE_NITS / RENODX_DIFFUSE_WHITE_NITS;
+
+  if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_2) {
+    peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.2f);
+
+  } else if (RENODX_GAMMA_CORRECTION == renodx::draw::GAMMA_CORRECTION_GAMMA_2_4) {
+    peak_ratio = renodx::color::correct::Gamma(peak_ratio, true, 2.4f);
+  }
   if (RENODX_TONE_MAP_TYPE == 2.f) {
-    output = renodx::tonemap::HermiteSplineLuminanceRolloff(output, peak);
+    untonemapped_graded = LMS_Vibrancy(untonemapped_graded, shader_injection.tone_map_lms_vibrancy, shader_injection.tone_map_lms_contrast);
+    output = renodx::tonemap::HermiteSplineLuminanceRolloff(untonemapped_graded, peak_ratio);
+
   } else if (RENODX_TONE_MAP_TYPE == 3.f) {
-    output = renodx::tonemap::neutwo::MaxChannel(output, peak);
+    output = renodx::tonemap::psychov::psychotm_test30(
+        untonemapped_graded,
+        peak_ratio,                               // peak
+        1.0f,                                     // exposure
+        1.0f,                                     // highlights
+        1.0f,                                     // shadows
+        contrast,                                 // contrast
+        1.0f,                                     // purity_scale
+        1.0f,                                     // bleaching_intensity
+        100.f,                                    // clip_point
+        0.5f,                                     // hue_restore
+        1.0f,                                     // adaptation_contrast
+        1,                                        // naka rushton
+        shader_injection.tone_map_lms_vibrancy);  // cone_response_exponent
   }
 
   return output;

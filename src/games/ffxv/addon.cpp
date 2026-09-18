@@ -75,7 +75,7 @@ renodx::utils::settings::Settings settings = {
         .is_visible = []() { return current_settings_mode >= 1; },
     },
     new renodx::utils::settings::Setting{
-        .key = "ToneMapMode",
+        .key = "ToneMapUpgradeMode",
         .binding = &shader_injection.tone_map_mode,
         .value_type = renodx::utils::settings::SettingValueType::INTEGER,
         .default_value = 0.f,

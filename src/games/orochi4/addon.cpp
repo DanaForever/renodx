@@ -54,7 +54,7 @@ renodx::utils::settings::Settings settings = {
         .label = "Tone Mapper",
         .section = "Tone Mapping",
         .tooltip = "Sets the tone mapper type",
-        .labels = {"SDR", "None", "Hermite Spline", "Neutwo"},
+        .labels = {"SDR", "None", "RenoDRT", "PsychoV"},
     },
     new renodx::utils::settings::Setting{
         .key = "ToneMapPeakNits",

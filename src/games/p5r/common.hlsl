@@ -1,7 +1,6 @@
 
 #include "./shared.h"
 #include "./macleod_boynton.hlsli"
-#include "./psycho_test17.hlsl"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -652,7 +651,7 @@ float3 ToneMap(float3 color, float peak, float paperwhite) {
       hue = renodx::tonemap::neutwo::MaxChannel(hue, peak_ratio);
       // hue = saturate(hue);
       // hue = NeutwoBT709WhiteForEnergy(hue, peak_ratio);
-      color = renodx::tonemap::psychov::psychotm_test22(
+      color = renodx::tonemap::psychov::psychotm_test30(
           color,
           peak_ratio,  // peak
           1.0f,        // exposure
